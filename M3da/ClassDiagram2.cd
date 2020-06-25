@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="CM3daDoc" Collapsed="true">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>eLBcOGhwp4b7Dk3akmFwCXV2QaExU60z8IkPvMcM6Js=</HashCode>
+      <FileName>M3daDoc.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Microsoft Sans Serif" Size="8.4" />
+</ClassDiagram>

@@ -1,0 +1,76 @@
+// M3da.idl : type library source for M3da.exe
+
+// This file will be processed by the MIDL compiler to produce the
+// type library (M3da.tlb).
+
+#include "olectl.h"
+[ uuid(28298EED-2921-46EF-9177-73085F111828), version(1.0) ]
+library M3da
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	//  Primary dispatch interface for CM3daDoc
+	
+	[ uuid(D0A70CB8-1A81-462F-9171-84EFAB11DD21) ]
+	dispinterface IM3da
+	{
+		properties:
+      [id(17), helpstring("property ElLen")] DOUBLE ElLen;
+      [id(18), helpstring("property IMode")] SHORT IMode;
+      [id(19), helpstring("property NoElementsH")] SHORT NoElementsH;
+      [id(20), helpstring("property NoElementsW")] SHORT NoElementsW;
+	  [id(26), helpstring("property ElDeg")] DOUBLE ElDeg;
+
+		methods:
+			[id(1), helpstring("method GetNo")] void GetNo(void);
+			[id(2), helpstring("method APIGetModel")] IDispatch* APIGetModel(void);
+      [id(3), helpstring("method DeleteSelectedWG")] void DeleteSelectedWG(void);
+      [id(4), helpstring("method DesAll")] void DesAll(void);
+      [id(5), helpstring("method ReDraw")] void ReDraw(void);
+      [id(6), helpstring("method GenMesh")] void GenMesh(void);
+      [id(7), helpstring("method ImportCat")] void ImportCat(BSTR FileName);
+      [id(8), helpstring("method TogOn1d2d")] SHORT Tog1d2d(void);
+      [id(9), helpstring("method ImportWG")] SHORT ImportWG(BSTR sFName,BSTR WGName);
+      [id(10), helpstring("method GetDBNoObjs")] LONG GetDBNoObjs(void);
+      [id(11), helpstring("method GetName")] BSTR GetName(LONG Index);
+      [id(12), helpstring("method ImpSecT")] void ImpSecT(BSTR sFName);
+      [id(13), helpstring("method SelectWG")] void SelectWG(BSTR inName);
+      [id(14), helpstring("method InvertSel")] void InvertSel(void);
+      [id(15), helpstring("method AddPoint")] void AddPoint(DOUBLE x, DOUBLE y, DOUBLE z, LONG Lab);
+      [id(16), helpstring("method AddLine")] void AddLine(DOUBLE x1, DOUBLE y1, DOUBLE z1, DOUBLE x2, DOUBLE y2, DOUBLE z2, LONG Lab);
+      [id(21), helpstring("method ImportWG2")] SHORT ImportWG2(BSTR sFName, BSTR sName);
+      [id(22), helpstring("method BuildAssem")] SHORT BuildAssem(LPCTSTR sModName);
+      [id(23), helpstring("method DisplayAll")] void DisplayAll(void);
+      [id(24), helpstring("method ExportUNV")] SHORT ExportUNV(BSTR sFName);
+      [id(25), helpstring("method SelectAllWGs")] void SelectAllWGs(void);
+      [id(27), helpstring("method ExportNAS")] SHORT ExportNAS(BSTR inName);
+      [id(28), helpstring("method MergeNodes")] void MergeNodes(DOUBLE dTol);
+      [id(29), helpstring("method ExportGroups")] void ExportGroups(BSTR sFName);
+  };
+
+	//  Class information for CM3daDoc
+	
+	[ uuid(A7226713-7CA7-4243-8B24-4C7AA36D1FA3) ]
+	coclass CM3daDoc
+	{
+		[default] dispinterface IM3da;
+	};
+	//  Primary dispatch interface for DBase
+		
+	[ uuid(45542F2E-3541-4330-9BE0-A4B59B3D392C) ]
+	dispinterface IDBase
+	{
+		properties:
+		methods:
+			[id(1), helpstring("method GetNo")] LONG GetNo(void);
+	};
+
+	//  Class information for DBase
+
+	[ uuid(D619E744-24BA-46CF-9DF3-4E44AEBA447B) ]
+	coclass DBase
+	{
+		[default] dispinterface IDBase;
+	};
+};

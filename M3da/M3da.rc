@@ -1,0 +1,2098 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef APSTUDIO_INVOKED
+#include "targetver.h"
+#endif
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\M3da.ico"
+
+IDR_M3daTYPE            ICON                    "res\\M3daDoc.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
+
+IDR_MAINFRAME_256       BITMAP                  "res\\Toolbar256.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_MAINFRAME TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_SAVE
+    SEPARATOR
+    BUTTON      ID_EDIT_CUT
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_EDIT_PASTE
+    SEPARATOR
+    BUTTON      ID_FILE_PRINT
+    BUTTON      ID_APP_ABOUT
+END
+
+IDR_MAINFRAME_256 TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_FILE_NEW
+    BUTTON      ID_FILE_OPEN
+    BUTTON      ID_FILE_SAVE
+    BUTTON      ID_EDIT_CUT
+    BUTTON      ID_EDIT_COPY
+    BUTTON      ID_EDIT_PASTE
+    BUTTON      ID_FILE_PRINT
+    BUTTON      ID_APP_ABOUT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
+        MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
+        MENUITEM SEPARATOR
+        MENUITEM "&Print...\tCtrl+P",           ID_FILE_PRINT
+        MENUITEM "Print Pre&view",              ID_FILE_PRINT_PREVIEW
+        MENUITEM "P&rint Setup...",             ID_FILE_PRINT_SETUP
+        MENUITEM SEPARATOR
+        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1
+        MENUITEM SEPARATOR
+        POPUP "Import"
+        BEGIN
+            MENUITEM "UNV",                         ID_IMPORT_UNV
+            MENUITEM "DAT",                         ID_IMPORT_DAT
+            MENUITEM "IGES",                        ID_IMPORT_IGES
+            MENUITEM "OP2",                         ID_IMPORT_OP2
+            MENUITEM "TXT to Groups",               ID_IMPORT_TXTTOGROUPS
+            MENUITEM "Symbols Table",               ID_IMPORT_SYMBOLSTABLE
+            MENUITEM "Load BMP",                    ID_IMPORT_LOADBMP
+        END
+        POPUP "Export"
+        BEGIN
+            MENUITEM "Current Mesh to UNV",         ID_EXPORT_CURRENTMESHTO
+            MENUITEM "Current Mesh to NAS",         ID_EXPORT_CURRENTMESTTONAS
+            MENUITEM "Groups to TXT",               ID_EXPORT_GROUPSTOTXT
+            MENUITEM "Export Results to TEXT File", ID_POST_EXPORTRESULTSTOTEXTFILE
+            MENUITEM "Export To Text",              ID_EXPORT_EXPORTTOTEXT
+        END
+        MENUITEM "RunScript File",              ID_FILE_RUNSCRIPTFILE
+        MENUITEM "Insert Catalogue Part",       ID_FILE_INSERTCATALOGUEPART
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
+        MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+    END
+    POPUP "&View"
+    BEGIN
+        POPUP "&Toolbars and Docking Windows"
+        BEGIN
+            MENUITEM "<placeholder>",               ID_VIEW_TOOLBAR
+        END
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        POPUP "VIEW"
+        BEGIN
+            MENUITEM "Locate Eye",                  ID_VIEW_LOCATEEYE
+            MENUITEM "Zoom All",                    ID_VIEW_ZOOMALL
+            MENUITEM "Reset View",                  ID_VIEW_RESETVIEW
+            MENUITEM "FRONT XY",                    ID_VIEW_FRONT
+            MENUITEM "TOP X-Z",                     ID_VIEW_TOP
+            MENUITEM "LEFT ZY",                     ID_VIEW_LEFTXY
+            MENUITEM "BACK -XY",                    ID_VIEW_BACK
+            MENUITEM "RIGHT -ZY",                   ID_VIEW_RIGHT
+            MENUITEM "BOTTOM XZ",                   ID_VIEW_BOTTOMXZ
+        END
+        MENUITEM "Select All",                  ID_VIEW_SELECTALL
+        MENUITEM "Display All",                 ID_VIEW_DISPLAYALL
+        MENUITEM "Display Selected",            ID_VIEW_DISPLAYSELECTED
+        MENUITEM "Hide Entities",               ID_VIEW_HIDEENTITIES
+        MENUITEM "Show All Hidden",             ID_VIEW_SHOWALLHIDDEN
+        MENUITEM "Display Group",               ID_VIEW_DISPLAYGROUP
+        MENUITEM "Line",                        ID_VIEW_LINE
+        MENUITEM "Shaded",                      ID_VIEW_SHADED
+        MENUITEM "Label Entities",              ID_VIEW_LABELENTITIES
+        MENUITEM "Nodes On/Off",                ID_VIEW_NODESOFF
+        MENUITEM "Nodes ASK/DOT",               ID_VIEW_NODESASK
+        MENUITEM "Shaded Edges On/Off",         ID_VIEW_SHADEDEDGES
+        MENUITEM "Display Shell Thickness",     ID_VIEW_DISPLAYSHELLTHICKNESS
+        MENUITEM "Display Element Offsets",     ID_VIEW_DISPLAYELEMENTOFFSETS
+        MENUITEM "Display Element Coord Sys",   ID_VIEW_DISPLAYELEMENTCOORDSYS
+        MENUITEM "Display Material Direction",  ID_VIEW_DISPLAYMATERIALDURECTION
+        MENUITEM "Control Point On/Off",        ID_VIEW_CONTROLPOINT
+        MENUITEM "Surface Direction Markers On/Off", ID_VIEW_SURFACEDIRECTIONMARKERS
+        POPUP "Visability"
+        BEGIN
+            MENUITEM "All Visable",                 ID_VISABILITY_ALLVISABLE
+            MENUITEM "Workplane",                   ID_VISABILITY_WORKPLANE
+            MENUITEM "Points On/Off",               ID_VISABILITY_POINTSON
+            MENUITEM "Coords On/Off",               ID_VISABILITY_COORDSON
+            MENUITEM "Node On/Off",                 ID_VISABILITY_NODEON
+            MENUITEM "Element On/Off",              ID_VISABILITY_ELEMENTON
+            MENUITEM "Boundary Conditions",         ID_VISABILITY_BOUNDARYCONDITIONS
+            MENUITEM "Curves On/Off",               ID_VISABILITY_CURVESON
+            POPUP "Surfaces"
+            BEGIN
+                MENUITEM "Surfaces On/Off",             ID_SURFACES_SURFACESON
+                MENUITEM "Surface Curves",              ID_SURFACESON_SURFACECURVES
+            END
+            MENUITEM "Assemblies On/Off",           ID_VISABILITY_ASSEMBLIES
+        END
+        MENUITEM "Gradient Filled Background",  ID_VIEW_GFRADIENTFILLEDBACKGROUND
+        MENUITEM "White Background",            ID_VIEW_WHITE
+    END
+    POPUP "Create"
+    BEGIN
+        POPUP "Curve Tools"
+        BEGIN
+            MENUITEM "Point",                       ID_CREATE_POINT
+            MENUITEM "Rectangle",                   ID_CREATE_RECTANGLE
+            POPUP "Circle"
+            BEGIN
+                MENUITEM "Circle Centre Radius",        ID_CIRCLE_CIRCLECENRERADIUS
+                MENUITEM "Circle Centre & Point",       ID_CIRCLE_CIRCLECENTREPOINT
+                MENUITEM "Circle 3 Throu Points",       ID_CIRCLE_CIRCLE3POINTS
+                MENUITEM "Arc 3 Throu Points",          ID_CIRCLE_ARC3POINT
+            END
+            MENUITEM "Multi Line",                  ID_LINE_MULTILINE
+            MENUITEM "Line",                        ID_LINE_LINE
+            MENUITEM "Line X",                      ID_LINE_LINEX
+            MENUITEM "Line Y",                      ID_LINE_LINEY
+            MENUITEM "Line Z",                      ID_LINE_LINEZ
+            MENUITEM "Line Angle",                  ID_LINE_LINEANGLE
+            MENUITEM "Curve",                       ID_CREATE_CURVE
+            MENUITEM "Curve Throu Points",          ID_CREATE_FITTEDCURVE
+            MENUITEM "Fillet",                      ID_CREATE_FILLET
+            MENUITEM "Make Corner",                 ID_CREATE_MAKECORNER
+            MENUITEM "Offset",                      ID_CREATE_OFFSET
+        END
+        POPUP "FEM Tools"
+        BEGIN
+            MENUITEM "CoordSys",                    ID_CREATE_COORDSYS
+            MENUITEM "CoordSys Line",               ID_CREATE_COORDSYSLINE
+            POPUP "Material"
+            BEGIN
+                MENUITEM "Isentropic ",                 ID_MATERIAL_ISENTROPIC
+                MENUITEM "Orthotropic",                 ID_MATERIAL_ORTHOTROPIC
+            END
+            POPUP "Property"
+            BEGIN
+                MENUITEM "Lumped Mass",                 ID_PROPERTY_LUMPEDMASS
+                MENUITEM "Translational Spring",        ID_PROPERTY_TRANSLATIONALSPRING
+                MENUITEM "Rotational Spring",           ID_PROPERTY_ROTATIONALSPRING
+                MENUITEM "Rod",                         ID_PROPERTY_ROD
+                MENUITEM "Beam - Basic",                ID_PROPERTY_BEAM_BASIC
+                MENUITEM "Beam-ROD",                    ID_PROPERTY_BEAM
+                MENUITEM "Beam-BAR",                    ID_PROPERTY_BEAMBAR
+                MENUITEM "Beam-TUBE",                   ID_PROPERTY_BEAMTUBE
+                MENUITEM "Beam-BOX",                    ID_PROPERTY_BEAMBOX
+                MENUITEM "Shell",                       ID_PROPERTY_SHELL
+                MENUITEM "Solid",                       ID_PROPERTY_SOLID
+                MENUITEM "2D Plain Stress",             ID_PROPERTY_2DPLAINSTRESS
+            END
+            MENUITEM "Node",                        ID_CREATE_NODE
+            MENUITEM "Node MoveTo",                 ID_CREATE_NODEMOVETO
+            MENUITEM "Nodes Between",               ID_CREATE_NODESBETWEEN
+            MENUITEM "Nodes on Curve",              ID_CREATE_NODESONCURVE
+            MENUITEM "Element",                     ID_CREATE_ELEMENT
+            MENUITEM "Copy Nodes",                  ID_CREATE_COPYNODES
+            POPUP "Element Type"
+            BEGIN
+                MENUITEM "Translational Spring",        ID_ELEMENTTYPE_TRANSLATIONALSPRING
+                MENUITEM "Rotational Spring",           ID_ELEMENTTYPE_ROTATIONALSPRING
+                MENUITEM "Rod",                         ID_ELEMENTTYPE_ROD
+                MENUITEM "Beam",                        ID_ELEMENTTYPE_BEAM
+                MENUITEM "Tri",                         ID_ELEMENTTYPE_TRI
+                MENUITEM "Quad",                        ID_ELEMENTTYPE_QUAD
+                MENUITEM "Tet",                         ID_ELEMENTTYPE_TET
+                MENUITEM "Wedge",                       ID_ELEMENTTYPE_WEDGE
+                MENUITEM "Brick",                       ID_ELEMENTTYPE_BRICK
+                MENUITEM "Rigid",                       ID_ELEMENTTYPE_RIGID
+            END
+            MENUITEM "Mapped TRI Mesh",             ID_MESH_MAPPEDTRIMESH
+            MENUITEM "Free TRI Mesh",               ID_MESH_FREETRIMESH
+            MENUITEM "Mapped QUAD Mesh",            ID_MESH_MAPPEDSURFACEMESH
+            MENUITEM "Sweep Elements",              ID_MESH_SWEEPELEMENTS
+            MENUITEM "Build Assembly Mesh",         ID_MESH_BUILDASSEMBLYMESH
+            MENUITEM "Quads Between Nodes",         ID_MESHQND
+            MENUITEM "Shell Coat Solid Elements",   ID_MESH_SHELLCOATSOLIDELEMENTS
+            MENUITEM "TET from Shell Boundary",     ID_MESH_TETFROMSHELLBOUNDARY
+            MENUITEM "Split Quad's into Tri elements", ID_MESH_QUADTOTRI
+            MENUITEM "Mesh Size on Surface",        ID_MESH_MESHSIZEONSURFACE
+            MENUITEM "Advancing Front Surface Mesh TRI", ID_MESH_ADVANCINGFRONTSURFACEMESHTRI
+        END
+        POPUP "Surface Tools"
+        BEGIN
+            MENUITEM "Planar By Boundary",          ID_SURFACE_PLANAR
+            MENUITEM "Loft",                        ID_SURFACE_LOFT
+            MENUITEM "Revolve",                     ID_SURFACE_REVOLVE
+            MENUITEM "Extrude",                     ID_SURFACE_EXTRUDE
+            MENUITEM "Sweep",                       ID_SURFACE_SWEEP
+            MENUITEM "Project Curve",               ID_SURFACE_PROJECTCURVE
+            MENUITEM "Trim Surface",                ID_SURFACE_TRIMSURFACE
+            MENUITEM "Un-Trim",                     ID_SURFACE_UN
+            MENUITEM "Internal Trim Loop",          ID_SURFACE_INTERNALTRIMLOOP
+        END
+    END
+    POPUP "Selection"
+    BEGIN
+        MENUITEM "Points by Colour",            ID_SELECTION_POINTSBYCOLOUR
+        MENUITEM "Curves by Colour",            ID_SELECTION_CURVESBYCOLOUR
+        MENUITEM "Surfaces by Colour",          ID_SELECTION_SURFACESBYCOLOUR
+        MENUITEM "Elements by PID",             ID_SELECTION_ELEMENTSBYPID
+        MENUITEM "Elements by Colour",          ID_SELECTION_ELEMENTSBYCOLOUR
+        MENUITEM "Elements by Type",            ID_SELECTION_ELEMENTSBYTYPE
+        MENUITEM "Elements by Material",        ID_SELECTION_ELEMENTSBYMATERIAL
+        MENUITEM "Nodes by Colour",             ID_SELECTION_NODESBYCOLOUR
+        MENUITEM "Select All",                  ID_SELECTION_SELECTALL
+        MENUITEM "Invert Selection",            ID_SELECTION_INVERTSELECTION
+        MENUITEM "Related To",                  ID_SELECTION_RELATEDTO
+        MENUITEM "Elat",                        ID_SELECTION_ELAT
+    END
+    POPUP "Group"
+    BEGIN
+        MENUITEM "Create Group",                ID_GROUP_CREATEGROUP
+        MENUITEM "Display Group",               ID_VIEW_DISPLAYGROUP
+        MENUITEM "Next Group",                  ID_GROUP_NEXTGROUP
+        MENUITEM "Previous Grpup",              ID_GROUP_PREVIOUSGRPUP
+        MENUITEM "Add to Group",                ID_GROUP_ADDTOGROUP
+        MENUITEM "Remove from Group",           ID_GROUP_REMOVEFROMGROUP
+        MENUITEM "Add Group",                   ID_GROUP_ADDGROUP
+        MENUITEM "Remove Group",                ID_GROUP_REMOVEGROUP
+        MENUITEM "Set Current",                 ID_GROUP_SETCURRENT
+        MENUITEM "List Groups",                 ID_GROUP_LISTGROUPS
+        MENUITEM "Elements By PID",             ID_GROUP_ELEMENTSBYPID
+        MENUITEM "Elements By MID",             ID_GROUP_ELEMENTSBYMID
+        MENUITEM "Elements By Colour",          ID_GROUP_ELEMENTSBYCOLOUR
+        MENUITEM "Elements By Type",            ID_GROUP_ELEMENTSBYTYPE
+        MENUITEM "Node By Colour",              ID_GROUP_NODEBYCOLOUR
+        MENUITEM "Node By Definition System",   ID_GROUP_NODEBYDEFINITIONSYSTEM
+        MENUITEM "Node By Output Sys",          ID_GROUP_NODEBUOUTPUTSYS
+        MENUITEM "Delete All Groups",           ID_GROUP_DELETEALLGROUPS
+    END
+    POPUP "Tools"
+    BEGIN
+        POPUP "Workplain"
+        BEGIN
+            MENUITEM "WP Size",                     ID_TOOLS_WPSIZE
+            MENUITEM "WP Mode",                     ID_TOOLS_WPMODE
+            MENUITEM "WP Centre",                   ID_WORKPLAIN_WPCENTRE
+            MENUITEM "WP Align 3 Pts",              ID_TOOLS_WPALIGN
+            MENUITEM "WP Align to Curve",           ID_WORKPLAIN_WPALIGNTOCURVE
+            MENUITEM "WP Align to Surface",         ID_WORKPLAIN_WPALIGNTOSURFACE
+            MENUITEM "WP to Global",                ID_TOOLS_WPGLOBAL
+        END
+        POPUP "Mesh Management"
+        BEGIN
+            MENUITEM "Create New Mesh",             ID_MESHMANAGEMENT_CREATENEWMESH
+            MENUITEM "List All Meshes",             ID_MESHMANAGEMENT_LISTALLMESHES
+            MENUITEM "Set Active Mesh",             ID_MESHMANAGEMENT_SETACTIVEMESH
+            MENUITEM "Toggle Mesh Visability",      ID_MESHMANAGEMENT_TOGGLEMESHVISABILITY
+            MENUITEM "Delete Mesh",                 ID_MESHMANAGEMENT_DELETEMESH
+        END
+        MENUITEM "Edit Object (Data Table)",    ID_TOOLS_EDITOBJECT
+        POPUP "Point Modify"
+        BEGIN
+            MENUITEM "CTRL point weight",           ID_POINTMODIFY_CTRLPOINTWEIGHT
+        END
+        POPUP "Curve Modify"
+        BEGIN
+            MENUITEM "Weight Thin",                 ID_CURVEMODIFY_WEIGHTTHIN
+            MENUITEM "Weight Medium",               ID_CURVEMODIFY_WEIGHTMEDIUM
+            MENUITEM "Weight Large",                ID_CURVEMODIFY_WEIGHTLARGE
+            MENUITEM "Solid",                       ID_CURVEMODIFY_SOLID
+            MENUITEM "Dot",                         ID_CURVEMODIFY_DOT
+            MENUITEM "Dash",                        ID_CURVEMODIFY_DASH
+            MENUITEM "Centre",                      ID_CURVEMODIFY_CENTRE
+            MENUITEM "Insert Knot",                 ID_CURVEMODIFY_INSERTKNOT
+        END
+        POPUP "Part Modify"
+        BEGIN
+            MENUITEM "Extract",                     ID_PARTMODIFY_EXTRACT
+        END
+        POPUP "Node Modify"
+        BEGIN
+            MENUITEM "Label by INC",                ID_NODEMODIFY_LABEL
+            MENUITEM "Label by START",              ID_NODEMODIFY_LABELBYSTART
+            MENUITEM "Output Coord Sys",            ID_NODEMODIFY_OUTPUTCOORDSYS
+            MENUITEM "Definition Coord Sys",        ID_NODEMODIFY_DEFINITIONCOORDSYS
+            MENUITEM "Change X Ordinate",           ID_NODEMODIFY_CHANGEXORDINATE
+            MENUITEM "Change Y Ordinate",           ID_NODEMODIFY_CHANGEYORDINATE
+            MENUITEM "Change Z Ordinate",           ID_NODEMODIFY_CHANGEZORDINATE
+        END
+        POPUP "Element Modifiy"
+        BEGIN
+            MENUITEM "Label by INC",                ID_ELEMENTMODIFIY_LABELBYINC
+            MENUITEM "Label by START",              ID_ELEMENTMODIFIY_LABELBYSTART
+            MENUITEM "Property ID (PID)",           ID_ELEMENTMODIFIY_PID
+            MENUITEM "Spring Coord System",         ID_ELEMENTMODIFIY_SPRINGCOORDSYSTEM
+            MENUITEM "Shell Mat Corrd System",      ID_ELEMENTMODIFIY_SHELLMATCORRDSYSTEM
+            MENUITEM "Beam Up Vectors",             ID_ELEMENTMODIFIY_BEAMUPVECTORS
+            MENUITEM "Beam Offset",                 ID_ELEMENTMODIFIY_BEAMOFFSET
+            MENUITEM "Beam End A Release",          ID_ELEMENTMODIFIY_BEAMENDARELEASE
+            MENUITEM "Beam End B Release",          ID_ELEMENTMODIFIY_BEAMENDBRELEASE
+            MENUITEM "Shell Offset",                ID_ELEMENTMODIFIY_SHELLOFFSET
+            MENUITEM "Reverse",                     ID_ELEMENTMODIFIY_REVERSE
+        END
+        POPUP "Property / Material Modify"
+        BEGIN
+            MENUITEM "Change Material",             ID_PROPERTYMODIFY_CHANGEMATERIAL
+            MENUITEM "Edit Property Values",        ID_PROPERTYMODIFY_EDITPROPERTYVALUES
+            MENUITEM "Edit Material Values",        ID_PROPERTY_EDITMATERIALVALUES
+        END
+        POPUP "List"
+        BEGIN
+            MENUITEM "All Properties",              ID_LIST_ALLPROPERTIES
+            MENUITEM "All Materials",               ID_LIST_ALLMATERIALS
+            MENUITEM "Property",                    ID_LIST_PROPERTY
+            MENUITEM "Material",                    ID_LIST_MATERIAL
+        END
+        MENUITEM "Move To",                     ID_TOOLS_MOVETO
+        MENUITEM "Move",                        ID_TOOLS_MOVE
+        MENUITEM "Copy To",                     ID_TOOLS_COPYTO
+        MENUITEM "Copy",                        ID_TOOLS_COPY
+        MENUITEM "Copy Rotate",                 ID_TOOLS_COPYROTATE
+        MENUITEM "Copy Rotate 2D",              ID_TOOLS_COPYROTATE2D
+        MENUITEM "Scale",                       ID_TOOLS_SCALE
+        MENUITEM "Reflect",                     ID_TOOLS_REFLECT
+        MENUITEM "Reflect 2D",                  ID_TOOLS_REFLECT2D
+        MENUITEM "Align",                       ID_TOOLS_ALIGN
+        MENUITEM "Rotate by Angles",            ID_TOOLS_ROTATEBYANGLES
+        MENUITEM "Rotate About",                ID_TOOLS_ROTATEABOUT
+        MENUITEM "Colour",                      ID_TOOLS_COLOUR
+        MENUITEM "Set Current Mesh",            ID_TOOLS_SETCURRENTMESH
+        MENUITEM "Measure Angle",               ID_TOOLS_MEASUREANGLE
+        MENUITEM "Measure Distance",            ID_TOOLS_MEASURE
+        MENUITEM "Element Mass Summation",      ID_TOOLS_ELEMENTMASSSUMMATION
+        POPUP "Checks"
+        BEGIN
+            MENUITEM "Check for Negative Volume Elements.", ID_CHECKS_NEGATIVEVOLUMEELEMENTS
+            MENUITEM "Check Shell Element Aspect Ration", ID_CHECKS_CHECKSHELLELEMENTASPECTRATION
+            MENUITEM "Check TET Collapse",          ID_CHECKS_CHECKTETCOLLAPSE
+            MENUITEM "Coincident Nodes",            ID_CHECKS_COINCIDENTNODES
+            MENUITEM "Coincident Elements",         ID_CHECKS_COINCIDENTELEMENTS
+            MENUITEM "Merge Coincident Nodes",      ID_CHECKS_MERGENODES
+            MENUITEM "Free Edge Display",           ID_CHECKS_FREEEDGEDISPLAY
+            MENUITEM "Free Face Display",           ID_CHECKS_FREEFACEDSP
+            MENUITEM "Shell Normal Consistancy",    ID_CHECKS_SHELLNORMALCONSISTANCY
+            MENUITEM "2d Section Properties A Ixx Iyy etc", ID_CHECKS_2DSECTIONPROPERTIESAIXXIYYETC
+            MENUITEM "Tet Circumsphere",            ID_CHECKS_TETCIRCUMSPHERE
+        END
+        MENUITEM "Delete",                      ID_TOOLS_DELETE
+    END
+    POPUP "LoadsBC"
+    BEGIN
+        MENUITEM "Load Sets",                   ID_ANALYSIS_LOADSETS
+        MENUITEM "BC Sets",                     ID_LOADSBC_BCSETS
+        MENUITEM "Temperature Sets",            ID_LOADSBC_TEMPERATURESETS
+        MENUITEM "List Load Sets",              ID_LOADSBC_LISTLOADSETS
+        MENUITEM "List Boundary Sets",          ID_LOADSBC_LISTBOUNDARYSETS
+        MENUITEM "List Temperature Sets",       ID_LOADSBC_LISTTEMPERATURESETS
+        MENUITEM SEPARATOR
+        MENUITEM "Create Force",                ID_SOLVER_CREATEFORCE
+        MENUITEM "Create Moment",               ID_ANALYSIS_CREATEMOMENT
+        MENUITEM "Create Pressure",             ID_ANALYSIS_CREATEPRESSURE
+        MENUITEM "Create Acceleration Body Load", ID_LOADSBC_CREATEACCELERATIONBODYLOAD
+        MENUITEM "Create Rotational Body Load", ID_LOADSBC_CREATEROTATIONALBODYLOAD
+        MENUITEM "Create Structural Temp",      ID_LOADSBC_CREATESTRUCTURALTEMP
+        MENUITEM "Create Restraint",            ID_SOLVER_CREATERESTRAINT
+        MENUITEM SEPARATOR
+        MENUITEM "Create Thermal Temp BC",      ID_LOADSBC_CREATETHERMALTEMPBC
+        MENUITEM "Create Thermal Nett Flux Load", ID_LOADSBC_CREATETHERMALNETTFLUXLOAD
+    END
+    POPUP "Solution"
+    BEGIN
+        MENUITEM "List Solutions",              ID_SOLUTION_LISTSOLUTIONSEQUENCES
+        MENUITEM "Create Solution",             ID_SOLUTION_CREATESOLUTIONSEQUENCE
+        MENUITEM "Create Solution Step",        ID_SOLUTION_CREATE
+        MENUITEM SEPARATOR
+        MENUITEM "Solve",                       ID_SOLVER_SOLVE
+    END
+    POPUP "Post-Processing"
+    BEGIN
+        MENUITEM "List Res Set",                ID_POST_LISTRESSET
+        MENUITEM "List Results Vectors",        ID_POST_LISTRESULTSVECTORS
+        MENUITEM "List Selected Res Set",       ID_POST_LISTSELECTEDRESSET
+        MENUITEM "Select Contour Results",      ID_POST_SELECTRESULTS
+        MENUITEM "Select Deformed Results",     ID_POST_SELECTDEFORMEDRESULTS
+        MENUITEM "Select Vector Results",       ID_POST_SELECTVECTORRESULTS
+        MENUITEM "Clear Results Vectors",       ID_POST_CLEARRESULTSVECTORS
+        MENUITEM "Display Contour Raw Results", ID_POST_CONTOURRAWDATA
+        MENUITEM "Display Deformed Results",    ID_POST_DEFORMEDDISPLAY
+        MENUITEM "Animate Neg / Pos Tog",       ID_POST_ANIMATENEG
+        MENUITEM "Frame Delay",                 ID_POST_FRAMEDELAY
+        MENUITEM "Animation Frames",            ID_POST_ANIMATIONFRAMES
+        MENUITEM "Animate",                     ID_POST_ANIMATE
+        MENUITEM "Toggle Results Label Display", ID_POST_TOGRESULTSLABELS
+        POPUP "Options"
+        BEGIN
+            MENUITEM "Deformation Scale",           ID_OPTIONS_DEFORMATIONSCALE
+            MENUITEM "Deformation Offset",          ID_OPTIONS_DEFORMATIONOFFSET
+            MENUITEM "Set Colour Bar Scale",        ID_OPTIONS_SETCOLOURBAR
+            MENUITEM "Reverse Colour Bar",          ID_OPTIONS_REVERSECOLOURBAR
+            MENUITEM "Vector Display Scale",        ID_OPTIONS_VECTORSCALE
+        END
+        MENUITEM "Export Results to TEXT File", ID_POST_EXPORTRESULTSTOTEXTFILE
+        MENUITEM "List Nodal Results",          ID_POST_LISTNODALRESULTS
+        MENUITEM "List Element Result",         ID_POST_LISTELEMENTRESULT
+        MENUITEM "List Response Data",          ID_POST_LISTRESPONSEDATA
+        MENUITEM "Delete All Results Sets",     ID_POST_DELETEALLRESULTSSETS
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About M3da...",              ID_APP_ABOUT
+    END
+END
+
+IDR_POPUP_EDIT MENU
+BEGIN
+    POPUP "Edit"
+    BEGIN
+        MENUITEM "Deselect All",                ID_EDIT_DES
+        MENUITEM "Repeat Last Command",         ID_EDIT_REPEATLASTCOMMAND
+        MENUITEM "Filter",                      ID_EDIT_FILTERNONE
+        MENUITEM "Information",                 ID_EDIT_INFORMATION
+        MENUITEM "Key In",                      ID_EDIT_KEYIN
+        MENUITEM "Pick",                        ID_EDIT_PICK
+        MENUITEM "Related To",                  ID_EDIT_RELATEDTO
+        MENUITEM "Label",                       ID_EDIT_LABEL
+        MENUITEM "Between",                     ID_EDIT_BETWEEN
+        MENUITEM "Translated From",             ID_EDIT_TRANSLATEDFROM
+        MENUITEM "Intersection",                ID_EDIT_IITERSECTION
+        MENUITEM "Project",                     ID_EDIT_PROJECT
+        MENUITEM "On Screen Location",          ID_EDIT_ONSCREENLOCATION
+        MENUITEM "Cancel",                      ID_EDIT_CANCEL
+        MENUITEM "Done",                        ID_EDIT_DONE
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS
+BEGIN
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL
+    "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL
+    "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL
+    "P",            ID_FILE_PRINT,          VIRTKEY, CONTROL
+    "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL
+    "X",            ID_EDIT_CUT,            VIRTKEY, CONTROL
+    "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL
+    "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL
+    VK_BACK,        ID_EDIT_UNDO,           VIRTKEY, ALT
+    VK_DELETE,      ID_EDIT_CUT,            VIRTKEY, SHIFT
+    VK_INSERT,      ID_EDIT_COPY,           VIRTKEY, CONTROL
+    VK_INSERT,      ID_EDIT_PASTE,          VIRTKEY, SHIFT
+    VK_F6,          ID_NEXT_PANE,           VIRTKEY 
+    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 319, 144
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About M3da"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
+    LTEXT           "M3d, Version 5.2 11/04/2020 64BIT WIN10",IDC_STATIC,43,14,247,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2010",IDC_STATIC,43,26,114,8
+    DEFPUSHBUTTON   "OK",IDOK,261,123,50,14,WS_GROUP
+    LTEXT           "THE AUTHOR SHALL IN NO EVENT BE LIABLE TO THE USER",IDC_STATIC,42,52,235,8
+    LTEXT           "FOR ANY INDIRECT, ECONOMIC, INCIDENTAL, SPECIAL, PUNITIVE",IDC_STATIC,42,59,235,8
+    LTEXT           "OR CONSEQUENTIAL LOSS INCLUDING, WITHOUT LIMITATION, LOSS",IDC_STATIC,42,66,235,8
+    LTEXT           "OF PROFIT, LOSS OF INCOME, LOSS OF USE OF THE AUTHOR",IDC_STATIC,42,73,235,8
+    LTEXT           "PRODUCTS OR OTHER PRODUCTS, LOSS OF GOODWILL, LOSS OF",IDC_STATIC,42,80,235,8
+    LTEXT           "ANTICIPATED SAVINGS, LOSS OF REVENUE, LOSS OF A",IDC_STATIC,42,87,235,8
+    LTEXT           "COMMERCIAL OPPORTUNITY OR CONTRACT, LOSS OF OR",IDC_STATIC,42,94,235,8
+    LTEXT           "CORRUPTION TO DATA, WHETHER OR NOT THE AUTHOR HAS BEEN",IDC_STATIC,42,101,235,8
+    LTEXT           "ADVISED OF THE POSSIBILITY OF SUCH LOSS.",IDC_STATIC,42,108,235,8
+    LTEXT           "Website : www.m3dfea.com",IDC_STATIC,43,121,204,8,SS_NOPREFIX
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "CompanyName", "M3d Bespoke Engineering Solutions"
+            VALUE "FileDescription", "M3d Model File"
+            VALUE "FileVersion", "5.0"
+            VALUE "InternalName", "M3da.exe"
+            VALUE "LegalCopyright", "M3d Bespoke Enginnering Solutions.  All rights reserved."
+            VALUE "OriginalFilename", "M3da.exe"
+            VALUE "ProductName", "M3d"
+            VALUE "ProductVersion", "5.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 311
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 137
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_ABOUTBOX AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDP_OLE_INIT_FAILED     "OLE initialization failed.  Make sure that the OLE libraries are the correct version."
+    IDD_INPUT               "INPUT"
+    IDS_EDIT1               "EIDIT1"
+    IDS_EDIT2               "Edit2"
+    IDS_EDIT3               "Edit3"
+    IDS_DRAW                "Draw"
+    IDS_EDIT                "Edit"
+    IDS_FE                  "FE"
+    IDS_GROUP               "Groups"
+    ID_VIEW_ONWP            "View on Workplane"
+    IDS_BC                  "Loads and Boundary Conditions"
+END
+
+STRINGTABLE
+BEGIN
+    IDR_MAINFRAME           "M3d\n\nM3da\nM3da Files (*.m3d)\n.m3d\nM3da.Document\nM3da.Document"
+END
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_APP_TITLE       "M3da"
+    AFX_IDS_IDLEMESSAGE     "Ready"
+END
+
+STRINGTABLE
+BEGIN
+    ID_INDICATOR_EXT        "EXT"
+    ID_INDICATOR_CAPS       "CAP"
+    ID_INDICATOR_NUM        "NUM"
+    ID_INDICATOR_SCRL       "SCRL"
+    ID_INDICATOR_OVR        "OVR"
+    ID_INDICATOR_REC        "REC"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_NEW             "Create a new document\nNew"
+    ID_FILE_OPEN            "Open an existing document\nOpen"
+    ID_FILE_CLOSE           "Close the active document\nClose"
+    ID_FILE_SAVE            "Save the active document\nSave"
+    ID_FILE_SAVE_AS         "Save the active document with a new name\nSave As"
+    ID_FILE_PAGE_SETUP      "Change the printing options\nPage Setup"
+    ID_FILE_PRINT_SETUP     "Change the printer and printing options\nPrint Setup"
+    ID_FILE_PRINT           "Print the active document\nPrint"
+    ID_FILE_PRINT_DIRECT    "Print the active document using current options\nQuick Print"
+    ID_FILE_PRINT_PREVIEW   "Display full pages\nPrint Preview"
+END
+
+STRINGTABLE
+BEGIN
+    ID_APP_ABOUT            "Display program information, version number and copyright\nAbout"
+    ID_APP_EXIT             "Quit the application; prompts to save documents\nExit"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FILE_MRU_FILE1       "Open this document"
+    ID_FILE_MRU_FILE2       "Open this document"
+    ID_FILE_MRU_FILE3       "Open this document"
+    ID_FILE_MRU_FILE4       "Open this document"
+    ID_FILE_MRU_FILE5       "Open this document"
+    ID_FILE_MRU_FILE6       "Open this document"
+    ID_FILE_MRU_FILE7       "Open this document"
+    ID_FILE_MRU_FILE8       "Open this document"
+    ID_FILE_MRU_FILE9       "Open this document"
+    ID_FILE_MRU_FILE10      "Open this document"
+    ID_FILE_MRU_FILE11      "Open this document"
+    ID_FILE_MRU_FILE12      "Open this document"
+    ID_FILE_MRU_FILE13      "Open this document"
+    ID_FILE_MRU_FILE14      "Open this document"
+    ID_FILE_MRU_FILE15      "Open this document"
+    ID_FILE_MRU_FILE16      "Open this document"
+END
+
+STRINGTABLE
+BEGIN
+    ID_NEXT_PANE            "Switch to the pParent window pane\nNext Pane"
+    ID_PREV_PANE            "Switch back to the previous window pane\nPrevious Pane"
+END
+
+STRINGTABLE
+BEGIN
+    ID_WINDOW_SPLIT         "Split the active window into panes\nSplit"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_CLEAR           "Erase the selection\nErase"
+    ID_EDIT_CLEAR_ALL       "Erase everything\nErase All"
+    ID_EDIT_COPY            "Copy the selection and put it on the Clipboard\nCopy"
+    ID_EDIT_CUT             "Cut the selection and put it on the Clipboard\nCut"
+    ID_EDIT_FIND            "Find the specified text\nFind"
+    ID_EDIT_PASTE           "Insert Clipboard contents\nPaste"
+    ID_EDIT_REPEAT          "Repeat the last action\nRepeat"
+    ID_EDIT_REPLACE         "Replace specific text with different text\nReplace"
+    ID_EDIT_SELECT_ALL      "Select the entire document\nSelect All"
+    ID_EDIT_UNDO            "Undo the last action\nUndo"
+    ID_EDIT_REDO            "Redo the previously undone action\nRedo"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_STATUS_BAR      "Show or hide the status bar\nToggle Status Bar"
+END
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_SCSIZE          "Change the window size"
+    AFX_IDS_SCMOVE          "Change the window position"
+    AFX_IDS_SCMINIMIZE      "Reduce the window to an icon"
+    AFX_IDS_SCMAXIMIZE      "Enlarge the window to full size"
+    AFX_IDS_SCNEXTWINDOW    "Switch to the pParent document window"
+    AFX_IDS_SCPREVWINDOW    "Switch to the previous document window"
+    AFX_IDS_SCCLOSE         "Close the active window and prompts to save the documents"
+END
+
+STRINGTABLE
+BEGIN
+    AFX_IDS_SCRESTORE       "Restore the window to normal size"
+    AFX_IDS_SCTASKLIST      "Activate Task List"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_ELTYPE              "Element Type"
+    IDS_STRING113           "Loads and Boundary Conditions"
+    IDS_POST                "Post Processing"
+    IDS_STRING115           "wwww"
+    IDS_LBC                 "Loads and BC"
+    IDS_STATUS_PANE1        "Pane 1"
+    IDS_STATUS_PANE2        "Pane 2"
+    IDS_TOOLBAR_STANDARD    "Standard"
+    IDS_TOOLBAR_CUSTOMIZE   "Customize..."
+END
+
+STRINGTABLE
+BEGIN
+    IDS_EDIT_MENU           "Edit"
+    ID_INDC_LC              "LC               "
+    ID_INDC_BC              "BC              "
+    IDR_DRAW                "Draw"
+    ID_INDICATOR_TS         "TS               "
+    IDR_CREATE              "Create"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_ELEMENTSBYMATERIAL 
+                            "Select elements with a specific material ID."
+    ID_MESH_MAPPEDSURFACEMESH "Create a mapped quad mesh on surface."
+    ID_MESH_MAPPEDTRIMESH   "Create a mapped tri mesh on surface."
+    ID_CHECKS_COINCIDENTNODES "Check current mesh for coincident nodes."
+    ID_MESH_SWEEPELEMENTS   "Sweep elements."
+    ID_VIEW_SHADEDEDGES     "Display shaded edges of elements."
+    ID_VISABILITY_NODEON    "Toggle Node Visability"
+    ID_VISABILITY_ELEMENTON "Toggle Element Visability"
+    ID_VIEW_NODESASK        "Displat the nodes as *"
+    ID_VISABILITY_CURVESON  "Toggle Curve Visability"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VISABILITY_ASSEMBLIES "Toggle Assembly Visability"
+    ID_GROUP_DELETEALLGROUPS "Delete All Groups"
+    ID_VIEW_WHITE           "Set the background colour to white."
+    ID_TOOLS_ALIGN          "Align a object in 3d."
+    ID_TOOLS_WPSIZE         "Set the size of the workplain."
+    ID_TOOLS_ROTATEBYANGLES "Rotate an object by angles."
+END
+
+STRINGTABLE
+BEGIN
+    ID_TOOLS_ROTATEABOUT    "Rotate objects about an axis."
+    ID_TOOLS_COPYROTATE     "Copy and rotate selected objects."
+    ID_TOOLS_SCALE          "Scale selected objects."
+    ID_TOOLS_REFLECT        "Reflect selected objects."
+    ID_TOOLS_LISTALLPROPERTIES "List all properties in current mesh"
+    ID_EXPORT_CURRENTMESTTONAS "Export current mesh to Nastran"
+    ID_NODEMODIFY_DEFINITIONCOORDSYS 
+                            "Change the nodal definition coordinate system."
+    ID_ELEMENTTYPE_RIGID    "Rigid Spider Element."
+END
+
+STRINGTABLE
+BEGIN
+    ID_LIST_ALLPROPERTIES   "List all properties in the model."
+    ID_LIST_ALLMATERIALS    "List all materials in the model."
+    ID_LIST_PROPERTY        "List a specific property."
+    ID_LIST_MATERIAL        "List a specific material."
+    ID_VIEW_DISPLAYSHELLTHICKNESS "Display shell element thickness."
+    ID_VIEW_DISPLAYELEMENTOFFSETS "Display offsets on elements."
+    ID_ELEMENTTYPE_BEAM     "Beam Element."
+    ID_ELEMENTMODIFIY_BEAMUPVECTORS "Set the beam orientation vector."
+    ID_ELEMENTMODIFIY_BEAMOFFSET "Set beam offset vector."
+    ID_ELEMENTMODIFIY_SHELLOFFSET "Set shell element offset."
+END
+
+STRINGTABLE
+BEGIN
+    ID_SELECTION_NODESBYCOLOUR "Select nodes with a specific colour."
+    ID_SELECTION_RELATEDTO  "select objects related to other objects."
+    ID_SELECTION_ELEMENTSBYTYPE "Select elements with a specific type."
+    ID_CREATE_COORDSYSLINE  "Create multiple coordinate systems in a line normal to elements."
+    ID_TOOLS_MEASURE        "Measure the distaance between 2 objects."
+    ID_ELEMENTMODIFIY_PID   "Modify the selected element property IDs (PIDs)"
+    ID_NODEMODIFY_OUTPUTCOORDSYS "Change the nodal output coordinate system."
+    ID_EDIT_RELATEDTO       "Pick objects that are related to other objects (eg Nodes that are related to Elements)."
+    ID_EDIT_LABEL           "Select objects by specifying their label."
+END
+
+STRINGTABLE
+BEGIN
+    ID_PROPERTYMODIFY_CHANGEMATERIAL 
+                            "Change the material assigned to a property."
+    ID_QWANTA_MERGEBOUNDARIES "Merge the sweep boundaries"
+    ID_CHECKS_MERGENODES    "Merge coincident nodes (1 pair at a time)."
+    ID_MESH_BUILDASSEMBLYMESH "Build a mesh from an assembly of other meshes."
+    ID_SOLVER_SOLVE         "Solve current model - linear static."
+    ID_SOLVER_CREATEFORCE   "Create a force on node."
+END
+
+STRINGTABLE
+BEGIN
+    ID_SOLVER_CREATERESTRAINT "Create a nodal restraint."
+    ID_SURFACESON_SURFACECURVES "Display curves on surfaces"
+    ID_SURFACES_SURFACESON  "Toggle Surface Visability"
+    ID_VISABILITY_POINTSON  "Toggle Point Visability"
+    ID_CIRCLE_CIRCLECENRERADIUS "Create a circle by centre and radius."
+    ID_CIRCLE_CIRCLE3POINTS "Create a circle throu 3 points."
+    ID_CIRCLE_ARC3POINT     "Create an arc throu 3 points."
+    ID_SELECTION_SURFACESBYCOLOUR "Select surfaces with a specific colour."
+    ID_SELECTION_CURVESBYCOLOUR "Select curves with a specific colour."
+    ID_SELECTION_POINTSBYCOLOUR "Select points with a specific colour."
+    ID_WORKPLAIN_WPALIGNTOCURVE "Align the workplain to a specified curve."
+    ID_WORKPLAIN_WPALIGNTOSURFACE 
+                            "Align the workplain to a specified surface."
+    ID_WORKPLAIN_WPCENTRE   "Centre the workplain at a specified point."
+END
+
+STRINGTABLE
+BEGIN
+    ID_IMPORT_TXTTOGROUPS   "Groups from text file"
+    ID_VIEW_DISPLAYMATERIALDURECTION "Display element material directions."
+    ID_OPTIONS_SETCOLOURBAR "Set colour bar min and max limits."
+    ID_VISABILITY_COORDSON  "Toggle Coordinate System Visability"
+    ID_GROUP_NEXTGROUP      "Move to the Next Group"
+    ID_GROUP_PREVIOUSGRPUP  "Move to the Previous Group"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_DISPLAYELEMENTCOORDSYS "Display element coordinate systems."
+    ID_ANALYSIS_CREATEMOMENT "Create a moment on node."
+    ID_ANALYSIS_CREATEPRESSURE "Create a pressure on shell element."
+    ID_VISABILITY_BOUNDARYCONDITIONS "Toggle Boundary Condition Visability"
+    ID_POST_EXPORTRESULTSTOTEXTFILE "Export the results to a .csv file."
+    ID_NODEMODIFY_LABEL     "Change the seleted node labels by a fixed increment."
+    ID_ELEMENTMODIFIY_LABELBYINC 
+                            "Change the seleted element labels by a fixed increment."
+    ID_NODEMODIFY_LABELBYSTART 
+                            "Change the selected node labels by specifing the start ID."
+    ID_ELEMENTMODIFIY_LABELBYSTART 
+                            "Change the selected element labels by specifing the start ID."
+    ID_POST_LISTELEMENTRESULT "List selected element results."
+    ID_VIEW_GFRADIENTFILLEDBACKGROUND "Display a gradient filled background."
+    ID_ELEMENTMODIFIY_REVERSE "Reverse element definition."
+    ID_MESHQND              "Create quad elements between two sets of nodes."
+END
+
+STRINGTABLE
+BEGIN
+    ID_CREATE_COORDSYS      "Create a coordinate system."
+    ID_GROUP_ELEMENTSBYPID  "Group elements by property"
+    ID_GROUP_ELEMENTSBYCOLOUR "Group elements by colour"
+    ID_SELECTION_ELEMENTSBYPID 
+                            "Select elements with a specific property ID (PID)."
+    ID_SELECTION_ELEMENTSBYCOLOUR "Select elements with a specific colour."
+END
+
+STRINGTABLE
+BEGIN
+    ID_GROUP_ELEMENTSBYTYPE "Group elements by type"
+    ID_GROUP_NODEBYCOLOUR   "Group nodes by colour"
+    ID_GROUP_NODEBUOUTPUTSYS "Group nodes by output coordinate system"
+    ID_GROUP_NODEBYDEFINITIONSYSTEM 
+                            "Group nodes by definition coordinate system"
+    ID_GROUP_ELEMENTSBYMID  "Group elements by material"
+    ID_POST_DELETEALLRESULTSSETS "Delete all result sets."
+    ID_OPTIONS_REVERSECOLOURBAR "Reverse the colour bar."
+    ID_VIEW_ZOOMALL         "Zoom to fit all F.E. objects."
+    ID_SELECTION_INVERTSELECTION "Invert the Current Selection"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TOOLS_COPYROTATE2D   "Copy and rotate objects in 2d."
+    ID_TOOLS_REFLECT2D      "Reflect selected objects in 2d."
+    ID_TOOLS_COPYTO         "Copy objects by picking locations"
+    ID_TOOLS_MOVETO         "Move objects by selecting locations"
+    ID_MESH_TETFROMSHELLBOUNDARY "Create tet mesh from shell boundary."
+END
+
+STRINGTABLE
+BEGIN
+    ID_CHECKS_FREEFACEDSP   "Element free face check"
+    ID_MESH_SHELLCOATSOLIDELEMENTS "Shell coat solid element free faces."
+    ID_CHECKS_FREEEDGEDISPLAY "Display the free edges of selected elements."
+    ID_MESH_QUADTOTRI       "Split quad elements into tri's."
+    ID_ANALYSIS_LOADSETS    "Create a load set."
+    ID_LOADSBC_BCSETS       "Create a boundary set."
+    ID_LOADSBC_TEMPERATURESETS "Create a temperature set."
+    ID_LOADSBC_CREATESTRUCTURALTEMP 
+                            "Create a structural temperature load on element."
+    ID_LOADSBC_CREATETHERMALTEMPBC "N/A yet"
+    ID_LOADSBC_CREATETHERMALNETTFLUXLOAD "N/A yet."
+    ID_SOLUTION_LISTSOLUTIONSEQUENCES "List the current solutions."
+    ID_SOLUTION_CREATESOLUTIONSEQUENCE "Create a solution."
+    ID_SOLUTION_CREATE      "Create a solution step."
+END
+
+STRINGTABLE
+BEGIN
+    ID_POST_SELECTRESULTS   "Select contour results."
+    ID_POST_LISTRESSET      "List all results sets."
+    ID_POST_LISTSELECTEDRESSET "List the selected results set."
+    ID_POST_CONTOURRAWDATA  "Contour plot."
+    ID_POST_TOGRESULTSLABELS "Turn on or off results labels."
+    ID_POST_DEFORMEDDISPLAY "Deformed display."
+    ID_POST_SELECTDEFORMEDRESULTS "Select deformed results."
+    ID_OPTIONS_DEFORMATIONSCALE "Change the deformation scale."
+    ID_ELEMENTTYPE_ROD      "Rod Element."
+END
+
+STRINGTABLE
+BEGIN
+    ID_LOADSBC_LISTLOADSETS "list all load sets."
+    ID_LOADSBC_LISTBOUNDARYSETS "List all boundary sets."
+    ID_LOADSBC_LISTTEMPERATURESETS "List all temperature sets."
+    ID_LOADSBC_CREATEACCELERATIONBODYLOAD 
+                            "Create an acceleration load on element."
+END
+
+STRINGTABLE
+BEGIN
+    ID_TOOLS_COLOUR         "Change the colour of objects."
+    ID_TOOLS_SETCURRENTMESH "Set the active F.E. mesh to work on."
+END
+
+STRINGTABLE
+BEGIN
+    ID_CREATE_NODESBETWEEN  "Create nodes between two sets of nodes."
+    ID_CREATE_NODESONCURVE  "Create nodes on curves."
+    ID_TOOLS_COPY           "Copy selected objects."
+    ID_TOOLS_WPMODE         "Change workplain between cartesian and cylindrical."
+    ID_TOOLS_WPALIGN        "Align the workplain to 3 point."
+    ID_TOOLS_WPGLOBAL       "Reset the workplain to global."
+    ID_VIEW_CONTROLPOINT    "Display surface control points."
+END
+
+STRINGTABLE
+BEGIN
+    ID_ELEMENTTYPE_TRANSLATIONALSPRING "Translational Spring."
+    ID_ELEMENTTYPE_ROTATIONALSPRING "Rotational Spring."
+    ID_ELEMENTMODIFIY_SPRINGCOORDSYSTEM 
+                            "Assign a coordinate system to selected spring elements."
+    ID_CHECKS_CHECKSHELLELEMENTASPECTRATION 
+                            "Check Shell Element Aspect Ration"
+END
+
+STRINGTABLE
+BEGIN
+    ID_CURVEMODIFY_WEIGHTTHIN "Change the curve weight to thin."
+    ID_CURVEMODIFY_WEIGHTMEDIUM "Change the curve weight to medium."
+    ID_CURVEMODIFY_WEIGHTLARGE "Change the curve weight to large."
+    ID_CURVEMODIFY_SOLID    "Change the curve line type to solid."
+    ID_CURVEMODIFY_DOT      "Change the curve line type to dotted."
+    ID_CURVEMODIFY_DASH     "Change the curve line type to dashed."
+    ID_CURVEMODIFY_CENTRE   "Change the curve line type to centre line."
+    ID_POINTMODIFY_CTRLPOINTWEIGHT 
+                            "Modify the NURBS weight of a curve control point."
+    ID_CIRCLE_CIRCLECENTREPOINT 
+                            "Create a circle by centre point and point on circumferance."
+END
+
+STRINGTABLE
+BEGIN
+    ID_GROUP_CREATEGROUP    "Create a new group."
+    ID_CREATE_FITTEDCURVE   "Create a curve fitted throu points."
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_DES             "De-select all objects."
+    ID_VIEW_DISPLAYALL      "Display all objects."
+    ID_EDIT_INFORMATION     "Show information for selected objects."
+    ID_EDIT_KEYIN           "Type in a translation for a command."
+    ID_EDIT_PICK            "Pick two objects to specify a translation vector for a command."
+    ID_EDIT_BETWEEN         "returns a location between two other locations."
+    ID_EDIT_TRANSLATEDFROM  "returns a location translated from another location."
+    ID_EDIT_FILTERNONE      "Set the object filter."
+    ID_EDIT_CANCEL          "Cancels a command."
+    ID_EDIT_DONE            "Finishes a command."
+    ID_VIEW_DISPLAYSELECTED "Display selected objects only."
+    ID_VIEW_DISPLAYGROUP    "Display the current group."
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_SHADED          "Display in shaded mode."
+    ID_VIEW_LINE            "Display in wire frame."
+    ID_VIEW_LOCATEEYE       "Locate the centre of rotation for dynamic viewing."
+    ID_VIEW_RESETVIEW       "Reset the view to global."
+    ID_GROUP_ADDTOGROUP     "Add selected objects to the current group."
+    ID_GROUP_REMOVEFROMGROUP "Remove selected objects to the current group."
+    ID_GROUP_ADDGROUP       "Add a group to the current group."
+    ID_GROUP_REMOVEGROUP    "Remove a group to the current group."
+    ID_GROUP_SETCURRENT     "Set the current group."
+END
+
+STRINGTABLE
+BEGIN
+    ID_GROUP_LISTGROUPS     "List all groups."
+    ID_CREATE_POINT         "Create a geometric point."
+    ID_LINE_LINE            "Create a line between two points."
+    ID_LINE_LINEX           "Create a line in workplain X direction."
+    ID_LINE_LINEY           "Create a line in workplain Y direction."
+    ID_LINE_LINEZ           "Create a line in workplain Z direction."
+END
+
+STRINGTABLE
+BEGIN
+    ID_CREATE_CURVE         "Create a curve by specifying control points."
+    ID_SURFACE_LOFT         "Loft a surface between curves."
+    ID_SURFACE_PLANAR       "Create a planar surface by boundary curves."
+    ID_CREATE_NODE          "Create nodes."
+    ID_CREATE_ELEMENT       "Create elements."
+    ID_ELEMENTTYPE_TRI      "Triangular Shell Element."
+    ID_ELEMENTTYPE_QUAD     "Quadrilateral Shell Element."
+    ID_ELEMENTTYPE_BRICK    "Brick Solid Element."
+    ID_ELEMENTTYPE_WEDGE    "Wedge Solid Element."
+    ID_ELEMENTTYPE_TET      "Tetrahedral Solid Element."
+    ID_CREATE_COPYNODES     "Copy selected nodes."
+    ID_CREATE_NODEMOVETO    "Move nodes from and to."
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_REPEATLASTCOMMAND "Repeat the last command."
+    ID_EDIT_IITERSECTION    "returns a location that is the intersection of two objects."
+    ID_EDIT_PROJECT         "Returns a location which is the projection of a location onto an object."
+    ID_CREATE_OFFSET        "Offset curves."
+    ID_CREATE_FILLET        "Create a fillet between two lines."
+    ID_LINE_LINEANGLE       "Create a line at a specified angle."
+    ID_CREATE_MAKECORNER    "Create a corner between two lines."
+    ID_CREATE_RECTANGLE     "Rectangle by two corner points."
+END
+
+STRINGTABLE
+BEGIN
+    ID_VISABILITY_ALLVISABLE "All visable."
+    ID_VIEW_LABELENTITIES   "Display labels on selected objects."
+END
+
+STRINGTABLE
+BEGIN
+    ID_CHECKS_CHECKTETCOLLAPSE "Check TET Collapse"
+    ID_VIEW_TOP             "Top View"
+    ID_VIEW_FRONT           "Front view XY"
+    ID_VIEW_LEFTXY          "Left View ZY"
+    ID_VIEW_BACK            "Back View -XY"
+    ID_VIEW_RIGHT           "Right View -ZY"
+    ID_VIEW_BOTTOMXZ        "Bottom View XZ"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_STRING349           "Profection"
+    IDS_DRAW2               "Draw"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VISABILITY_WORKPLANE "Toggle workplane visability"
+    ID_TOOLS_MEASUREANGLE   "Measure angle between 3 points"
+    ID_LOADSBC_CREATEROTATIONALBODYLOAD "Create rotational body load."
+END
+
+STRINGTABLE
+BEGIN
+    ID_PROPERTYMODIFY_EDITPROPERTYVALUES "Edit Properties Values"
+    ID_PROPERTY_EDITMATERIALVALUES "Edit Material Values"
+    ID_PROPERTY_BEAM33273   "Basic Beam "
+    ID_POST_LISTNODALRESULTS "List Nodal Results Values"
+    ID_CURVEMODIFY_INSERTKNOT "Insert Knot into Knot Vector"
+END
+
+STRINGTABLE
+BEGIN
+    ID_POST_ANIMATE         "Animate Display"
+    ID_POST_ANIMATENEG      "Animate Positive and Negative Toggle"
+    ID_POST_FRAMEDELAY      "Animation Frame Delay"
+    ID_POST_ANIMATIONFRAMES "No of Animation Frames"
+    ID_ELEMENTMODIFIY_BEAMENDARELEASE "Release end A degrees of Freedom"
+    ID_ELEMENTMODIFIY_BEAMENDBRELEASE "Release end B degrees of Freedom"
+    ID_OPTIONS_DEFORMATIONOFFSET "Relative Deformation Offset"
+    ID_POST_LISTRESULTSVECTORS "List Available Reults Vectors"
+    ID_TOOLS_EDITOBJECT     "Edit Object Values Via Data Table Editor"
+END
+
+STRINGTABLE
+BEGIN
+    ID_OPTIONS_VECTORSCALE  "Set Vector Length Scale Factor"
+    ID_POST_SELECTVECTORRESULTS "Select vector results for arrow display."
+    ID_POST_CLEARRESULTSVECTORS "Remove Results Vectors from Display"
+    ID_MESH_ADVANCINGFRONTSURFACEMESHTRI 
+                            "Advancing Front Surface Mesh on Surface"
+END
+
+STRINGTABLE
+BEGIN
+    ID_LINE_MULTILINE       "Multiple Continued Line"
+    ID_CHECKS_2DSECTIONPROPERTIESAIXXIYYETC 
+                            "Calculate 2d section properties of a group of 2d elements in XY plane (A,Ixx,Iyy,Izz)"
+    ID_MESHMANAGEMENT_LISTALLMESHES 
+                            "List all finite element models in the database."
+    ID_MESHMANAGEMENT_SETACTIVEMESH "Set the active mesh to work on."
+    ID_MESHMANAGEMENT_TOGGLEMESHVISABILITY "Toggle mesh visability"
+    ID_MESHMANAGEMENT_CREATENEWMESH "Create a new Finite Element mesh."
+    ID_MESHMANAGEMENT_DELETEMESH "Delete Finite Element mesh."
+    ID_VIEW_HIDEENTITIES    "Hide selected enties."
+    ID_VIEW_SHOWALLHIDDEN   "Shoe all hidden entities."
+    ID_POST_LISTRESPONSEDATA "List Frequency Response Data"
+    ID_MESH_MESHSIZEONSURFACE "Define mesh size on surface for Auto-Mesher"
+    ID_PARTMODIFY_EXTRACT   "Extract Surfaces, Curves , Points from PArt"
+END
+
+STRINGTABLE
+BEGIN
+    ID_CHECKS_TETCIRCUMSPHERE 
+                            "Calculate the circum radius and centre of a TET Element (Internal Check)"
+    ID_FILE_RUNSCRIPTFILE   "Run an M3d Script File"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United Kingdom) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENG)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_DRAW                BITMAP                  "res\\toolbar1.bmp"
+
+IDR_CREATE              BITMAP                  "res\\bmp00001.bmp"
+
+IDR_EDIT                BITMAP                  "res\\bmp00002.bmp"
+
+IDR_FE                  BITMAP                  "res\\bmp00003.bmp"
+
+IDR_GROUP               BITMAP                  "res\\bmp00004.bmp"
+
+IDR_BC                  BITMAP                  "res\\bmp00006.bmp"
+
+IDR_ELTYPE              BITMAP                  "res\\bmp00007.bmp"
+
+IDR_POST                BITMAP                  "res\\bmp00008.bmp"
+
+IDR_PROJ                BITMAP                  "res\\bmp00009.bmp"
+
+IDR_UTILITIES           BITMAP                  "res\\bmp00005.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_DRAW TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_VIEW_DISPLAYALL
+    BUTTON      ID_VIEW_DISPLAYSELECTED
+    BUTTON      ID_VIEW_SHADED
+    BUTTON      ID_VIEW_LINE
+    BUTTON      ID_VIEW_NODESOFF
+    BUTTON      ID_VIEW_ZOOMALL
+    BUTTON      ID_VIEW_RESETVIEW
+    BUTTON      ID_VIEW_LOCATEEYE
+    BUTTON      ID_VIEW_LABELENTITIES
+    BUTTON      ID_VISABILITY_WORKPLANE
+    BUTTON      ID_VISABILITY_CURVESON
+    BUTTON      ID_SURFACES_SURFACESON
+    BUTTON      ID_VISABILITY_ALLVISABLE
+    BUTTON      ID_VISABILITY_COORDSON
+    BUTTON      ID_VISABILITY_NODEON
+    BUTTON      ID_VISABILITY_ELEMENTON
+    BUTTON      ID_VISABILITY_BOUNDARYCONDITIONS
+    BUTTON      ID_VIEW_DISPLAYSHELLTHICKNESS
+    BUTTON      ID_VIEW_DISPLAYELEMENTCOORDSYS
+    BUTTON      ID_VIEW_SURFACEDIRECTIONMARKERS
+END
+
+IDR_CREATE TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_CREATE_POINT
+    BUTTON      ID_LINE_MULTILINE
+    BUTTON      ID_LINE_LINE
+    SEPARATOR
+    BUTTON      ID_LINE_LINEX
+    BUTTON      ID_LINE_LINEY
+    BUTTON      ID_LINE_LINEANGLE
+    BUTTON      ID_CREATE_RECTANGLE
+    BUTTON      ID_CIRCLE_CIRCLECENTREPOINT
+    BUTTON      ID_CIRCLE_CIRCLECENRERADIUS
+    SEPARATOR
+    BUTTON      ID_CIRCLE_CIRCLE3POINTS
+    BUTTON      ID_CIRCLE_ARC3POINT
+    BUTTON      ID_CREATE_CURVE
+    BUTTON      ID_CREATE_FITTEDCURVE
+    BUTTON      ID_SURFACE_LOFT
+    SEPARATOR
+    BUTTON      ID_SURFACE_REVOLVE
+    SEPARATOR
+    BUTTON      ID_SURFACE_EXTRUDE
+    BUTTON      ID_SURFACE_PROJECTCURVE
+    BUTTON      ID_SURFACE_TRIMSURFACE
+    BUTTON      ID_SURFACE_PLANAR
+    BUTTON      ID_SURFACE_INTERNALTRIMLOOP
+    BUTTON      ID_SURFACE_SWEEP
+END
+
+IDR_EDIT TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_TOOLS_EDITOBJECT
+    BUTTON      ID_PROPERTYMODIFY_EDITPROPERTYVALUES
+    BUTTON      ID_PROPERTY_EDITMATERIALVALUES
+    BUTTON      ID_TOOLS_MOVETO
+    BUTTON      ID_TOOLS_COPYTO
+    BUTTON      ID_TOOLS_MOVE
+    BUTTON      ID_TOOLS_COPY
+    BUTTON      ID_TOOLS_COPYROTATE2D
+    BUTTON      ID_TOOLS_REFLECT2D
+    BUTTON      ID_TOOLS_ROTATEABOUT
+    BUTTON      ID_TOOLS_COPYROTATE
+    BUTTON      ID_TOOLS_ALIGN
+    BUTTON      ID_TOOLS_REFLECT
+    BUTTON      ID_TOOLS_SCALE
+    BUTTON      ID_CREATE_OFFSET
+    BUTTON      ID_CREATE_FILLET
+    BUTTON      ID_CREATE_MAKECORNER
+    BUTTON      ID_TOOLS_COLOUR
+    BUTTON      ID_EDIT_INFORMATION
+    BUTTON      ID_TOOLS_MEASURE
+    BUTTON      ID_TOOLS_DELETE
+    BUTTON      ID_TOOLS_MEASUREANGLE
+END
+
+IDR_FE TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_TOOLS_SETCURRENTMESH
+    BUTTON      ID_EXPORT_CURRENTMESHTO
+    SEPARATOR
+    BUTTON      ID_CREATE_NODE
+    BUTTON      ID_CREATE_ELEMENT
+    BUTTON      ID_CREATE_NODEMOVETO
+    BUTTON      ID_CREATE_COPYNODES
+    BUTTON      ID_CREATE_NODESBETWEEN
+    BUTTON      ID_CREATE_NODESONCURVE
+    BUTTON      ID_CREATE_COORDSYS
+    BUTTON      ID_CREATE_COORDSYSLINE
+    BUTTON      ID_MESH_SWEEPELEMENTS
+    BUTTON      ID_MESH_MAPPEDSURFACEMESH
+    BUTTON      ID_MESH_MAPPEDTRIMESH
+    BUTTON      ID_MESHQND
+    BUTTON      ID_MESH_QUADTOTRI
+    BUTTON      ID_MESH_TETFROMSHELLBOUNDARY
+    BUTTON      ID_MESH_SHELLCOATSOLIDELEMENTS
+    BUTTON      ID_MESH_MESHSIZEONSURFACE
+    BUTTON      ID_MESH_ADVANCINGFRONTSURFACEMESHTRI
+END
+
+IDR_GROUP TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_GROUP_CREATEGROUP
+    BUTTON      ID_GROUP_LISTGROUPS
+    BUTTON      ID_GROUP_SETCURRENT
+    BUTTON      ID_VIEW_DISPLAYGROUP
+    BUTTON      ID_GROUP_PREVIOUSGRPUP
+    BUTTON      ID_GROUP_NEXTGROUP
+    BUTTON      ID_GROUP_ADDTOGROUP
+    BUTTON      ID_GROUP_REMOVEFROMGROUP
+    BUTTON      ID_GROUP_ADDGROUP
+    BUTTON      ID_GROUP_REMOVEGROUP
+    BUTTON      ID_GROUP_ELEMENTSBYPID
+    BUTTON      ID_GROUP_ELEMENTSBYMID
+    BUTTON      ID_GROUP_ELEMENTSBYCOLOUR
+    BUTTON      ID_GROUP_ELEMENTSBYTYPE
+    BUTTON      ID_GROUP_NODEBYCOLOUR
+    BUTTON      ID_GROUP_NODEBYDEFINITIONSYSTEM
+    BUTTON      ID_GROUP_NODEBUOUTPUTSYS
+    BUTTON      ID_GROUP_DELETEALLGROUPS
+END
+
+IDR_BC TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_ANALYSIS_LOADSETS
+    BUTTON      ID_LOADSBC_BCSETS
+    BUTTON      ID_LOADSBC_TEMPERATURESETS
+    BUTTON      ID_SOLVER_CREATERESTRAINT
+    BUTTON      ID_SOLVER_CREATEFORCE
+    BUTTON      ID_ANALYSIS_CREATEMOMENT
+    BUTTON      ID_ANALYSIS_CREATEPRESSURE
+    BUTTON      ID_LOADSBC_CREATEACCELERATIONBODYLOAD
+    BUTTON      ID_LOADSBC_CREATEROTATIONALBODYLOAD
+    BUTTON      ID_LOADSBC_CREATESTRUCTURALTEMP
+END
+
+IDR_ELTYPE TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_ELEMENTTYPE_ROD
+    BUTTON      ID_ELEMENTTYPE_BEAM
+    BUTTON      ID_ELEMENTTYPE_TRI
+    BUTTON      ID_ELEMENTTYPE_QUAD
+    BUTTON      ID_ELEMENTTYPE_TET
+    BUTTON      ID_ELEMENTTYPE_WEDGE
+    BUTTON      ID_ELEMENTTYPE_BRICK
+    BUTTON      ID_ELEMENTTYPE_TRANSLATIONALSPRING
+    BUTTON      ID_ELEMENTTYPE_ROTATIONALSPRING
+    BUTTON      ID_ELEMENTTYPE_MASS
+    BUTTON      ID_ELEMENTTYPE_RIGID
+END
+
+IDR_POST TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_POST_SELECTDEFORMEDRESULTS
+    BUTTON      ID_POST_SELECTRESULTS
+    BUTTON      ID_POST_DEFORMEDDISPLAY
+    BUTTON      ID_POST_CONTOURRAWDATA
+    BUTTON      ID_POST_SELECTVECTORRESULTS
+    BUTTON      ID_OPTIONS_VECTORSCALE
+    BUTTON      ID_POST_CLEARRESULTSVECTORS
+    BUTTON      ID_POST_ANIMATE
+    BUTTON      ID_POST_ANIMATIONFRAMES
+    BUTTON      ID_POST_FRAMEDELAY
+    BUTTON      ID_POST_ANIMATENEG
+    BUTTON      ID_OPTIONS_DEFORMATIONSCALE
+    BUTTON      ID_OPTIONS_REVERSECOLOURBAR
+    BUTTON      ID_OPTIONS_SETCOLOURBAR
+    BUTTON      ID_POST_TOGRESULTSLABELS
+    BUTTON      ID_POST_LISTNODALRESULTS
+    BUTTON      ID_POST_LISTELEMENTRESULT
+    BUTTON      ID_POST_DELETEALLRESULTSSETS
+END
+
+IDR_PROJ TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_PROJWP
+    BUTTON      ID_PROJ_BOTTOMXZ
+    BUTTON      ID_PROJ_FRONT
+    BUTTON      ID_PROJ_TOP
+    BUTTON      ID_PROJ_LEFTXY
+    BUTTON      ID_PROJ_BACK
+    BUTTON      ID_PROJ_RIGHT
+    BUTTON      ID_PROJSO1
+    BUTTON      ID_PROPISO2
+END
+
+IDR_UTILITIES TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_NODEMODIFY_CHANGEXORDINATE
+    BUTTON      ID_NODEMODIFY_CHANGEYORDINATE
+    BUTTON      ID_NODEMODIFY_CHANGEZORDINATE
+    BUTTON      ID_CHECKS_MERGENODES
+    BUTTON      ID_CHECKS_FREEEDGEDISPLAY
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DBar DIALOGEX 0, 0, 317, 93
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_EDIT1,168,7,142,40,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | WS_VSCROLL
+    EDITTEXT        IDC_EDIT2,7,7,155,40,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,14,58,288,20,ES_AUTOHSCROLL
+END
+
+IDD_DIALOG2 DIALOGEX 0, 0, 274, 171
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Filter"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,19,143,38,14
+    LISTBOX         IDC_LIST1,18,19,119,112,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LISTBOX         IDC_LIST2,140,19,121,112,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Non Pickable Items",IDC_STATIC,18,7,96,12
+    LTEXT           "Pickable Items",IDC_STATIC,140,7,79,11
+    PUSHBUTTON      "Clear All",IDC_CLEAR_FIL,59,143,55,14
+    PUSHBUTTON      "All Selectable",IDC_BUTTON1,115,143,55,14
+    LTEXT           "Double click an item to add or remove from list",IDC_STATIC,20,132,194,9
+    PUSHBUTTON      "Pick Only",IDC_BUTTON2,173,143,42,14
+END
+
+IDD_GROUPS_LIST DIALOGEX 0, 0, 182, 185
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Groups"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Set As Active",IDOK,111,7,63,14
+    PUSHBUTTON      "Cancel",IDCANCEL,112,164,63,14
+    LISTBOX         IDC_GROUP_SEL,7,7,105,171,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Set and Display",IDC_GROUPDSPCURRENT,113,21,62,14,0,WS_EX_RTLREADING
+    PUSHBUTTON      "Add to Active",IDC_GROUPADDGP,112,52,63,14
+    PUSHBUTTON      "Rem from Active",IDC_GROUPREMGRP,112,65,63,13
+    PUSHBUTTON      "Display All",IDC_GROUPDSPALL,113,35,62,14,0,WS_EX_RTLREADING
+    PUSHBUTTON      "Delete Group",IDC_GROUPDELS,112,81,63,14
+END
+
+IDD_RELTO DIALOGEX 0, 0, 179, 200
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Pick Item Type"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LISTBOX         IDC_LIST_RELTO,7,7,163,177,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Double click an item to return.",IDC_STATIC,7,186,133,7
+END
+
+IDD_RES_SEL DIALOGEX 0, 0, 386, 185
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Select Results"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,206,164,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,329,164,50,14
+    LISTBOX         IDC_LIST_RES,14,35,141,115,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LISTBOX         IDC_LIST_VAL,161,35,159,115,LBS_NOINTEGRALHEIGHT | LBS_WANTKEYBOARDINPUT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "",IDC_LCTEXT,15,9,256,8
+    LTEXT           "",IDC_SUBTITLE,16,20,289,9
+    LISTBOX         IDC_LIST_VAL2,324,35,48,115,LBS_NOINTEGRALHEIGHT | LBS_WANTKEYBOARDINPUT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_COLOURPICK DIALOGEX 0, 0, 414, 216
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Colour"
+FONT 10, "Microsoft Sans Serif", 400, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,215,202,23,7
+    PUSHBUTTON      "Cancel",IDCANCEL,191,202,25,7
+    LTEXT           "",IDC_STATIC_COL,7,201,117,8
+END
+
+IDD_SETS DIALOGEX 0, 0, 259, 144
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,199,122,50,14
+    PUSHBUTTON      "Create",IDCREATE,199,7,50,14
+    LTEXT           "Set Title",IDC_SETLABEL,39,0,92,8
+    LISTBOX         IDC_LIST1,9,23,183,94,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Set ID",IDC_SETIDLAB,9,0,29,9
+    EDITTEXT        IDC_SETID,9,8,24,14,ES_AUTOHSCROLL | ES_NUMBER
+    PUSHBUTTON      "Delete",IDCDELSET,199,21,50,14
+    PUSHBUTTON      "Set As Active",IDCSETCUR,199,35,50,14
+    LTEXT           "Static",IDC_CURSET,9,127,124,11
+    LTEXT           "Current Set",IDC_CURSET2,9,118,124,11
+    PUSHBUTTON      "List",IDCSETLIST,199,63,50,14
+    PUSHBUTTON      "None Active",IDC_NONEACT,199,49,50,14
+    EDITTEXT        IDC_TITLE,34,8,157,14,ES_AUTOHSCROLL,WS_EX_CLIENTEDGE
+END
+
+IDD_DIA_STEP DIALOGEX 0, 0, 503, 185
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,445,145,50,14
+    COMBOBOX        IDC_BC_DD,123,31,89,121,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_TC_DD,212,31,89,122,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_STPTIT_TB,336,31,105,12,ES_AUTOHSCROLL
+    LTEXT           "Load Set",IDC_STATIC,33,21,30,8
+    LTEXT           "Boundary Set",IDC_STATIC,122,21,44,8,SS_ENDELLIPSIS
+    LTEXT           "Temperature Set",IDC_STATIC,213,21,57,8,SS_ENDELLIPSIS
+    LTEXT           "Step Title",IDC_STATIC,337,21,32,8,SS_ENDELLIPSIS
+    LISTBOX         IDC_STEP_LBX,33,46,408,113,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_LC_DD,33,31,89,108,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_RS_DD,302,31,33,122,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Restart",IDC_STATIC,301,21,24,8,SS_ENDELLIPSIS
+    LTEXT           "Static",IDC_CURSOL_TXT,33,9,160,12
+    PUSHBUTTON      "Create",IDC_CREATE,445,46,50,14
+    PUSHBUTTON      "Activate",IDC_ACT_STEP,445,60,50,14
+    LTEXT           "Active Step:-",IDC_STATIC_STEPLAB1,34,162,132,8
+    LTEXT           "Active Step:-",IDC_STATIC_STEP_ACT,34,170,462,8
+    PUSHBUTTON      "Delete",IDC_STEP_DEL,445,73,50,14
+END
+
+IDD_SOL DIALOGEX 0, 0, 383, 166
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,326,127,50,14
+    LISTBOX         IDC_SOL_LST,7,36,308,106,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_TITLE_TXT,7,21,157,12,ES_AUTOHSCROLL
+    COMBOBOX        IDC_TYPE_CBO,166,21,70,74,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_TOL_TXT,238,21,76,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Solution Title",IDC_STATIC,7,10,157,11
+    LTEXT           "Solution Type",IDC_STATIC,170,10,48,11
+    LTEXT           "Tolerence",IDC_STATIC,235,10,38,11
+    DEFPUSHBUTTON   "Create",ID_CR,326,39,50,14
+    DEFPUSHBUTTON   "Activate",ID_ACT,326,53,50,14
+    DEFPUSHBUTTON   "Delete",ID_DEL,326,67,50,14
+    LTEXT           "Active Solution:-",IDC_STATIC_SOL_LAB,9,143,55,8
+    LTEXT           "Active Solution:-",IDC_STATIC_SOL_ACT,9,150,367,8
+END
+
+IDD_ENTEDITOR DIALOGEX 0, 0, 299, 244
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Apply Changes",IDOK,175,223,53,14
+    PUSHBUTTON      "Cancel",IDCANCEL,265,223,27,14
+    EDITTEXT        IDC_EDIT_FLOAT,7,166,51,12,ES_AUTOHSCROLL | NOT WS_VISIBLE
+    EDITTEXT        IDC_PTITLE,40,13,253,12,ES_AUTOHSCROLL
+    LTEXT           "Title:",IDC_STATIC,17,15,23,11
+    LTEXT           "ID:",IDC_PID,17,25,23,11
+    EDITTEXT        IDC_ENTID,41,25,32,12,ES_AUTOHSCROLL | WS_DISABLED
+    PUSHBUTTON      "List",IDC_ENTLIST,7,223,30,14
+    CONTROL         "",IDC_LIST1,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,41,285,171
+END
+
+IDD_PCOMPEDIT DIALOGEX 0, 0, 317, 184
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,206,163,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,260,163,50,14
+    PUSHBUTTON      "Button1",IDC_BUTTON1,233,138,50,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DBar, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 310
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 86
+    END
+
+    IDD_DIALOG2, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 267
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 164
+    END
+
+    IDD_GROUPS_LIST, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 175
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 178
+    END
+
+    IDD_RELTO, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 172
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 193
+    END
+
+    IDD_RES_SEL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 379
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 178
+    END
+
+    IDD_COLOURPICK, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 408
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 209
+    END
+
+    IDD_SETS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 253
+        VERTGUIDE, 191
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 139
+    END
+
+    IDD_DIA_STEP, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 496
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 178
+    END
+
+    IDD_SOL, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 376
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 159
+    END
+
+    IDD_ENTEDITOR, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 292
+        VERTGUIDE, 96
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 237
+    END
+
+    IDD_PCOMPEDIT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 310
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 177
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_ENTEDITOR AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_PCOMPEDIT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_RES_SEL AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_COLOURPICK AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#include ""res\\M3da.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#include ""afxprint.rc""       // printing/print preview resources\r\n"
+    "#if !defined(_AFXDLL)\r\n"
+    "#include ""afxribbon.rc""              // MFC ribbon and control bar resources\r\n"
+    "#endif\r\n"
+    "#endif\r\n"
+    "1 TYPELIB ""M3da.tlb""\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    ID_CREATE_NODESBETWEEN  "Between Nodes"
+    ID_CREATE_NODESONCURVE  "Node On Curve"
+    ID_TOOLS_MOVE           "Move"
+    ID_TOOLS_COPY           "Copy"
+    ID_PointCR              "Create Point"
+END
+
+STRINGTABLE
+BEGIN
+    ID_GROUP_LISTGROUPS     "List Groups"
+    ID_VIEW_NODESOFF        "Nodes Off"
+    ID_CREATE_POINT         "Create Points"
+    ID_LINE_LINE            "Create Line"
+    ID_LINE_LINEX           "Line in X"
+    ID_LINE_LINEY           "Line in Y"
+    ID_CREATE_CIRCLE        "Create Circle"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_DISPLAYALL      "Diaplay All"
+    ID_EDIT_INFORMATION     "Infomation"
+    ID_VIEW_DISPLAYSELECTED "Display Selected"
+    ID_VIEW_DISPLAYGROUP    "Display Group"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_SHADED          "Draw Shaded"
+    ID_VIEW_LINE            "Draw Wireframe"
+    ID_VIEW_LOCATEEYE       "Set Eye"
+    ID_VIEW_RESETVIEW       "Reset Eye"
+    ID_GROUP_DISPLAYGROUP   "Display Current Group"
+    ID_GROUP_ADDTOGROUP     "Add Selected Items To Group"
+    ID_GROUP_REMOVEFROMGROUP "Remove Selected Items From Group"
+    ID_GROUP_ADDGROUP       "Add a Group"
+    ID_GROUP_REMOVEGROUP    "Remove a Group"
+    ID_GROUP_SETCURRENT     "Set Active Group"
+END
+
+STRINGTABLE
+BEGIN
+    ID_CREATE_CURVE         "Create Curve"
+    ID_SURFACE_LOFT         "Loft Surface"
+    ID_SURFACE_PLANAR       "Surface by Boundary Curves"
+    ID_SURFACE_REVOLVE      "Revolve Surface About Y Axis"
+    ID_SURFACE_EXTRUDE      "Surface Extrude"
+    ID_CREATE_NODE          "Create Nodes"
+    ID_CREATE_ELEMENT       "Create Elements"
+    ID_ELEMENTTYPE_TRI      "Set defualt element type to TRI."
+    ID_ELEMENTTYPE_QUAD     "Set defualt element type to QUAD."
+    ID_ELEMENTTYPE_BRICK    "Set defualt element type to BRICK."
+    ID_ELEMENTTYPE_WEDGE    "Set defualt element type to WEDGE."
+    ID_ELEMENTTYPE_TET      "Set defualt element type to TET."
+    ID_CREATE_COPYNODES     "Copy Nodes"
+    ID_CREATE_NODEMOVETO    "Node Move To"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TOOLS_COLOUR         "Change Colour"
+    ID_TOOLS_SETCURRENTMESH "Set Current Mesh"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EXPORT_CURRENTMESHTO "Export Current Mesh"
+    ID_GROUP_CREATEGROUP    "Create New Group"
+    ID_TOOLS_DELETE         "Delete"
+    ID_CREATE_FITTEDCURVE   "Create Fitted Curve"
+END
+
+STRINGTABLE
+BEGIN
+    ID_CREATE_OFFSET        "Offset"
+    ID_CREATE_FILLET        "Fillet"
+    ID_LINE_LINEANGLE       "Line at Angle"
+    ID_CREATE_MAKECORNER    "Make Corner"
+    ID_BUTTON32890          "Make Corner"
+    ID_CREATE_RECTANGLE     "Create Rectangle"
+    ID_BUTTON32893          "Create Rectangle"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SURFACE_PROJECTCURVE "Project Curve onto Surface"
+    ID_SURFACE_TRIMSURFACE  "Surface external trim loop"
+    ID_SURFACE_INTERNALTRIMLOOP "Surface Internal Trim Loop"
+    ID_CREATE_COORDSYS      "Create Coordinate System"
+    ID_GROUP_ELEMENTSBYPID  "Add Elements by PID"
+    ID_BUTTON32909          "Delete AllGroups"
+END
+
+STRINGTABLE
+BEGIN
+    ID_CREATE_COORDSYSLINE  "Create a Line of Coord Systems"
+    ID_TOOLS_MEASURE        "Linear Measure"
+    ID_BUTTON32921          "Measure Linear Distance"
+END
+
+STRINGTABLE
+BEGIN
+    MappedMesh              "Mapped Mesh"
+    ID_MESH_MAPPEDSURFACEMESH "Mapped Quad Mesh on Surface"
+    ID_MESH_MAPPEDTRIMESH   "Mapped Tri Mesh on Surface"
+    ID_MESH_SWEEPELEMENTS   "Sweep Elements"
+    ID_VISABILITY_NODEON    "Toggle Node Visability"
+    ID_VISABILITY_ELEMENTON "Toggle Element Visability"
+    ID_VISABILITY_CURVESON  "Display Curves"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VISABILITY_ALLVISABLE "All Visable"
+    ID_VIEW_LABELENTITIES   "Label Selected Entities"
+    ID_QWANTA_IMPORTCATALOGUE "Import Parts Catalogue"
+    ID_QWANTA_IMPORTSECTIONTABLE "Import Sections Table"
+    ID_QWANTA_IMPORTWAVEGUIDE "Import Waveguide Report"
+    ID_QWANTA_1D            "Toggle 1d 2d Meshing"
+    ID_QWANTA_MESHDENSITYTOGGLE "Toggle Mesh Density Settings"
+    ID_QWANTA_GENERATEMESH  "Generate Mesh on Waveguides"
+    ID_QWANTA_DISPLAYCATALOGUE "Display Catalogue"
+    ID_CATALOGUEDISPLAY_DISPLAYCATALUGUE "Display Catalogue"
+    ID_CATALOGUEDISPLAY_DISPLAYNEXT "Display Next in Catalogue"
+END
+
+STRINGTABLE
+BEGIN
+    ID_CATALOGUEDISPLAY_DISPLAYPREVIOUS "Display Previous in Catalogue"
+    ID_QWANTA_BUILDAMDEXPORT "Build and Export Mesh"
+    ID_TOOLS_ALIGN          "Align Objects"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TOOLS_ROTATEABOUT    "Rotate About Vector"
+    ID_BUTTON32980          "Copy and Rotate"
+    ID_TOOLS_SCALE          "Scale Objects"
+    ID_TOOLS_REFLECT        "Reflect Objects"
+    ID_ELEMENTTYPE_RIGID    "Set defualt element type to RIGID SPIDER."
+END
+
+STRINGTABLE
+BEGIN
+    ID_CHECKS_MERGENODES    "Merge Coincident Nodes"
+    ID_SURFACE_SWEEP        "Sweep curves into  surfaces"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SURFACES_SURFACESON  "Display Surfaces"
+    ID_CIRCLE_CIRCLECENRERADIUS "Circle centre and radius"
+    ID_CIRCLE_CIRCLE3POINTS "Circle throu 3 points"
+    ID_CIRCLE_ARC3POINT     "Arc throu 3 points"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_DISPLAYELEMENTCOORDSYS "Display Element Coord Sys"
+    ID_VISABILITY_BOUNDARYCONDITIONS "Toggle Boundary Condition Visability"
+    ID_POST_LISTELEMENTRESULT "List selected element results."
+    ID_MESHQND              "Quads Between Nodes"
+END
+
+STRINGTABLE
+BEGIN
+    ID_CIRCLE_CIRCLECENTREPOINT "Circle centre and point on radus"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TOOLS_COPYTO         "Copy objects by selecting locations"
+    ID_TOOLS_MOVETO         "Move To"
+    ID_BUTTON33130          "Move objects by selecting locations"
+    ID_MESH_TETFROMSHELLBOUNDARY "TET from Shell Boundary"
+END
+
+STRINGTABLE
+BEGIN
+    ID_BUTTON33194          "Set defualt element type to TRANSLATIONAL SPRING."
+    ID_BUTTON33195          "Set defualt element type to ROTATIONAL SPRING."
+    ID_ELEMENTTYPE_ROTSPG   "Set defualt element type to ROTATIONAL SPRING."
+    ID_ELEMENTTYPE_TSPRING  "Set defualt element type to TRANSLATIONAL SPRING."
+END
+
+STRINGTABLE
+BEGIN
+    ID_POST_SELECTRESULTS   "Select Contour Results"
+    ID_POST_CONTOURRAWDATA  "Display Contour Raw Results"
+    ID_POST_TOGRESULTSLABELS "Toggle Results Label Display"
+    ID_POST_DEFORMEDDISPLAY "Display Deformed Results"
+    ID_POST_SELECTDEFORMEDRESULTS "Select Deformed Results"
+    ID_OPTIONS_DEFORMATIONSCALE "Deformation Scale"
+    ID_ELEMENTTYPE_ROD      "Set defualt element type to ROD."
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_DISPLAYSHELLTHICKNESS "Display Shell Thickness"
+    ID_ELEMENTTYPE_BEAM     "Set defualt element type to BEAM."
+END
+
+STRINGTABLE
+BEGIN
+    ID_INDC_LC              "LC               "
+    ID_INDC_BC              "BC              "
+    ID_INDICATOR_TS         "TS               "
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_WP              "View on Workplane"
+END
+
+STRINGTABLE
+BEGIN
+    ID_BUTTON33233          "View on WP"
+    ID_WP_VIEW              "View On WP"
+    ID_BUTTON33236          "WP VIEW"
+    ID_BUTTON33238          "View on WP"
+    ID_PROJ_FRONT           "Front View"
+    ID_PROJ_TOP             "Top View"
+    ID_PROJ_BOTTOMXZ        "Bottom View"
+    ID_PROJ_LEFTXY          "View Left"
+    ID_PROJ_BACK            "View Back"
+    ID_PROJ_RIGHT           "View Right"
+    ID_PROJSO1              "Isomrtric"
+END
+
+STRINGTABLE
+BEGIN
+    ID_VIEW_ONWP            "AAAAA"
+END
+
+STRINGTABLE
+BEGIN
+    ID_PROPISO2             "View ISO2"
+    ID_ELEMENTTYPE_MASS     "Lumped mass element type"
+    ID_VISABILITY_WORKPLANE "Display Work Plain"
+    ID_LOADSBC_CREATEROTATIONALBODYLOAD 
+                            "Create a rotational acceleration load"
+    ID_NODEMODIFY_CHANGEXORDINATE "Change node X ordinate"
+    ID_NODEMODIFY_CHANGEZORDINATE "Change node Z ordinate"
+END
+
+STRINGTABLE
+BEGIN
+    ID_NODEMODIFY_CHANGEYORDINATE "Change node Y ordinate"
+    ID_BUTTON33265          "Modify Node X Ordinate"
+    ID_BUTTON33266          "Change node Y ordinate"
+    ID_PROPERTYMODIFY_EDITPROPERTYVALUES "Edit Property Values"
+    ID_PROPERTY_EDITMATERIALVALUES "Edit Material Values"
+    ID_VIEW_SURFACEDIRECTIONMARKERS "Surface Direction Markers On/Off"
+    ID_POST_LISTNODALRESULTS "List Nodal Results Values"
+END
+
+STRINGTABLE
+BEGIN
+    ID_MESH_SHELLCOATSOLIDELEMENTS "Shell Coat Solid Elements"
+    ID_CHECKS_FREEEDGEDISPLAY "Element Free Edges"
+    ID_MESH_QUADTOTRI       "Split Quad's into Tri elements"
+END
+
+STRINGTABLE
+BEGIN
+    ID_OPTIONS_SETCOLOURBAR "Set Colour Bar Scale"
+    ID_VISABILITY_COORDSON  "Display Coordinate Systems"
+END
+
+STRINGTABLE
+BEGIN
+    ID_POST_ANIMATE         "Animate Results"
+    ID_POST_ANIMATENEG      "Animate Positve and Negative Toggle"
+    ID_POST_FRAMEDELAY      "Animation Frame Delay"
+    ID_POST_ANIMATIONFRAMES "No of Animation Frames"
+    ID_TOOLS_EDITOBJECT     "Edit Object Vakues"
+END
+
+STRINGTABLE
+BEGIN
+    ID_OPTIONS_VECTORSCALE  "Vector Display Scale"
+    ID_POST_SELECTVECTORRESULTS "Select vector results for arrow display."
+    ID_POST_CLEARRESULTSVECTORS "Remove Results Vectors from Display"
+    ID_BUTTON33305          "Set Vector Length Scale Factor"
+    ID_BUTTON33306          "No of Animation Frames"
+    ID_BUTTON33307          "List Nodal Results Values"
+    ID_MESH_ADVANCINGFRONTSURFACEMESHTRI "Advancing Front Surface Mesh TRI"
+END
+
+STRINGTABLE
+BEGIN
+    ID_LINE_MULTILINE       "Multiple Continued Line"
+    ID_MESH_MESHSIZEONSURFACE "Define mesh size on surface for Auto-Mesher"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_CREATE2             "Create"
+END
+
+#endif    // English (United Kingdom) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#include "res\M3da.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#include "afxprint.rc"       // printing/print preview resources
+#if !defined(_AFXDLL)
+#include "afxribbon.rc"              // MFC ribbon and control bar resources
+#endif
+#endif
+1 TYPELIB "M3da.tlb"
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

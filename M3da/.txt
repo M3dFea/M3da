@@ -1,0 +1,14 @@
+NO of Nodes 4
+Node  1 DOF 1
+Node  1 DOF 2
+Node  1 DOF 3
+Node  2 DOF 4
+Node  2 DOF 5
+Node  2 DOF 6
+Node  3 DOF 7
+Node  3 DOF 8
+Node  3 DOF 9
+Node  4 DOF 10
+Node  4 DOF 11
+Node  4 DOF 12
+iDof 13

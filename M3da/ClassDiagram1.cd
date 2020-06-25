@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="DBase">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
+    <NestedTypes>
+      <Enum Name="DBase::__unnamed_0001_1" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>DBase.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>wLmcNVjxwfdcz5Ot+0X9uWVqar5fWY1+PL1un3ULhKs=</HashCode>
+      <FileName>DBase.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Microsoft Sans Serif" Size="8.4" />
+</ClassDiagram>
