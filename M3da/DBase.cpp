@@ -7654,7 +7654,7 @@ for (i=0;i<iNoOff+1;i++)
       NdNew->iLabel=pCurrentMesh->iNodeLab;
       pCurrentMesh->iNodeLab++;
       pCurrentMesh->pNodes[pCurrentMesh->iNdNo]=NdNew;
-	    NDF1->Add(NdNew);
+	  NDF1->Add(NdNew);
       pCurrentMesh->iNdNo++;
       MoveObj(NdNew,vA);
     }
@@ -7669,7 +7669,7 @@ for (i=0;i<iNoOff+1;i++)
       NdNew->iLabel=pCurrentMesh->iNodeLab;
       pCurrentMesh->iNodeLab++;
       pCurrentMesh->pNodes[pCurrentMesh->iNdNo]=NdNew;
-	    NDF2->Objs[j] = NdNew;
+	  NDF2->Objs[j] = NdNew;
       pCurrentMesh->iNdNo++;
       MoveObj(NdNew,vA);
     }
@@ -7716,9 +7716,7 @@ for (i=0;i<iNoOff+1;i++)
 	  NDF1->Objs[j] = NDF2->Objs[j];
     }
   } 
-  
 }
-
 InvalidateOGL();
 ReDraw();
 }
