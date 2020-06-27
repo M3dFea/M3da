@@ -2485,9 +2485,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 	int iTT = 0;
 	int ii = 0;
 	int isc = 0;
-	int aa;
 	int itry;
-	int jj;
 	double dC;
 	double dTgt = GetTargetElSize(fEls);
 	double dMaxAng;
@@ -2693,7 +2691,6 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 
 double DBase::GetTargetElSize(cLinkedList* fEls)
 {
-int i;
 double drc=0;
 E_Object3* pE;
 G_Object* pNext;
@@ -3665,7 +3662,6 @@ E_Object3* pFF;
 //Dsp_RemGP(eTET);
 // need to remove any free nodes left
 int i;
-int iE;
 E_Object3* pE;
 BOOL bRem;
 for (i=0;i<4;i++)
@@ -4174,7 +4170,6 @@ void DBase::GetCandiatesNode(E_Object3* pFace, ObjList* pFrom, C3dVector vC, dou
 
 void DBase::GetCandiates(cLinkedList* pFrom,C3dVector vC, double dCD, ObjList* pRes)
 {
-  int i;
   C3dVector vT;
   pRes->Clear();
   double dDist;
@@ -6011,7 +6006,6 @@ C3dVector DBase::PickPointToGlobal2(CPoint Pt)
 	C3dVector V;
 	C3dVector R;
 	C3dVector M;
-	char s1[80];
 	VPT.x = Pt.x; VPT.y = Pt.y; VPT.z = 0;
 	P0= pWPlane->Pt_Point[0];
 
@@ -6030,9 +6024,6 @@ C3dVector DBase::PickPointToGlobal2(CPoint Pt)
 	LDY = VDY.Mag();
 	VDX.Normalize();
 	VDY.Normalize();
-
-	int i;
-
 	DOTX = VDO.Dot(VDX);
 	DOTY = VDO.Dot(VDY);
 	FDX = DOTX / LDX * LWP + P0.x;
@@ -7608,10 +7599,9 @@ int k;
 
 Pt_Object* iNlabs[200]; 
 C3dVector vA;
-
-Pt_Object* NdNew;
-E_Object* El;
-E_Object* ENew;
+Pt_Object* NdNew = NULL;
+E_Object* El = NULL;
+E_Object* ENew = NULL;
 ObjList* ELF=new ObjList;
 ObjList* NDF=new ObjList;;
 ObjList* NDF1=new ObjList;;
@@ -7773,9 +7763,7 @@ void DBase::CalcAngles(cLinkedList* NDF)
 	pF = (c2dFront*) pF->next;
 	C3dVector vA, vB, vC;
 	C3dVector v1, v2;
-	Pt_Object* pN;
 	double dAng;
-	double d;
 	while ((pF != NULL) && (pF->next !=NULL))
 	{
 		pFB = (c2dFront*)pF->before;
@@ -8043,14 +8031,9 @@ void DBase::CreatTestPCOMPS()
 void DBase::ElSweepB(ObjList* Items, int iDir)
 {
 	int i;
-	int j;
-	int k;
 	c2dFront* oF;
-	Pt_Object* iNlabs[200];
 	C3dVector vA;
-	Pt_Object* NdNew;
 	E_Object* El;
-	E_Object* ENew;
 	ObjList* ELF = new ObjList;
 	cLinkedList* NDF = new cLinkedList();
 	NDF->DeleteAll();
@@ -8074,7 +8057,6 @@ void DBase::ElSweepB(ObjList* Items, int iDir)
 		}
 		for (i = 0; i < ELF->iNo; i++)		//For all selected items
 		{
-					Pt_Object* pN;
 					E_Object2B* pEB = (E_Object2B*) ELF->Objs[i];
 					if (bFirst)					// if its the first element take node 0
 					{  
@@ -11684,7 +11666,6 @@ BOOL DBase::CurvesToSurface508(int iS, IgesP* PDat, ObjList* Curves, ObjList* Pa
 	BOOL isClosedU = pSurf->isClosedinU();
 	BOOL isClosedV = pSurf->isClosedinV();
 	NCurve* pSC;
-	double dStp;
 	C3dVector pt;
 	NCurveOnSurf* pS = NULL;
 	BOOL bIsCv = FALSE;
@@ -12932,7 +12913,6 @@ void DBase::KnotInsertion(NCurve* pC,C3dVector vPt)
   C3dVector pM;
   pM.Set(0.0, 1.0, 0.0);
   double p;  //order
-  double s;  //multiplicity
   int r;
   double dU;
   NCurve* pNewC=NULL;
@@ -19182,7 +19162,7 @@ BOOL DBase::isNodeInCircle2d(ObjList* pN, int iExclude, double dRad, C2dVector C
 void DBase::MeshSurfSize(ObjList* pSurfs, double dS)
 {
 	int iCO;
-	int i, j, k;
+	int i, j;
 	int iInc;
 	double dL;
 	NSurf* pS;
@@ -19269,7 +19249,6 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 	bNinT = NodeInTri(t1, t2, t3, vTPt);
 	C3dVector v;
 	double dMinDst;
-	G_Object* pNext;
 	int iNodeLab = 1;
 	int iSegLab = 1;
 	int i;
@@ -19296,7 +19275,6 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 	C3dVector p3d;
 	C3dVector dSSpc1;
 	C3dVector dSSpc2;
-	CvPt_Object* pRealPt;
 	double dMinR;
 	int iID;
 	c2dParPt* pbFNd;
