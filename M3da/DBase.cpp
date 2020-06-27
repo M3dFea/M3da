@@ -7631,7 +7631,7 @@ if (Items->iNo>0)
     if (Items->Objs[i]->iObjType==3) 
     {
 	    El = (E_Object*) Items->Objs[i];
-        if ((El->iType == 91) || (El->iType == 94))
+        if ((El->iType == 91) || (El->iType == 94) || (El->iType == 21))
         {
 		  ELF->Add(El);
           for (j=0;j<El->iNoNodes;j++)
@@ -7678,15 +7678,14 @@ for (i=0;i<iNoOff+1;i++)
       El = (E_Object*) ELF->Objs[k];
       if (El->iType==94)
 	  {
-      iNlabs[0]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
+        iNlabs[0]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
 	    iNlabs[1]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
 	    iNlabs[2]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(2))];
 	    iNlabs[3]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(3))];
-      iNlabs[4]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
+        iNlabs[4]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
 	    iNlabs[5]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
 	    iNlabs[6]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(2))];
 	    iNlabs[7]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(3))];
-
 		ENew=pCurrentMesh->AddEl(iNlabs,pCurrentMesh->iElementLab,9,115,-1,1,8,0,0,0,0,0,0);
 		pCurrentMesh->iElementLab++;
 	  }
@@ -7698,9 +7697,17 @@ for (i=0;i<iNoOff+1;i++)
         iNlabs[3]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
 	    iNlabs[4]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
 	    iNlabs[5]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(2))];
-
 		ENew=pCurrentMesh->AddEl(iNlabs,pCurrentMesh->iElementLab,9,112,-1,1,6,0,0,0,0,0,0);
 		pCurrentMesh->iElementLab++;
+	  }
+	  else if (El->iType == 21)
+	  {
+		  iNlabs[0] = (Pt_Object*)NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
+		  iNlabs[1] = (Pt_Object*)NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
+		  iNlabs[2] = (Pt_Object*)NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
+		  iNlabs[3] = (Pt_Object*)NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
+		  ENew = pCurrentMesh->AddEl(iNlabs, pCurrentMesh->iElementLab, 74, 94, -1, 1, 4, 0, 0, 0, 0, -1, 0);
+		  pCurrentMesh->iElementLab++;
 	  }
 
 	}

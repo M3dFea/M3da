@@ -11835,7 +11835,7 @@ if (iStat == 2)
   cDBase->S_Save(cDBase->OTemp);
   cDBase->S_Count=0;
   cDBase->FILTER.SetAll();
-  outtext2("/TRANSLATION:");
+  outtext2("/ENTER TRANSLATION:");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zTVEC_Mnu();
