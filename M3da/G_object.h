@@ -1545,6 +1545,7 @@ public:
   CString sTitle;
   cLinkedList();
   ~cLinkedList();
+  void Clear();
   void DeleteAll();
   void Add(G_Object* inItem);
   void AddEx(G_Object* inItem);
@@ -1986,7 +1987,8 @@ public:
    //Nurbs curve to superceed ContolPoly
 	//***************310320*****************************
 	// Added for Auto Meshing
-	int iInc;            //Curve mesh increment size on edge  
+   double dLSize;       //Line Mesh Size 
+   int iInc;            //Curve mesh increment size on edge  
    ~NCurve();
    NCurve();
    int iNoCPts;
@@ -2106,7 +2108,7 @@ class NSurf : public G_Object
 DECLARE_DYNAMIC(NSurf)
 public:
 	// Added for Auto Meshing
-	double dSize;            //Surface Mesh Size     
+	double dSSize;            //Surface Mesh Size     
    //Object type 7
    //Nurbs curve to superceed ContolPoly
    //Iges Knot Offsets of iges import Only

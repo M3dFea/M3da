@@ -359,6 +359,8 @@ BOOL NodeInTri(C2dVector t1, C2dVector t2, C2dVector t3, C2dVector pt);
 BOOL isSegIn(ObjList* pSegs, c2dParPt* pS1, c2dParPt* pS2);
 BOOL isNodeInCircle(ObjList* pN, int iExclude,double dRad, C2dVector Cpt);
 BOOL isNodeInCircle2d(ObjList* pN, int iExclude, double dRad, C2dVector Cpt, double dSX, double dSY);
+void MeshBeamSize(ObjList* pCurves, double dS);
+void MeshBeams(ObjList* pCurves);
 void MeshSurfSize(ObjList* pSurfs, double dS);
 //****************  2d Advancing Front Auto Mesher ******************
 void MeshSurfAF(ObjList* pSurfs, double dSz);
@@ -557,7 +559,8 @@ void TogMeshD();
 CString GetObjName(int index);
 void SelWGName(CString inName);
 void SelAllWGs();
-void NodesOnCurve(int iNo);
+void NodesOnCurve(NCurve* pC, int iNo, cLinkedList* pN);
+void GenNodesOnCurve(int iNo, cLinkedList* pN);
 void Test2();
 void Test3();
 void TestMPM2();
@@ -601,6 +604,7 @@ void CalcAngles(cLinkedList* NDF);
 void GenFronts(cLinkedList* NDF,int iDir);
 BOOL MoveFront(c2dFront* pMF);
 void ChkIntersects(cLinkedList* NDF);
+void GenBEamElements(cLinkedList* NDF, int iCOl);
 void GenElements(cLinkedList* NDF);
 void CreatTestPCOMPS();
 void ElSweepB(ObjList* Items, int iDir);   //*** MAIN ***

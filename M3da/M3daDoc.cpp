@@ -318,6 +318,7 @@ ON_COMMAND(ID_POST_LISTRESPONSEDATA, &CM3daDoc::OnPostListresponsedata)
 ON_COMMAND(ID_MESH_MESHSIZEONSURFACE, &CM3daDoc::OnMeshMeshsizeonsurface)
 ON_COMMAND(ID_PARTMODIFY_EXTRACT, &CM3daDoc::OnPartmodifyExtract)
 ON_COMMAND(ID_CHECKS_TETCIRCUMSPHERE, &CM3daDoc::OnChecksTetcircumsphere)
+ON_COMMAND(ID_FEMTOOLS_MESHSIZEONCURVES, &CM3daDoc::OnFemtoolsMeshsizeoncurves)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5317,6 +5318,22 @@ void CM3daDoc::OnChecksTetcircumsphere()
 	{
 		outtextMSG2("CHKCIRCUMSPH");
 		sLastcmd = "CHKCIRCUMSPH";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnFemtoolsMeshsizeoncurves()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag();
+		outtextMSG2("MMESHBZ");
+		sLastcmd = "MMESHBZ";
 	}
 	else
 	{

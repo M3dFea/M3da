@@ -251,6 +251,7 @@ BEGIN
                 MENUITEM "Brick",                       ID_ELEMENTTYPE_BRICK
                 MENUITEM "Rigid",                       ID_ELEMENTTYPE_RIGID
             END
+            MENUITEM "Beam Mesh on Curves",         ID_FEMTOOLS_MESHSIZEONCURVES
             MENUITEM "Mapped TRI Mesh",             ID_MESH_MAPPEDTRIMESH
             MENUITEM "Free TRI Mesh",               ID_MESH_FREETRIMESH
             MENUITEM "Mapped QUAD Mesh",            ID_MESH_MAPPEDSURFACEMESH
@@ -1177,6 +1178,7 @@ BEGIN
     ID_CHECKS_TETCIRCUMSPHERE 
                             "Calculate the circum radius and centre of a TET Element (Internal Check)"
     ID_FILE_RUNSCRIPTFILE   "Run an M3d Script File"
+    ID_FEMTOOLS_MESHSIZEONCURVES "Beam Mesh on Curves"
 END
 
 #endif    // English (United States) resources

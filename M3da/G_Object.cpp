@@ -339,6 +339,17 @@ sTitle="";
 iObjType=200;
 }
 
+void cLinkedList::Clear()
+{
+	iCnt = 0;
+	Head = NULL;
+	pCur = NULL;
+	iLabel = -1;
+	iColour = -1;
+	sTitle = "";
+	iObjType = 200;
+}
+
 //Results set class
 cLinkedList::~cLinkedList()
 {
@@ -22021,6 +22032,19 @@ iElementLab++;
 iCYSLab++;
 }
 
+// pInVertex[200]	Nodes
+// int iLab			Element Label
+// int iCol			Element Colour
+// int iType		Element Type
+// int iPID			Element Property ID
+// int iMat			
+// int iNo			No of Nodes
+// int iA
+// int iB
+// int iC
+// BOOL AddDisp
+// int iMatCys
+// double dMatAng)
 E_Object* ME_Object::AddEl(Pt_Object* pInVertex[200],int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int iA,int iB,int iC,BOOL AddDisp,int iMatCys,double dMatAng)
 {
 E_Object* pERet=NULL;
@@ -38656,6 +38680,7 @@ DrawNoCvs=FALSE;
 pS=NULL;
 pE=NULL;
 iInc = -1;
+dLSize = 1;
 }
 
 
@@ -38680,7 +38705,7 @@ DrawNoCvs=FALSE;
 pS=NULL;
 pE=NULL;
 iInc = -1;
-
+dLSize = 1;
 
 }
 
@@ -38740,6 +38765,7 @@ void NCurve::Serialize(CArchive& ar,int iV)
 	{
 		// TODO: add storing code here
 		G_Object::Serialize(ar,iV);
+		ar << dLSize;
 		ar << iInc;
 		ar << iLnThk;
 		ar << iLnType;
@@ -38763,9 +38789,14 @@ void NCurve::Serialize(CArchive& ar,int iV)
 	{
 		G_Object::Serialize(ar,iV);
 		if (iV < -51)
+		{
+			ar >> dLSize;
 			ar >> iInc;
+		}
 		else
+		{
 			iInc = -1;
+		}
 		ar >> iLnThk;
 		ar >> iLnType;
 		ar >> iNoCPts;
@@ -38807,6 +38838,7 @@ cPoly->p = p;
 cPoly->ws = ws;
 cPoly->we = we;
 cPoly->iInc = iInc;
+cPoly->dLSize = dLSize;
 cPoly->pParent=Parrent;
 
 for (i=0;i<iNoCPts;i++)
@@ -41698,7 +41730,7 @@ pCVsV[0]=NULL;
 pCVsV[1]=NULL;
 iNoTrimCvs=0;
 iNoExtCvs=0;
-dSize = -1;
+dSSize = -1;
 }
 
 
@@ -41720,7 +41752,7 @@ pCVsV[1]=NULL;
 iNoTrimCvs=0;
 iNoExtCvs=0;
 iNoIntLoops=0;
-dSize = -1;
+dSSize = -1;
 
 }
 
@@ -41741,7 +41773,7 @@ pSurf->pU = pU;
 pSurf->pV = pV;
 pSurf->pParent=Parrent;
 pSurf->iNoTrimCvs=iNoTrimCvs;
-pSurf->dSize = dSize;
+pSurf->dSSize = dSSize;
 
 for (i=0;i<iNoCvs;i++)
 {
@@ -41784,7 +41816,7 @@ void NSurf::Info()
 	G_Object::Info();
 	sprintf_s(S1, "%s%i", "Surface Type : ", iType);
 	outtext1(S1);
-	sprintf_s(S1, "%s%f", "Surface Mesh Size : ", dSize);
+	sprintf_s(S1, "%s%f", "Surface Mesh Size : ", dSSize);
 	outtext1(S1);
 	int i;
 	int j;
@@ -41818,7 +41850,7 @@ pSurf->pU = pU;
 pSurf->pV = pV;
 pSurf->pParent=NULL;
 pSurf->iNoTrimCvs=iNoTrimCvs;
-pSurf->dSize = dSize;
+pSurf->dSSize = dSSize;
 for (i=0;i<iNoCvs;i++)
 {
   pSurf->pCVsU [i] = (NCurve*) pCVsU[i]->Copy(pSurf);
@@ -41866,7 +41898,7 @@ void NSurf::Serialize(CArchive& ar,int iV)
 	{
 	// TODO: add storing code here
 	  G_Object::Serialize(ar,iV);
-	  ar << dSize;
+	  ar << dSSize;
 	  ar << iNoCvs;
 	  ar << pU;
 	  ar << pV;
@@ -41927,7 +41959,7 @@ void NSurf::Serialize(CArchive& ar,int iV)
 	{
 		int iSC;
 		G_Object::Serialize(ar,iV);
-		ar >> dSize;
+		ar >> dSSize;
 		ar >> iNoCvs;
 		ar >> pU;
 		ar >> pV;

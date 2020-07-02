@@ -2342,6 +2342,16 @@ if (iStat == 0)
   pNext->Init(cDBase, -1);
   this->DoMenu(CInMsg, Pt);
   }
+  else if (CInMsg == "MMESHBZ")
+  {
+  iResumePos = 0;
+  iCancelPos = 100;
+  cDBase->DB_ActiveBuffSet(2);
+  cDBase->DB_ClearBuff();
+  pNext = new zMMESHBZ_Mnu();
+  pNext->Init(cDBase, -1);
+  this->DoMenu(CInMsg, Pt);
+  }
   else if (CInMsg == "FINDNODE")
   {
   iResumePos = 0;
@@ -4780,7 +4790,7 @@ if (iStat == 3)
 {
   C3dVector p1;
   p1=cDBase->DB_PopBuff();
-  cDBase->NodesOnCurve((int) p1.x);
+  cDBase->GenNodesOnCurve((int) p1.x,NULL);
   cDBase->FILTER.SetAll();
   RetVal=1;
 }
@@ -6028,7 +6038,7 @@ int zMMESHSZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/PICK SURFACES");
+			outtext2("/PICK SURFACES TO DEFINE MESH SIZE");
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(15);
 			iStat = 1;
@@ -6077,6 +6087,70 @@ int zMMESHSZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 MenuEnd:
 return RetVal;
 
+}
+
+int zMMESHBZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("/PICK CURVES TO BEAM MESH");
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+			}
+
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			outtext2("/ENTER ELEMENT SIZE");
+			SetFocus();
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			cDBase->S_Des();
+			C3dVector ptNo;
+			ptNo = cDBase->DB_PopBuff();
+			cDBase->MeshBeamSize(cDBase->OTemp, ptNo.x);
+			cDBase->OTemp->Clear();
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+return RetVal;
 }
 
 int zFMESHT_Mnu::DoMenu(CString CInMsg,CPoint Pt)

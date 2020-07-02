@@ -7982,6 +7982,33 @@ void DBase::GenElements(cLinkedList* NDF)
 }
 
 //*********************************************************************************
+// Pre: Valid fronts and resulting element colour
+// Post: Elements generated 
+//*********************************************************************************
+void DBase::GenBEamElements(cLinkedList* NDF,int iCOl)
+{
+	Pt_Object *pENodes[100];
+	Pt_Object* p1;
+	Pt_Object* p2;
+	E_Object* pEL;
+	p1 = (Pt_Object*) NDF->Head;
+	while (p1->next != NULL)
+	{
+		p2 = (Pt_Object*) p1->next;
+        pENodes[0] = p1;
+		pENodes[1] = p2;
+        if ((p1 != NULL) && (p2 != NULL))
+        {
+           pEL = pCurrentMesh->AddEl(pENodes, pCurrentMesh->iElementLab, iCOl, 21, -1, -1, 2, 0, 0, 0, 0, -1, 0);
+           pCurrentMesh->iElementLab++;
+		   AddTempGraphics(pEL);
+		   Dsp_Add(pEL);
+        }	
+		p1 = p2;
+	}
+}
+
+//*********************************************************************************
 // Pre: True
 // Post: Test PCOMPG's generated
 //*********************************************************************************
@@ -9856,7 +9883,39 @@ if ((cSel != NULL) && (SDist < 400) )
 return (cSel);
 }
 
-void DBase::NodesOnCurve(int iNo)
+//****************************************************************
+//Pre:	pC valid poniter or curve, no of nodes to generate
+//		pN should be empty
+//Post: Nodes creates and stored in pN
+//****************************************************************
+void DBase::NodesOnCurve(NCurve* pC,int iNo, cLinkedList* pN)
+{
+	C3dVector v;
+	Pt_Object* pNode;
+	int i, iCO;
+	double dW = 0;
+	double dInc;
+	double dSpan;
+
+	dW = 0;
+	dSpan = pC->we - pC->ws;
+	dInc = dSpan / (iNo - 1);
+	for (i = 0; i < iNo; i++)
+	{
+		v = pC->GetPt(dW);
+		//AddNode(v, -1,1,1,10,0,0);
+		pNode = pCurrentMesh->AddNode(v, pCurrentMesh->iNodeLab, 1, 1, 100, 0, 0);
+		pCurrentMesh->iNodeLab++;
+		AddTempGraphics(pNode);
+		Dsp_Add(pNode);
+		dW += dInc;
+		if (dW > 1.0) { dW = 1.0; }
+		if (pN != NULL)
+			pN->Add(pNode);  //Add the newly created node to linked list
+	}
+}
+
+void DBase::GenNodesOnCurve(int iNo,cLinkedList* pN)
 {
 C3dVector v;
 Pt_Object* pNode;
@@ -9903,6 +9962,8 @@ if (iNo>0)
 		Dsp_Add(pNode);
 	    dW+=dInc;
 		  if(dW>1.0) {dW=1.0;}
+		  if (pN != NULL)
+			  pN->Add(pNode);  //Add the newly created node to linked list
 	  }
     }
   }
@@ -19156,6 +19217,81 @@ BOOL DBase::isNodeInCircle2d(ObjList* pN, int iExclude, double dRad, C2dVector C
 }
 
 //*****************************************************************************
+//               SET LINE MESH SIZE ON CURVES
+//				 AND MESH INCLUDED FOR NOW
+//*****************************************************************************
+void DBase::MeshBeamSize(ObjList* pCurves, double dS)
+{
+	int iCO;
+	int i, j;
+	int iInc;
+	double dL;
+	char S1[200];
+	NCurve* pEdge = NULL;
+	if (dS < 0)
+	{
+		outtext1("ERROR: Element mesh size must be > 0.");
+	}
+	else
+	{
+		for (iCO = 0; iCO < pCurves->iNo; iCO++)
+		{
+			if (pCurves->Objs[iCO]->iObjType == 7)
+			{
+				pEdge = (NCurve*) pCurves->Objs[iCO];
+				pEdge->dLSize = dS;		//Set size on element
+				dL = pEdge->getLen();	//Get the length of the edge
+				iInc = dL / dS;			//Calculate the number of elements
+				if (iInc < 1)			//Can't have less than 1 element
+					iInc = 1;
+				if ((pEdge->iType==3) && (iInc<4))	//Case of sircle
+					iInc = 4;			//Use a min of 4 elements
+				pEdge->iInc = iInc;
+				sprintf_s(S1, "INFO: %i Elements Set For Curve %i Set", iInc, pEdge->iLabel);
+				outtext1(S1);
+			}
+		}
+		MeshBeams(pCurves);
+	}
+}
+
+//Pre: MeshBeamSize has already been called to set iInc
+//Post: Beam nodes and elemenet geerated for all curves
+//      in pCureves and added to current mesh
+void DBase::MeshBeams(ObjList* pCurves)
+{
+	NCurve* pEdge = NULL;
+	int i = 0;
+	int iInc=0;		//No of elements increments
+	int iC = 124;	//Colour of curve to transfur to element
+	cLinkedList* pNds = new cLinkedList();
+	for (i = 0; i < pCurves->iNo; i++)
+	{
+		if (pCurves->Objs[i]->iObjType == 7)  //Its a curve
+		{
+			pNds->Clear();
+			pEdge = (NCurve*)pCurves->Objs[i];
+			if (pEdge != NULL)
+			{
+				iInc = pEdge->iInc;
+				iInc += 1;
+				//Generate nodes on curve and store in pNds;
+				NodesOnCurve(pEdge,iInc,pNds);
+				GenBEamElements(pNds, pEdge->iColour);
+				ReDraw();
+			}
+			else
+			{
+				
+			}
+			//sprintf_s(S1, "INFO: %i Elements Set For Curve %i Set", iInc, pEdge->iLabel);
+			//outtext1(S1);
+		}
+	}
+	delete (pNds);
+}
+
+//*****************************************************************************
 //               SET 2D MESH SIZE ON SURFACE
 //               AND DIVIDE EDGES INTO SEG DIVISIONS
 //*****************************************************************************
@@ -19165,8 +19301,8 @@ void DBase::MeshSurfSize(ObjList* pSurfs, double dS)
 	int i, j;
 	int iInc;
 	double dL;
-	NSurf* pS;
-	NCurve* pEdge;
+	NSurf* pS = NULL;
+	NCurve* pEdge = NULL;
 	if (dS < 0)
 	{
 		outtext1("ERROR: Element mesh size must be > 0.");
@@ -19180,7 +19316,7 @@ void DBase::MeshSurfSize(ObjList* pSurfs, double dS)
 				(pSurfs->Objs[iCO]->iObjType == 17))
 			{
 				pS = (NSurf*) pSurfs->Objs[iCO];
-				pS->dSize = dS;		//Set size on element
+				pS->dSSize = dS;		//Set size on element
 				//Calculate the number of increment on edges
 				for (i = 0; i < pS->iNoExtCvs; i++)
 				{
@@ -19298,8 +19434,8 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 			pS = (NSurf*) pSurfs->Objs[iCO];
 			//if (pS->iLabel == 87)
 			//	pS->iLabel = 87;
-			if (pS->dSize > 0)
-				dS = pS->dSize;
+			if (pS->dSSize > 0)
+				dS = pS->dSSize;
 			CreateBSegs(Pts, Segs,dS, pS);
 			Pts->GenIDS(iNodeLab);
 			Segs->GenIDS(iSegLab);

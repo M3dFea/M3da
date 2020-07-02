@@ -463,6 +463,7 @@ public:
   afx_msg void OnMeshMeshsizeonsurface();
   afx_msg void OnPartmodifyExtract();
   afx_msg void OnChecksTetcircumsphere();
+  afx_msg void OnFemtoolsMeshsizeoncurves();
 };
 
 
