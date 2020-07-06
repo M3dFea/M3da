@@ -34035,7 +34035,7 @@ int PCOMP::GetVarHeaders(CString sVar[])
     sVar[iNo] = S1;
     iNo++;
   }
-  return(iNo-1);
+  return(iNo);
 }
 
 
@@ -34074,7 +34074,7 @@ int PCOMP::GetVarValues(CString sVar[])
     sVar[iNo] = S1;
     iNo++;
   }
-  return (iNo-1);
+  return (iNo);
 }
 
 
