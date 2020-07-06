@@ -33975,6 +33975,7 @@ for (i=0;i<iNoLays;i++)
 return (pREt);
 }
 
+//Add a layer to the pcomp stack
 void PCOMP::AddLayer(int inMID,double inT,double inThe,BOOL inSo)
 {
 if (iNoLays<MAX_LAYERS)
