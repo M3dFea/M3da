@@ -33740,7 +33740,7 @@ int PCOMPG::GetVarValues(CString sVar[])
 	sprintf_s(S1, "%i", bLAM);
 	sVar[iNo] = S1;
 	iNo++;
-	sprintf_s(S1, "%i", iNoLays - 1);
+	sprintf_s(S1, "%i", iNoLays);
 	sVar[iNo] = S1;
 	iNo++;
 	int i;
@@ -34065,7 +34065,7 @@ int PCOMP::GetVarValues(CString sVar[])
   sprintf_s(S1, "%i", bLAM);
   sVar[iNo] = S1;
   iNo++;
-  sprintf_s(S1, "%i", iNoLays-1);
+  sprintf_s(S1, "%i", iNoLays);
   sVar[iNo] = S1;
   iNo++;
   int i;
