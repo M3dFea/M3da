@@ -294,6 +294,18 @@ DBase::~DBase()
 	DB_ObjectCount = 0;
 }
 
+void DBase::DeleteAll()
+{
+	int i;
+	S_Count = 0;
+	for (i = 2; i < DB_ObjectCount; i++)
+	{
+		delete(DB_Obj[i]);
+		DB_Obj[i] = NULL;
+	}
+	DB_ObjectCount = 2;
+}
+
 void DBase::PrintTime(CString cS)
 {
 	int Hour;

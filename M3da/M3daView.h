@@ -94,6 +94,7 @@ public:
   afx_msg void OnProjBack();
   afx_msg void OnProjso1();
   afx_msg void OnPropiso2();
+  afx_msg void OnEditUndo();
 };
 
 #ifndef _DEBUG  // debug version in M3daView.cpp

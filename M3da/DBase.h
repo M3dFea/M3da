@@ -39,7 +39,7 @@ int iPartLabCnt;
 DBase();
 DBase(double WPS);
 virtual ~DBase();
-
+void DeleteAll();
 int DspFlags;
 BOOL bPICK;
 

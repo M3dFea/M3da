@@ -418,6 +418,18 @@ void CM3daDoc::Serialize(CArchive& ar)
 
 }
 
+//Added to implement undo and redo
+//This will delete all content i the database I think
+void CM3daDoc::DeleteContents()
+{
+	//delete(cDBase);
+	//cDBase = new DBase(10);
+	if (cDBase != NULL)
+	{
+		cDBase->DeleteAll();
+	}
+}
+
 
 // CM3daDoc diagnostics
 
@@ -946,6 +958,7 @@ void CM3daDoc::OnCreatePoint()
 if (pMnu->isNULL())
 {
   SetModifiedFlag();
+  CheckPoint();
   outtextMSG2("PTCR");
   sLastcmd="PTCR";
 }

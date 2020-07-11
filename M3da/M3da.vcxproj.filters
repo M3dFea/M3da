@@ -107,6 +107,9 @@
     <ClInclude Include="EEdit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Undo.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="M3da.idl">

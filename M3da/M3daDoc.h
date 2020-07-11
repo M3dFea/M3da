@@ -6,7 +6,7 @@
 #pragma once
 #include "Mnu.h"
 
-class CM3daDoc : public CDocument
+class CM3daDoc : public CDocument, public CUndo
 {
 protected: // create from serialization only
 	CM3daDoc();
@@ -14,6 +14,7 @@ protected: // create from serialization only
 
 // Attributes
 public:
+
 BOOL bOnFirst=TRUE;
 CView* pCView;
 CDC* D_ClientDC;
@@ -61,7 +62,7 @@ void Dsp_Group();
 public:
 	virtual BOOL OnNewDocument();
 	virtual void Serialize(CArchive& ar);
-
+	virtual void DeleteContents();
 // Implementation
 public:
 	virtual ~CM3daDoc();

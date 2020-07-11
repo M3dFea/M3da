@@ -61,6 +61,7 @@ ON_COMMAND(ID_PROJ_RIGHT, &CM3daView::OnProjRight)
 ON_COMMAND(ID_PROJ_BACK, &CM3daView::OnProjBack)
 ON_COMMAND(ID_PROJSO1, &CM3daView::OnProjso1)
 ON_COMMAND(ID_PROPISO2, &CM3daView::OnPropiso2)
+ON_COMMAND(ID_EDIT_UNDO, &CM3daView::OnEditUndo)
 END_MESSAGE_MAP()
 
 // CM3daView construction/destruction
@@ -781,4 +782,13 @@ void CM3daView::OnPropiso2()
   GetDocument()->SetView(this);
   GetDocument()->Draw(tOrient.RetrieveMat(), pDC, 4);
   ReleaseDC(pDC);
+}
+
+
+void CM3daView::OnEditUndo()
+{
+	// TODO: Add your command handler code here
+	CM3daDoc* pDoc = GetDocument();
+	pDoc->Undo();
+	//pDoc->UpdateAllViews(NULL);
 }
