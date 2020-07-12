@@ -401,6 +401,8 @@ BOOL CM3daDoc::OnNewDocument()
 	{
 		bOnFirst = FALSE;
 	}
+	ReSet();
+	CheckPoint();
 	return TRUE;
 
 }
@@ -490,7 +492,7 @@ void CM3daDoc::InitDoc()
 	pMnu = new zMnu();
 	pMnu->Init(cDBase, -1);
 	sLastcmd = "";
-	ReSet();
+
 }
 
 void CM3daDoc::SetView (CView* pCViewIn)
@@ -5385,3 +5387,15 @@ void CM3daDoc::OnFemtoolsMeshsizeoncurves()
 
 
 
+
+
+BOOL CM3daDoc::OnOpenDocument(LPCTSTR lpszPathName)
+{
+	if (!__super::OnOpenDocument(lpszPathName))
+		return FALSE;
+	ReSet();
+	CheckPoint();
+	// TODO:  Add your specialized creation code here
+
+	return TRUE;
+}
