@@ -791,11 +791,15 @@ void CM3daView::OnPropiso2()
 void CM3daView::OnEditUndo()
 {
 	// TODO: Add your command handler code here
-	CM3daDoc* pDoc = GetDocument();
-	pDoc->Undo();
-	CDC* pDC = this->GetDC();
-	GetDocument()->Draw(tOrient.RetrieveMat(), pDC, 4);
-	ReleaseDC(pDC);
+	CM3daDoc* pDoc=NULL;
+	pDoc = GetDocument();
+	if (pDoc != NULL)
+	{
+		pDoc->Undo();
+		CDC* pDC = this->GetDC();
+		pDoc->Draw(tOrient.RetrieveMat(), pDC, 4);
+		ReleaseDC(pDC);
+	}
 	//pDoc->UpdateAllViews(NULL);
 }
 
