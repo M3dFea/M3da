@@ -321,6 +321,7 @@ ON_COMMAND(ID_CHECKS_TETCIRCUMSPHERE, &CM3daDoc::OnChecksTetcircumsphere)
 ON_COMMAND(ID_FEMTOOLS_MESHSIZEONCURVES, &CM3daDoc::OnFemtoolsMeshsizeoncurves)
 //ON_COMMAND(ID_EDIT_REDO, &CM3daDoc::OnEditRedo)
 //ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, &CM3daDoc::OnUpdateEditRedo)
+//ON_COMMAND(ID_FILE_OPEN, &CM3daDoc::OnFileOpen)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -393,9 +394,13 @@ BOOL CM3daDoc::OnNewDocument()
 	// TODO: add reinitialization code here
 	// (SDI documents will reuse this document)
 	if (bOnFirst == FALSE)
+	{
 		InitDoc();
+	}
 	else
+	{
 		bOnFirst = FALSE;
+	}
 	return TRUE;
 
 }
@@ -5377,3 +5382,6 @@ void CM3daDoc::OnFemtoolsMeshsizeoncurves()
 //{
 //	// TODO: Add your command update UI handler code here
 //}
+
+
+

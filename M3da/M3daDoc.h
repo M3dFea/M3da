@@ -467,6 +467,7 @@ public:
   afx_msg void OnFemtoolsMeshsizeoncurves();
 //  afx_msg void OnEditRedo();
 //  afx_msg void OnUpdateEditRedo(CCmdUI *pCmdUI);
+//  afx_msg void OnFileOpen();
 };
 
 
