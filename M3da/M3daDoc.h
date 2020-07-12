@@ -62,7 +62,7 @@ void Dsp_Group();
 public:
 	virtual BOOL OnNewDocument();
 	virtual void Serialize(CArchive& ar);
-	virtual void DeleteContents();
+	virtual void DeleteContents2();
 // Implementation
 public:
 	virtual ~CM3daDoc();
@@ -465,6 +465,8 @@ public:
   afx_msg void OnPartmodifyExtract();
   afx_msg void OnChecksTetcircumsphere();
   afx_msg void OnFemtoolsMeshsizeoncurves();
+//  afx_msg void OnEditRedo();
+//  afx_msg void OnUpdateEditRedo(CCmdUI *pCmdUI);
 };
 
 

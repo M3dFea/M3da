@@ -28,7 +28,7 @@ public:
 
     // Here are the hooks into the CDocument class
     virtual void Serialize(CArchive& ar) = 0;
-    virtual void DeleteContents() = 0;
+    virtual void DeleteContents2() = 0;
 
     // User accessable functions
     CUndo(long undolevels = 4, long = 32768);    // Constructor
@@ -40,6 +40,7 @@ public:
     void CheckPoint();   // Save current state 
     void EnableCheckPoint();
     void DisableCheckPoint();
+	void ReSet();
 };
 
 // Constructor
@@ -80,6 +81,22 @@ inline CUndo::
 
     // Clear redo list
     ClearRedoList();
+}
+
+inline void CUndo::
+ReSet()
+{
+	// Clear undo list
+	POSITION pos = m_undolist.GetHeadPosition();
+	CMemFile  *nextFile = NULL;
+	while (pos) {
+		nextFile = (CMemFile *)m_undolist.GetNext(pos);
+		delete nextFile;
+	}
+	m_undolist.RemoveAll();
+
+	// Clear redo list
+	ClearRedoList();
 }
 
 // Checks undo availability, may be used to enable menus
@@ -123,7 +140,7 @@ Store(CMemFile* file)
 inline void CUndo::
 Load(CMemFile* file) 
 {
-    DeleteContents(); 
+    DeleteContents2(); 
     file->SeekToBegin();
     CArchive ar(file, CArchive::load);
     Serialize(ar); 

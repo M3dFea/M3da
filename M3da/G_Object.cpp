@@ -45320,6 +45320,21 @@ Table::Table()
   iNo=0;
 }
 
+Table::~Table()
+{
+	DeleteAll();
+}
+
+void Table::DeleteAll()
+{
+	int i;
+	for (i = 0; i < iNo; i++)
+		delete(pEnts[i]);
+	iNo = 0;
+}
+
+
+
 void Table::AddItem(Entity* pIn)
 {
 BOOL bisIn =  Exists(pIn->iID);

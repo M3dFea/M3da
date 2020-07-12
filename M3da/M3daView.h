@@ -95,6 +95,9 @@ public:
   afx_msg void OnProjso1();
   afx_msg void OnPropiso2();
   afx_msg void OnEditUndo();
+  afx_msg void OnUpdateEditUndo(CCmdUI *pCmdUI);
+  afx_msg void OnEditRedo();
+  afx_msg void OnUpdateEditRedo(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // debug version in M3daView.cpp

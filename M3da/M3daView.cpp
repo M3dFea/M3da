@@ -62,6 +62,9 @@ ON_COMMAND(ID_PROJ_BACK, &CM3daView::OnProjBack)
 ON_COMMAND(ID_PROJSO1, &CM3daView::OnProjso1)
 ON_COMMAND(ID_PROPISO2, &CM3daView::OnPropiso2)
 ON_COMMAND(ID_EDIT_UNDO, &CM3daView::OnEditUndo)
+ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO, &CM3daView::OnUpdateEditUndo)
+ON_COMMAND(ID_EDIT_REDO, &CM3daView::OnEditRedo)
+ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, &CM3daView::OnUpdateEditRedo)
 END_MESSAGE_MAP()
 
 // CM3daView construction/destruction
@@ -790,5 +793,33 @@ void CM3daView::OnEditUndo()
 	// TODO: Add your command handler code here
 	CM3daDoc* pDoc = GetDocument();
 	pDoc->Undo();
+	CDC* pDC = this->GetDC();
+	GetDocument()->Draw(tOrient.RetrieveMat(), pDC, 4);
+	ReleaseDC(pDC);
 	//pDoc->UpdateAllViews(NULL);
+}
+
+
+void CM3daView::OnUpdateEditUndo(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	CM3daDoc* pDoc = GetDocument();
+	pCmdUI->Enable(pDoc->CanUndo());
+}
+
+
+void CM3daView::OnEditRedo()
+{
+	// TODO: Add your command handler code here
+	CM3daDoc* pDoc = GetDocument();
+	pDoc->Redo();
+	pDoc->UpdateAllViews(NULL);
+}
+
+
+void CM3daView::OnUpdateEditRedo(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	CM3daDoc* pDoc = GetDocument();
+	pCmdUI->Enable(pDoc->CanRedo());
 }

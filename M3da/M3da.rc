@@ -121,6 +121,7 @@ BEGIN
     POPUP "&Edit"
     BEGIN
         MENUITEM "&Undo\tCtrl+Z",               ID_EDIT_UNDO
+        MENUITEM "Redo",                        ID_EDIT_REDO
         MENUITEM SEPARATOR
         MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
@@ -1179,6 +1180,7 @@ BEGIN
                             "Calculate the circum radius and centre of a TET Element (Internal Check)"
     ID_FILE_RUNSCRIPTFILE   "Run an M3d Script File"
     ID_FEMTOOLS_MESHSIZEONCURVES "Beam Mesh on Curves"
+    ID_EDIT_REDO33332       "Redo Last"
 END
 
 #endif    // English (United States) resources

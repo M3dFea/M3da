@@ -3192,8 +3192,10 @@ class Table : public CObject
 DECLARE_DYNAMIC(Table)
 public:
 Table();
+~Table();
 Entity* pEnts[MAX_ENTS];
 int iNo;
+virtual void DeleteAll();
 virtual void AddItem(Entity* pIn);
 virtual Entity* GetItem(int iID);
 virtual int NextID();

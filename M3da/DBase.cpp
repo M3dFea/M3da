@@ -298,12 +298,15 @@ void DBase::DeleteAll()
 {
 	int i;
 	S_Count = 0;
-	for (i = 2; i < DB_ObjectCount; i++)
+	DelAll_Group();
+	for (i = 1; i < DB_ObjectCount; i++)
 	{
 		delete(DB_Obj[i]);
 		DB_Obj[i] = NULL;
 	}
-	DB_ObjectCount = 2;
+	DB_ObjectCount = 1;
+	PropsT->DeleteAll();
+	MatT->DeleteAll();
 }
 
 void DBase::PrintTime(CString cS)

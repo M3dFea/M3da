@@ -508,13 +508,14 @@
 #define ID_CHECKS_TETCIRCUMSPHERE       33329
 #define ID_FILE_RUNSCRIPTFILE           33330
 #define ID_FEMTOOLS_MESHSIZEONCURVES    33331
+#define ID_EDIT_REDO33332               33332
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        361
-#define _APS_NEXT_COMMAND_VALUE         33332
+#define _APS_NEXT_COMMAND_VALUE         33333
 #define _APS_NEXT_CONTROL_VALUE         1055
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
