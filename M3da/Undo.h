@@ -31,7 +31,7 @@ public:
     virtual void DeleteContents2() = 0;
 
     // User accessable functions
-    CUndo(long undolevels = 1, long = 32768);    // Constructor
+    CUndo(long undolevels = 4, long = 32768);    // Constructor
     ~CUndo();            // Destructor
     BOOL CanUndo();      // Returns TRUE if can Undo
     BOOL CanRedo();      // Returns TRUE if can Redo
