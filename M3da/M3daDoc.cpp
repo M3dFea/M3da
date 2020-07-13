@@ -609,7 +609,9 @@ void SendMsg(CString AAA)
 CString Msg;
 Msg=AAA;
 CPoint N(0,0);
-pMnu->DoMenu(Msg,N);
+int iExit;
+iExit = pMnu->DoMenu(Msg,N);
+
 }
 
 BOOL CM3daDoc::isMenuNULL()
@@ -975,7 +977,7 @@ void CM3daDoc::OnCreatePoint()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PTCR");
   sLastcmd="PTCR";
 
@@ -993,7 +995,7 @@ else
 //  CFilterDialog Dlg;
 //	Dlg.DoModal();
 //
-// SetModifiedFlag(); CheckPoint();
+// SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 // outtextMSG2("LN");
 // sLastcmd="LN";
 //}
@@ -1005,7 +1007,7 @@ void CM3daDoc::OnLineLinex()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("LNX");
   sLastcmd="LNX";
 }
@@ -1023,7 +1025,7 @@ void CM3daDoc::OnLineLiney()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("LNY");
   sLastcmd="LNY";
 }
@@ -1041,7 +1043,7 @@ void CM3daDoc::OnLineLinez()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("LNZ");
   sLastcmd="LNZ";
 }
@@ -1057,7 +1059,7 @@ void CM3daDoc::OnCreateCircle()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("CIRCR");
   sLastcmd="CIRCR";
 }
@@ -1092,7 +1094,7 @@ void CM3daDoc::OnCreateCurve()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("CVCR");
   sLastcmd="CVCR";
 }
@@ -1110,7 +1112,7 @@ void CM3daDoc::OnSurfaceLoft()
 
 if (pMnu->isNULL())
 {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("SURCR");
     sLastcmd="SURCR";
 }
@@ -1127,7 +1129,7 @@ void CM3daDoc::OnSurfaceExtrude()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("SUREX");
   sLastcmd="SUREX";
 }
@@ -1144,7 +1146,7 @@ void CM3daDoc::OnSurfaceRevolve()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("SURRV");
   sLastcmd="SURRV";
 }
@@ -1161,7 +1163,7 @@ void CM3daDoc::OnToolsCopyrotate()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("COPYROT");
   sLastcmd="COPYROT";
 }
@@ -1178,7 +1180,7 @@ void CM3daDoc::OnCreateNode()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("NDCR");
   sLastcmd="NDCR";
 }
@@ -1195,7 +1197,7 @@ void CM3daDoc::OnCreateElement()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELCR");
   sLastcmd="ELCR";
 }
@@ -1210,7 +1212,7 @@ else
 void CM3daDoc::OnElementtypeTri()
 {
   // TODO: Add your command handler code here
-SetModifiedFlag(); CheckPoint();
+SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 outtextMSG2("ELTYPE");
 outtextMSG2("TRI");
 }
@@ -1218,7 +1220,7 @@ outtextMSG2("TRI");
 void CM3daDoc::OnElementtypeQuad()
 {
 // TODO: Add your command handler code here
-SetModifiedFlag(); CheckPoint();
+SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 outtextMSG2("ELTYPE");
 outtextMSG2("QUAD");
 }
@@ -1226,7 +1228,7 @@ outtextMSG2("QUAD");
 void CM3daDoc::OnElementtypeBrick()
 {
 // TODO: Add your command handler code here
-SetModifiedFlag(); CheckPoint();
+SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 outtextMSG2("ELTYPE");
 outtextMSG2("BRICK");
 }
@@ -1237,7 +1239,7 @@ outtextMSG2("BRICK");
 void CM3daDoc::OnElementtypeWedge()
 {
 // TODO: Add your command handler code here
-SetModifiedFlag(); CheckPoint();
+SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 outtextMSG2("ELTYPE");
 outtextMSG2("WEDGE");
 }
@@ -1246,7 +1248,7 @@ outtextMSG2("WEDGE");
 void CM3daDoc::OnElementtypeTet()
 {
   // TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELTYPE");
   outtextMSG2("TET");
 }
@@ -1254,7 +1256,7 @@ void CM3daDoc::OnElementtypeTet()
 void CM3daDoc::OnElementtypeRigid()
 {
   // TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELTYPE");
   outtextMSG2("RIGID");
 }
@@ -1265,7 +1267,7 @@ void CM3daDoc::OnCreateCopynodes()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("NDCO"); 
   sLastcmd="NDCO";
 }
@@ -1282,7 +1284,7 @@ void CM3daDoc::OnFileInsertcataloguepart()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("INSCAT"); 
   sLastcmd="INSCAT";
 }
@@ -1300,7 +1302,7 @@ void CM3daDoc::OnToolsScale()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("SCALE"); 
   sLastcmd="SCALE";
 }
@@ -1318,7 +1320,7 @@ void CM3daDoc::OnCreateNodemoveto()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("NDMOVE");
   sLastcmd="NDMOVE";
 }
@@ -1336,7 +1338,7 @@ void CM3daDoc::OnCreateNodesbetween()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("NDBET");
   sLastcmd="NDBET";
 }
@@ -1353,7 +1355,7 @@ void CM3daDoc::OnCreateNodesoncurve()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("NDONCV");
   sLastcmd="NDONCV";
 }
@@ -1379,7 +1381,7 @@ void CM3daDoc::OnToolsMove()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("MOVE");
   sLastcmd="MOVE";
 }
@@ -1397,7 +1399,7 @@ void CM3daDoc::OnToolsReflect()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("REFLECT");
   sLastcmd="REFLECT";
 }
@@ -1414,7 +1416,7 @@ void CM3daDoc::OnToolsCopy()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("COPY");	
   sLastcmd="COPY";
 }
@@ -1432,7 +1434,7 @@ void CM3daDoc::OnToolsWpmode()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("WPMODE");	
   sLastcmd="WPMODE";
 }
@@ -1449,7 +1451,7 @@ void CM3daDoc::OnToolsWpalign()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("WPALIGN");	
 }
 else
@@ -1505,7 +1507,7 @@ void CM3daDoc::OnToolsColour()
 if (pMnu->isNULL())
 {
   int iCol=cDBase->GetColourID();
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("COL");
   outtextMSG2("D");
   char S1[22];
@@ -1523,7 +1525,7 @@ else
 void CM3daDoc::OnToolsSetcurrentmesh()
 {
 	// TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   cDBase->SetCurMesh();
 }
 
@@ -1590,7 +1592,7 @@ void CM3daDoc::OnGroupCreategroup()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("GPCR");
   sLastcmd="GPCR";
 }
@@ -1627,7 +1629,7 @@ void CM3daDoc::OnCreateFittedcurve()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("CVFIT");
   sLastcmd="CVFIT";
 }
@@ -1644,7 +1646,7 @@ void CM3daDoc::OnLineLineangle()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("LNANG");
   sLastcmd="LNANG";
 }
@@ -1658,7 +1660,7 @@ else
 void CM3daDoc::OnCreateFillet()
 {
   // TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("FIL");
   sLastcmd="FIL";
 
@@ -1670,7 +1672,7 @@ void CM3daDoc::OnCreateOffset()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("OFFSET");
   sLastcmd="OFFSET";
 }
@@ -1687,7 +1689,7 @@ void CM3daDoc::OnCreateMakecorner()
 
 if (pMnu->isNULL())
 {
-   SetModifiedFlag(); CheckPoint();
+   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("CORNER");
   sLastcmd="CORNER";
 }
@@ -1704,7 +1706,7 @@ void CM3daDoc::OnSurfaceProjectcurve()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("CVONSUR");
   sLastcmd="CVONSUR";
 }
@@ -1720,7 +1722,7 @@ void CM3daDoc::OnSurfaceTrimsurface()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("SURTRIM");
   sLastcmd="SURTRIM";
 }
@@ -1737,7 +1739,7 @@ void CM3daDoc::OnCreateRectangle()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("RECT");
   sLastcmd="RECT";
 }
@@ -1754,7 +1756,7 @@ void CM3daDoc::OnGroupElementsbypid()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("GPBYPID");
   sLastcmd="GPBYPID";
 }
@@ -1771,7 +1773,7 @@ void CM3daDoc::OnGroupElementsbycolour()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("GPBYCOL");
   sLastcmd="GPBYCOL";
 }
@@ -1836,7 +1838,7 @@ void CM3daDoc::OnSurfacePlanar()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("SURBOUND");
   sLastcmd="SURBOUND";
 }
@@ -1870,7 +1872,7 @@ void CM3daDoc::OnCreateCoordsys()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("COORDCR");
   sLastcmd="COORDCR";
 }
@@ -1887,7 +1889,7 @@ void CM3daDoc::OnSurfaceInternaltrimloop()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("SURTRIMLOOP");
   sLastcmd="SURTRIMLOOP";
 }
@@ -1947,7 +1949,7 @@ void CM3daDoc::OnCreateCoordsysline()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("COLINE");
   sLastcmd="COLINE";
 }
@@ -2014,7 +2016,7 @@ void CM3daDoc::OnElementmodifiyPid()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELMOPID");
   sLastcmd="ELMOPID";
 }
@@ -2030,7 +2032,7 @@ void CM3daDoc::OnChecksCoincidentnodes()
 
 if (pMnu->isNULL())
 {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("CNODES");
     sLastcmd="CNODES";
 }
@@ -2047,7 +2049,7 @@ void CM3daDoc::OnNodemodifyOutputcoordsys()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("NDMOOSYS");
   sLastcmd="NDMOOSYS";
 }
@@ -2064,7 +2066,7 @@ void CM3daDoc::OnMeshSweepelements()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELSWEEP");
   sLastcmd="ELSWEEP";
 }
@@ -2097,7 +2099,7 @@ void CM3daDoc::OnToolsAlign()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ALIGN");
   sLastcmd="ALIGN";
 }
@@ -2114,7 +2116,7 @@ void CM3daDoc::OnMeshMappedsurfacemesh()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("MMESHQ");
   sLastcmd="MMESHQ";
 }
@@ -2131,7 +2133,7 @@ void CM3daDoc::OnMeshMappedtrimesh()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("MMESHT");
   sLastcmd="MMESHT";
 }
@@ -2148,7 +2150,7 @@ void CM3daDoc::OnToolsRotateabout()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 	outtextMSG2("ROTABOUT");
   sLastcmd="ROTABOUT";
 }
@@ -2165,7 +2167,7 @@ void CM3daDoc::OnToolsRotatebyangles()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ROTANG");
   sLastcmd="ROTANG";
 }
@@ -2193,7 +2195,7 @@ void CM3daDoc::OnEditProject()
 void CM3daDoc::OnToolsDelete()
 {
 	// TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   cDBase->DeleteObj();
 }
 
@@ -2753,9 +2755,9 @@ SHORT CM3daDoc::API_ExportUNV(LPCTSTR sFName)
   pFile = fopen(sFName,"w");
   if (pFile!=NULL)
   { 
-	  cDBase->ExportMesh(pFile);
+	cDBase->ExportMesh(pFile);
     outtext1("Export of Universal File Finished");
-	  fclose(pFile);
+	fclose(pFile);
     bRet=0;
   } 
   else
@@ -2793,7 +2795,7 @@ void CM3daDoc::OnLineLine()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("LN");
   sLastcmd="LN";
 }
@@ -2819,7 +2821,7 @@ void CM3daDoc::SetElDeg(DOUBLE newVal)
 
 	// TODO: Add your property handler code here
     cDBase->gdASize=newVal;
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 }
 
 void CM3daDoc::OnToolsListallproperties()
@@ -2845,7 +2847,7 @@ void CM3daDoc::OnNodemodifyDefinitioncoordsys()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("NDMORSYS");
   sLastcmd="NDMORSYS";
 }
@@ -2938,7 +2940,7 @@ void CM3daDoc::OnViewDisplayelementoffsets()
 void CM3daDoc::OnElementtypeBeam()
 {
   // TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtext1("BEAM TYPE 21 SET");
   outtextMSG2("ELTYPE");
   outtextMSG2("BEAM");
@@ -2947,7 +2949,7 @@ void CM3daDoc::OnElementtypeBeam()
 void CM3daDoc::OnElementtypeRod()
 {
   // TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELTYPE");
   outtextMSG2("ROD");
 }
@@ -2958,7 +2960,7 @@ void CM3daDoc::OnElementmodifiyBeamoffset()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("BOFF");
   sLastcmd="BOFF";
 }
@@ -2975,7 +2977,7 @@ void CM3daDoc::OnElementmodifiyBeamupvectors()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("BUPVEC");
   sLastcmd="BUPVEC";
 }
@@ -2992,7 +2994,7 @@ void CM3daDoc::OnPropertySolid()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PRSOLID");
   sLastcmd="PRSOLID";
 }
@@ -3009,7 +3011,7 @@ void CM3daDoc::OnPropertyBeam()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PRBROD");
   sLastcmd="PRBROD";
 }
@@ -3026,7 +3028,7 @@ void CM3daDoc::OnPropertyRod()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PRROD");
   sLastcmd="PRROD";
 }
@@ -3042,7 +3044,7 @@ void CM3daDoc::OnPropertyBeambar()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PRBBAR");
   sLastcmd="PRBBAR";
 }
@@ -3059,7 +3061,7 @@ void CM3daDoc::OnPropertyBeamtube()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PRBTUBE");
   sLastcmd="PRBTUBE";
 }
@@ -3075,7 +3077,7 @@ void CM3daDoc::OnPropertyBeambox()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PRBBOX");
   sLastcmd="PRBBOX";
 }
@@ -3091,7 +3093,7 @@ void CM3daDoc::OnPropertyShell()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PRSHELL");
   sLastcmd="PRSHELL";
 }
@@ -3108,7 +3110,7 @@ void CM3daDoc::OnElementmodifiyShelloffset()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("SOFF");
   sLastcmd="SOFF";
 }
@@ -3125,7 +3127,7 @@ void CM3daDoc::OnMaterialIsentropic()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("MMAT1");
   sLastcmd="MMAT1";
 }
@@ -3142,7 +3144,7 @@ void CM3daDoc::OnPropertymodifyChangematerial()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PRCMAT");
   sLastcmd="PRCMAT";
 }
@@ -3214,7 +3216,7 @@ void CM3daDoc::OnQwantaMergeboundaries()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("QWNODES");
   sLastcmd="QWNODES";
 }
@@ -3250,7 +3252,7 @@ void CM3daDoc::OnChecksMergenodes()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("MERNODES");
   sLastcmd="MERNODES";
 }
@@ -3275,7 +3277,7 @@ void CM3daDoc::OnSurfaceSweep()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("SURSWEEP");
   sLastcmd="SURSWEEP";
 }
@@ -3297,7 +3299,7 @@ void CM3daDoc::OnSolverCreaterestraint()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("RCR");
   sLastcmd="RCR";
 }
@@ -3313,7 +3315,7 @@ void CM3daDoc::OnSolverCreateforce()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("FCR");
   sLastcmd="FCR";
 }
@@ -3353,7 +3355,7 @@ void CM3daDoc::OnCircleCirclecenreradius()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("CIRCR");
   sLastcmd="CIRCR";
 }
@@ -3370,7 +3372,7 @@ void CM3daDoc::OnCircleCircle3points()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("CIR3PT");
   sLastcmd="CIR3PT";
 }
@@ -3387,7 +3389,7 @@ void CM3daDoc::OnCircleArc3point()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ARC3PT");
   sLastcmd="ARC3PT";
 }
@@ -3495,7 +3497,7 @@ else
 void CM3daDoc::OnElementtypeScellcfd()
 {
   // TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELTYPE");
   outtextMSG2("SCELL");
 
@@ -3653,7 +3655,7 @@ void CM3daDoc::OnProperty2dplainstress()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PRSHELL");
   sLastcmd="PRSHELL";
 }
@@ -3677,7 +3679,7 @@ void CM3daDoc::OnAnalysisCreatemoment()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("MCR");
   sLastcmd="MCR";
 }
@@ -3694,7 +3696,7 @@ void CM3daDoc::OnAnalysisCreatepressure()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PCR");
   sLastcmd="PCR";
 }
@@ -3739,7 +3741,7 @@ void CM3daDoc::OnNodemodifyLabel()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("NDMOLAB");
   sLastcmd="NDMOLAB";
 }
@@ -3755,7 +3757,7 @@ void CM3daDoc::OnElementmodifiyLabelbyinc()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELMOLAB");
   sLastcmd="ELMOLAB";
 }
@@ -3772,7 +3774,7 @@ void CM3daDoc::OnNodemodifyLabelbystart()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("NDMOLAB2");
   sLastcmd="NDMOLAB2";
 }
@@ -3788,7 +3790,7 @@ void CM3daDoc::OnElementmodifiyLabelbystart()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELMOLAB2");
   sLastcmd="ELMOLAB2";
 }
@@ -3804,7 +3806,7 @@ void CM3daDoc::OnMeshFreetrimesh()
 
 if (pMnu->isNULL())
 {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("FMESHT");
     sLastcmd="FMESHT";
 }
@@ -3820,7 +3822,7 @@ void CM3daDoc::OnPostListelementresult()
 
 if (pMnu->isNULL())
 {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("RESLISTEL");
     sLastcmd="RESLISTEL";
 }
@@ -3866,7 +3868,7 @@ void CM3daDoc::OnElementmodifiyReverse()
 
 if (pMnu->isNULL())
 {
-	SetModifiedFlag(); CheckPoint();
+	SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("ELREV");
     sLastcmd="ELREV";
 }
@@ -3882,7 +3884,7 @@ void CM3daDoc::OnMeshqnd()
 
 if (pMnu->isNULL())
 {
-	SetModifiedFlag(); CheckPoint();
+	SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("MESHQND");
     sLastcmd="MESHQND";
 }
@@ -3988,7 +3990,7 @@ void CM3daDoc::OnGroupElementsbytype()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("GPBYTYPE");
   sLastcmd="GPBYTYPE";
 }
@@ -4005,7 +4007,7 @@ void CM3daDoc::OnGroupNodebycolour()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("GPNDBYCOL");
   sLastcmd="GPNDBYCOL";
 }
@@ -4022,7 +4024,7 @@ void CM3daDoc::OnGroupNodebuoutputsys()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("GPNDBYOSYS");
   sLastcmd="GPNDBYOSYS";
 }
@@ -4039,7 +4041,7 @@ void CM3daDoc::OnGroupNodebydefinitionsystem()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("GPNDBYDSYS");
   sLastcmd="GPNDBYDSYS";
 }
@@ -4056,7 +4058,7 @@ void CM3daDoc::OnGroupElementsbymid()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("GPBYMID");
   sLastcmd="GPBYMID";
 }
@@ -4073,7 +4075,7 @@ void CM3daDoc::OnPostDeleteallresultssets()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("RESDEL");
   sLastcmd="RESDEL";
 }
@@ -4129,7 +4131,7 @@ void CM3daDoc::OnCurvemodifyWeightlarge()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("CVMOLWL");
   sLastcmd="CVMOLWL";
 }
@@ -4145,7 +4147,7 @@ void CM3daDoc::OnCurvemodifyWeightmedium()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("CVMOLWM");
   sLastcmd="CVMOLWM";
 }
@@ -4161,7 +4163,7 @@ void CM3daDoc::OnCurvemodifyWeightthin()
 
 if (pMnu->isNULL())
 {
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("CVMOLWT");
   sLastcmd="CVMOLWT";
 }
@@ -4177,7 +4179,7 @@ void CM3daDoc::OnCurvemodifyDash()
 
 	if (pMnu->isNULL())
 	{
-	SetModifiedFlag(); CheckPoint();
+	SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("CVMODASH");
     sLastcmd="CVMODASH";
 	}
@@ -4193,7 +4195,7 @@ void CM3daDoc::OnCurvemodifyDot()
 
 	if (pMnu->isNULL())
 	{
-	SetModifiedFlag(); CheckPoint();
+	SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("CVMODOT");
     sLastcmd="CVMODOT";
 	}
@@ -4209,7 +4211,7 @@ void CM3daDoc::OnCurvemodifySolid()
 
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("CVMOSOL");
       sLastcmd="CVMOSOL";
 	}
@@ -4225,7 +4227,7 @@ void CM3daDoc::OnCurvemodifyCentre()
 
 	if (pMnu->isNULL())
 	{
-      SetModifiedFlag(); CheckPoint();
+      SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("CVMOCTR");
       sLastcmd="CVMOCTR";
 	}
@@ -4241,7 +4243,7 @@ void CM3daDoc::OnPointmodifyCtrlpointweight()
 
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("CVMOW");
       sLastcmd="CVMOW";
 	}
@@ -4277,7 +4279,7 @@ void CM3daDoc::OnCircleCirclecentrepoint()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("CIRCPT");
       sLastcmd="CIRCPT";
 	}
@@ -4292,7 +4294,7 @@ void CM3daDoc::OnToolsReflect2d()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("REFLECT2D");
       sLastcmd="REFLECT2D";
 	}
@@ -4309,7 +4311,7 @@ void CM3daDoc::OnToolsCopyrotate2d()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("COPYROT2D");
       sLastcmd="COPYROT2D";
 	}
@@ -4324,7 +4326,7 @@ void CM3daDoc::OnToolsMoveto()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("MOVETO");
       sLastcmd="MOVETO";
 	}
@@ -4339,7 +4341,7 @@ void CM3daDoc::OnToolsCopyto()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("COPYTO");
       sLastcmd="COPYTO";
 	}
@@ -4355,7 +4357,7 @@ void CM3daDoc::OnSurfaceUn()
 		// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("SURFUNTRIM");
       sLastcmd="SURFUNTRIM";
 	}
@@ -4371,7 +4373,7 @@ void CM3daDoc::OnMeshTetfromshellboundary()
 	if (pMnu->isNULL())
 	{
     //outtext1("Not Available Yet!");
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("MMESHTET");
     sLastcmd="MMESHTET";
 	}
@@ -4399,7 +4401,7 @@ void CM3daDoc::OnMeshShellcoatsolidelements()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("MSHELL");
       sLastcmd="MSHELL";
 	}
@@ -4428,7 +4430,7 @@ void CM3daDoc::OnMeshQuadtotri()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("MQUADTOTRI");
       sLastcmd="MQUADTOTRI";
 	}
@@ -4443,7 +4445,7 @@ void CM3daDoc::OnChecksShellnormalconsistancy()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("SNORM");
       sLastcmd="SNORM";
 	}
@@ -4476,7 +4478,7 @@ void CM3daDoc::OnLoadsbcCreatestructuraltemp()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("TCR");
       sLastcmd="TCR";
 	}
@@ -4491,7 +4493,7 @@ void CM3daDoc::OnLoadsbcCreatethermalnettfluxload()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("FLUXCR");
       sLastcmd="FLUXCR";
 	}
@@ -4506,7 +4508,7 @@ void CM3daDoc::OnLoadsbcCreatethermaltempbc()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
       outtextMSG2("TBCR");
       sLastcmd="TBCR";
 	}
@@ -4536,7 +4538,7 @@ void CM3daDoc::OnSolutionCreatesolutionsequence()
   cDBase->AnalysisSolution();
   //if (pMnu->isNULL())
 	//{
-	//  SetModifiedFlag(); CheckPoint();
+	//  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   //  outtextMSG2("SOLCR");
   //  sLastcmd="SOLCR";
 	//}
@@ -4553,7 +4555,7 @@ void CM3daDoc::OnSolutionCreate()
 
  // if (pMnu->isNULL())
 	//{
-	//  SetModifiedFlag(); CheckPoint();
+	//  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
  //   outtextMSG2("STEPCR");
  //   sLastcmd="STEPCR";
 	//}
@@ -4567,7 +4569,7 @@ void CM3daDoc::OnLoadsbcListloadsets()
 {
   if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("LSETLIST");
     sLastcmd="LSETLIST";
 	}
@@ -4581,7 +4583,7 @@ void CM3daDoc::OnLoadsbcListboundarysets()
 {
   if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("BSETLIST");
     sLastcmd="BSETLIST";
 	}
@@ -4595,7 +4597,7 @@ void CM3daDoc::OnLoadsbcListtemperaturesets()
 {
   if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("TSETLIST");
     sLastcmd="TSETLIST";
 	}
@@ -4610,7 +4612,7 @@ void CM3daDoc::OnLoadsbcCreateaccelerationbodyload()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("ACR");
     sLastcmd="ACR";
 	}
@@ -4623,7 +4625,7 @@ void CM3daDoc::OnLoadsbcCreateaccelerationbodyload()
 void CM3daDoc::OnElementtypeTranslationalspring()
 {
   // TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELTYPE");
   outtextMSG2("TSPRING");
 }
@@ -4631,7 +4633,7 @@ void CM3daDoc::OnElementtypeTranslationalspring()
 void CM3daDoc::OnElementtypeRotationalspring()
 {
   // TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELTYPE");
   outtextMSG2("RSPRING");
 }
@@ -4641,7 +4643,7 @@ void CM3daDoc::OnElementmodifiySpringcoordsystem()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("SPGMOSYS");
     sLastcmd="SPGMOSYS";
 	}
@@ -4656,7 +4658,7 @@ void CM3daDoc::OnPropertyRotationalspring()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("PRSPGR");
     sLastcmd="PRSPGR";
 	}
@@ -4671,7 +4673,7 @@ void CM3daDoc::OnPropertyTranslationalspring()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
 	{
-	  SetModifiedFlag(); CheckPoint();
+	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("PRSPGT");
     sLastcmd="PRSPGT";
 	}
@@ -4687,7 +4689,7 @@ void CM3daDoc::OnChecksNegativevolumeelements()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
   {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("CHKJAC");
     sLastcmd = "CHKJAC";
   }
@@ -4703,7 +4705,7 @@ void CM3daDoc::OnChecksCheckshellelementaspectration()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
   {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("CHKSHELLASP");
     sLastcmd = "CHKSHELLASP";
   }
@@ -4719,7 +4721,7 @@ void CM3daDoc::OnChecksChecktetcollapse()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
   {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("CHKTETCOL");
     sLastcmd = "CHKTETCOL";
   }
@@ -4734,7 +4736,7 @@ void CM3daDoc::OnElementtypeMass()
 {
   // TODO: Add your command handler code here
   // TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();
+  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("ELTYPE");
   outtextMSG2("SCALAR");
 }
@@ -4744,7 +4746,7 @@ void CM3daDoc::OnPropertyLumpedmass()
 {
   if (pMnu->isNULL())
   {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("PRMASS");
     sLastcmd = "PRMASS";
   }
@@ -4846,7 +4848,7 @@ void CM3daDoc::OnNodemodifyChangexordinate()
 {
   if (pMnu->isNULL())
   {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("NODEX");
     sLastcmd = "NODEX";
   }
@@ -4862,7 +4864,7 @@ void CM3daDoc::OnNodemodifyChangeyordinate()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
   {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("NODEY");
     sLastcmd = "NODEY";
   }
@@ -4878,7 +4880,7 @@ void CM3daDoc::OnNodemodifyChangezordinate()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
   {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("NODEZ");
     sLastcmd = "NODEZ";
   }
@@ -4894,7 +4896,7 @@ void CM3daDoc::OnPropertymodifyEditpropertyvalues()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
   {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("PREDIT");
     sLastcmd = "PREDIT";
   }
@@ -4910,7 +4912,7 @@ void CM3daDoc::OnPropertyEditmaterialvalues()
   // TODO: Add your command handler code here
   if (pMnu->isNULL())
   {
-    SetModifiedFlag(); CheckPoint();
+    SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
     outtextMSG2("MATEDIT");
     sLastcmd = "MATEDIT";
   }
@@ -4926,7 +4928,7 @@ void CM3daDoc::OnPropertyBeamBasic()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("PRBAR2");
 		sLastcmd = "PRBAR2";
 	}
@@ -4964,7 +4966,7 @@ void CM3daDoc::OnCurvemodifyInsertknot()
 {
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("KNOTINS");
 		sLastcmd = "KNOTINS";
 	}
@@ -4994,7 +4996,7 @@ void CM3daDoc::OnPostFramedelay()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("RESDELAY");
 		sLastcmd = "RESDELAY";
 	}
@@ -5011,7 +5013,7 @@ void CM3daDoc::OnPostAnimationframes()
 		// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("RESFRAMES");
 		sLastcmd = "RESFRAMES";
 	}
@@ -5027,7 +5029,7 @@ void CM3daDoc::OnElementmodifiyBeamendarelease()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("BDOFA");
 		sLastcmd = "BDOFA";
 	}
@@ -5043,7 +5045,7 @@ void CM3daDoc::OnElementmodifiyBeamendbrelease()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("BDOFB");
 		sLastcmd = "BDOFB";
 	}
@@ -5059,7 +5061,7 @@ void CM3daDoc::OnOptionsDeformationoffset()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("RESDISPOFF");
 		sLastcmd = "RESDISPOFF";
 	}
@@ -5076,7 +5078,7 @@ void CM3daDoc::OnPostListresultsvectors()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("RESVECLIST");
 		sLastcmd = "RESVECLIST";
 	}
@@ -5092,7 +5094,7 @@ void CM3daDoc::OnToolsEditobject()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("OEDIT");
 		sLastcmd = "OEDIT";
 	}
@@ -5132,7 +5134,7 @@ void CM3daDoc::OnPostClearresultsvectors()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("RESVECDEL");
 		sLastcmd = "RESVECDEL";
 	}
@@ -5148,7 +5150,7 @@ void CM3daDoc::OnMeshAdvancingfrontsurfacemeshtri()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("MMESHAF");
 		sLastcmd = "MMESHAF";
 	}
@@ -5164,7 +5166,7 @@ void CM3daDoc::OnLineMultiline()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("LNC");
 		sLastcmd = "LNC";
 	}
@@ -5180,7 +5182,7 @@ void CM3daDoc::OnChecks2dsectionpropertiesaixxiyyetc()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("CHK2D");
 		sLastcmd = "CHK2D";
 	}
@@ -5315,7 +5317,7 @@ void CM3daDoc::OnMeshMeshsizeonsurface()
 {
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("MMESHSZ");
 		sLastcmd = "MMESHSZ";
 	}
@@ -5331,7 +5333,7 @@ void CM3daDoc::OnPartmodifyExtract()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("EXTRACT");
 		sLastcmd = "EXTRACT";
 	}
@@ -5362,7 +5364,7 @@ void CM3daDoc::OnFemtoolsMeshsizeoncurves()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
-		SetModifiedFlag(); CheckPoint();
+		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
 		outtextMSG2("MMESHBZ");
 		sLastcmd = "MMESHBZ";
 	}

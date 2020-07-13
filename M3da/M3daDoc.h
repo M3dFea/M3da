@@ -14,7 +14,7 @@ protected: // create from serialization only
 
 // Attributes
 public:
-
+BOOL bFinalChkPt = FALSE;
 BOOL bOnFirst=TRUE;
 CView* pCView;
 CDC* D_ClientDC;

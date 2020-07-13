@@ -795,6 +795,11 @@ void CM3daView::OnEditUndo()
 	pDoc = GetDocument();
 	if (pDoc != NULL)
 	{
+		if (pDoc->bFinalChkPt == FALSE)
+		{
+			pDoc->CheckPoint();
+			pDoc->bFinalChkPt = TRUE;
+		}
 		pDoc->Undo();
 		CDC* pDC = this->GetDC();
 		pDoc->Draw(tOrient.RetrieveMat(), pDC, 4);
