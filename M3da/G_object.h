@@ -1933,7 +1933,18 @@ Link(double x1, double y1, double z1,
 };
 
 
-
+class Text : public G_Object
+{
+DECLARE_DYNAMIC(Text)
+public:
+	CvPt_Object* inPt;          //Insertion Point
+	cLinkedList* pSyms;			//Sybols list forming text
+	CString sText;
+	Text();
+	~Text();
+	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+};
 
 
 //26/09/2016
@@ -1950,8 +1961,6 @@ public:
    double h;                   //symbol height
    int iSegs;
    Symbol();
-
-
    virtual ~Symbol();
    virtual void Create(int iLab,C3dVector inP,G_Object* Parrent);
    void addSeg(C3dVector pt1,C3dVector pt2);
@@ -1968,7 +1977,7 @@ public:
    virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);  //use defualt gObject which uses getCentroid
    //virtual void SetTo(C3dVector cInVect);
    //virtual void Transform(C3dMatrix TMAt);
-   //virtual void Translate(C3dVector vIn);
+   virtual void Translate(C3dVector vIn);
    virtual void Move(C3dVector vM);
    //virtual void Serialize(CArchive& ar,int iV);
    virtual C3dVector Get_Centroid();

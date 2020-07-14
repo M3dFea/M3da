@@ -54,7 +54,7 @@ void LoadSymbols(FILE* pFile);
 //Load the symbols table from SymTable.h stored internally
 void LoadSymbolsInterbal();
 void SymTableCalcMetrics();
-
+void AddText(CString inText, C3dVector vInPt);
 //debug only
 void displaySymTable();
 //****************************     End 28/09/2016    ****************************

@@ -1024,27 +1024,28 @@ iType[2] =(2);		//LINE
 iType[3] =(3);		//ELEMENT
 iType[4] =(4);		//MESH
 iType[5] =(5);		//SYMBOL
-iType[6] =(7);		//NURBS CURVE
-iType[7] =(12);		//COORDSYS
-iType[8] =(13);	//CURVE ON SURFACE
-iType[9] =(14);	//SOLID SECTION
-iType[10] =(15);	//NURBS SURFACE
-iType[11] =(18);	//FACE
-iType[12] =(19);	//SHELL
-iType[13] =(20);	//PART
-iType[14] =(200);	//LSET
-iType[15] =(201);	//BSET
-iType[16] =(202);	//TSET
-iType[17] =(321);	//FORCE
-iType[18] =(323);	//MOMENT
-iType[19] =(324);	//PRESSURE
-iType[20] =(322);	//RESTRAINT
-iType[21] =(325);	//TEMPERATURE
-iType[22] =(326);	//FLUX LOAD
-iType[23] =(327);	//T BC
-iType[24] =(328);	//ACCEL LOAD
-iType[25] =(329);	//ROTATION ACCEL LOAD
-iType[26] =(330);	//RESULTS VECTOR
+iType[6] =(6);		//TEXT
+iType[7] =(7);		//NURBS CURVE
+iType[8] =(12);		//COORDSYS
+iType[9] =(13);		//CURVE ON SURFACE
+iType[10] =(14);		//SOLID SECTION
+iType[11] =(15);	//NURBS SURFACE
+iType[12] =(18);	//FACE
+iType[13] =(19);	//SHELL
+iType[14] =(20);	//PART
+iType[15] =(200);	//LSET
+iType[16] =(201);	//BSET
+iType[17] =(202);	//TSET
+iType[18] =(321);	//FORCE
+iType[19] =(323);	//MOMENT
+iType[20] =(324);	//PRESSURE
+iType[21] =(322);	//RESTRAINT
+iType[22] =(325);	//TEMPERATURE
+iType[23] =(326);	//FLUX LOAD
+iType[24] =(327);	//T BC
+iType[25] =(328);	//ACCEL LOAD
+iType[26] =(329);	//ROTATION ACCEL LOAD
+iType[27] =(330);	//RESULTS VECTOR
 
 sType[0] = "POINT";
 sType[1] = "NODE";
@@ -1052,28 +1053,29 @@ sType[2] = "LINE NOT USED";
 sType[3] = "ELEMENT";
 sType[4] = "MESH";
 sType[5] = "SYMBOL";
-sType[6] = "CURVE";
-sType[7] = "COORDSYS";
-sType[8] = "CURVE ON SURFACE";
-sType[9] = "SECTION";
-sType[10] = "SURFACE";
-sType[11] = "FACE";
-sType[12] = "SHELL";
-sType[13] = "PART";
-sType[14] = "LOAD SET";        // LOAD SET
-sType[15] = "BC SET";          //SET
-sType[16] = "TEMPERATURE SET"; //SET
-sType[17] = "FORCE";
-sType[18] = "MOMENT";
-sType[19] = "PRESSURE";
-sType[20] = "RESTRAINT";
-sType[21] ="TEMP STRUCTURAL";
-sType[22] ="NET FLUX Q";
-sType[23] ="TEMP BC T";
-sType[24] ="ACCEL BODY LOAD";
-sType[25] = "ROTATIONAL BODY LOAD";
-sType[26] = "RESULTS VECTOR";
-iNoOfType=27;
+sType[6] = "TEXT";
+sType[7] = "CURVE";
+sType[8] = "COORDSYS";
+sType[9] = "CURVE ON SURFACE";
+sType[10] = "SECTION";
+sType[11] = "SURFACE";
+sType[12] = "FACE";
+sType[13] = "SHELL";
+sType[14] = "PART";
+sType[15] = "LOAD SET";        // LOAD SET
+sType[16] = "BC SET";          //SET
+sType[17] = "TEMPERATURE SET"; //SET
+sType[18] = "FORCE";
+sType[19] = "MOMENT";
+sType[20] = "PRESSURE";
+sType[21] = "RESTRAINT";
+sType[22] ="TEMP STRUCTURAL";
+sType[23] ="NET FLUX Q";
+sType[24] ="TEMP BC T";
+sType[25] ="ACCEL BODY LOAD";
+sType[26] = "ROTATIONAL BODY LOAD";
+sType[27] = "RESULTS VECTOR";
+iNoOfType=28;
 
 //USED IN ASTRIUMS QUANTA PROGRAM
 //iType[17] =(500); //WG DEF
@@ -36355,6 +36357,48 @@ void CoordSys::OglDraw(int iDspFlgs,double dS1,double dS2)
 OglDrawW(iDspFlgs,dS1,dS2);
 }
 
+
+//*****************************************************************
+// BlowsR 14/07/2020
+// Text Object added
+// linked list of symbols
+//*****************************************************************
+IMPLEMENT_DYNAMIC(Text, CObject)
+
+Text::Text()
+{
+	pParent = NULL;
+	Drawn = 0;
+	Selectable = 1;
+	Visable = 1;
+	iObjType = 6;
+	iLabel = -1;
+	iColour = 100;
+	inPt = NULL;
+	pSyms = new cLinkedList();
+	sText = "";
+}
+
+Text::~Text()
+{
+	if (inPt != NULL)
+		delete(inPt);
+	if (pSyms != NULL)
+		pSyms->DeleteAll();
+}
+
+void Text::OglDraw(int iDspFlgs, double dS1, double dS2)
+{
+	pSyms->OglDraw(iDspFlgs, dS1, dS2);
+}
+
+void Text::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	pSyms->OglDrawW(iDspFlgs, dS1, dS2);
+}
+
+
+
 //26/09/2016
 //symbol class used for compounds of lines
 // fonts, hatches etc
@@ -36369,7 +36413,7 @@ Visable  = 1;
 iObjType = 5;
 iLabel = -1;
 iColour = 2;
-
+pParent = NULL;
 pL=NULL;
 
 inPt=NULL;
@@ -36642,6 +36686,19 @@ C3dVector Symbol::Get_Centroid()
 // SYMBOLS FUNCTIONS
 // 14/07/2020
 //*****************************************************************************************
+void Symbol::Translate(C3dVector vIn)
+{
+	Link* pCL = pL;
+	vCent->Move(vIn);
+	inPt->Move(vIn);
+	pCL = pL;
+	while (pCL != NULL)
+	{
+		pCL->p1->Move(vIn);
+		pCL->p2->Move(vIn);
+		pCL = pCL->pNext;
+	}
+}
 
 void Symbol::Move(C3dVector vM)
 {

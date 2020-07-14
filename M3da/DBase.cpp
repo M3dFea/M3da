@@ -10236,10 +10236,16 @@ AddObj(pS);
 ReDraw();
 }
 
+
+
+
 void DBase::Test3()
 {
-  outtext1("TEST PROCEDURE");
-  displaySymTable();
+  //outtext1("TEST PROCEDURE");
+	C3dVector vIn;
+	vIn.Set(1, 1, 1);
+	AddText("Hello World", vIn);
+  //displaySymTable();
   //CPcompEditor Dlg;
   //Dlg.pEnt = P;
   //Dlg.DoModal();
@@ -18733,6 +18739,38 @@ int i;
 return (pRet);
 }
 
+
+void DBase::AddText(CString inText,C3dVector vInPt)
+{
+	int i=0;
+	int iL=0;
+	int iC=0;
+	C3dVector vM;
+	vM.Set(0, 0, 0);
+	vM += vInPt;
+	Symbol* pSym = NULL;
+	Symbol* pSymN = NULL;
+	iL = inText.GetLength();
+	Text* pText = new Text();
+
+	for (i = 0; i < iL; i++)
+	{
+		iC = inText[i];
+		pSym = GetSymbol(iC);
+		if (pSym!=NULL)
+		{ 
+			pSymN = (Symbol*)pSym->Copy(NULL);
+			pSymN->Translate(vM);
+			pText->pSyms->Add(pSymN);
+			vM.x += pSym->w+1;
+		}
+	}
+	AddObj(pText);
+	ReDraw();
+}
+
+
+
 void DBase::displaySymTable()
 {
 int i;
@@ -18744,7 +18782,7 @@ for (i=0;i<iNoSymbols;i++)
 {
 	pSym = pSymTable[i];
 	pSymN = (Symbol*) pSym->Copy(NULL);
-	pSymN->Move(vM);
+	pSymN->Translate(vM);
     AddObj (pSymN);
 	vM.x += 1.25*pSym->w;
 }
