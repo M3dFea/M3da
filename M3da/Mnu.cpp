@@ -3322,7 +3322,10 @@ else if (iStat == 1)
 }
 else if (iStat == 2)
 {
-  cDBase->AddText(CInMsg,p1);
+  C3dVector vN;
+  vN.Set(0, 0, 1);
+  vN = cDBase->GlobaltoWP3(vN);
+  cDBase->AddText(vN,p1, CInMsg);
   outtext1("Text Added.");
   RetVal = 1;
 }
