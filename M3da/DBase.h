@@ -50,6 +50,9 @@ void ClearSymTable();
 void AddSymbol(Symbol* pSym);
 Symbol* GetSymbol(int iLab);
 void LoadSymbols(FILE* pFile);
+//14/07/2020
+//Load the symbols table from SymTable.h stored internally
+void LoadSymbolsInterbal();
 void SymTableCalcMetrics();
 
 //debug only

@@ -1932,6 +1932,10 @@ Link(double x1, double y1, double z1,
 ~Link();
 };
 
+
+
+
+
 //26/09/2016
 //symbol class used for compounds of lines
 // fonts, hatches etc
@@ -1949,7 +1953,6 @@ public:
 
 
    virtual ~Symbol();
-
    virtual void Create(int iLab,C3dVector inP,G_Object* Parrent);
    void addSeg(C3dVector pt1,C3dVector pt2);
    virtual C3dVector MinPt(C3dVector inPt);
@@ -1966,7 +1969,7 @@ public:
    //virtual void SetTo(C3dVector cInVect);
    //virtual void Transform(C3dMatrix TMAt);
    //virtual void Translate(C3dVector vIn);
-   //virtual void Move(C3dVector vM);
+   virtual void Move(C3dVector vM);
    //virtual void Serialize(CArchive& ar,int iV);
    virtual C3dVector Get_Centroid();
    //virtual void S_Box(CPoint P1,CPoint P2,ObjList* pSel);

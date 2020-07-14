@@ -3,6 +3,7 @@
 #include "gl\gl.h"
 #include "gl\glu.h"
 #include "M3Da.h"
+#include "SymTable.h"
 #pragma warning(disable:4477)
 
 const double Pi = 3.1415926535;
@@ -403,6 +404,7 @@ iCVLabCnt=1;
 iSFLabCnt=1;
 iPartLabCnt = 1;
 iNoSymbols=0;
+LoadSymbolsInterbal();  //Load the Acad char set
 pWorldBMP = NULL;
 ResFrameDelay = 200;
 NoResFrame = 5;
@@ -10237,9 +10239,10 @@ ReDraw();
 void DBase::Test3()
 {
   outtext1("TEST PROCEDURE");
-  CPcompEditor Dlg;
+  displaySymTable();
+  //CPcompEditor Dlg;
   //Dlg.pEnt = P;
-  Dlg.DoModal();
+  //Dlg.DoModal();
 }
 
 
@@ -18733,9 +18736,17 @@ return (pRet);
 void DBase::displaySymTable()
 {
 int i;
+C3dVector vM;
+vM.Set(0, 0, 0);
+Symbol* pSym;
+Symbol* pSymN;
 for (i=0;i<iNoSymbols;i++)
 {
-  AddObj (pSymTable[i]->Copy(NULL));
+	pSym = pSymTable[i];
+	pSymN = (Symbol*) pSym->Copy(NULL);
+	pSymN->Move(vM);
+    AddObj (pSymN);
+	vM.x += 1.25*pSym->w;
 }
 ReDraw();
 }
@@ -18804,6 +18815,61 @@ C3dVector vPt(0,0,0);
   while (iStop == 0);
 SymTableCalcMetrics();
 displaySymTable();
+}
+
+//********************************************************************
+// Pre: TRUE
+// Post: Symbols table loaded from SymTable.h stored internally
+//********************************************************************
+void DBase::LoadSymbolsInterbal()
+{
+	int iStop = 0;
+	CString s1;
+	char s2[20];
+	char s3[20];
+
+	C3dVector vP1;
+	C3dVector vP2;
+
+	int iLab;
+	int i = 0;
+	Symbol* pSym;
+	//outtext1("Loading Internal Symbols Table.");
+	ClearSymTable();
+	C3dVector vPt(0, 0, 0);
+	do
+	{
+		s1 = SymTableData[i];
+		i++;
+		if ((s1[0] == 'E') && (s1[1] == 'N') && (s1[2] == 'D'))
+		{
+			iStop = 1;
+		}
+		else if ((s1[0] == 'S') && (s1[1] == 'Y') && (s1[2] == 'M'))
+		{
+			pSym = new Symbol();
+			sscanf(s1, "%s%s", s2, s3);
+			iLab = atoi(s3);
+			pSym->Create(iLab, vPt, NULL);
+			AddSymbol(pSym);
+		}
+		else
+		{
+			sscanf(s1, "%s%s", s2, s3);
+			vP1.x = atof(s2);
+			vP1.y = atof(s3);
+			vP1.z = 0;
+			s1 = SymTableData[i];
+			i++;
+			sscanf(s1, "%s%s", s2, s3);
+			vP2.x = atof(s2);
+			vP2.y = atof(s3);
+			vP2.z = 0;
+			pSym->addSeg(vP1, vP2);
+		}
+	} while (iStop == 0);
+	SymTableCalcMetrics();
+	//displaySymTable();
 }
 
 void DBase::FreeMeshTri(double dS)

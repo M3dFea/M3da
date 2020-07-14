@@ -36520,12 +36520,20 @@ if (pCL!=NULL)
 }
 w=dMaxX-dMinX;
 h=dMaxY-dMinY;
-vCent->Pt_Point->x=(w)/2+dMinX;
-vCent->Pt_Point->y=(h)/2+dMinY;
+vCent->Pt_Point->x=(w)/2;
+vCent->Pt_Point->y=(h)/2;
 vCent->Pt_Point->z=0;
-   //CvPt_Object* vCent;         //Centroid
-   //double w;                   //symbol width
-   //double h;                   //symbol height
+//Bring to Origin
+inPt->Pt_Point->Set(0, 0, 0);
+pCL = pL;
+  while (pCL != NULL)
+  {
+	  pCL->p1->Pt_Point->x -= dMinX;
+	  pCL->p2->Pt_Point->x -= dMinX;
+	  pCL->p1->Pt_Point->y -= dMinY;
+	  pCL->p2->Pt_Point->y -= dMinY;
+	  pCL = pCL->pNext;
+  }
 
 }
 
@@ -36628,6 +36636,27 @@ C3dVector Symbol::Get_Centroid()
 {
   return (GetCoords());
 }
+
+
+//*****************************************************************************************
+// SYMBOLS FUNCTIONS
+// 14/07/2020
+//*****************************************************************************************
+
+void Symbol::Move(C3dVector vM)
+{
+	Link* pCL = pL;
+	vCent->Move(vM);
+	inPt->Move(vM);
+	pCL = pL;
+	while (pCL != NULL)
+	{
+		pCL->p1->Move(vM);
+		pCL->p2->Move(vM);
+		pCL = pCL->pNext;
+	}
+}
+
 
 //*****************************************************************************************
 // START OF BREP OBJECT DATA STRUCTURE USES

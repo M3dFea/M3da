@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #include "M3da.h"
 #include "M3daDoc.h"
-#include "SymTable.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -492,7 +492,6 @@ void CM3daDoc::InitDoc()
 	pMnu = new zMnu();
 	pMnu->Init(cDBase, -1);
 	sLastcmd = "";
-
 }
 
 void CM3daDoc::SetView (CView* pCViewIn)
