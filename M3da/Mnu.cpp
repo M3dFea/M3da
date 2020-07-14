@@ -4820,11 +4820,8 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	cDBase->CreatTestPCOMPS();
-  //cDBase->Test3();   //Test Face List Display
-						//TestMPM2(); for material point test
-						//Was Test3 for comp layup
-						//TestFL();
+  //cDBase->CreatTestPCOMPS();
+  cDBase->Test3();   //PCOMP EDITOR
   RetVal=1;
 }
 
