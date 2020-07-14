@@ -1944,6 +1944,11 @@ public:
 	~Text();
 	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
+	virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
+	virtual void HighLight(CDC* pDC);
+	virtual void Translate(C3dVector vIn);
+	virtual void Move(C3dVector vM);
 };
 
 

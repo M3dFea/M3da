@@ -36397,11 +36397,83 @@ void Text::OglDrawW(int iDspFlgs, double dS1, double dS2)
 	pSyms->OglDrawW(iDspFlgs, dS1, dS2);
 }
 
+G_ObjectD Text::SelDist(CPoint InPT, Filter FIL)
+{
+	G_ObjectD Ret;
+	G_ObjectD dist;
+	Ret.pObj = NULL;
+	Ret.Dist = 1e36;;
+	Symbol* pS = NULL;
+	pS = (Symbol*) pSyms->Head;
+	BOOL bWantSymbol; 
+	bWantSymbol = FIL.isFilter(5);
 
+	while (pS != NULL)
+	{
+		dist = pS->SelDist(InPT, FIL);
+		if (dist.Dist < Ret.Dist)
+		{
+			Ret.Dist = dist.Dist;
+			if (bWantSymbol)
+			  Ret.pObj = dist.pObj;
+			else
+			  Ret.pObj = this;
+		}
+		pS = (Symbol*) pS->next;
+	}
+	return(Ret);
+}
+
+void Text::SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran)
+{
+	Symbol* pS = NULL;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->SetToScr(pModMat, pScrTran);
+		pS = (Symbol*) pS->next;
+	}
+}
+
+void Text::HighLight(CDC* pDC)
+{
+
+	Symbol* pS = NULL;
+	pS = (Symbol*) pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->HighLight(pDC);
+		pS = (Symbol*) pS->next;
+	}
+}
+
+
+void Text::Translate(C3dVector vIn)
+{
+	Symbol* pS = NULL;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Translate(vIn);
+		pS = (Symbol*)pS->next;
+	}
+}
+
+void Text::Move(C3dVector vM)
+{
+	Symbol* pS = NULL;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Move(vM);
+		pS = (Symbol*)pS->next;
+	}
+}
 
 //26/09/2016
 //symbol class used for compounds of lines
 // fonts, hatches etc
+
 IMPLEMENT_DYNAMIC(Symbol , CObject )
 
 

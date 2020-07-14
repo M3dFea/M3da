@@ -18761,8 +18761,9 @@ void DBase::AddText(CString inText,C3dVector vInPt)
 		{ 
 			pSymN = (Symbol*)pSym->Copy(NULL);
 			pSymN->Translate(vM);
+			pSymN->pParent = pText;
 			pText->pSyms->Add(pSymN);
-			vM.x += pSym->w+1;
+			vM.x += pSym->w+0.1;
 		}
 	}
 	AddObj(pText);
@@ -18897,12 +18898,14 @@ void DBase::LoadSymbolsInterbal()
 			vP1.x = atof(s2);
 			vP1.y = atof(s3);
 			vP1.z = 0;
+			vP1 *= 0.1;
 			s1 = SymTableData[i];
 			i++;
 			sscanf(s1, "%s%s", s2, s3);
 			vP2.x = atof(s2);
 			vP2.y = atof(s3);
 			vP2.z = 0;
+			vP2 *= 0.1;
 			pSym->addSeg(vP1, vP2);
 		}
 	} while (iStop == 0);

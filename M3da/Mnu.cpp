@@ -1242,6 +1242,16 @@ if (iStat == 0)
 	  pNext->Init(cDBase,-1)	;
 	  this->DoMenu(CInMsg,Pt);
   }
+  if (CInMsg == "TEXTCR")
+  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zTEXTCR_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+  }
   else if (CInMsg == "GPREMGP")
   {
 	  iResumePos = 0;
@@ -3283,6 +3293,51 @@ MenuEnd:
 return RetVal;
 }
 
+int zTEXTCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+{
+DoNext(&CInMsg,Pt);
+if (pNext==NULL)
+{
+if (CInMsg == "C") //Common Options
+{
+  RetVal = 2;
+  goto MenuEnd;
+}
+
+if (iStat == 0)
+{
+	outtext2("/PICK TEXT LOCATION");
+    iResumePos=1;
+    iCancelPos=100;
+    pNext = new zPT_Mnu();
+    pNext->Init(cDBase,-1);
+    DoNext(&CInMsg,Pt);
+}
+else if (iStat == 1)
+{
+	p1 = cDBase->DB_PopBuff();
+	outtext2("/ENTER TEXT");
+	SetFocus();
+	iStat=2;
+}
+else if (iStat == 2)
+{
+  cDBase->AddText(CInMsg,p1);
+  outtext1("Text Added.");
+  RetVal = 1;
+}
+//Escape clause
+if (iStat == 100)
+{
+  cDBase->bLineDrag = FALSE;
+  cDBase->DB_BuffCount=initCnt;
+  cDBase->S_Count=S_initCnt;
+  RetVal = 1;
+}
+}
+MenuEnd:
+return RetVal;
+}
 
 int zCIR3PT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {

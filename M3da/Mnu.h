@@ -745,6 +745,13 @@ C3dVector vR;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zTEXTCR_Mnu : public zMnu
+{
+	C3dVector p1;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zCIRCPT_Mnu: public zMnu
 {
 C3dVector p1;
