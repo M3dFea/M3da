@@ -322,6 +322,7 @@ ON_COMMAND(ID_FEMTOOLS_MESHSIZEONCURVES, &CM3daDoc::OnFemtoolsMeshsizeoncurves)
 //ON_COMMAND(ID_EDIT_REDO, &CM3daDoc::OnEditRedo)
 //ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, &CM3daDoc::OnUpdateEditRedo)
 //ON_COMMAND(ID_FILE_OPEN, &CM3daDoc::OnFileOpen)
+ON_COMMAND(ID_CURVETOOLS_TEXT, &CM3daDoc::OnCurvetoolsText)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5399,4 +5400,20 @@ BOOL CM3daDoc::OnOpenDocument(LPCTSTR lpszPathName)
 	// TODO:  Add your specialized creation code here
 
 	return TRUE;
+}
+
+
+void CM3daDoc::OnCurvetoolsText()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("TEXTCR");
+		sLastcmd = "TEXTCR";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
 }

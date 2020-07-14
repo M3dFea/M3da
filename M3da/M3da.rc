@@ -188,6 +188,7 @@ BEGIN
     BEGIN
         POPUP "Curve Tools"
         BEGIN
+            MENUITEM "Text",                        ID_CURVETOOLS_TEXT
             MENUITEM "Point",                       ID_CREATE_POINT
             MENUITEM "Rectangle",                   ID_CREATE_RECTANGLE
             POPUP "Circle"
@@ -1181,6 +1182,7 @@ BEGIN
     ID_FILE_RUNSCRIPTFILE   "Run an M3d Script File"
     ID_FEMTOOLS_MESHSIZEONCURVES "Beam Mesh on Curves"
     ID_EDIT_REDO33332       "Redo Last"
+    ID_CURVETOOLS_TEXT      "Add Text"
 END
 
 #endif    // English (United States) resources
@@ -1251,6 +1253,7 @@ END
 
 IDR_CREATE TOOLBAR 24, 24
 BEGIN
+    BUTTON      ID_CURVETOOLS_TEXT
     BUTTON      ID_CREATE_POINT
     BUTTON      ID_LINE_MULTILINE
     BUTTON      ID_LINE_LINE
@@ -2069,6 +2072,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_CREATE2             "Create"
+END
+
+STRINGTABLE
+BEGIN
+    ID_CURVETOOLS_TEXT      "Add Text"
 END
 
 #endif    // English (United Kingdom) resources

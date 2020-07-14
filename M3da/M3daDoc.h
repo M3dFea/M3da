@@ -469,6 +469,7 @@ public:
 //  afx_msg void OnUpdateEditRedo(CCmdUI *pCmdUI);
 //  afx_msg void OnFileOpen();
   virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+  afx_msg void OnCurvetoolsText();
 };
 
 
