@@ -36345,15 +36345,29 @@ Text::Text()
 	iObjType = 6;
 	iLabel = -1;
 	iColour = 100;
-	inPt = NULL;
 	pSyms = new cLinkedList();
 	sText = "";
 }
 
+Text::Text(CString sT, C3dVector vIn, C3dVector vN, double dH)
+{
+	pParent = NULL;
+	Drawn = 0;
+	Selectable = 1;
+	Visable = 1;
+	iObjType = 6;
+	iLabel = -1;
+	iColour = 100;
+	pSyms = new cLinkedList();
+	sText = "";
+	inPt= vIn;
+	vNorm=vN;
+	dTextHeight=dH;
+	sText=sT;
+}
+
 Text::~Text()
 {
-	if (inPt != NULL)
-		delete(inPt);
 	if (pSyms != NULL)
 		pSyms->DeleteAll();
 }
