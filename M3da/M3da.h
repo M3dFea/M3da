@@ -39,7 +39,7 @@ public:
 };
 void outtext1(CString AAA);
 void outtext2(CString AAA);
-void SendMsg(CString AAA, CString wCase);
+void SendMsg(CString AAA);
 void SetFocus();
 void outtextMSG(CString AAA);
 void outtextMSG2(CString AAA);

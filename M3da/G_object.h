@@ -1954,7 +1954,6 @@ public:
 	virtual void Translate(C3dVector vIn);
 	virtual void Move(C3dVector vM);
 	virtual void Serialize(CArchive& ar, int iV);
-	virtual C3dVector Get_Centroid();
 };
 
 

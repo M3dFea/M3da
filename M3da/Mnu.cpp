@@ -19,11 +19,11 @@ iT=iType;
 
 
 
-void zMnu::DoNext(CString *CInMsg, CString *CInMsg2,CPoint Pt)
+void zMnu::DoNext(CString *CInMsg,CPoint Pt)
 {
 if (pNext != NULL)
 {
-  iCKill = pNext->DoMenu(*CInMsg, *CInMsg2,Pt);
+  iCKill = pNext->DoMenu(*CInMsg,Pt);
   if (iCKill==1)
   {
     delete pNext;
@@ -47,10 +47,10 @@ if (pNext != NULL)
 
 }
 
-int zMnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 BOOL  bNextBlock;
-DoNext(&CInMsg, &CInMsg2,Pt);
+DoNext(&CInMsg,Pt);
 if (pNext==NULL)
 {
 if (iStat == 0)						
@@ -64,7 +64,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zNDCR_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SURTRIM")
   { 
@@ -74,7 +74,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zSURTRIM_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ELMOLAB")
   { 
@@ -84,7 +84,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zELMOLAB_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "QWNODES")
   { 
@@ -94,7 +94,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zQWNODES_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PRROD")
   { 
@@ -104,7 +104,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zPRROD_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "NDMOLAB")
   { 
@@ -114,7 +114,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zNDMOLAB_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RESSEL")
   { 
@@ -124,7 +124,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRESSEL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPNEXT")
   { 
@@ -134,7 +134,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zGPNEXT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPPREV")
   { 
@@ -144,7 +144,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zGPPREV_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MESHQND")
   { 
@@ -154,7 +154,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zMESHQND_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RESSETFULLLIST")
   { 
@@ -164,7 +164,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRESSETFULLLIST_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RESSETDEFSCL")
   { 
@@ -174,7 +174,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRESSETDEFSCL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RESSETLIST")
   { 
@@ -184,7 +184,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRESSETLIST_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RESDEF")
   { 
@@ -194,7 +194,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRESSELDEF_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "WPCENT")
   { 
@@ -204,7 +204,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zWPCENT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MMAT1")
   { 
@@ -214,7 +214,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMMAT1_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PRSOLID")
   { 
@@ -224,7 +224,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zPRSOLID_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PRCMAT")
   { 
@@ -234,7 +234,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zPRCMAT_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "WPONCV")
   { 
@@ -244,7 +244,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zWPONCV_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "WPONSURF")
   { 
@@ -254,7 +254,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zWPONSURF_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SURSWEEP")
   { 
@@ -264,7 +264,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSURSWEEP_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ALIGN")
   { 
@@ -274,7 +274,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zALIGN_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "QANG")
   { 
@@ -284,7 +284,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zQANGSIZE_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PRSHELL")
   { 
@@ -294,7 +294,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zPRSHELL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SELPTSCOL")
   { 
@@ -304,7 +304,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSELPTSCOL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SELSURFCOL")
   { 
@@ -314,7 +314,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSELSURFCOL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SELCURCOL")
   { 
@@ -324,7 +324,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSELCURCOL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MERNODES")
   { 
@@ -334,7 +334,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMERNODES_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ARC3PT")
   { 
@@ -344,7 +344,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zARC3PT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CIR3PT")
   { 
@@ -354,7 +354,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCIR3PT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SOFF")
   { 
@@ -364,7 +364,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSOFF_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PRBBOX")
   { 
@@ -374,7 +374,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zPRBBOX_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PRBTUBE")
   { 
@@ -384,7 +384,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zPRBTUBE_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PRBROD")
   { 
@@ -394,7 +394,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zPRBROD_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PRBBAR")
   { 
@@ -404,7 +404,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zPRBBAR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "BUPVEC")
   { 
@@ -414,7 +414,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zBUPVEC_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "QSIZE")
   { 
@@ -424,7 +424,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zQSIZE_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "BOFF")
   { 
@@ -434,7 +434,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zBOFF_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SELBYMID")
   { 
@@ -444,7 +444,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSELBYMID_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "INSCAT")
   { 
@@ -454,7 +454,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zINSCAT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "REFLECT")
   { 
@@ -464,7 +464,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zREFLECT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PRLISTALL")
   { 
@@ -474,7 +474,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zPRLISTALL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MATLISTALL")
   { 
@@ -484,7 +484,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMATLISTALL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SCALE")
   { 
@@ -494,7 +494,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSCALE_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "COPYROT")
   { 
@@ -504,7 +504,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCOPYROT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MMESHQ")
   { 
@@ -514,7 +514,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zMMESHQ_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MMESHT")
   { 
@@ -524,7 +524,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMMESHT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ROTANG")
   { 
@@ -534,7 +534,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zROTANG_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ROTABOUT")
   { 
@@ -544,7 +544,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zROTABOUT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ELSWEEP")
   { 
@@ -554,7 +554,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zELSWEEP_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ELSWEEPB")
   {
@@ -564,7 +564,7 @@ if (iStat == 0)
   cDBase->DB_ClearBuff();
   pNext = new zELSWEEPB_Mnu();
   pNext->Init(cDBase, -1);
-  this->DoMenu(CInMsg, CInMsg2, Pt);
+  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "LABENT")
   { 
@@ -574,7 +574,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zLABENT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PRLIST")
   { 
@@ -584,7 +584,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zPRLIST_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ELMOPID")
   { 
@@ -594,7 +594,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zELMOPID_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "NDMOOSYS")
   { 
@@ -604,7 +604,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zNDMOOSYS_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "NDMORSYS")
   { 
@@ -614,7 +614,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zNDMORSYS_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SELBYTYPE")
   { 
@@ -624,7 +624,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSELBYTYPE_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CNODES")
   { 
@@ -634,7 +634,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCNODES_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "LMEAS")
   { 
@@ -644,7 +644,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zLMEAS_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ELAT")
   { 
@@ -654,7 +654,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zELAT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "COLINE")
   { 
@@ -664,7 +664,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCOLINE_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPBYPID")
   { 
@@ -674,7 +674,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zGPBYPID_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RELTO")
   { 
@@ -684,7 +684,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRELTO_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SELALL")
   { 
@@ -694,7 +694,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSELALL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPBYCOL")
   { 
@@ -704,7 +704,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zGPBYCOL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SELBYCOL")
   { 
@@ -714,7 +714,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSELBYCOL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SELNODESBYCOL")
   { 
@@ -724,7 +724,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSELNODESBYCOL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "COORDCR")
   { 
@@ -734,7 +734,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCOORDCR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVONSUR")
   { 
@@ -744,7 +744,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVONSUR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SURBOUND")
   { 
@@ -754,7 +754,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSURBOUND_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SELBYPID")
   { 
@@ -764,7 +764,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSELBYPID_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SURTRIMLOOP")
   { 
@@ -774,7 +774,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSURTRIMLOOP_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "NDBET")
   { 
@@ -784,7 +784,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zNDBET_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CORNER")
   { 
@@ -794,7 +794,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCORNER_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RECT")
   { 
@@ -804,7 +804,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRECT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "OFFSET")
   { 
@@ -814,7 +814,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zOFFSET_Mnu();
 	  pNext->Init(cDBase,-1);
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "LNANG")
   { 
@@ -824,7 +824,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zLNANG_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "FIL")
   { 
@@ -834,7 +834,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zFIL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVFIT")
   { 
@@ -844,7 +844,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVFIT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "TEST")
   { 
@@ -854,7 +854,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zTEST_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "FILET")
   { 
@@ -864,7 +864,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zFILET_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "WPSIZE")
   { 
@@ -874,7 +874,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zWPSIZE_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "COPY")
   { 
@@ -884,7 +884,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCOPY_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "FCR")
   { 
@@ -894,7 +894,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zFCR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MCR")
   { 
@@ -904,7 +904,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMCR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PCR")
   { 
@@ -914,7 +914,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zPCR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVMOW")
   { 
@@ -924,7 +924,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVMOW_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MOVE")
   { 
@@ -934,7 +934,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMOVE_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVPTON")
   { 
@@ -944,7 +944,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVPTON_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SUREX")
   { 
@@ -954,7 +954,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSUREX_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SURRV")
   { 
@@ -964,7 +964,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSURRV_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SURCR")
   { 
@@ -974,7 +974,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSURCR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "LAB")
   { 
@@ -984,7 +984,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zLAB_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RCR")
   { 
@@ -994,7 +994,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRCR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "NDMOVE")
   { 
@@ -1004,7 +1004,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zNDMOVE_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "WPMODE")
   { 
@@ -1014,7 +1014,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zWPMODE_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "NDCO")
   { 
@@ -1024,7 +1024,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zNDCO_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVCR")
   { 
@@ -1034,7 +1034,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zCVCR_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "NDONCV")
   { 
@@ -1044,7 +1044,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zNDSONCV_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ELCR")
   { 
@@ -1054,7 +1054,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zELCR_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ELTYPE")
   { 
@@ -1064,7 +1064,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zELTYPE_Mnu();
 	pNext->Init(cDBase,-1)	;
-	pNext->DoMenu(CInMsg,CInMsg2,Pt);
+	pNext->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "PTCR")
   { 
@@ -1074,7 +1074,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zPTCR_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "LN")
   { 
@@ -1084,7 +1084,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zLN_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CIRCR")
   { 
@@ -1094,7 +1094,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zCIRCR_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "LNX")
   { 
@@ -1104,7 +1104,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zLNX_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "LNY")
   { 
@@ -1114,7 +1114,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zLNY_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "LNZ")
   { 
@@ -1124,7 +1124,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zLNZ_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "WPALIGN")
   { 
@@ -1134,7 +1134,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zWPALIGN_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "WPGLOB")
   { 
@@ -1144,7 +1144,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zWPGLOB_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPCR")
   { 
@@ -1154,7 +1154,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPCR_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPLIST")
   { 
@@ -1164,7 +1164,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPLIST_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPDSP")
   { 
@@ -1174,7 +1174,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPDSP_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "FILCLR")
   { 
@@ -1184,7 +1184,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zFILCLR_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPADD")
   { 
@@ -1194,7 +1194,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPADD_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPREM")
   { 
@@ -1204,7 +1204,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPREM_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPSET")
   { 
@@ -1214,7 +1214,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPSET_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPADDGP")
   { 
@@ -1224,7 +1224,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPADDGP_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else
   {
@@ -1240,7 +1240,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zFILALL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   if (CInMsg == "TEXTCR")
   {
@@ -1250,7 +1250,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zTEXTCR_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "GPREMGP")
   {
@@ -1270,7 +1270,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCOL_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "FILSET")
   {
@@ -1280,7 +1280,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSETFIL_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "NDMOLAB2")
   { 
@@ -1290,7 +1290,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zNDMOLAB2_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "DES")
   { 
@@ -1300,7 +1300,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zDES_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MSHLIST")
   {
@@ -1310,7 +1310,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMSHLIST_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "MSHCR")
   {
@@ -1320,7 +1320,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMSHCR_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "MSHACT")
   {
@@ -1330,7 +1330,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMSHACT_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "MSHVIS")
   {
@@ -1340,7 +1340,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMSHVIS_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "MSHDEL")
   {
@@ -1380,7 +1380,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zLSETLIST_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "BSETLIST")
   { 
@@ -1390,7 +1390,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zBSETLIST_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "TSETLIST")
   { 
@@ -1400,7 +1400,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zTSETLIST_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "COPYROT2D")
   { 
@@ -1410,7 +1410,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zCOPYROT2D_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
     else if (CInMsg == "LSETACT")
   { 
@@ -1420,7 +1420,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zLSETACT_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "BSETACT")
   { 
@@ -1430,7 +1430,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zBSETACT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "TSETACT")
   { 
@@ -1440,7 +1440,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zTSETACT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "LSETDEL")
   { 
@@ -1450,7 +1450,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zLSETDEL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "BSETDEL")
   { 
@@ -1460,7 +1460,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zBSETDEL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "TSETDEL")
   { 
@@ -1470,7 +1470,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zTSETDEL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "LSETCR")
   { 
@@ -1480,7 +1480,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zLSETCR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "BSETCR")
   { 
@@ -1490,7 +1490,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zBSETCR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
     else if (CInMsg == "TSETCR")
   { 
@@ -1500,7 +1500,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zTSETCR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "DSPGP")
   { 
@@ -1510,7 +1510,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zDSPGP_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "DSPALL")
   { 
@@ -1520,7 +1520,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zDSPALL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SELINV")
   { 
@@ -1530,7 +1530,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSELINV_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "DSPSEL")
   { 
@@ -1540,7 +1540,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zDSPSEL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPDEL")
   { 
@@ -1550,7 +1550,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zGPDEL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "DELAY")
   { 
@@ -1560,7 +1560,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zDELAY_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ECHO")
   {
@@ -1600,7 +1600,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRESDEL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVMOLWT")
   { 
@@ -1610,7 +1610,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVMOLWT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVMOLWM")
   { 
@@ -1620,7 +1620,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVMOLWM_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
     else if (CInMsg == "CVMOLWL")
   { 
@@ -1630,7 +1630,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVMOLWL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVMOSOL")
   { 
@@ -1640,7 +1640,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVMOSOL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVMODOT")
   { 
@@ -1650,7 +1650,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVMODOT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVMODASH")
   { 
@@ -1660,7 +1660,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVMODASH_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CVMOCTR")
   { 
@@ -1670,7 +1670,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zCVMOCTR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RESLISTEL")
   { 
@@ -1680,7 +1680,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRESLISTEL_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RESREVCOLBAR")
   { 
@@ -1690,7 +1690,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRESREVCOLBAR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "FMESHT")
   { 
@@ -1700,7 +1700,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zFMESHT_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RESSETCOLBAR")
   { 
@@ -1710,7 +1710,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zRESCOLSETBAR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPBYTYPE")
   { 
@@ -1720,7 +1720,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPBYTYPE_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPBYMID")
   { 
@@ -1730,7 +1730,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zGPBYMID_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPNDBYCOL")
   { 
@@ -1740,7 +1740,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPNDBYCOL_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "FEDGE")
   { 
@@ -1750,7 +1750,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zFEDGE_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SNORM")
   { 
@@ -1760,7 +1760,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zSNORM_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MQUADTOTRI")
   { 
@@ -1770,7 +1770,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zMQUADTOTRI_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "FFACE")
   { 
@@ -1780,7 +1780,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zFFACE_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MSHELL")
   { 
@@ -1790,7 +1790,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zMSHELL_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "GPNDBYOSYS")
   { 
@@ -1800,7 +1800,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPNDBYOSYS_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MATEDIT")
   {
@@ -1840,7 +1840,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zGPNDBYDSYS_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "COPYTO")
   { 
@@ -1850,7 +1850,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zCOPYTO_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MOVETO")
   { 
@@ -1860,7 +1860,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zMOVETO_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RESLISTND")
   {
@@ -1880,7 +1880,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zCIRCPT_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RESSETVECSCL")
   {
@@ -1900,7 +1900,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zREFLECT2D_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SURFUNTRIM")
   { 
@@ -1910,7 +1910,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zSURFUNTRIM_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
    else if (CInMsg == "MATLIST")
   { 
@@ -1920,7 +1920,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMATLIST_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MMESHTET")
   { 
@@ -1930,7 +1930,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zMMESHTET_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "MMAT8")
   {
@@ -1950,7 +1950,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zTCR_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "TBCR")
   { 
@@ -1960,7 +1960,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zTBCR_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SOLLIST")
   { 
@@ -1970,7 +1970,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSOLLIST_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SOLCR")
   { 
@@ -1980,7 +1980,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSOLCR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "SPGMOSYS")
   { 
@@ -1990,7 +1990,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSPGMOSYS_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "AMEAS")
   {
@@ -2020,7 +2020,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zACR_Mnu();
 	  pNext->Init(cDBase,-1);
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CHKJAC")
   {
@@ -2040,7 +2040,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSTEPCR_Mnu();
 	  pNext->Init(cDBase,-1);
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "RACR")
   {
@@ -2070,7 +2070,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zFLUXCR_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ELMASS")
   {
@@ -2200,7 +2200,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zPRSPGT_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ELMOSHELLMCYS")
   {
@@ -2220,7 +2220,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zPRSPGR_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "CHK2D")
   {
@@ -2390,7 +2390,7 @@ if (iStat == 0)
 	cDBase->DB_ClearBuff();
 	pNext = new zELREV_Mnu();
 	pNext->Init(cDBase,-1)	;
-	this->DoMenu(CInMsg,CInMsg2,Pt);
+	this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "ELMOLAB2")
   { 
@@ -2400,7 +2400,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zELMOLAB2_Mnu();
 	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,CInMsg2,Pt);
+	  this->DoMenu(CInMsg,Pt);
   }
   else if (CInMsg == "NULL")
   {
@@ -2488,7 +2488,7 @@ return iIsValid;
 
 
 
-int zPT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -2585,7 +2585,7 @@ return RetVal;
 
 
 
-int zSEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSEL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -2642,7 +2642,7 @@ MenuEnd:
 return RetVal;
 } 
 
-int zNDCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zNDCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2;
 CInMsg2=CInMsg;
@@ -2676,7 +2676,7 @@ if (iStat == 2)
 	outtext1("1 Node Created.");
   }
   iStat=1;   
-  this->DoMenu(CInMsg,CInMsg2,Pt);
+  this->DoMenu(CInMsg,Pt);
 }
 if (iStat == 100)  //Cancel Case
 {
@@ -2687,7 +2687,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zBET_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zBET_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -2742,7 +2742,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zTVEC_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zTVEC_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -2820,7 +2820,7 @@ return RetVal;
 } 
 
 
-int zTRAN_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zTRAN_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -2873,7 +2873,7 @@ MenuEnd:
 return RetVal;
 }    
 
-int zONSCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zONSCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -2917,7 +2917,7 @@ MenuEnd:
 return RetVal;
 }    
 
-int zPTCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPTCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2;
 CInMsg2=CInMsg;
@@ -2956,7 +2956,7 @@ if (iStat == 2)
 	outtext1("1 Point Created.");
   }
   iStat=1;   
-  this->DoMenu(CInMsg,CInMsg2,Pt);
+  this->DoMenu(CInMsg,Pt);
 }
 if (iStat == 2)  //Cancel Case
 {
@@ -2967,7 +2967,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zFINDNODE_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zFINDNODE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -3005,7 +3005,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zLNANG_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLNANG_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3066,7 +3066,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zLNX_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLNX_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3101,7 +3101,7 @@ else if (iStat == 1)
   cDBase->AddLN(p1,p2,-1,TRUE);
   outtext1("1 Line Created.");
   iStat=0;   
-  this->DoMenu(CInMsg,CInMsg2,Pt);
+  this->DoMenu(CInMsg,Pt);
 }
 //Escape clause
 if (iStat == 100)
@@ -3116,7 +3116,7 @@ return RetVal;
 }
 
 
-int zLN_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLN_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3157,7 +3157,7 @@ else if (iStat == 2)
   outtext1("1 Line Created.");
   iStat=0;  
   cDBase->bLineDrag = FALSE;
-  this->DoMenu(CInMsg,CInMsg2,Pt);
+  this->DoMenu(CInMsg,Pt);
 }
 //Escape clause
 if (iStat == 100)
@@ -3172,7 +3172,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zLNC_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -3235,7 +3235,7 @@ MenuEnd:
 }
 
 
-int zCIRCPT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCIRCPT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3293,7 +3293,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zTEXTCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zTEXTCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3353,7 +3353,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCIR3PT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCIR3PT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3414,7 +3414,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zARC3PT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zARC3PT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3476,7 +3476,7 @@ return RetVal;
 }
 
 
-int zRECT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRECT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3532,7 +3532,7 @@ return RetVal;
 }
 
 
-int zLNY_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLNY_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3567,7 +3567,7 @@ if (iStat == 1)
   cDBase->AddLN(p1,p2,-1,TRUE);
   outtext1("1 Line Created.");
   iStat=0;   
-  this->DoMenu(CInMsg,CInMsg2,Pt);
+  this->DoMenu(CInMsg,Pt);
 }
 //Escape clause
 if (iStat == 100)
@@ -3581,7 +3581,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zLNZ_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLNZ_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3617,7 +3617,7 @@ if (iStat == 1)
   cDBase->AddLN(p1,p2,-1,TRUE);
   outtext1("1 Line Created.");
   iStat=0;   
-  this->DoMenu(CInMsg,CInMsg2,Pt);
+  this->DoMenu(CInMsg,Pt);
 }
 //Escape clause
 if (iStat == 100)
@@ -3631,7 +3631,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zKEY_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zKEY_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3670,7 +3670,7 @@ return RetVal;
 
 
 
-int zWPALIGN_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zWPALIGN_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3735,7 +3735,7 @@ MenuEnd:
 return RetVal;
 }      
 
-int zWPONCV_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zWPONCV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3818,7 +3818,7 @@ MenuEnd:
 return RetVal;
 }    
 
-int zWPONSURF_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zWPONSURF_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3898,7 +3898,7 @@ return RetVal;
 }    
 
 
-int zWPCENT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zWPCENT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -3944,7 +3944,7 @@ return RetVal;
 }   
 
 
-int zALIGN_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zALIGN_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4057,7 +4057,7 @@ MenuEnd:
 return RetVal;
 }   
 
-int zREFLECT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zREFLECT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4139,7 +4139,7 @@ MenuEnd:
 return RetVal;
 } 
 
-int zREFLECT2D_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zREFLECT2D_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4215,7 +4215,7 @@ return RetVal;
 } 
 
 
-int zROTANG_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zROTANG_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4288,7 +4288,7 @@ return RetVal;
 }   
 
 
-int zROTABOUT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zROTABOUT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4369,7 +4369,7 @@ MenuEnd:
 return RetVal;
 } 
 
-int zCOPYROT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCOPYROT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4462,7 +4462,7 @@ MenuEnd:
 return RetVal;
 } 
 
-int zCOPYROT2D_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCOPYROT2D_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4548,7 +4548,7 @@ MenuEnd:
 return RetVal;
 } 
 
-int zINSCAT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zINSCAT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4586,7 +4586,7 @@ MenuEnd:
 return RetVal;
 } 
 
-int zSCALE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSCALE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4657,7 +4657,7 @@ MenuEnd:
 return RetVal;
 } 
 
-int zCOORDCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCOORDCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4741,7 +4741,7 @@ MenuEnd:
 return RetVal;
 }   
 
-int zWPGLOB_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zWPGLOB_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 outtext1("WP Set to Global.");
@@ -4754,7 +4754,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zSOLVE_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zSOLVE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
   cDBase->SolveStress();
@@ -4762,7 +4762,7 @@ int zSOLVE_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
   return RetVal;
 }
 
-int zCIRCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCIRCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4805,7 +4805,7 @@ if (iStat == 3)
   cDBase->AddCirCR(vN,p1,vR.x,-1);
   outtext1("1 Circle Created.");
   iStat = 2;
-  this->DoMenu(CInMsg,CInMsg2,Pt);
+  this->DoMenu(CInMsg,Pt);
 }
 //Escape clause
 if (iStat == 100)
@@ -4819,7 +4819,7 @@ MenuEnd:
 return RetVal;
 }   
 
-int zNDSONCV_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zNDSONCV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4876,7 +4876,7 @@ MenuEnd:
 return RetVal;
 }   
 
-int zTEST_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zTEST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4906,7 +4906,7 @@ MenuEnd:
 return RetVal;
 }   
 
-int zCVMOW_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVMOW_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -4966,7 +4966,7 @@ return RetVal;
 
 
 
-int zCVPTON_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVPTON_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -5015,7 +5015,7 @@ return RetVal;
 }   
 
 
-int zELTYPE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zELTYPE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -5115,7 +5115,7 @@ return RetVal;
 }
 
 
-int zELCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zELCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 int noNodes;
 
@@ -5206,7 +5206,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zLMEAS_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLMEAS_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -5256,7 +5256,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zAMEAS_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zAMEAS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
   if (pNext == NULL)
@@ -5317,7 +5317,7 @@ int zAMEAS_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
   return RetVal;
 }
 
-int zFILET_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zFILET_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CPoint PNear1;
 CPoint PNear2;
@@ -5378,7 +5378,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCVCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 	CString CInMsg2;
 	CInMsg2 = CInMsg;
@@ -5428,7 +5428,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zCVFIT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVFIT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 	CString CInMsg2;
 	CInMsg2 = CInMsg;
@@ -5486,7 +5486,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zSUREX_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSUREX_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -5555,7 +5555,7 @@ return RetVal;
 
 
 
-int zSURRV_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSURRV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -5659,7 +5659,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCVONSUR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVONSUR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -5729,7 +5729,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSURTRIM_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSURTRIM_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -5798,7 +5798,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMMESHQ_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMMESHQ_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -5858,7 +5858,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSURFUNTRIM_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSURFUNTRIM_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -5907,7 +5907,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMMESHT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMMESHT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -5970,7 +5970,7 @@ return RetVal;
 }
 
 
-int zMMESHAF_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zMMESHAF_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -6036,7 +6036,7 @@ return RetVal;
 }
 
 
-int zEXTRACT_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zEXTRACT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -6090,7 +6090,7 @@ MenuEnd:
 }
 
 
-int zMMESHSZ_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zMMESHSZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -6155,7 +6155,7 @@ return RetVal;
 
 }
 
-int zMMESHBZ_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zMMESHBZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -6219,7 +6219,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zFMESHT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zFMESHT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -6282,7 +6282,7 @@ return RetVal;
 }
 
 
-int zSURTRIMLOOP_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSURTRIMLOOP_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -6351,7 +6351,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSURCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSURCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -6405,7 +6405,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSURSWEEP_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSURSWEEP_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -6470,7 +6470,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSDSEC_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSDSEC_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 	DoNext(&CInMsg,Pt);
 	if (pNext==NULL)
@@ -6512,7 +6512,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSURBOUND_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zSURBOUND_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -6563,7 +6563,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zCVMOLWT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVMOLWT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -6607,7 +6607,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCVMOLWM_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVMOLWM_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -6651,7 +6651,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCVMOLWL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVMOLWL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -6700,7 +6700,7 @@ return RetVal;
 
 
 
-int zCVMOSOL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVMOSOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -6744,7 +6744,7 @@ return RetVal;
 }
 
 
-int zCVMODOT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVMODOT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -6787,7 +6787,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCVMOCTR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVMOCTR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -6830,7 +6830,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCVMODASH_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCVMODASH_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -6878,7 +6878,7 @@ return RetVal;
 
 
 
-int zFIL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zFIL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -6952,7 +6952,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCORNER_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCORNER_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -7005,7 +7005,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zPROJ_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPROJ_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -7058,7 +7058,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zKNOTINS_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zKNOTINS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
 
@@ -7119,7 +7119,7 @@ MenuEnd:
 }
 
 
-int zKNOTMOD_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zKNOTMOD_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
 
@@ -7182,7 +7182,7 @@ MenuEnd:
   return RetVal;
 }
 
-int zINT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zINT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -7229,7 +7229,7 @@ return RetVal;
 }
 
 
-int zNODEX_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zNODEX_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
   if (pNext == NULL)
@@ -7293,7 +7293,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zNODEY_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zNODEY_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
   if (pNext == NULL)
@@ -7357,7 +7357,7 @@ int zNODEY_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
   return RetVal;
 }
 
-int zNODEZ_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zNODEZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
   if (pNext == NULL)
@@ -7421,7 +7421,7 @@ MenuEnd:
   return RetVal;
 }
 
-int zFCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zFCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -7486,7 +7486,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zACR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zACR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -7551,7 +7551,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zRACR_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zRACR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
   if (pNext == NULL)
@@ -7640,7 +7640,7 @@ MenuEnd:
 
 //class zTBCR_Mnu: public zMnu
 //class zFLUXCR_Mnu: public zMnu
-int zTBCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zTBCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -7705,7 +7705,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zFLUXCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zFLUXCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -7771,7 +7771,7 @@ return RetVal;
 }
 
 
-int zTCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zTCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -7836,7 +7836,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -7902,7 +7902,7 @@ return RetVal;
 }
 
 
-int zPCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -7968,7 +7968,7 @@ return RetVal;
 }
 
 
-int zRESLISTEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRESLISTEL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -8023,7 +8023,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zRESLISTND_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zRESLISTND_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -8079,7 +8079,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zCNODES_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCNODES_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -8148,7 +8148,7 @@ return RetVal;
 
 
 
-int zRCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -8224,7 +8224,7 @@ return RetVal;
 }
 
 
-int zCOL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -8282,7 +8282,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zLABENT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLABENT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -8322,7 +8322,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zELMOPID_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zELMOPID_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -8385,7 +8385,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zELREV_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zELREV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -8438,7 +8438,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCHKCIRCUMSPH_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zCHKCIRCUMSPH_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	CString CInMsg2 = CInMsg;
 	DoNext(&CInMsg, Pt);
@@ -8489,7 +8489,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zPRBROD_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRBROD_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -8605,7 +8605,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zPRROD_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRROD_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -8741,7 +8741,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zPRBAR2_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zPRBAR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	CString CInMsg2 = CInMsg;
 	DoNext(&CInMsg, Pt);
@@ -8917,7 +8917,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zPRBBAR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRBBAR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -9055,7 +9055,7 @@ return RetVal;
 }
 
 
-int zQWNODES_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zQWNODES_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -9100,7 +9100,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMERNODES_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMERNODES_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -9216,7 +9216,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCHKSHELLASP_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zCHKSHELLASP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   CString CInMsg2 = CInMsg;
   DoNext(&CInMsg, Pt);
@@ -9316,7 +9316,7 @@ MenuEnd:
   return RetVal;
 }
 
-int zCHKTETCOL_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zCHKTETCOL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   CString CInMsg2 = CInMsg;
   DoNext(&CInMsg, Pt);
@@ -9415,7 +9415,7 @@ MenuEnd:
   return RetVal;
 }
 
-int zPRCMAT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRCMAT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -9510,7 +9510,7 @@ return RetVal;
 }
 
 
-int zPRSOLID_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRSOLID_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -9608,7 +9608,7 @@ return RetVal;
 }
 
 
-int zPRSHELL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRSHELL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -9745,7 +9745,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zPRSPGT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRSPGT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -9902,7 +9902,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zPRMASS_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zPRMASS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   CString CInMsg2 = CInMsg;
   DoNext(&CInMsg, Pt);
@@ -9997,7 +9997,7 @@ MenuEnd:
   return RetVal;
 }
 
-int zPRSPGR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRSPGR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -10155,7 +10155,7 @@ return RetVal;
 }
 
 
-int zPRBBOX_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRBBOX_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -10337,7 +10337,7 @@ return RetVal;
 
 
 
-int zMMAT8_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMMAT8_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -10580,7 +10580,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMMAT1_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zMMAT1_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   CString CInMsg2 = CInMsg;
   DoNext(&CInMsg, Pt);
@@ -10757,7 +10757,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zPRBTUBE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRBTUBE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -10894,7 +10894,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zNDMOLAB2_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zNDMOLAB2_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -10957,7 +10957,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zELMOLAB2_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zELMOLAB2_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -11022,7 +11022,7 @@ return RetVal;
 }
 
 
-int zNDMOLAB_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zNDMOLAB_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -11086,7 +11086,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zELMOLAB_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zELMOLAB_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -11151,7 +11151,7 @@ return RetVal;
 }
 
 
-int zNDMOOSYS_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zNDMOOSYS_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -11216,7 +11216,7 @@ return RetVal;
 }
 
 
-int zELMOSHELLMCYS_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zELMOSHELLMCYS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   CString CInMsg2 = CInMsg;
   DoNext(&CInMsg, Pt);
@@ -11293,7 +11293,7 @@ MenuEnd:
   return RetVal;
 }
 
-int zSPGMOSYS_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSPGMOSYS_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -11371,7 +11371,7 @@ return RetVal;
 }
 
 
-int zNDMORSYS_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zNDMORSYS_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -11434,7 +11434,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zWPSIZE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zWPSIZE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -11473,7 +11473,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zRESCOLSETBAR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRESCOLSETBAR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -11513,7 +11513,7 @@ return RetVal;
 }
 
 
-int zBUPVEC_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zBUPVEC_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -11583,7 +11583,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zBOFF_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zBOFF_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -11653,7 +11653,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zBDOFA_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zBDOFA_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	CString CInMsg2 = CInMsg;
 	DoNext(&CInMsg, Pt);
@@ -11718,7 +11718,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zBDOFB_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zBDOFB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	CString CInMsg2 = CInMsg;
 	DoNext(&CInMsg, Pt);
@@ -11784,7 +11784,7 @@ MenuEnd:
 }
 
 
-int zSOFF_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSOFF_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -11855,7 +11855,7 @@ return RetVal;
 }
 
 
-int zNDCO_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zNDCO_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -11938,7 +11938,7 @@ return RetVal;
 
 
 
-int zELSWEEP_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zELSWEEP_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -12014,7 +12014,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zELSWEEPB_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zELSWEEPB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -12082,7 +12082,7 @@ MenuEnd:
 }
 
 
-int zCOPY_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCOPY_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -12153,7 +12153,7 @@ return RetVal;
 }
 
 
-int zCOPYTO_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCOPYTO_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -12214,7 +12214,7 @@ if (iStat == 5)
   vT-=vF;
   cDBase->Copy(cDBase->OTemp,vT,(int) 1);
   iStat=4;
-  this->DoMenu(CInMsg,CInMsg2,Pt);
+  this->DoMenu(CInMsg,Pt);
 }
 //Escape clause
 if (iStat == 100)
@@ -12230,7 +12230,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zOFFSET_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zOFFSET_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -12286,7 +12286,7 @@ if (iStat == 5)
   ptVec=cDBase->DB_PopBuff();
   cDBase->OffSet(pO,ptVec,dDist.x);
   iStat = 2;
-  this->DoMenu(CInMsg,CInMsg2,Pt);
+  this->DoMenu(CInMsg,Pt);
 }
 //Escape clause
 if (iStat == 100)
@@ -12300,7 +12300,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMOVE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMOVE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -12359,7 +12359,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMOVETO_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMOVETO_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -12422,7 +12422,7 @@ if (iStat == 5)
   cDBase->MoveObjs(cDBase->OTemp,vT);
   cDBase->S_Res();
   RetVal = 1;
-  //this->DoMenu(CInMsg,CInMsg2,Pt);
+  //this->DoMenu(CInMsg,Pt);
 }
 //Escape clause
 if (iStat == 100)
@@ -12438,7 +12438,7 @@ return RetVal;
 
 
 
-int zNDMOVE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zNDMOVE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 int noNodes;
 noNodes=cDBase->pCurrentMesh->GetNoNode(cDBase->iCurElemType);
@@ -12517,7 +12517,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zWPMODE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zWPMODE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -12546,7 +12546,7 @@ return RetVal;
 }   
 
 
-int zNDBET_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zNDBET_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 int noNodes;
 noNodes=cDBase->pCurrentMesh->GetNoNode(cDBase->iCurElemType);
@@ -12622,7 +12622,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMESHQND_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMESHQND_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 int noNodes;
 noNodes=cDBase->pCurrentMesh->GetNoNode(cDBase->iCurElemType);
@@ -12700,7 +12700,7 @@ return RetVal;
 
 
 
-int zGPCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 if (pNext==NULL)
@@ -12728,7 +12728,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zLAB_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLAB_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 if (CInMsg!="MouseInp")
@@ -12807,7 +12807,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zGPBYPID_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPBYPID_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Creating Groups by Property ID.");
 cDBase->AddToGroupbyPID(-1);
@@ -12815,7 +12815,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zCHKJAC_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zCHKJAC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   outtext1("Checking for Negative Volume Elements.");
   cDBase->ChkNegJac();
@@ -12823,7 +12823,7 @@ int zCHKJAC_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
   return RetVal;
 }
 
-int zDSPGP_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zDSPGP_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Displaying Current Group:-");
 cDBase->Dsp_Group();
@@ -12831,7 +12831,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zDSPALL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zDSPALL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 cDBase->Dsp_All();
@@ -12840,7 +12840,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zSHOWALL_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zSHOWALL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
 	cDBase->Dsp_ShowAll();
@@ -12848,7 +12848,7 @@ int zSHOWALL_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
 	return RetVal;
 }
 
-int zHIDE_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zHIDE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -12892,7 +12892,7 @@ int zHIDE_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
 MenuEnd:
 	return RetVal;
 }
-int zDSPSEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zDSPSEL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 cDBase->Dsp_All();
@@ -12901,7 +12901,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zDES_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zDES_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 cDBase->S_Des();
@@ -12909,7 +12909,7 @@ cDBase->ReDraw();
 RetVal = 1;
 return RetVal;
 }
-int zGPBYMID_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPBYMID_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Creating Groups by Material ID.");
 cDBase->AddToGroupbyMID(-1);
@@ -12917,7 +12917,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zSELBYPID_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSELBYPID_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -12971,7 +12971,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMATEDIT_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zMATEDIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
   DoNext(&CInMsg, Pt);
@@ -13024,7 +13024,7 @@ MenuEnd:
 }
 
 
-int zPREDIT_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zPREDIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
   DoNext(&CInMsg, Pt);
@@ -13077,7 +13077,7 @@ MenuEnd:
   return RetVal;
 }
 
-int zOEDIT_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zOEDIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
 	DoNext(&CInMsg, Pt);
@@ -13117,7 +13117,7 @@ MenuEnd:
 }
 
 
-int zMATLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMATLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -13170,7 +13170,7 @@ return RetVal;
 
 
 
-int zPRLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -13220,7 +13220,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMMESHTET_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMMESHTET_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -13294,7 +13294,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMSHELL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMSHELL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -13360,7 +13360,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zFFACE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zFFACE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -13414,7 +13414,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMQUADTOTRI_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMQUADTOTRI_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -13467,7 +13467,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCHK2D_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zCHK2D_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -13521,7 +13521,7 @@ MenuEnd:
 }
 
 
-int zFEDGE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zFEDGE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -13574,7 +13574,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zELMASS_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zELMASS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
   if (pNext == NULL)
@@ -13627,7 +13627,7 @@ MenuEnd:
   return RetVal;
 }
 
-int zCELM_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zCELM_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
   if (pNext == NULL)
@@ -13682,7 +13682,7 @@ MenuEnd:
 
 
 
-int zSNORM_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSNORM_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -13735,7 +13735,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zPRLISTALL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zPRLISTALL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 cDBase->ListAllProps();
@@ -13743,7 +13743,7 @@ RetVal = 2;
 return RetVal;
 }
 
-int zSOLLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSOLLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 cDBase->ListSolutions();
@@ -13752,7 +13752,7 @@ return RetVal;
 }
 
 
-int zSOLCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSOLCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -13837,7 +13837,7 @@ return RetVal;
 }
 
 
-int zSTEPCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSTEPCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -13982,7 +13982,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMATLISTALL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zMATLISTALL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 cDBase->ListAllMats();
@@ -13990,7 +13990,7 @@ RetVal = 2;
 return RetVal;
 }
 
-int zRELTO_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRELTO_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
 DoNext(&CInMsg,Pt);
@@ -14066,7 +14066,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zELAT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zELAT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14119,7 +14119,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zCOLINE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zCOLINE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14165,7 +14165,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSELNODESBYCOL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSELNODESBYCOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14219,7 +14219,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zRESDISPOFF_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zRESDISPOFF_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
 	DoNext(&CInMsg, Pt);
@@ -14272,7 +14272,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zSELSURFCOL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSELSURFCOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14326,7 +14326,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSELPTSCOL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSELPTSCOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14381,7 +14381,7 @@ return RetVal;
 }
 
 
-int zSELCURCOL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSELCURCOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14435,7 +14435,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSELBYCOL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSELBYCOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14489,7 +14489,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSELBYTYPE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSELBYTYPE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14543,7 +14543,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSELALL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSELALL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14597,7 +14597,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSELINV_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSELINV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14625,7 +14625,7 @@ return RetVal;
 }
 
 
-int zGPBYCOL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPBYCOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Creating Groups by Element Colour.");
 cDBase->AddToGroupbyCol(-1);
@@ -14633,7 +14633,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zGPNDBYCOL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPNDBYCOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Creating Groups by Node Colour.");
 cDBase->AddToGroupbyNDCol(-1);
@@ -14641,7 +14641,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zGPNDBYOSYS_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPNDBYOSYS_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Creating Groups by Node Output System.");
 cDBase->AddToGroupbyNDOSYS(-1);
@@ -14649,7 +14649,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zGPNDBYDSYS_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPNDBYDSYS_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Creating Groups by Node Definition System.");
 cDBase->AddToGroupbyNDDSYS(-1);
@@ -14657,7 +14657,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zGPBYTYPE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPBYTYPE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Creating Groups by Element Type.");
 cDBase->AddToGroupbyType(-1);
@@ -14665,7 +14665,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zSELBYMID_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSELBYMID_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -14703,7 +14703,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zGPSET_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPSET_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14743,7 +14743,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zGPDEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPDEL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14782,7 +14782,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zLSETDEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLSETDEL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14822,7 +14822,7 @@ return RetVal;
 }
 
 
-int zBSETDEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zBSETDEL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14861,7 +14861,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zTSETDEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zTSETDEL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14900,7 +14900,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zDELAY_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zDELAY_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -14940,7 +14940,7 @@ return RetVal;
 }
 
 
-int zECHO_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zECHO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -14976,7 +14976,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zRESDELAY_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zRESDELAY_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 DoNext(&CInMsg, Pt);
 if (pNext == NULL)
@@ -15013,7 +15013,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zRESLSTRESP_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zRESLSTRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -15050,7 +15050,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zRESFRAMES_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zRESFRAMES_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -15089,7 +15089,7 @@ MenuEnd:
 
 
 
-int zRESVEC_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRESVEC_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15127,7 +15127,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zRESVECDEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zRESVECDEL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -15154,7 +15154,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zRESSEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zRESSEL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -15193,7 +15193,7 @@ MenuEnd:
 }
 
 
-int zRESSETDEFSCL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRESSETDEFSCL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15231,7 +15231,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zRESSETVECSCL_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zRESSETVECSCL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -15270,7 +15270,7 @@ MenuEnd:
 }
 
 
-int zRESSELDEF_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRESSELDEF_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15308,7 +15308,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zMSHLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zMSHLIST_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -15334,7 +15334,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zMSHCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zMSHCR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
 	if (pNext == NULL)
@@ -15362,7 +15362,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zMSHACT_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zMSHACT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
 	DoNext(&CInMsg, Pt);
@@ -15402,7 +15402,7 @@ int zMSHACT_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
 	return RetVal;
 }
 
-int zMSHVIS_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zMSHVIS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
 	DoNext(&CInMsg, Pt);
@@ -15442,7 +15442,7 @@ int zMSHVIS_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
 	return RetVal;
 }
 
-int zMSHDEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zMSHDEL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
 	DoNext(&CInMsg, Pt);
@@ -15482,7 +15482,7 @@ MenuEnd:
 	return RetVal;
 }
 
-int zLSETLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLSETLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15508,7 +15508,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zLSETACT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLSETACT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -15548,7 +15548,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zSTEPACT_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zSTEPACT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
   DoNext(&CInMsg, Pt);
@@ -15588,7 +15588,7 @@ MenuEnd:
   return RetVal;
 }
 
-int zSOLACT_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zSOLACT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
   DoNext(&CInMsg, Pt);
@@ -15628,7 +15628,7 @@ MenuEnd:
   return RetVal;
 }
 
-int zBSETACT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zBSETACT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -15668,7 +15668,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zBSETLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zBSETLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15694,7 +15694,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zTSETLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zTSETLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15720,7 +15720,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zTSETACT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zTSETACT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 DoNext(&CInMsg,Pt);
@@ -15760,7 +15760,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zLSETCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zLSETCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15804,7 +15804,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zBSETCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zBSETCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15848,7 +15848,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zTSETCR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zTSETCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15894,7 +15894,7 @@ return RetVal;
 
 
 
-int zSETFIL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zSETFIL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15933,7 +15933,7 @@ return RetVal;
 }
 
 
-int zGPREMGP_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPREMGP_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -15970,7 +15970,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zGPADDGP_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPADDGP_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -16007,7 +16007,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zQANGSIZE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zQANGSIZE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -16043,7 +16043,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zQSIZE_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zQSIZE_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
@@ -16079,35 +16079,35 @@ MenuEnd:
 return RetVal;
 }
 
-int zGPLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 cDBase->ListGp();
 RetVal = 2;
 return RetVal;
 }
 
-int zGPNEXT_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPNEXT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 cDBase->NextGp();
 RetVal = 2;
 return RetVal;
 }
 
-int zGPPREV_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPPREV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 cDBase->PrevGp();
 RetVal = 2;
 return RetVal;
 }
 
-int zRESSETLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRESSETLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 cDBase->ListResSets();
 RetVal = 2;
 return RetVal;
 }
 
-int zRESVECLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
+int zRESVECLIST_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	cDBase->ListVecSets();
 	RetVal = 2;
@@ -16115,7 +16115,7 @@ int zRESVECLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2, CPoint Pt)
 }
 
 
-int zRESDEL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRESDEL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 cDBase->DelResSets();
 outtext1("All Results Deleted.");
@@ -16123,7 +16123,7 @@ RetVal = 2;
 return RetVal;
 }
 
-int zRESREVCOLBAR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRESREVCOLBAR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
 cDBase->RevColourBar();
@@ -16131,7 +16131,7 @@ RetVal = 2;
 return RetVal;
 }
 
-int zRESSETFULLLIST_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zRESSETFULLLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 cDBase->ListResSet();
 RetVal = 2;
@@ -16139,7 +16139,7 @@ return RetVal;
 }
 
 
-int zGPDSP_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPDSP_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Displaying Current Group.");
 cDBase->Dsp_Group();
@@ -16147,7 +16147,7 @@ RetVal = 2;
 return RetVal;
 }
 
-int zFILALL_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zFILALL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Filter Set to All.");
 cDBase->FILTER.SetAll();
@@ -16155,7 +16155,7 @@ RetVal = 2;
 return RetVal;
 }
 
-int zFILCLR_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zFILCLR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Filter Cleared.");
 cDBase->FILTER.Clear();
@@ -16163,7 +16163,7 @@ RetVal = 2;
 return RetVal;
 }
 
-int zGPADD_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPADD_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Selected Items Added to Group.");
 cDBase->AddToGroup();
@@ -16171,7 +16171,7 @@ RetVal = 1;
 return RetVal;
 }
 
-int zGPREM_Mnu::DoMenu(CString CInMsg,CString CInMsg2,CPoint Pt)
+int zGPREM_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 outtext1("Selected Items Removed from Group.");
 cDBase->RemFromGroup();

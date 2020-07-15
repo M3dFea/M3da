@@ -453,19 +453,17 @@ void outtextMSG(CString AAA)
 {
   CString a;
   CString b;
-  CString c;
   Edit3->GetWindowText(b);
   int iRetPos = b.Find(13);
   while (iRetPos != -1)
   {
     a = b.Left(iRetPos);
-	c = a;
     b = b.Right(b.GetLength()-iRetPos-2);
 	a.MakeUpper();
 	if (a.Find("/")==-1)
 	{
 	 outtext2(a);
-     SendMsg(a,c);
+     SendMsg(a);
 	}
     a ="";
     Edit3->SetWindowText(a);
@@ -480,7 +478,7 @@ void outtextMSG2(CString AAA)
 CString  strNewText;
 strNewText.Format("%s\r",AAA);
 outtext2(strNewText);
-SendMsg(AAA,AAA);
+SendMsg(AAA);
 }
 
 void CMainFrame::OnSize(UINT nType, int cx, int cy)
