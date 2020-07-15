@@ -36410,12 +36410,33 @@ void Text::OglDraw(int iDspFlgs, double dS1, double dS2)
 
 void Text::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
-	glColor3fv(cols[GetCol()]);
-	glPointSize(10.0f);
-	glBegin(GL_POINTS);
+	Symbol* pS = NULL;
+	if ((iDspFlgs & DSP_LINE) > 0)
+	{
+		Selectable = 1;
+		pS = (Symbol*)pSyms->Head;
+		while (pS != NULL)
+		{
+			pS->Selectable = 1;
+			pS = (Symbol*)pS->next;
+		}
+		glColor3fv(cols[GetCol()]);
+		glPointSize(10.0f);
+		glBegin(GL_POINTS);
 		glVertex3f((float)inPt.x, (float)inPt.y, (float)inPt.z);
-	glEnd();
-	pSyms->OglDrawW(iDspFlgs, dS1, dS2);
+		glEnd();
+		pSyms->OglDrawW(iDspFlgs, dS1, dS2);
+	}
+	else
+	{
+		Selectable = 0;
+		pS = (Symbol*)pSyms->Head;
+		while (pS != NULL)
+		{
+			pS->Selectable = 0;
+			pS = (Symbol*)pS->next;
+		}
+	}
 }
 
 G_ObjectD Text::SelDist(CPoint InPT, Filter FIL)
