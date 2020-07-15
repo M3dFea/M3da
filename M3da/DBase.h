@@ -42,10 +42,9 @@ virtual ~DBase();
 void DeleteAll();
 int DspFlags;
 BOOL bPICK;
-int iVER;
+
 int iNoSymbols;
-double dAveW=1;
-double dAveH=1;
+int iVER;
 Symbol* pSymTable[MAX_SYMBOLS];
 void ClearSymTable();
 void AddSymbol(Symbol* pSym);
