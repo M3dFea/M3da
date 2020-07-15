@@ -3177,36 +3177,7 @@ void cLinkList::OglDraw(int iDspFlgs,double dS1,double dS2)
 OglDrawW(iDspFlgs,dS1,dS2);
 }
 
-//****************************************************************************
-//26/09/2016
-//Link class simples way of storing lists of lines
-//used for symbols
-//****************************************************************************
 
-Link::Link()
-{
-pNext=NULL;
-}
-
-Link::Link(double x1, double y1, double z1,
-	       double x2, double y2, double z2)
-{
-pNext=NULL;
-p1 =new CvPt_Object();
-p2 =new CvPt_Object();
-
-p1->Pt_Point->x=x1; p1->Pt_Point->y=y1; p1->Pt_Point->z=z1;
-p2->Pt_Point->x=x2; p2->Pt_Point->y=y2; p2->Pt_Point->z=z2;
-}
-
-Link::~Link()
-{
-if (p1!=NULL)
-  delete(p1);
-if (p2!=NULL)
-  delete(p2);
-pNext=NULL;
-}
 
 
 
@@ -36374,29 +36345,15 @@ Text::Text()
 	iObjType = 6;
 	iLabel = -1;
 	iColour = 100;
+	inPt = NULL;
 	pSyms = new cLinkedList();
 	sText = "";
-}
-
-Text::Text(CString sT, C3dVector vIn, C3dVector vN, double dH)
-{
-	pParent = NULL;
-	Drawn = 0;
-	Selectable = 1;
-	Visable = 1;
-	iObjType = 6;
-	iLabel = -1;
-	iColour = 100;
-	pSyms = new cLinkedList();
-	sText = "";
-	inPt= vIn;
-	vNorm=vN;
-	dTextHeight=dH;
-	sText=sT;
 }
 
 Text::~Text()
 {
+	if (inPt != NULL)
+		delete(inPt);
 	if (pSyms != NULL)
 		pSyms->DeleteAll();
 }
@@ -36461,6 +36418,16 @@ void Text::HighLight(CDC* pDC)
 	}
 }
 
+void Text::Transform(C3dMatrix TMat)
+{
+	Symbol* pS = NULL;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Transform(TMat);
+		pS = (Symbol*)pS->next;
+	}
+}
 
 void Text::Translate(C3dVector vIn)
 {
@@ -36500,8 +36467,7 @@ iObjType = 5;
 iLabel = -1;
 iColour = 2;
 pParent = NULL;
-pL=NULL;
-
+pL=new cLinkedList();
 inPt=NULL;
 iSegs=0;
 }
@@ -36513,13 +36479,6 @@ Symbol::~Symbol()
   if (vCent!=NULL)
     delete(vCent);
 
-  Link* pNext;
-  while (pL!=NULL) 
-  {  
-	pNext=pL->pNext;
-    delete (pL);
-    pL=pNext;
-  } 
 }
 
 void Symbol::Create(int iLab,C3dVector inP,G_Object* Parrent)
@@ -36535,14 +36494,13 @@ if (inPt!=NULL)
   { delete(inPt);}
 inPt=new CvPt_Object;
 inPt->Create(inP,0,-1,0,0,1,this);
-pL=NULL;
 iSegs=0;
 }
 
 void Symbol::addSeg(C3dVector pt1,C3dVector pt2)
 {
 
-Link* pSeg = new Link(pt1.x,pt1.y,pt1.z,
+cLink* pSeg = new Link(pt1.x,pt1.y,pt1.z,
 					  pt2.x,pt2.y,pt2.z);
 
 pSeg->pNext=pL;
@@ -36786,6 +36744,21 @@ void Symbol::Translate(C3dVector vIn)
 	}
 }
 
+void Symbol::Transform(C3dMatrix TMat)
+{
+	Link* pCL = pL;
+	vCent->Transform(TMat);
+	inPt->Transform(TMat);
+	pCL = pL;
+	while (pCL != NULL)
+	{
+		pCL->p1->Transform(TMat);
+		pCL->p2->Transform(TMat);
+		pCL = pCL->pNext;
+	}
+}
+
+
 void Symbol::Move(C3dVector vM)
 {
 	Link* pCL = pL;
@@ -36799,6 +36772,45 @@ void Symbol::Move(C3dVector vM)
 		pCL = pCL->pNext;
 	}
 }
+
+void Symbol::Serialize(CArchive& ar, int iV)
+{
+	//int i;
+	//Link* pCL;
+	//if (ar.IsStoring())
+	//{
+	//	G_Object::Serialize(ar, iV);
+	//	inPt->Serialize(ar, iV);
+	//	vCent->Serialize(ar, iV);;
+	//	ar<<w;                   
+	//	ar<<h;                   
+	//	ar<<iSegs;
+	//	pCL = pL;
+	//	for (i = 0; i < iSegs; i++)
+	//	{
+	//		pCL->p1->Serialize(ar, iV);
+	//		pCL->p2->Serialize(ar, iV);
+	//		pCL = pCL->pNext;
+	//	}
+	//}
+	//else
+	//{
+	//	G_Object::Serialize(ar, iV);
+	//	inPt->Serialize(ar, iV);
+	//	vCent->Serialize(ar, iV);;
+	//	ar >> w;
+	//	ar >> h;
+	//	//ar  iSegs;
+	//	//pCL = pL;
+	//	//for (i = 0; i < iSegs; i++)
+	//	//{
+	//	//	pCL->p1->Serialize(ar, iV);
+	//	//	pCL->p2->Serialize(ar, iV);
+	//	//	pCL = pCL->pNext;
+	//	//}
+	//}
+}
+
 
 
 //*****************************************************************************************
