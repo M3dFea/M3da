@@ -10242,13 +10242,13 @@ ReDraw();
 void DBase::Test3()
 {
   //outtext1("TEST PROCEDURE");
-	//C3dVector vIn;
-	//vIn.Set(1, 1, 1);
-	//AddText("Hello World", vIn);
+	C3dVector vIn;
+	vIn.Set(1, 1, 1);
+	AddText("Hello World", vIn);
   //displaySymTable();
-  CPcompEditor Dlg;
+  //CPcompEditor Dlg;
   //Dlg.pEnt = P;
-  Dlg.DoModal();
+  //Dlg.DoModal();
 }
 
 
@@ -18739,10 +18739,8 @@ int i;
 return (pRet);
 }
 
-//*********************************************************
-// Text to be inserted ay vInPt and transformed tp vN
-//*********************************************************
-void DBase::AddText(C3dVector vN,C3dVector vInPt, CString inText)
+
+void DBase::AddText(CString inText,C3dVector vInPt)
 {
 	int i=0;
 	int iL=0;
@@ -18753,7 +18751,8 @@ void DBase::AddText(C3dVector vN,C3dVector vInPt, CString inText)
 	Symbol* pSym = NULL;
 	Symbol* pSymN = NULL;
 	iL = inText.GetLength();
-	Text* pText = new Text(inText, vInPt, vN,1);
+	Text* pText = new Text();
+
 	for (i = 0; i < iL; i++)
 	{
 		iC = inText[i];

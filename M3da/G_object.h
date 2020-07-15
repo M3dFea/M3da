@@ -1923,13 +1923,10 @@ class Text : public G_Object
 {
 DECLARE_DYNAMIC(Text)
 public:
-	C3dVector inPt;         //Insertion Point
-	C3dVector vNorm;			//Normal
-	double dTextHeight;		//Text Height
-	cLinkedList* pSyms;	    //Sybols list forming text
+	CvPt_Object* inPt;          //Insertion Point
+	cLinkedList* pSyms;			//Sybols list forming text
 	CString sText;
 	Text();
-	Text(CString sT,C3dVector vIn,C3dVector vN,double dH);
 	~Text();
 	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
