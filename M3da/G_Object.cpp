@@ -36461,6 +36461,16 @@ void Text::HighLight(CDC* pDC)
 	}
 }
 
+void Text::Transform(C3dMatrix TMat)
+{
+	Symbol* pS = NULL;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Transform(TMat);
+		pS = (Symbol*)pS->next;
+	}
+}
 
 void Text::Translate(C3dVector vIn)
 {
@@ -36786,6 +36796,21 @@ void Symbol::Translate(C3dVector vIn)
 	}
 }
 
+void Symbol::Transform(C3dMatrix TMat)
+{
+	Link* pCL = pL;
+	vCent->Transform(TMat);
+	inPt->Transform(TMat);
+	pCL = pL;
+	while (pCL != NULL)
+	{
+		pCL->p1->Transform(TMat);
+		pCL->p2->Transform(TMat);
+		pCL = pCL->pNext;
+	}
+}
+
+
 void Symbol::Move(C3dVector vM)
 {
 	Link* pCL = pL;
@@ -36799,6 +36824,45 @@ void Symbol::Move(C3dVector vM)
 		pCL = pCL->pNext;
 	}
 }
+
+void Symbol::Serialize(CArchive& ar, int iV)
+{
+	int i;
+	Link* pCL;
+	if (ar.IsStoring())
+	{
+		G_Object::Serialize(ar, iV);
+		inPt->Serialize(ar, iV);
+		vCent->Serialize(ar, iV);;
+		ar<<w;                   
+		ar<<h;                   
+		ar<<iSegs;
+		pCL = pL;
+		for (i = 0; i < iSegs; i++)
+		{
+			pCL->p1->Serialize(ar, iV);
+			pCL->p2->Serialize(ar, iV);
+			pCL = pCL->pNext;
+		}
+	}
+	else
+	{
+		G_Object::Serialize(ar, iV);
+		inPt->Serialize(ar, iV);
+		vCent->Serialize(ar, iV);;
+		ar >> w;
+		ar >> h;
+		//ar  iSegs;
+		//pCL = pL;
+		//for (i = 0; i < iSegs; i++)
+		//{
+		//	pCL->p1->Serialize(ar, iV);
+		//	pCL->p2->Serialize(ar, iV);
+		//	pCL = pCL->pNext;
+		//}
+	}
+}
+
 
 
 //*****************************************************************************************

@@ -18763,8 +18763,9 @@ void DBase::AddText(C3dVector vN,C3dVector vInPt, CString inText)
 			pSymN = (Symbol*)pSym->Copy(NULL);
 			pSymN->Translate(vM);
 			pSymN->pParent = pText;
+			pSymN->iColour = pText->iColour;
 			pText->pSyms->Add(pSymN);
-			vM.x += pSym->w+0.1;
+			vM.x += pSym->w+0.25*dAveW;
 		}
 	}
 	AddObj(pText);
@@ -18794,9 +18795,23 @@ ReDraw();
 void DBase::SymTableCalcMetrics()
 {
 int i;
-for (i=0;i<this->iNoSymbols;i++)
+//These are the average symbol heights and widths
+dAveH=0;
+dAveW=0;
+Symbol* pS = NULL;
+if (iNoSymbols > 0)
 {
-  this->pSymTable[i]->CalculateMetrics();
+	for (i = 0; i < this->iNoSymbols; i++)
+	{
+		this->pSymTable[i]->CalculateMetrics();
+		dAveH += pSymTable[i]->h;
+		dAveW += pSymTable[i]->w;
+	}
+	dAveH /= iNoSymbols;
+	dAveW /= iNoSymbols;
+	//Set space width, which will calculated as 0
+	pS = GetSymbol(32);
+	pS->w = dAveW;
 }
 
 }
@@ -18899,14 +18914,12 @@ void DBase::LoadSymbolsInterbal()
 			vP1.x = atof(s2);
 			vP1.y = atof(s3);
 			vP1.z = 0;
-			vP1 *= 0.1;
 			s1 = SymTableData[i];
 			i++;
 			sscanf(s1, "%s%s", s2, s3);
 			vP2.x = atof(s2);
 			vP2.y = atof(s3);
 			vP2.z = 0;
-			vP2 *= 0.1;
 			pSym->addSeg(vP1, vP2);
 		}
 	} while (iStop == 0);

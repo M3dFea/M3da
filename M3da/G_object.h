@@ -1950,6 +1950,7 @@ public:
 	virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
 	virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
 	virtual void HighLight(CDC* pDC);
+	virtual void Transform(C3dMatrix TMAt);
 	virtual void Translate(C3dVector vIn);
 	virtual void Move(C3dVector vM);
 };
@@ -1984,10 +1985,10 @@ public:
    virtual void HighLight(CDC* pDC);
    virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);  //use defualt gObject which uses getCentroid
    //virtual void SetTo(C3dVector cInVect);
-   //virtual void Transform(C3dMatrix TMAt);
+   virtual void Transform(C3dMatrix TMAt);
    virtual void Translate(C3dVector vIn);
    virtual void Move(C3dVector vM);
-   //virtual void Serialize(CArchive& ar,int iV);
+   virtual void Serialize(CArchive& ar,int iV);
    virtual C3dVector Get_Centroid();
    //virtual void S_Box(CPoint P1,CPoint P2,ObjList* pSel);
 };
