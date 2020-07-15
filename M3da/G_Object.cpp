@@ -36411,7 +36411,7 @@ void Text::OglDraw(int iDspFlgs, double dS1, double dS2)
 void Text::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
 	Symbol* pS = NULL;
-	if ((iDspFlgs & DSP_LINE) > 0)
+	if ((iDspFlgs & DSP_CURVES) > 0)
 	{
 		Selectable = 1;
 		pS = (Symbol*)pSyms->Head;
