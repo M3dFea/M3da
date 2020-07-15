@@ -36568,6 +36568,11 @@ void Text::Serialize(CArchive& ar, int iV)
 	}
 }
 
+C3dVector Text::Get_Centroid()
+{
+	return(inPt);
+}
+
 
 //26/09/2016
 //symbol class used for compounds of lines
