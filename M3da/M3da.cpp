@@ -272,7 +272,7 @@ void CM3daApp::OnFileRunscriptfile()
 				fgets(s1, 200, pFile);
 				Cmd = s1;
 				Cmd.Remove('\n');
-				SendMsg(Cmd);
+				SendMsg(Cmd,Cmd);
 			}
 		}
 		fclose(pFile);

@@ -604,13 +604,13 @@ void CM3daDoc::SelectBox(CPoint P1,CPoint P2)
 cDBase->S_Box(P1,P2);
 }
 
-void SendMsg(CString AAA)
+void SendMsg(CString AAA, CString wCase)
 {
 CString Msg;
 Msg=AAA;
 CPoint N(0,0);
 int iExit;
-iExit = pMnu->DoMenu(Msg,N);
+iExit = pMnu->DoMenu(Msg, wCase,N);
 
 }
 
@@ -679,7 +679,7 @@ if (cDBase->bPICK==TRUE)
 }
 if (MsgType == 1)
 {
-  pMnu->DoMenu(InFu,PT1);
+  pMnu->DoMenu(InFu,InFu,PT1);
 
 }
 }
