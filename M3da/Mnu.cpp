@@ -1260,7 +1260,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zGPREMGP_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "COL")
   {
@@ -1350,7 +1350,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zMSHDEL_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "SHOWALL")
   {
@@ -1360,7 +1360,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zSHOWALL_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "HIDE")
   {
@@ -1370,7 +1370,7 @@ if (iStat == 0)
 	  cDBase->DB_ClearBuff();
 	  pNext = new zHIDE_Mnu();
 	  pNext->Init(cDBase, -1);
-	  this->DoMenu(CInMsg, CInMsg2, Pt);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "LSETLIST")
   { 
@@ -1570,7 +1570,7 @@ if (iStat == 0)
   cDBase->DB_ClearBuff();
   pNext = new zECHO_Mnu();
   pNext->Init(cDBase, -1);
-  this->DoMenu(CInMsg, CInMsg2, Pt);
+  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "PRBAR2")
   {
@@ -1580,7 +1580,7 @@ if (iStat == 0)
   cDBase->DB_ClearBuff();
   pNext = new zPRBAR2_Mnu();
   pNext->Init(cDBase, -1);
-  this->DoMenu(CInMsg, CInMsg2, Pt);
+  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "RESDISPOFF")
   {
@@ -1590,7 +1590,7 @@ if (iStat == 0)
   cDBase->DB_ClearBuff();
   pNext = new zRESDISPOFF_Mnu();
   pNext->Init(cDBase, -1);
-  this->DoMenu(CInMsg, CInMsg2, Pt);
+  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "RESDEL")
   { 
@@ -1810,7 +1810,7 @@ if (iStat == 0)
     cDBase->DB_ClearBuff();
     pNext = new zMATEDIT_Mnu();
     pNext->Init(cDBase, -1);
-    this->DoMenu(CInMsg, CInMsg2, Pt);
+    this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "PREDIT")
   {
@@ -1820,7 +1820,7 @@ if (iStat == 0)
     cDBase->DB_ClearBuff();
     pNext = new zPREDIT_Mnu();
     pNext->Init(cDBase, -1);
-    this->DoMenu(CInMsg, CInMsg2, Pt);
+    this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "OEDIT")
   {
@@ -1830,7 +1830,7 @@ if (iStat == 0)
   cDBase->DB_ClearBuff();
   pNext = new zOEDIT_Mnu();
   pNext->Init(cDBase, -1);
-  this->DoMenu(CInMsg, CInMsg2, Pt);
+  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "GPNDBYDSYS")
   { 
@@ -1870,7 +1870,7 @@ if (iStat == 0)
   cDBase->DB_ClearBuff();
   pNext = new zRESLISTND_Mnu();
   pNext->Init(cDBase, -1);
-  this->DoMenu(CInMsg, CInMsg2, Pt);
+  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "CIRCPT")
   { 
@@ -1890,7 +1890,7 @@ if (iStat == 0)
   cDBase->DB_ClearBuff();
   pNext = new zRESSETVECSCL_Mnu();
   pNext->Init(cDBase, -1);
-  this->DoMenu(CInMsg, CInMsg2, Pt);
+  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "REFLECT2D")
   { 
