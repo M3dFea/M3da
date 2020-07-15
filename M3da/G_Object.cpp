@@ -36478,8 +36478,7 @@ Symbol::~Symbol()
     delete(inPt);
   if (vCent!=NULL)
     delete(vCent);
-  if (pL != Null)
-	  pL->DeleteAll();
+
 }
 
 void Symbol::Create(int iLab,C3dVector inP,G_Object* Parrent)
