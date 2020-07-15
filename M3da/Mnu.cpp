@@ -3322,10 +3322,21 @@ else if (iStat == 1)
 }
 else if (iStat == 2)
 {
+	sText = CInMsg;
+	outtext2("/ENTER TEXT HEIGHT (1)");
+	SetFocus();
+	iStat = 3;
+}
+else if (iStat == 3)
+{
+  double dH;
+  dH = atof(CInMsg);
+  if (dH <= 0)
+	  dH = 1;
   C3dVector vN;
   vN.Set(0, 0, 1);
   vN = cDBase->GlobaltoWP3(vN);
-  cDBase->AddText(vN,p1, CInMsg);
+  cDBase->AddText(vN,p1, sText,dH);
   outtext1("Text Added.");
   RetVal = 1;
 }

@@ -1943,7 +1943,7 @@ public:
 	cLinkedList* pSyms;	    //Sybols list forming text
 	CString sText;
 	Text();
-	Text(CString sT,C3dVector vIn,C3dVector vN,double dH);
+	Text(CString sT,double dH);
 	~Text();
 	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
@@ -1953,6 +1953,7 @@ public:
 	virtual void Transform(C3dMatrix TMAt);
 	virtual void Translate(C3dVector vIn);
 	virtual void Move(C3dVector vM);
+	virtual void Serialize(CArchive& ar, int iV);
 };
 
 

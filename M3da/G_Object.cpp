@@ -36376,9 +36376,11 @@ Text::Text()
 	iColour = 100;
 	pSyms = new cLinkedList();
 	sText = "";
+	inPt.Set(0,0,0);      
+	vNorm.Set(0,0,1);
 }
 
-Text::Text(CString sT, C3dVector vIn, C3dVector vN, double dH)
+Text::Text(CString sT, double dH)
 {
 	pParent = NULL;
 	Drawn = 0;
@@ -36389,10 +36391,10 @@ Text::Text(CString sT, C3dVector vIn, C3dVector vN, double dH)
 	iColour = 100;
 	pSyms = new cLinkedList();
 	sText = "";
-	inPt= vIn;
-	vNorm=vN;
 	dTextHeight=dH;
 	sText=sT;
+	inPt.Set(0, 0, 0);
+	vNorm.Set(0, 0, 1);
 }
 
 Text::~Text()
@@ -36403,11 +36405,16 @@ Text::~Text()
 
 void Text::OglDraw(int iDspFlgs, double dS1, double dS2)
 {
-	pSyms->OglDraw(iDspFlgs, dS1, dS2);
+	OglDrawW(iDspFlgs, dS1, dS2);
 }
 
 void Text::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
+	glColor3fv(cols[GetCol()]);
+	glPointSize(10.0f);
+	glBegin(GL_POINTS);
+		glVertex3f((float)inPt.x, (float)inPt.y, (float)inPt.z);
+	glEnd();
 	pSyms->OglDrawW(iDspFlgs, dS1, dS2);
 }
 
@@ -36463,6 +36470,9 @@ void Text::HighLight(CDC* pDC)
 
 void Text::Transform(C3dMatrix TMat)
 {
+
+	inPt = TMat * inPt;
+	vNorm = TMat * vNorm;
 	Symbol* pS = NULL;
 	pS = (Symbol*)pSyms->Head;
 	while (pS != NULL)
@@ -36476,6 +36486,7 @@ void Text::Translate(C3dVector vIn)
 {
 	Symbol* pS = NULL;
 	pS = (Symbol*)pSyms->Head;
+	inPt+=vIn; 
 	while (pS != NULL)
 	{
 		pS->Translate(vIn);
@@ -36493,6 +36504,49 @@ void Text::Move(C3dVector vM)
 		pS = (Symbol*)pS->next;
 	}
 }
+
+void Text::Serialize(CArchive& ar, int iV)
+{
+	C3dVector v1;
+	C3dVector v2;
+	int i;
+	int iNo;
+	Link* pCL;
+	Symbol* pSym = NULL;
+	if (ar.IsStoring())
+	{
+		G_Object::Serialize(ar, iV);
+		inPt.Serialize(ar, iV);				 //Insertion Point
+		vNorm.Serialize(ar, iV); 			//Normal
+		ar<<dTextHeight;					//Text Height
+		ar<<sText;
+		ar<<pSyms->iCnt;	 
+		pSym = (Symbol*) pSyms->Head;
+		while (pSym!=NULL)
+		{
+			pSym->Serialize(ar, iV);
+			pSym = (Symbol*) pSym->next;
+		}
+	}
+	else
+	{
+		G_Object::Serialize(ar, iV);
+		inPt.Serialize(ar, iV);				 //Insertion Point
+		vNorm.Serialize(ar, iV); 			//Normal
+		ar >> dTextHeight;					//Text Height
+		ar >> sText;
+		ar >> iNo;
+		pSym = (Symbol*)pSyms->Head;
+		for (i=0;i<iNo;i++)
+		{
+			pSym = new Symbol();
+			pSym->pParent = this;
+			pSym->Serialize(ar, iV);
+			pSyms->Add(pSym);
+		}
+	}
+}
+
 
 //26/09/2016
 //symbol class used for compounds of lines
@@ -36572,7 +36626,10 @@ if ((iDspFlgs & DSP_CURVES)>0)
 {
   Selectable=1;
   Link* pCL;
-  glColor3fv(cols[iColour]);
+  if (this->pParent!=NULL)
+	  glColor3fv(cols[pParent->iColour]);
+  else
+      glColor3fv(cols[iColour]);
   C3dVector vPt;
   C3dVector vPt2;
   glLineWidth(4);
@@ -36624,8 +36681,8 @@ void Symbol::CalculateMetrics()
 {
 //Calculate dimensions of symbol
 Link* pCL=pL;
-double dMinX;double dMinY;
-double dMaxX;double dMaxY;
+double dMinX = 0;double dMinY = 0;
+double dMaxX = 0;double dMaxY = 0;
 vCent=new CvPt_Object();
 
 w=0;
@@ -36813,6 +36870,7 @@ void Symbol::Transform(C3dMatrix TMat)
 
 void Symbol::Move(C3dVector vM)
 {
+
 	Link* pCL = pL;
 	vCent->Move(vM);
 	inPt->Move(vM);
@@ -36827,7 +36885,10 @@ void Symbol::Move(C3dVector vM)
 
 void Symbol::Serialize(CArchive& ar, int iV)
 {
+	C3dVector v1;
+	C3dVector v2;
 	int i;
+	int iNo;
 	Link* pCL;
 	if (ar.IsStoring())
 	{
@@ -36840,26 +36901,27 @@ void Symbol::Serialize(CArchive& ar, int iV)
 		pCL = pL;
 		for (i = 0; i < iSegs; i++)
 		{
-			pCL->p1->Serialize(ar, iV);
-			pCL->p2->Serialize(ar, iV);
+			pCL->p1->Pt_Point->Serialize(ar, iV);
+			pCL->p2->Pt_Point->Serialize(ar, iV);
 			pCL = pCL->pNext;
 		}
 	}
 	else
 	{
 		G_Object::Serialize(ar, iV);
+		inPt = new CvPt_Object();
+		vCent = new CvPt_Object();
 		inPt->Serialize(ar, iV);
 		vCent->Serialize(ar, iV);;
 		ar >> w;
 		ar >> h;
-		//ar  iSegs;
-		//pCL = pL;
-		//for (i = 0; i < iSegs; i++)
-		//{
-		//	pCL->p1->Serialize(ar, iV);
-		//	pCL->p2->Serialize(ar, iV);
-		//	pCL = pCL->pNext;
-		//}
+		ar >> iNo;
+		for (i = 0; i < iNo; i++)
+		{
+			v1.Serialize(ar, iV);
+			v2.Serialize(ar, iV);
+			addSeg(v1, v2);
+		}
 	}
 }
 

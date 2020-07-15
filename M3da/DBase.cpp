@@ -1136,8 +1136,12 @@ void DBase::Serialize(CArchive& ar)
 				//pM->Visable = TRUE;
 				break;
 			case 5 :
-				DB_Obj[i] = new Circ1;
+				DB_Obj[i] = new Symbol();
 				DB_Obj[i]->Serialize(ar,iVER);
+				break;
+			case 6:
+				DB_Obj[i] = new Text();
+				DB_Obj[i]->Serialize(ar, iVER);
 				break;
 			case 7 :
 				if (iSecondaryType == 3)
@@ -18742,18 +18746,27 @@ return (pRet);
 //*********************************************************
 // Text to be inserted ay vInPt and transformed tp vN
 //*********************************************************
-void DBase::AddText(C3dVector vN,C3dVector vInPt, CString inText)
+void DBase::AddText(C3dVector vN,C3dVector vInPt, CString inText, double dH)
 {
 	int i=0;
 	int iL=0;
 	int iC=0;
+	double dScl = 0;
+	if (dH <= 0)
+	{
+		dScl = 1;
+	}
+	else
+	{
+		dScl = dH / dAveH;
+	}
+
 	C3dVector vM;
 	vM.Set(0, 0, 0);
-	vM += vInPt;
 	Symbol* pSym = NULL;
 	Symbol* pSymN = NULL;
 	iL = inText.GetLength();
-	Text* pText = new Text(inText, vInPt, vN,1);
+	Text* pText = new Text(inText,1);
 	for (i = 0; i < iL; i++)
 	{
 		iC = inText[i];
@@ -18768,6 +18781,21 @@ void DBase::AddText(C3dVector vN,C3dVector vInPt, CString inText)
 			vM.x += pSym->w+0.25*dAveW;
 		}
 	}
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	RMat.Scale(dScl);
+	pText->Transform(RMat);
+	//Transfor to worplane orientation
+	RMat = GetWPmat();
+	RMat.m_30 = 0;
+	RMat.m_31 = 0;
+	RMat.m_32 = 0;
+	C3dMatrix TMat;
+	pText->Transform(RMat);
+	//Move to Insertion point
+	TMat.Translate(vInPt.x, vInPt.y, vInPt.z);
+	pText->Transform(TMat);
+
 	AddObj(pText);
 	ReDraw();
 }
