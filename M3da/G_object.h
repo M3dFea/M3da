@@ -1917,20 +1917,6 @@ virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 virtual void HighLight(CDC* pDC);
 };
 
-//26/09/2016
-//Link class simples way of storing lists of lines
-//used for symbols
-class Link
-{
-public:
-Link* pNext;
-CvPt_Object* p1;
-CvPt_Object* p2;
-Link();
-Link(double x1, double y1, double z1,
-	 double x2, double y2, double z2);
-~Link();
-};
 
 
 class Text : public G_Object
@@ -1963,11 +1949,11 @@ class Symbol : public G_Object
 {
 DECLARE_DYNAMIC(Symbol)
 public:
-   Link* pL;
-   CvPt_Object* inPt;          //Insertion Point
-   CvPt_Object* vCent;         //Centroid
-   double w;                   //symbol width
-   double h;                   //symbol height
+   cLinkedList* pL;				//Link making up the symbol
+   CvPt_Object* inPt;			//Insertion Point
+   CvPt_Object* vCent;			//Centroid
+   double w;					//symbol width
+   double h;					//symbol height
    int iSegs;
    Symbol();
    virtual ~Symbol();
@@ -2509,6 +2495,7 @@ class cLink : public G_Object
 public:
 Pt_Object* pVertex[2];
 cLink();
+
 ~cLink();
 BOOL isSame(cLink* inLink);
 int isSameWithDir(cLink* inLink);
