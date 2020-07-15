@@ -36748,8 +36748,8 @@ pCL = pL;
   {
 	  pCL->p1->Pt_Point->x -= dMinX;
 	  pCL->p2->Pt_Point->x -= dMinX;
-	  pCL->p1->Pt_Point->y -= dMinY;
-	  pCL->p2->Pt_Point->y -= dMinY;
+	  //pCL->p1->Pt_Point->y -= dMinY;
+	  //pCL->p2->Pt_Point->y -= dMinY;
 	  pCL = pCL->pNext;
   }
 
