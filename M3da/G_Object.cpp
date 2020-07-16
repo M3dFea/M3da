@@ -36413,6 +36413,8 @@ Text::Text(int iLab,CString sT, double dH)
 
 Text::~Text()
 {
+	if (inPt != NULL)
+		delete (inPt);
 	if (pSyms != NULL)
 		pSyms->DeleteAll();
 }
