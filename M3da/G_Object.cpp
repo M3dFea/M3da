@@ -36367,6 +36367,8 @@ IMPLEMENT_DYNAMIC(Text, CObject)
 
 Text::Text()
 {
+	C3dVector inP;
+	inP.Set(0, 0, 0);
 	pParent = NULL;
 	Drawn = 0;
 	Selectable = 1;
@@ -36376,12 +36378,19 @@ Text::Text()
 	iColour = 100;
 	pSyms = new cLinkedList();
 	sText = "";
-	inPt.Set(0,0,0);      
+	if (inPt != NULL)
+	{
+		delete(inPt);
+	}
+	inPt = new CvPt_Object;
+	inPt->Create(inP, 0, -1, 0, 0, 1, this);
 	vNorm.Set(0,0,1);
 }
 
 Text::Text(CString sT, double dH)
 {
+	C3dVector inP;
+	inP.Set(0, 0, 0);
 	pParent = NULL;
 	Drawn = 0;
 	Selectable = 1;
@@ -36393,7 +36402,12 @@ Text::Text(CString sT, double dH)
 	sText = "";
 	dTextHeight=dH;
 	sText=sT;
-	inPt.Set(0, 0, 0);
+	if (inPt != NULL)
+	{
+		delete(inPt);
+	}
+	inPt = new CvPt_Object;
+	inPt->Create(inP, 0, -1, 0, 0, 20, this);
 	vNorm.Set(0, 0, 1);
 }
 
@@ -36421,10 +36435,7 @@ void Text::OglDrawW(int iDspFlgs, double dS1, double dS2)
 			pS = (Symbol*)pS->next;
 		}
 		glColor3fv(cols[GetCol()]);
-		glPointSize(10.0f);
-		glBegin(GL_POINTS);
-		glVertex3f((float)inPt.x, (float)inPt.y, (float)inPt.z);
-		glEnd();
+		inPt->OglDrawW(iDspFlgs, dS1, dS2);
 		pSyms->OglDrawW(iDspFlgs, dS1, dS2);
 	}
 	else
@@ -36447,24 +36458,37 @@ G_ObjectD Text::SelDist(CPoint InPT, Filter FIL)
 	Ret.Dist = 1e36;;
 	Symbol* pS = NULL;
 	pS = (Symbol*) pSyms->Head;
-	BOOL bWantSymbol; 
-	bWantSymbol = FIL.isFilter(5);
-
-	while (pS != NULL)
+	//  IF POINTS ARE SELECTABLE
+	if (FIL.isFilter(0))
 	{
-		dist = pS->SelDist(InPT, FIL);
-		if (dist.Dist < Ret.Dist)
+			dist = inPt->SelDist(InPT, FIL);
+			if (dist.Dist <= Ret.Dist)
+			{
+					Ret.Dist = dist.Dist;
+					Ret.pObj = inPt;
+			}
+	}
+	if (FIL.isFilter(6))
+	{
+		while (pS != NULL)
 		{
-			Ret.Dist = dist.Dist;
-			if (bWantSymbol)
-			  Ret.pObj = dist.pObj;
-			else
-			  Ret.pObj = this;
+			dist = pS->SelDist(InPT, FIL);
+			if (dist.Dist < Ret.Dist)
+			{
+				Ret.Dist = dist.Dist;
+				Ret.pObj = this;
+			}
+			pS = (Symbol*)pS->next;
 		}
-		pS = (Symbol*) pS->next;
 	}
 	return(Ret);
 }
+
+void Text::S_Box(CPoint P1, CPoint P2, ObjList* pSel)
+{
+	G_Object::S_Box(P1, P2, pSel);
+}
+
 
 void Text::SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran)
 {
@@ -36475,6 +36499,12 @@ void Text::SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran)
 		pS->SetToScr(pModMat, pScrTran);
 		pS = (Symbol*) pS->next;
 	}
+	inPt->SetToScr(pModMat, pScrTran);
+
+	C3dVector vC;
+	vC = Get_Centroid();
+	vC.SetToScr(pModMat, pScrTran);
+	SelPt = vC;
 }
 
 void Text::HighLight(CDC* pDC)
@@ -36492,7 +36522,7 @@ void Text::HighLight(CDC* pDC)
 void Text::Transform(C3dMatrix TMat)
 {
 
-	inPt = TMat * inPt;
+	inPt->Transform(TMat);
 	vNorm = TMat * vNorm;
 	Symbol* pS = NULL;
 	pS = (Symbol*)pSyms->Head;
@@ -36507,7 +36537,7 @@ void Text::Translate(C3dVector vIn)
 {
 	Symbol* pS = NULL;
 	pS = (Symbol*)pSyms->Head;
-	inPt+=vIn; 
+	inPt->Translate(vIn);
 	while (pS != NULL)
 	{
 		pS->Translate(vIn);
@@ -36537,7 +36567,7 @@ void Text::Serialize(CArchive& ar, int iV)
 	if (ar.IsStoring())
 	{
 		G_Object::Serialize(ar, iV);
-		inPt.Serialize(ar, iV);				 //Insertion Point
+		inPt->Serialize(ar, iV);				 //Insertion Point
 		vNorm.Serialize(ar, iV); 			//Normal
 		ar<<dTextHeight;					//Text Height
 		ar<<sText;
@@ -36552,7 +36582,7 @@ void Text::Serialize(CArchive& ar, int iV)
 	else
 	{
 		G_Object::Serialize(ar, iV);
-		inPt.Serialize(ar, iV);				 //Insertion Point
+		inPt->Serialize(ar, iV);				 //Insertion Point
 		vNorm.Serialize(ar, iV); 			//Normal
 		ar >> dTextHeight;					//Text Height
 		ar >> sText;
@@ -36570,8 +36600,44 @@ void Text::Serialize(CArchive& ar, int iV)
 
 C3dVector Text::Get_Centroid()
 {
-	return(inPt);
+	C3dVector vC;
+	vC.Set(inPt->Pt_Point->x, inPt->Pt_Point->y, inPt->Pt_Point->z);
+	return(vC);
 }
+
+
+G_Object* Text::Copy(G_Object* Parrent)
+{
+	Symbol* pS = NULL;
+	Text* cText = new Text();
+	cText->Drawn = Drawn;
+	cText->Selectable = Selectable;
+	cText->Visable = Visable;
+	cText->iColour = iColour;
+	cText->iObjType = iObjType;
+	cText->iLabel = iLabel;
+	cText->pParent = NULL;
+	//Specifics
+	cText->inPt->Pt_Point->x = inPt->Pt_Point->x; 
+	cText->inPt->Pt_Point->y = inPt->Pt_Point->y;
+	cText->inPt->Pt_Point->z = inPt->Pt_Point->z;
+	cText->pParent = cText;
+	cText->inPt->iColour = inPt->iColour;
+	cText->vNorm = vNorm;			
+	cText->dTextHeight = dTextHeight;
+	cText->sText;
+			
+
+	pS = (Symbol*) pSyms->Head;
+	while (pS != NULL)
+	{
+		cText->pSyms->Add(pS->Copy(cText));
+		pS = (Symbol*) pS->next;
+	}
+	
+	return(cText);
+}
+
 
 
 //26/09/2016

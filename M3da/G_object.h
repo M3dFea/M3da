@@ -1937,10 +1937,10 @@ class Text : public G_Object
 {
 DECLARE_DYNAMIC(Text)
 public:
-	C3dVector inPt;         //Insertion Point
-	C3dVector vNorm;			//Normal
-	double dTextHeight;		//Text Height
-	cLinkedList* pSyms;	    //Sybols list forming text
+	CvPt_Object* inPt=NULL;         //Insertion Point
+	C3dVector vNorm;				//Normal
+	double dTextHeight;				//Text Height
+	cLinkedList* pSyms;				//Sybols list forming text
 	CString sText;
 	Text();
 	Text(CString sT,double dH);
@@ -1948,6 +1948,7 @@ public:
 	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
 	virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
+	virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
 	virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
 	virtual void HighLight(CDC* pDC);
 	virtual void Transform(C3dMatrix TMAt);
@@ -1955,7 +1956,7 @@ public:
 	virtual void Move(C3dVector vM);
 	virtual void Serialize(CArchive& ar, int iV);
 	virtual C3dVector Get_Centroid();
-
+	virtual G_Object* Copy(G_Object* Parrent);
 };
 
 
