@@ -36424,6 +36424,8 @@ void Text::OglDraw(int iDspFlgs, double dS1, double dS2)
 
 void Text::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
+	char sLab[20];
+	C3dVector vC;
 	Symbol* pS = NULL;
 	if ((iDspFlgs & DSP_CURVES) > 0)
 	{
@@ -36437,6 +36439,13 @@ void Text::OglDrawW(int iDspFlgs, double dS1, double dS2)
 		glColor3fv(cols[GetCol()]);
 		inPt->OglDrawW(iDspFlgs, dS1, dS2);
 		pSyms->OglDrawW(iDspFlgs, dS1, dS2);
+
+		if (bDrawLab == TRUE)
+		{
+			vC = this->Get_Centroid();
+			sprintf_s(sLab, "Txt%i", iLabel);
+			OglString(iDspFlgs, (float)vC.x, (float)vC.y, (float)vC.z, &sLab[0]);
+		}
 	}
 	else
 	{
@@ -36621,7 +36630,6 @@ G_Object* Text::Copy(G_Object* Parrent)
 	cText->inPt->Pt_Point->x = inPt->Pt_Point->x; 
 	cText->inPt->Pt_Point->y = inPt->Pt_Point->y;
 	cText->inPt->Pt_Point->z = inPt->Pt_Point->z;
-	cText->pParent = cText;
 	cText->inPt->iColour = inPt->iColour;
 	cText->vNorm = vNorm;			
 	cText->dTextHeight = dTextHeight;
