@@ -400,6 +400,7 @@ DspFlags=DSP_ALL;
 dMFullScl=1;
 bRevColBar=FALSE;
 iPtLabCnt=1;
+iTxtLabCnt = 1;
 iCVLabCnt=1;
 iSFLabCnt=1;
 iPartLabCnt = 1;
@@ -1068,6 +1069,7 @@ void DBase::Serialize(CArchive& ar)
 		ar<<iMeshCnt;
 		ar<<iCurGp;
 		ar<<iPtLabCnt; 
+		ar<<iTxtLabCnt;
 		ar<<iCVLabCnt;
 		ar<<iSFLabCnt;
 		ar<<iPartLabCnt;
@@ -1093,6 +1095,8 @@ void DBase::Serialize(CArchive& ar)
 		ar>>iMeshCnt;
 		ar>>iCurGp;
 		ar>>iPtLabCnt;
+		if (iVER <= -55)
+			ar >> iTxtLabCnt;
 		if (iVER <= -51)
 			ar >> iCVLabCnt;
 		ar>>iSFLabCnt;
@@ -1297,6 +1301,22 @@ irc++;
 return(irc);
 }
 
+int DBase::GetMaxTxtLabCnt()
+{
+	int i;
+	int irc = 0;
+	for (i = 1; i < DB_ObjectCount; i++)
+	{
+		if (DB_Obj[i]->iObjType == 6)
+		{
+			if (DB_Obj[i]->iLabel > irc)
+				irc = DB_Obj[i]->iLabel;
+		}
+	}
+	irc++;
+	return(irc);
+}
+
 int DBase::GetMaxCVLabCnt()
 {
 int i;
@@ -1352,22 +1372,22 @@ if (ar.IsStoring())
    ar<<iNo;
    for (j=0;j<iNo;j++)
    {
-     iLevs=0;
-     ptr = Groups[i]->Objs[j];
-	   do
-	   {
-       iLevs++;        //Count the levels of heiarachy
-	     ptr=ptr->pParent;
-	   }
-	   while (ptr!=NULL);
-     ptr = Groups[i]->Objs[j];
-	   ar<<iLevs;
-	   for (k=0;k<iLevs;k++)
-     {
-       ar<<ptr->iObjType;
-       ar<<ptr->iLabel;
-	     ptr=ptr->pParent;
-	   }
+		iLevs=0;
+		ptr = Groups[i]->Objs[j];
+		do
+		{
+			iLevs++;        //Count the levels of heiarachy
+			ptr=ptr->pParent;
+		}
+		while (ptr!=NULL);
+		ptr = Groups[i]->Objs[j];
+		ar<<iLevs;
+		for (k=0;k<iLevs;k++)
+		{
+			ar<<ptr->iObjType;
+			ar<<ptr->iLabel;
+			ptr=ptr->pParent;
+		}
    }
  }
 }
@@ -5013,31 +5033,37 @@ for (i=0;i<Objs->iNo;i++)
   {
      pOC=Objs->Objs[i];
      pO=NULL;
-		 if (pOC->iObjType==0)             //POINTS
-		 { 
-       pO = Objs->Objs[i]->Copy(NULL);
-       pO->iLabel=iPtLabCnt;
-       iPtLabCnt++;
-     }
-     else if (pOC->iObjType==7) 
-     {
-        pO = Objs->Objs[i]->Copy(NULL);
-        pO->iLabel=iCVLabCnt;
-        iCVLabCnt++;
+	if (pOC->iObjType==0)             //POINTS
+	{ 
+		pO = Objs->Objs[i]->Copy(NULL);
+		pO->iLabel=iPtLabCnt;
+		iPtLabCnt++;
+    }
+	else if (pOC->iObjType == 6)
+	{
+		pO = Objs->Objs[i]->Copy(NULL);
+		pO->iLabel = iTxtLabCnt;
+		iTxtLabCnt++;
+	}
+    else if (pOC->iObjType==7) 
+    {
+		pO = Objs->Objs[i]->Copy(NULL);
+		pO->iLabel=iCVLabCnt;
+		iCVLabCnt++;
      }
      else if (pOC->iObjType==15)
      {
-        pO = Objs->Objs[i]->Copy(NULL);
-        pO->iLabel=iSFLabCnt;
-        iSFLabCnt++;
+		pO = Objs->Objs[i]->Copy(NULL);
+		pO->iLabel=iSFLabCnt;
+		iSFLabCnt++;
      }
      if (pO!=NULL)
      {
-        pO->pParent=NULL;
-		    pO->Translate(-p1);
-        pO->Transform(tForm);
-        pO->Translate(p1);
-	      AddObj(pO);
+		pO->pParent=NULL;
+		pO->Translate(-p1);
+		pO->Transform(tForm);
+		pO->Translate(p1);
+		AddObj(pO);
      }
   }
 }
@@ -7473,6 +7499,11 @@ for (j=0;j<iNoOff;j++)
 			  pO->iLabel = iMeshCnt;
 			  iMeshCnt++;
 		  }
+		  else if (pO->iObjType == 6)
+		  {  //Text
+			  pO->iLabel = iTxtLabCnt;
+			  iTxtLabCnt++;
+		  }
 		  else if (pO->iObjType==7)
 		  {  //curve
              pO->iLabel=iCVLabCnt;
@@ -7587,19 +7618,24 @@ for (j=0;j<iNoOff;j++)
       {
 	    pO = Items->Objs[i]->Copy(NULL);
 		  if (pO->iObjType==0)
-		  {  //Point
-        pO->iLabel=iPtLabCnt;
-			  iPtLabCnt++;
+		  {		//Point
+				pO->iLabel=iPtLabCnt;
+				iPtLabCnt++;
+		  }
+		  else if (pO->iObjType == 6)
+		  {		//Text
+				pO->iLabel = iTxtLabCnt;
+				iTxtLabCnt++;
 		  }
 		  else if (pO->iObjType==7) 
-		  {//curve
-        pO->iLabel=iCVLabCnt;
-			  iCVLabCnt++;
+		  {		//curve
+				pO->iLabel=iCVLabCnt;
+				iCVLabCnt++;
 		  }
 		  else if (pO->iObjType==15)
-		  {//surface
-            pO->iLabel=iSFLabCnt;
-			iSFLabCnt++;
+		  {		//surface
+				pO->iLabel=iSFLabCnt;
+				iSFLabCnt++;
 		  }
           RotateAbout2(pO,p1,p2,dA);
 	      AddObj(pO);
@@ -18766,7 +18802,8 @@ void DBase::AddText(C3dVector vN,C3dVector vInPt, CString inText, double dH)
 	Symbol* pSym = NULL;
 	Symbol* pSymN = NULL;
 	iL = inText.GetLength();
-	Text* pText = new Text(inText,1);
+	Text* pText = new Text(iTxtLabCnt,inText,1);
+	iTxtLabCnt++;
 	for (i = 0; i < iL; i++)
 	{
 		iC = inText[i];

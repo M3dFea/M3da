@@ -36387,7 +36387,7 @@ Text::Text()
 	vNorm.Set(0,0,1);
 }
 
-Text::Text(CString sT, double dH)
+Text::Text(int iLab,CString sT, double dH)
 {
 	C3dVector inP;
 	inP.Set(0, 0, 0);
@@ -36396,7 +36396,7 @@ Text::Text(CString sT, double dH)
 	Selectable = 1;
 	Visable = 1;
 	iObjType = 6;
-	iLabel = -1;
+	iLabel = iLab;
 	iColour = 100;
 	pSyms = new cLinkedList();
 	sText = "";
@@ -36616,7 +36616,7 @@ G_Object* Text::Copy(G_Object* Parrent)
 	cText->iColour = iColour;
 	cText->iObjType = iObjType;
 	cText->iLabel = iLabel;
-	cText->pParent = NULL;
+	cText->pParent = Parrent;
 	//Specifics
 	cText->inPt->Pt_Point->x = inPt->Pt_Point->x; 
 	cText->inPt->Pt_Point->y = inPt->Pt_Point->y;

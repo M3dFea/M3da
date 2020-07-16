@@ -7,7 +7,7 @@
 
 //Not the version number has to be negative
 //so we can maintain compatability with older files
-const int VERSION_NO=-53;
+const int VERSION_NO=-55;
 const int iNoOffObjectTypes = 10;
 const int MAX_GPS = 1000;
 const int MAX_TEMPGRP = 10000;
@@ -33,6 +33,7 @@ int NoResFrame; // No of frames for animation
 BMP* pWorldBMP;
 //****************************28/09/2016 SYMBOLS TABLE****************************
 int iPtLabCnt;
+int iTxtLabCnt;
 int iCVLabCnt;
 int iSFLabCnt;
 int iPartLabCnt;
@@ -108,7 +109,7 @@ void SetView(CView* pCViewCurrent);
 //final screen transform
 
 int GetMaxPtLabCnt();
-int GetMaxCVLabCnt();
+int GetMaxTxtLabCnt(); int GetMaxCVLabCnt();
 int GetMaxSFLabCnt();
 C3dMatrix pScrMat;
 C3dMatrix pScrInvMat;
