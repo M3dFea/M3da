@@ -98,12 +98,12 @@ BEGIN
         MENUITEM SEPARATOR
         POPUP "Import"
         BEGIN
-            MENUITEM "UNV",                         ID_IMPORT_UNV
-            MENUITEM "DAT",                         ID_IMPORT_DAT
+            MENUITEM "Ideas UNV",                   ID_IMPORT_UNV
+            MENUITEM "Nastran DAT",                 ID_IMPORT_DAT
             MENUITEM "IGES",                        ID_IMPORT_IGES
-            MENUITEM "OP2",                         ID_IMPORT_OP2
+            MENUITEM "Nastran OP2",                 ID_IMPORT_OP2
             MENUITEM "TXT to Groups",               ID_IMPORT_TXTTOGROUPS
-            MENUITEM "Symbols Table",               ID_IMPORT_SYMBOLSTABLE
+            MENUITEM "Symbols Table",               ID_IMPORT_SYMBOLSTABLE, INACTIVE
             MENUITEM "Load BMP",                    ID_IMPORT_LOADBMP
         END
         POPUP "Export"
