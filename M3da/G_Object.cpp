@@ -46689,7 +46689,7 @@ BOOL CSOLDialog::OnInitDialog()
   pT->ResetContent();
   pT->AddString("0: Lin Static");
   pT->AddString("1: SS Heat");
-  pT->AddString("2: Lancoz");
+  pT->AddString("2: Lanczos N/A");
   CEdit* pTol=(CEdit*) GetDlgItem(IDC_TOL_TXT);
   pTol->SetWindowTextA("0.000000001");
   Refresh();
