@@ -7419,8 +7419,8 @@ E_Object* ENew;
 if (Items->iNo>0)
 {
 pCurrentMesh->MaxLab();
-pCurrentMesh->iElementLab++;
-pCurrentMesh->iNodeLab++;
+//pCurrentMesh->iElementLab++;
+//pCurrentMesh->iNodeLab++;
 vA = tVec;
 for (j=0;j<iNoOff;j++)
 {
