@@ -3454,6 +3454,8 @@ public:
    virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);
    void Append(ME_Object* pMexh,int iNInc,int iEInc);
    void ExportUNV(FILE* pFile,SecTable* pS);
+   void ExportNASExec(FILE* pFile, SecTable* pS);
+   void ExportNASCase101(FILE* pFile, SecTable* pS);
    void ExportNAS(FILE* pFile,SecTable* pS);
    void ExportRes(FILE* pFile);
    void ExportSec(FILE* pFile,int id,CString Name, double w,double h,double t);

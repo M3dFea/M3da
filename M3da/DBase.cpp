@@ -1750,6 +1750,7 @@ else
 void DBase::AddTemperatureBC(ObjList* Nodes,double T)
 {
 int i;
+int iSet;
 if (pCurrentMesh->iCurBC!=-1)
 {
   for (i=0;i<Nodes->iNo;i++)
@@ -1759,7 +1760,8 @@ if (pCurrentMesh->iCurBC!=-1)
      Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
      ME_Object* ME= (ME_Object*) pN->pParent;
      G_Object* cAddedT;
-     cAddedT = ME->AddTemperatureBC((Pt_Object*) pN, T,-1);
+	 iSet = ME->GetTSETID(ME->iCurTSet);
+     cAddedT = ME->AddTemperatureBC((Pt_Object*) pN, T,-iSet);
      if (cAddedT!=NULL)
      {
         Dsp_Add(cAddedT);
@@ -1870,7 +1872,7 @@ else
 void DBase::AddForce(ObjList* Nodes,C3dVector F)
 {
 int i;
-
+int iSet;
 C3dMatrix TMat;
 TMat.MakeUnit();
 if (pCurrentMesh->iCurLC!=-1)
@@ -1890,7 +1892,8 @@ for (i=0;i<Nodes->iNo;i++)
       }
 	    ME_Object* ME= (ME_Object*) pN->pParent;
         G_Object* cAddedF;
-        cAddedF = ME->AddForce((Pt_Object*) pN, TMat*F,-1);
+		iSet = ME->GetLCID(ME->iCurLC);
+        cAddedF = ME->AddForce((Pt_Object*) pN, TMat*F, iSet);
 		if (cAddedF!=NULL)
 		{
           Dsp_Add(cAddedF);
@@ -1912,7 +1915,7 @@ else
 void DBase::AddMoment(ObjList* Nodes,C3dVector F)
 {
 int i;
-
+int iSet;
 C3dMatrix TMat;
 TMat.MakeUnit();
 if (pCurrentMesh->iCurLC!=-1)
@@ -1933,7 +1936,8 @@ for (i=0;i<Nodes->iNo;i++)
       }
         ME_Object* ME= (ME_Object*) pN->pParent;
         G_Object* cAddedF;
-        cAddedF = ME->AddMoment((Pt_Object*) pN, TMat*F,-1);
+		iSet = ME->GetLCID(ME->iCurLC);
+        cAddedF = ME->AddMoment((Pt_Object*) pN, TMat*F,iSet);
 		if (cAddedF!=NULL)
 		{
           Dsp_Add(cAddedF);
@@ -4264,6 +4268,7 @@ void DBase::GetCandiateFaces(E_Object3* pBF,ObjList* pFrom,C3dVector vC, double 
 void DBase::AddPressure(ObjList* Els,C3dVector F)
 {
 int i;
+int iSet;
 if (pCurrentMesh->iCurLC!=-1)
 {
 for (i=0;i<Els->iNo;i++)
@@ -4275,11 +4280,12 @@ for (i=0;i<Els->iNo;i++)
    {
     if (pE->pParent->iObjType==4)
 	  {
-		   ME_Object* ME= (ME_Object*) pE->pParent;
-       G_Object* cAddedM;
-       cAddedM = ME->AddPressure((E_Object*) pE, F,1);
-		   Dsp_Add(cAddedM);
-       AddTempGraphics(cAddedM);
+		ME_Object* ME= (ME_Object*) pE->pParent;
+		G_Object* cAddedM;
+		iSet = ME->GetLCID(ME->iCurLC);
+		cAddedM = ME->AddPressure((E_Object*) pE, F,iSet);
+		Dsp_Add(cAddedM);
+		AddTempGraphics(cAddedM);
 	  }
    }
  }
@@ -4373,6 +4379,7 @@ void DBase::RESLISTND(ObjList* Nds)
 void DBase::AddRestraint(ObjList* Nodes,C3dVector TDofSet,C3dVector RDofSet)
 {
 int i;
+int iSet = -1;
 BOOL xon,yon,zon,rxon,ryon,rzon;
 xon = FALSE;
 yon = FALSE;
@@ -4398,9 +4405,10 @@ for (i=0;i<Nodes->iNo;i++)
    {
       if (pN->pParent->iObjType==4)
 	  {
-		    ME_Object* ME= (ME_Object*) pN->pParent;
+		ME_Object* ME= (ME_Object*) pN->pParent;
         G_Object* cAddedR;
-        cAddedR = ME->AddRestraint((Pt_Object*) pN, xon,yon,zon,rxon,ryon,rzon,-1);
+		iSet = ME->GetBCID(ME->iCurBC);
+        cAddedR = ME->AddRestraint((Pt_Object*) pN, xon,yon,zon,rxon,ryon,rzon, iSet);
 		if (cAddedR!=NULL)
           Dsp_Add(cAddedR);
 	  }
@@ -12875,19 +12883,22 @@ if (this->pCurrentMesh!=NULL)
     int Min=timeStart.GetMinute();
     int Sec=timeStart.GetSecond();
 
-    if (Year<2025)
+    if (Year<3000)
     {
     fprintf(pFile2,"%s\n","$**********************************************************");
     fprintf(pFile2,"%s\n","$      NASTRAN DECK EXPORTED FROM M3D");
-    fprintf(pFile2,"%s\n","$      VERSION 5.0");
+    fprintf(pFile2,"%s\n","$      VERSION 5.5");
     fprintf(pFile2,"%s\n","$      www.M3dFea.com");
     fprintf(pFile2,"%s %i:%i:%i\n","$      DATE",Day,Mon,Year);
     fprintf(pFile2,"%s %i:%i:%i\n","$      TIME",Hour,Min,Sec);
     fprintf(pFile2,"%s\n","$**********************************************************");
+	if (pCurrentMesh->pSOLS != NULL)
+		pCurrentMesh->ExportNASExec(pFile2, pSecs);
     fprintf(pFile2, "%s\n", "BEGIN BULK");
-    fprintf(pFile2,"%s\n","$*********************MATERIALS****************************");
+	fprintf(pFile2, "%s\n", "PARAM,POST,-1");
+    fprintf(pFile2,"%s\n","$******************** MATERIALS ***************************");
     MatT->ExportNAS(pFile2);
-    fprintf(pFile2,"%s\n","$********************PROPERTIES****************************");
+    fprintf(pFile2,"%s\n","$******************* PROPERTIES ***************************");
 	PropsT->ExportNAS(pFile2);
     pCurrentMesh->ExportNAS(pFile2,pSecs);
 	fprintf(pFile2, "%s\n", "ENDDATA");

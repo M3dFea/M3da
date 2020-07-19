@@ -18659,6 +18659,65 @@ for (i=0;i<iNoRes;i++)
 }
 }
 
+void ME_Object::ExportNASExec(FILE* pFile, SecTable* pS)
+{
+	int iC = pSOLS->iCur;
+	if (iC!=-1)
+	{
+		if (pSOLS->pSols[iC]->iType == 0)
+		{
+			//SOL 101
+			fprintf(pFile, "%s\n", "SOL 101");
+			fprintf(pFile, "%s\n", "CEND");
+			ExportNASCase101(pFile, pS);
+		}
+		else if (pSOLS->pSols[iC]->iType == 1)
+		{
+			//SOL STEADY STATE HEAT
+			fprintf(pFile, "%s\n", "$ERROR NO EXECUTIVE STATEMENT AVAILABLE FOR STEADY STATE HEAT TRANSFUR");
+		}
+		else if (pSOLS->pSols[iC]->iType == 2)
+		{
+			fprintf(pFile, "%s\n", "SOL 103");
+			fprintf(pFile, "%s\n", "CEND");
+			fprintf(pFile, "%s\n", "$ERROR CASE CONTROL NOT IMPLEMENTED YET");
+		}
+	}
+}
+
+void ME_Object::ExportNASCase101(FILE* pFile, SecTable* pS)
+{
+int i = 0;
+int iNoSteps = 0;
+int iC = pSOLS->iCur;
+fprintf(pFile, "%s\n", "$******************* CASE CONTROL *************************");
+fprintf(pFile, "%s\n", "$");
+fprintf(pFile, "TITLE = %s\n", pSOLS->pSols[iC]->sTitle);
+fprintf(pFile, "%s\n", "ECHO = NONE");
+Solution* pSOL = pSOLS->pSols[iC];
+iNoSteps = pSOL->iNo;
+for (i = 0; i < iNoSteps; i++)
+{
+	fprintf(pFile, "SUBCASE %i\n", i + 1);
+	fprintf(pFile, "    TITLE = %s\n", pSOL->sStepTitle[i]);
+	if (pSOL->LS[i] > 0)
+	{
+		fprintf(pFile, "    LOAD = %i\n", pSOL->LS[i]);
+	}
+	if (pSOL->BS[i] > 0)
+	{
+		fprintf(pFile, "    SPC  = %i\n", pSOL->BS[i]);
+	}
+	if (pSOL->TS[i] > 0)
+	{
+		fprintf(pFile, "    TEMP = %i\n", pSOL->TS[i]);
+	}
+	fprintf(pFile, "    %s\n", "DISPLACEMENT(PRINT, PLOT) = ALL");
+	fprintf(pFile, "    %s\n", "FORCE(PRINT, PLOT) = ALL");
+	fprintf(pFile, "    %s\n", "STRESS(PRINT, PLOT, CENTER) = ALL");
+	fprintf(pFile, "    %s\n", "OLOAD(PRINT) = ALL");
+}
+}
 
 void ME_Object::ExportNAS(FILE* pFile,SecTable* pS)	 
 {
@@ -18680,13 +18739,13 @@ for (i=0;i<iElNo;i++)
 {
 	pElems[i]->ExportNAS(pFile);
 }
-
-if (iCurLC != -1)
+fprintf(pFile, "%s\n", "$********************LOADING*******************************");
+for (i=0;i<iNoLCs;i++)
 {
-  cLinkedList* pCLC = LCS[iCurLC];
+  cLinkedList* pCLC = LCS[i];
+  fprintf(pFile, "$%s\n", pCLC->sTitle);
   if (pCLC!=NULL)
   {
-	fprintf(pFile, "%s\n", "$********************LOADING*******************************");
     BCLD* pNext;
     pNext = (BCLD*) pCLC->Head;
     while (pNext != NULL)
@@ -18696,13 +18755,13 @@ if (iCurLC != -1)
     }
   }
 }
-
-if (iCurBC != -1)
+fprintf(pFile, "%s\n", "$********************RESTRAINTS*******************************");
+for (i = 0; i < iNoBCs; i++)
 {
-	cLinkedList* pCBC = BCS[iCurBC];
+	cLinkedList* pCBC = BCS[i];
+	fprintf(pFile, "$%s\n", pCBC->sTitle);
 	if (pCBC != NULL)
 	{
-		fprintf(pFile, "%s\n", "$********************RESTRAINTS*******************************");
 		BCLD* pNext;
 		pNext = (BCLD*)pCBC->Head;
 		while (pNext != NULL)
@@ -21107,7 +21166,7 @@ G_Object* ME_Object::AddRestraint(Pt_Object* pInNode,
 
 cLinkedList* pSet=NULL;
 Restraint* pF=NULL;
-int ID;
+int ID = -1;
 if ((inSetID==-1) && (iCurBC==-1))
 {
   outtext1("ERROR: No Boundary Set Active.");
@@ -34232,7 +34291,7 @@ void Moment::OglDrawW(int iDspFlgs, double dS1, double dS2)
 void Moment::ExportNAS(FILE* pFile)
 {
 
-fprintf(pFile,"%8s%8s%8i%8s%8s%8s%8s%8s\n","MOMENT  ","       1",pObj->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
+fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8s%8s\n","MOMENT  ",SetID,pObj->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
 }
 
 CString Moment::GetName()
@@ -34402,8 +34461,21 @@ void Pressure::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 
 void Pressure::ExportNAS(FILE* pFile)
 {
+int i;
+E_Object* pE;
+if (pObj != NULL)
+{
+	pE = (E_Object*) pObj;
+	if (pE->iNoNodes == 3)
+	{
+		fprintf(pFile, "%8s%8i%8s%8i%8i%8i\n", "PLOAD   ", SetID,e8(F.x), pE->GetNode(0)->iLabel, pE->GetNode(1)->iLabel, pE->GetNode(2)->iLabel);
+	}
+	else if (pE->iNoNodes == 4)
+	{
+		fprintf(pFile, "%8s%8i%8s%8i%8i%8i%8i\n", "PLOAD   ", SetID, e8(F.x), pE->GetNode(0)->iLabel, pE->GetNode(1)->iLabel, pE->GetNode(2)->iLabel, pE->GetNode(3)->iLabel);
+	}
+}
 
-//fprintf(pFile,"%8s%8s%8i%8s%8s%8s%8s%8s\n","MOMENT  ","       1",pNode->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
 }
 
 CString Pressure::GetName()
@@ -35205,7 +35277,7 @@ void Force::ExportUNV(FILE* pFile)
 void Force::ExportNAS(FILE* pFile)
 {
 
-fprintf(pFile,"%8s%8s%8i%8s%8s%8s%8s%8s\n","FORCE   ","       1",pObj->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
+fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8s%8s\n","FORCE   ", SetID,pObj->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
 }
 
 
@@ -35513,7 +35585,7 @@ vCent=Get_Centroid();
 char S1[7];
 sprintf_s(S1,"%s",GetDofStr());
 
-fprintf(pFile,"%8s%8s%8i%8s%8s\n","SPC     ","       1",pObj->iLabel,GetDofStr(),"     0.0");
+fprintf(pFile,"%8s%8i%8i%8s%8s\n","SPC     ",SetID,pObj->iLabel,GetDofStr(),"     0.0");
 
 }
 
