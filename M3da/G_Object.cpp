@@ -24149,23 +24149,23 @@ for(i=0;i<iElNo;i++)
 
     *db.mn(1,1)-=pElems[i]->dTemp;   //Subtract thermal strains 
     *db.mn(2,1)-=pElems[i]->dTemp;   //Subtract thermal strains
-	//Z2 bending Stress (Top surface Z2 is thick/2 z1 is -thick/2)
+	//Z1 bending Stress (Top surface Z2 is thick/2 z1 is -thick/2)
+	mStrn = db;
+	*mStrn.mn(1, 1) += 0.5*Curv.x*dthk;   
+	*mStrn.mn(2, 1) += 0.5*Curv.y*dthk;
+	*mStrn.mn(3, 1) += 0.5*Curv.z*dthk;			//Engininerring Strain to Strain????
+    ResZ1=dee* mStrn;                        //Calculare Stresses
+	mStrn.clear();
+	//Z2 bending Stress (Bot surface Z1 is -thick/2 z1 is -thick/2)
 	mStrn = db;
 	*mStrn.mn(1, 1) -= 0.5*Curv.x*dthk;   //Subtract thermal strains 
 	*mStrn.mn(2, 1) -= 0.5*Curv.y*dthk;
-	*mStrn.mn(3, 1) -= 0.5*Curv.z*dthk;  //Engininerring Strain to Strain????
-    Res=dee* mStrn;                        //Calculare Stresses
-	mStrn.clear();
-	//Z1 bending Stress (Bot surface Z1 is -thick/2 z1 is -thick/2)
-	mStrn = db;
-	*mStrn.mn(1, 1) += 0.5*Curv.x*dthk;   //Subtract thermal strains 
-	*mStrn.mn(2, 1) += 0.5*Curv.y*dthk;
-	*mStrn.mn(3, 1) += 0.5*Curv.z*dthk;
-	ResZ1 = dee * mStrn;                        //Calculare Stresses
+	*mStrn.mn(3, 1) -= 0.5*Curv.z*dthk;
+	ResZ2 = dee * mStrn;                        //Calculare Stresses
 	mStrn.clear();
 	//Mid bending Stress (Bot surface Z1 is thick/2 z1 is -thick/2)
 	mStrn = db;
-	ResZ2 = dee * mStrn;
+	Res = dee * mStrn;
 	Add2dStressRes(ResS, pElems[i]->iLabel, Res,ResZ1,ResZ2);
 	Res.clear();
 	ResZ1.clear();
