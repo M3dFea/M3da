@@ -5,10 +5,9 @@
 #include "resource.h"
 #include "G_Object.h"
 
-//Not the version number has to be negative
+//Note the version number has to be negative
 //so we can maintain compatability with older files
 const int VERSION_NO=-56;
-const int iNoOffObjectTypes = 10;
 const int MAX_GPS = 1000;
 const int MAX_TEMPGRP = 10000;
 const int MAX_SYMBOLS = 10000;
