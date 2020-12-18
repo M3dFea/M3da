@@ -10376,14 +10376,14 @@ void E_Object2::ExportNAS(FILE* pFile)
 
   if (iType == 136)
   {
-    //fprintf(pFile, "%8s%8i%8i%8i%8i%8s%8s%8s%8i\n", "CBUSH   ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel,"","","", iCS);
-	ME_Object* pM = (ME_Object*)this->pParent;
-	fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1000.0", pVertex[0]->iLabel, "1", pVertex[1]->iLabel, "1");
-	pM->iElementLab++;
-	fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1.0E8", pVertex[0]->iLabel, "2", pVertex[1]->iLabel, "2");
-	pM->iElementLab++;
-	fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1000.0", pVertex[0]->iLabel, "3", pVertex[1]->iLabel, "3");
-	pM->iElementLab++;
+    fprintf(pFile, "%8s%8i%8i%8i%8i%8s%8s%8s%8i\n", "CBUSH   ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel,"","","", iCS);
+	//ME_Object* pM = (ME_Object*)this->pParent;
+	//fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1000.0", pVertex[0]->iLabel, "1", pVertex[1]->iLabel, "1");
+	//pM->iElementLab++;
+	//fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1.0E8", pVertex[0]->iLabel, "2", pVertex[1]->iLabel, "2");
+	//pM->iElementLab++;
+	//fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1000.0", pVertex[0]->iLabel, "3", pVertex[1]->iLabel, "3");
+	//pM->iElementLab++;
 
   }
 }
