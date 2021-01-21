@@ -18839,7 +18839,12 @@ if ((pRes!=CResSet) || (iOpt!=iPostOpt))
   iPostOpt=iOpt;
   if (iElNo > 0) 
   {
-    if ((pRes->TCODE==4) || (pRes->TCODE==5) || (pRes->TCODE==25) || (pRes->TCODE == 18))
+    if ((pRes->TCODE==4) || 
+		(pRes->TCODE==5) || 
+		(pRes->TCODE==25) || 
+		(pRes->TCODE == 18) ||
+		(pRes->TCODE == 4004) ||  //GRMS FORCE?
+		(pRes->TCODE == 4005))  //Not sure where this tcode is documented Grms Rand
     {
     for (i = 0; i < iElNo; i++)
     {
@@ -18915,7 +18920,12 @@ bFirst = TRUE;
   }
   if (iElNo > 0) 
   {
-	if((pRes->TCODE==4) || (pRes->TCODE==5) || (pRes->TCODE==25) || (pRes->TCODE == 18))
+	if((pRes->TCODE==4) || 
+		(pRes->TCODE==5) || 
+		(pRes->TCODE==25) || 
+		(pRes->TCODE == 18) || 
+		(pRes->TCODE == 4004) ||  //GRMS FORCE
+		(pRes->TCODE == 4005))    //GRMS FORCE
     {
     for (i = 0; i < iElNo; i++)
     {
@@ -25754,6 +25764,81 @@ void ME_Object::AddOESNRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
     }
     iNoRes++;
   }
+}
+
+void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+{
+	int i;
+	double ds11;
+	double ds22;
+	double ds12;
+	double dvmMax;
+	double dvm;
+	if (iCnt > 5)
+	{
+		ResultsSets[iNoRes] = new ResSet();
+		ResultsSets[iNoRes]->sFile = inName;
+		ResultsSets[iNoRes]->sTitle = sTitle;
+		ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+		ResultsSets[iNoRes]->ACODE = Vals[0];
+		ResultsSets[iNoRes]->TCODE = Vals[1];
+		ResultsSets[iNoRes]->TYPE = Vals[2];
+		ResultsSets[iNoRes]->LC = Vals[3];
+		ResultsSets[iNoRes]->WID = Vals[6];
+		CString sEL;
+		BOOL isGood = FALSE;
+		if (Vals[2] == 33)
+		{
+			isGood = TRUE;
+			sEL = "STRESS GRMS CENTRE CQUAD4";
+		}
+
+		if ((iCnt > 7) && (isGood))
+		{
+			ResultsSets[iNoRes]->sName = sEL;
+			ResultsSets[iNoRes]->iNoV = 11;
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "Normal X at Z1";
+			ResultsSets[iNoRes]->lab[2] = "Normal Y at Z1";
+			ResultsSets[iNoRes]->lab[3] = "Shear stress in xy at Z1";
+			ResultsSets[iNoRes]->lab[4] = "Derived VM at Z1";
+			ResultsSets[iNoRes]->lab[5] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[6] = "Normal X at Z2";
+			ResultsSets[iNoRes]->lab[7] = "Normal Y at Z2";
+			ResultsSets[iNoRes]->lab[8] = "Shear stress in xy at Z2";
+			ResultsSets[iNoRes]->lab[9] = "Derived VM at Z2";
+			ResultsSets[iNoRes]->lab[10] = "Max VM at Z1 & Z2";
+			for (i = 7; i < iCnt; i += 9)
+			{
+				Res11* pRes = new Res11;
+				pRes->ID = Vals[i] / 10;
+				pRes->v[0] = *(float*)&Vals[i + 1];
+				pRes->v[1] = *(float*)&Vals[i + 2];
+				pRes->v[2] = *(float*)&Vals[i + 3];
+				pRes->v[3] = *(float*)&Vals[i + 4];
+				ds11 = pRes->v[1];
+				ds22 = pRes->v[2];
+				ds12 = pRes->v[3];
+				dvm = pow((ds11 * ds11 - ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				pRes->v[4] = dvm;
+				pRes->v[5] = *(float*)&Vals[i + 5];
+				pRes->v[6] = *(float*)&Vals[i + 6];
+				pRes->v[7] = *(float*)&Vals[i + 7];
+				pRes->v[8] = *(float*)&Vals[i + 8];
+				ds11 = pRes->v[6];
+				ds22 = pRes->v[7];
+				ds12 = pRes->v[8];
+				dvmMax = dvm;
+				dvm = pow((ds11 * ds11 - ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				pRes->v[9] = dvm;
+				if (dvm > dvmMax)
+					dvmMax = dvm;
+				pRes->v[10] = dvmMax;
+				ResultsSets[iNoRes]->Add(pRes);
+			}
+		}
+		iNoRes++;
+	}
 }
 
 void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)

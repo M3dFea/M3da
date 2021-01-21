@@ -10743,6 +10743,15 @@ if (pCurrentMesh!=NULL)
 }
 }
 
+void DBase::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOESRRes(Vals, iCnt, sTitle, sSubTitle, inName);
+	}
+}
+
+
 void DBase::AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
 {
   if (pCurrentMesh != NULL)
@@ -10907,6 +10916,25 @@ while (!feof(pFile))
             //WriteF
       }
    }
+   else if ((sDataS[0] == 'O') && 
+            (sDataS[1] == 'E') &&
+            (sDataS[2] == 'S') &&
+            (sDataS[3] == 'R') &&
+            (iRecord == -3))
+   {
+   //TRYING TO FIND RANDOM GRMS RESULTS
+   while (iKey != 0)
+   {
+	   iCnt = 0;
+	   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle);
+	   if (iCnt > 0)
+	   {
+		   //Non Linear Stress
+		   AddOESRRes(DataB, iCnt, sTitle, sSubTitle, inName);
+	   }
+	   //WriteF
+   }
+   }
    else if ((sDataS[0] == 'O') &&  //Strain element desity added 21/02/2019
             (sDataS[1] == 'N') &&  //Does not work yet
             (sDataS[2] == 'R') &&
@@ -10921,6 +10949,24 @@ while (!feof(pFile))
          AddONRGRes(DataB, iCnt, sTitle, sSubTitle, inName);
        //WriteF
      }
+   }
+      else if ((sDataS[0] == 'O') &&
+            (sDataS[1] == 'E') &&
+            (sDataS[2] == 'S') &&
+			(sDataS[3] == '1') &&
+            (iRecord == -3)) 
+   {
+      while (iKey != 0)
+      {
+            iCnt = 0;
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+			if (iCnt > 0)
+			{
+				if (DataB[0] / 10 == 1)  //Statics only
+					AddOES1Res(DataB, iCnt, sTitle, sSubTitle, inName);
+			}
+            //WriteF
+      }
    }
    fread (&sT,8,1,pFile);
    //iWord = *(int*) &sWord;
