@@ -25801,13 +25801,13 @@ void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
 			ResultsSets[iNoRes]->lab[1] = "Normal X at Z1";
 			ResultsSets[iNoRes]->lab[2] = "Normal Y at Z1";
 			ResultsSets[iNoRes]->lab[3] = "Shear stress in xy at Z1";
-			ResultsSets[iNoRes]->lab[4] = "Derived VM at Z1";
+			ResultsSets[iNoRes]->lab[4] = "Thales VM at Z1";
 			ResultsSets[iNoRes]->lab[5] = "Z1 = Fibre distance";
 			ResultsSets[iNoRes]->lab[6] = "Normal X at Z2";
 			ResultsSets[iNoRes]->lab[7] = "Normal Y at Z2";
 			ResultsSets[iNoRes]->lab[8] = "Shear stress in xy at Z2";
-			ResultsSets[iNoRes]->lab[9] = "Derived VM at Z2";
-			ResultsSets[iNoRes]->lab[10] = "Max VM at Z1 & Z2";
+			ResultsSets[iNoRes]->lab[9] = "Thales VM at Z2";
+			ResultsSets[iNoRes]->lab[10] = "Thales Max VM at Z1 & Z2";
 			for (i = 7; i < iCnt; i += 9)
 			{
 				Res11* pRes = new Res11;
@@ -25819,7 +25819,10 @@ void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
 				ds11 = pRes->v[1];
 				ds22 = pRes->v[2];
 				ds12 = pRes->v[3];
-				dvm = pow((ds11 * ds11 - ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				//dvm = pow((ds11 * ds11 - ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				//Note the + where 1 would be but this is Thales method for
+				//GRMS VM note all values are +ve
+				dvm = pow((ds11 * ds11 + ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
 				pRes->v[4] = dvm;
 				pRes->v[5] = *(float*)&Vals[i + 5];
 				pRes->v[6] = *(float*)&Vals[i + 6];
@@ -25829,7 +25832,7 @@ void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
 				ds22 = pRes->v[7];
 				ds12 = pRes->v[8];
 				dvmMax = dvm;
-				dvm = pow((ds11 * ds11 - ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				dvm = pow((ds11 * ds11 + ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
 				pRes->v[9] = dvm;
 				if (dvm > dvmMax)
 					dvmMax = dvm;
