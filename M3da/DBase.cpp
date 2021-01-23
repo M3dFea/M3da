@@ -14858,7 +14858,7 @@ int iStop=0;
 int iM;
 double dThk;
 double dTh;
-bool bOut;
+bool bOut=FALSE;
 CString sT;
 
 PCOMP* pS=new PCOMP();
@@ -14906,6 +14906,8 @@ do
     bOut=TRUE;
   else if (sT.Find("NO") >= 0)
     bOut=FALSE;
+  else
+	bOut = FALSE;
   if (iM!=0)
     pS->AddLayer(iM,dThk,dTh,bOut);
   iCnt=iCnt+4;
@@ -17371,6 +17373,63 @@ pShell->dNSM=dNSM;
 
 PropsT->AddItem(pShell);
 outtext1("New Shell Property Created.");
+}
+
+//iP ith to extract
+CString ExtractSubString(int iP,CString sIn)
+{
+	sIn.Replace(",", " ");
+	int i;
+	int iS = 0;
+	int iLen = sIn.GetLength();
+	CString sOut;
+	int iOCnt = 0;
+	int iCBlock = 0;
+	BOOL bF = FALSE;
+	for (i = 0; i < iLen ; i++)
+	{
+		if (sIn[i] != ' ')
+		{
+			if (bF == FALSE)
+			{
+				bF = TRUE;
+				iCBlock++;
+			}
+			
+			if (iCBlock == iP)
+			{
+				sOut += sIn[i];
+				iOCnt++;
+			}
+		}
+		else
+		{
+			bF = FALSE;
+		}
+	}
+	return(sOut);
+}
+
+void DBase::CreatePrPCOMP(CString sT, int iPID, double dNSM,int iNoLay, CString sLay[])
+{
+	int i;
+	int iMID;
+	double dThk;
+	double dTheta;
+	CString s;
+	PCOMP* pC = new PCOMP();
+	pC->sTitle = sT;
+	pC->iID = iPID;
+	pC->dNSM = dNSM;
+	for (i = 0; i < iNoLay; i++)
+	{
+		iMID = atoi(ExtractSubString(1, sLay[i]));
+		dThk = atof(ExtractSubString(2, sLay[i]));
+		dTheta = atof(ExtractSubString(3, sLay[i]));
+		pC->AddLayer(iMID, dThk, dTheta, 0);
+	}
+	PropsT->AddItem(pC);
+	outtext1("New PCOMP Property Created.");
 }
 
 void DBase::CreatePrSpringT(CString sT,int iPID,double dkx,double dky,double dkz,double dkt)

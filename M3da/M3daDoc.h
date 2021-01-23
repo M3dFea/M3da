@@ -470,6 +470,7 @@ public:
 //  afx_msg void OnFileOpen();
   virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
   afx_msg void OnCurvetoolsText();
+  afx_msg void OnPropertyPcomp();
 };
 
 

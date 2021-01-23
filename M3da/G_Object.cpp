@@ -9143,7 +9143,7 @@ int i;
 double det;
 Mat bT;
 Mat MM;
-int iDof;
+int iDof=-1;
 int iS;
 int MID=-1;
 double dthk=1.0;
@@ -9167,7 +9167,8 @@ Material* pM=NULL;
     dRho=pM->GetDensity();
 
 if (((iType==91) || (iType==94)) && (pS!=NULL))
-{
+{ 
+  //These are to be over written in E_Oject4 & 3 so we can deal with PCOMPS and NSM
   if (pS!=NULL)
   {
     PSHELL* pSh = (PSHELL*) pS;
@@ -13572,6 +13573,101 @@ double E_Object3::GetArea2d()
 	return (dA);
 }
 
+
+//*************************************************************************************
+// Pre: Property Table and Material Table
+// Post: Nodal masses in col vector
+// This is an override for the general method in E_Object so we can
+// deal with PCOMPs and NSM
+//*************************************************************************************
+Mat E_Object3::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
+{
+
+	int nip = 0;
+	Mat coord;
+	Mat deriv;
+	Mat fun;
+	Mat NT;
+	Mat NS;
+	Mat NM;
+	Mat Points;
+	Mat jac;
+	int i;
+	double det;
+	Mat bT;
+	int iDof = -1;
+	int iS;
+	int MID = -1;
+	double dthk = 0.0;
+	double dRho = 0;
+	double dNSM = 0;
+	char S1[80];
+	Property* pS = NULL;
+	Material* pM = NULL;
+
+	// Get Shell Thicknes and Density
+	// ************NEED TO DO BEAMS LATTER************ 
+
+	pS = PropsT->GetItem(PID);
+	if (pS != NULL)
+	{
+		if (pS->iType == 1)  //pShell
+		{
+			PSHELL* pSh = (PSHELL*)pS;
+			dthk = pSh->dT;
+			dNSM = pSh->dNSM;
+		}
+		MID = pS->GetDefMatID();
+		if (MatT != NULL)
+			pM = MatT->GetItem(MID);
+	}
+	else
+	{
+		sprintf_s(S1, "ERROR: Property Not Found For EL %i", iLabel);
+		outtext1(S1);
+	}
+
+	if (pM != NULL)
+		dRho = pM->GetDensity();
+	iDof = 2; nip = 1; iS = 3;
+	//*********************JUST FOR TEST*******************************
+	Mat AA(iNoNodes, 1);
+	coord = getCoords3d();
+	Points = Sample(nip);
+	for (i = 1; i < nip + 1; i++)
+	{
+		det = 0;
+		fun = ShapeFun(Points, i);
+		deriv = ShapeDer(Points, i);
+		jac = deriv * coord;
+		jac = jac.InvertJac(det);
+		NT = fun;
+		NT.Transpose();
+		//MM = NT * S;
+		det *= *Points.mn(i, 3);
+		NT *= det;
+		AA += NT;  //FS The shell nodal areas
+		//Clean up
+		fun.clear();
+		deriv.clear();
+		jac.clear();
+		NT.clear();
+	}
+
+	//Mass Area*dRho*dThk+Area*NSM
+	NM = AA;
+	NS = AA;
+	NM *= dthk * dRho;  //Element nodal volume mass
+	NS *= dNSM;			//Element NSM per Area
+	NM += NS;
+	//FS.diag();
+	coord.clear();
+	Points.clear();
+	AA.clear();
+	NS.clear();
+	return (NM);
+}
+
 //*********************************
 IMPLEMENT_DYNAMIC( E_Object1, CObject )
 
@@ -15931,6 +16027,99 @@ double E_Object4::GetArea2d()
 	return (dA);
 }
 
+//*************************************************************************************
+// Pre: Property Table and Material Table
+// Post: Nodal masses in col vector
+// This is an override for the general method in E_Object so we can
+// deal with PCOMPs and NSM
+//*************************************************************************************
+Mat E_Object4::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
+{
+
+	int nip = 0;
+	Mat coord;
+	Mat deriv;
+	Mat fun;
+	Mat NT;
+	Mat NS;
+	Mat NM;
+	Mat Points;
+	Mat jac;
+	int i;
+	double det;
+	Mat bT;
+	int iDof = -1;
+	int iS;
+	int MID = -1;
+	double dthk = 0.0;
+	double dRho = 0;
+	double dNSM = 0;
+	char S1[80];
+	Property* pS = NULL;
+	Material* pM = NULL;
+
+	// Get Shell Thicknes and Density
+	// ************NEED TO DO BEAMS LATTER************ 
+
+	pS = PropsT->GetItem(PID);
+	if (pS != NULL)
+	{
+		if (pS->iType == 1)  //pShell
+		{
+			PSHELL* pSh = (PSHELL*)pS;
+			dthk = pSh->dT;
+			dNSM = pSh->dNSM;
+		}
+		MID = pS->GetDefMatID();
+		if (MatT != NULL)
+			pM = MatT->GetItem(MID);
+	}
+	else
+	{
+		sprintf_s(S1, "ERROR: Property Not Found For EL %i", iLabel);
+		outtext1(S1);
+	}
+
+	if (pM != NULL)
+		dRho = pM->GetDensity();
+	iDof = 2; nip = 4; iS = 3;
+	//*********************JUST FOR TEST*******************************
+	Mat AA(iNoNodes, 1);
+	coord = getCoords3d();
+	Points = Sample(nip);
+	for (i = 1; i < nip + 1; i++)
+	{
+		det = 0;
+		fun = ShapeFun(Points, i);
+		deriv = ShapeDer(Points, i);
+		jac = deriv * coord;
+		jac = jac.InvertJac(det);
+		NT = fun;
+		NT.Transpose();
+		//MM = NT * S;
+		det *= *Points.mn(i, 3);
+		NT *= det;
+		AA += NT;  //FS The shell nodal areas
+		//Clean up
+		fun.clear();
+		deriv.clear();
+		jac.clear();
+		NT.clear();
+	}
+
+	//Mass Area*dRho*dThk+Area*NSM
+	NM = AA;
+	NS = AA;
+	NM *= dthk * dRho;  //Element nodal volume mass
+	NS *= dNSM;			//Element NSM per Area
+	NM += NS;
+	//FS.diag();
+	coord.clear();
+	Points.clear();
+	AA.clear();
+	NS.clear();
+	return (NM);
+}
 //----------------------------------------------------------------------------
 //    E L E M E N T   O B J E C T
 //----------------------------------------------------------------------------
@@ -34135,6 +34324,7 @@ if (iNoLays<MAX_LAYERS)
    Theta[iNoLays]=inThe;
    sOut[iNoLays]=inSo;
    iNoLays++;
+   dZ0 = -0.5*GetThk();
 }
 else
 {

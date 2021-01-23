@@ -2382,13 +2382,13 @@ if (iStat == 0)
     pNext->Init(cDBase, -1);
     this->DoMenu(CInMsg, Pt);
   }
-  else if (CInMsg == "ELREV")
+  else if (CInMsg == "PRPCOMP")
   { 
 	iResumePos=0;
     iCancelPos=100;
     cDBase->DB_ActiveBuffSet(2);
 	cDBase->DB_ClearBuff();
-	pNext = new zELREV_Mnu();
+	pNext = new zPRPCOMP_Mnu();
 	pNext->Init(cDBase,-1)	;
 	this->DoMenu(CInMsg,Pt);
   }
@@ -9743,6 +9743,124 @@ if (iStat == 100)
 }
 MenuEnd:
 return RetVal;
+}
+
+
+int zPRPCOMP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		C3dVector ptVec;
+		if (iStat == 0)
+		{
+			outtext2("/ENTER PROPERTY TITLE");
+			SetFocus();
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sTit = CInMsg;
+			iStat = 2;
+		}
+		////////////////Get defualt pid//////////////////////////////  
+		iNLab = 1;
+		if (cDBase->pCurrentMesh != NULL)
+		{
+			iNLab = cDBase->PropsT->NextID();
+		}
+		char s1[200];
+		CString sT;
+		sprintf_s(s1, "%s%i%s", "ENTER NEW PID (", iNLab, ")");
+		////////////////////////////////////////////////////////////
+		if (iStat == 2)
+		{
+			outtext2(s1);
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			iPID = atoi(CInMsg);
+			if (iPID < 1)
+			{
+				iPID = iNLab;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			outtext2("/ENTER NSM");
+			iStat = 5;
+			goto MenuEnd;
+		}
+		if (iStat == 5)
+		{
+			dNSM = atof(CInMsg);
+			if (dNSM < 0)
+			{
+				iStat = 4;
+				outtext1("ERROR: Invalid NSM.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 6;
+			}
+		}
+		//
+		if (iStat == 6)
+		{
+			outtext2("/ENTER LAYER (MID,THK,THETA)");
+			iStat = 7;	
+			goto MenuEnd;
+		}
+		if (iStat == 7)
+		{
+			if (CInMsg == "D")
+			{
+				iStat = 8;
+			}
+			else
+			{
+				sLay[iNoLay]= CInMsg;
+				iNoLay++;
+				iStat = 6;
+				DoMenu(CInMsg, Pt);
+			}
+		}
+		if (iStat == 8)
+		{
+			RetVal = 1;
+			if (cDBase->pCurrentMesh != NULL)
+			{
+				cDBase->CreatePrPCOMP(sTit, iPID, dNSM, iNoLay, sLay);
+			}
+			outtext1("End of Property Definition.");
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
 }
 
 int zPRSPGT_Mnu::DoMenu(CString CInMsg,CPoint Pt)

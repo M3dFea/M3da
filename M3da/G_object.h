@@ -2662,34 +2662,34 @@ public:
      virtual G_Object* Copy(G_Object* Parrent);
      virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
      virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
-	   virtual void ExportUNV(FILE* pFile);
+	 virtual void ExportUNV(FILE* pFile);
      virtual void ExportNAS(FILE* pFile);
      virtual Mat Sample(int iNo);
-	   virtual Mat ShapeDer(Mat Points, int i);
-	   virtual Mat ShapeFun(Mat Points, int i);
-	   virtual Mat getCoords2d();
-	   virtual Mat getCoords3d();
-	   virtual Mat bmat(Mat& coord,
-                   Mat& deriv,
-				   int iD,
-				   int iDof);
+	 virtual Mat ShapeDer(Mat Points, int i);
+	 virtual Mat ShapeFun(Mat Points, int i);
+	 virtual Mat getCoords2d();
+	 virtual Mat getCoords3d();
+	 virtual Mat bmat(Mat& coord,
+                      Mat& deriv,
+				      int iD,
+				      int iDof);
 	 virtual Mat bmat2d(Mat& coord,
-                      Mat& deriv);
+                        Mat& deriv);
    virtual Mat GetElNodalMass(PropTable* PropsT,MatTable* MatT);
    virtual Mat GetThermalStrainMat3d(PropTable* PropsT,MatTable* MatT,double dT);
    virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
    virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
-	 virtual int MaxBW();
+   virtual int MaxBW();
    virtual Vec<int>GetSteerVec3d();
    virtual Vec<int>GetSteerVec1d();
-	 virtual BOOL NodeInEl(Pt_Object* pN);
+   virtual BOOL NodeInEl(Pt_Object* pN);
    virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
    virtual Mat KayMat(double K, int iD);
-	 virtual Mat DeeMat(double E, double v,int iD);
-	 virtual int noDof();
-	 virtual BOOL ChkNegJac();
-	 virtual int GetfaceList(cFace* Faces[6]);
-	 virtual int GetLinkList(cLink* Links[200]);
+   virtual Mat DeeMat(double E, double v,int iD);
+   virtual int noDof();
+   virtual BOOL ChkNegJac();
+   virtual int GetfaceList(cFace* Faces[6]);
+   virtual int GetLinkList(cLink* Links[200]);
    virtual void Info();
    virtual G_Object* GetNode(int i);
    virtual C3dVector GetNodalCoords(int i);
@@ -3008,6 +3008,7 @@ public:
    virtual int GetVarValues(CString sVar[]);
    virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
    double GetArea2d();
+   virtual Mat GetElNodalMass(PropTable* PropsT, MatTable* MatT);
 };
 
 class E_CellS : public E_Object
@@ -3034,62 +3035,63 @@ class E_Object4 : public E_Object
 {
 DECLARE_DYNAMIC(E_Object4)
 public:
-     int iMCys;
-     double MAng;
-     double dZOFFS;
-     Pt_Object* pVertex[4];
-     ~E_Object4();
-	 virtual void Create(Pt_Object* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);	 
-     virtual G_Object* Copy(G_Object* Parrent);
-     virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
-     virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
-     virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
-     virtual void Draw(CDC* pDC,int iDrawmode);
-	 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
-	 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
+	int iMCys;
+	double MAng;
+	double dZOFFS;
+	Pt_Object* pVertex[4];
+	~E_Object4();
+	virtual void Create(Pt_Object* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);	 
+	virtual G_Object* Copy(G_Object* Parrent);
+	virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+	virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
+	virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
+	virtual void Draw(CDC* pDC,int iDrawmode);
+	virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
+	virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 	 //virtual void SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran);
 	 //virtual void HighLight(CDC* pDC);
 	 //virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);
-	 virtual C3dVector Get_Centroid();
-	 virtual void ExportUNV(FILE* pFile);
-   virtual void ExportNAS(FILE* pFile);
-	 virtual Mat Sample(int iNo);
-	 virtual Mat ShapeDer(Mat Points, int i);
-	 virtual Mat ShapeFun(Mat Points, int i);
-	 virtual Mat getCoords2d();
-   virtual Mat getCoords3d();
-	 virtual Mat bmatAxi(double& radius,
+	virtual C3dVector Get_Centroid();
+	virtual void ExportUNV(FILE* pFile);
+	virtual void ExportNAS(FILE* pFile);
+	virtual Mat Sample(int iNo);
+	virtual Mat ShapeDer(Mat Points, int i);
+	virtual Mat ShapeFun(Mat Points, int i);
+	virtual Mat getCoords2d();
+	virtual Mat getCoords3d();
+	virtual Mat bmatAxi(double& radius,
                          Mat& coord,
                          Mat& deriv,
                          Mat& fun);
-	 virtual int MaxBW();
-   virtual Mat E_Object4::GetStiffMat(PropTable* PropsT,MatTable* MatT);
-   virtual Mat E_Object4::GetStiffMat_Ex(PropTable* PropsT, MatTable* MatT);
-   Mat E_Object4::GetB_1pt(double &det);
-   virtual Vec<int>GetSteerVec3d();
-   virtual Vec<int> GetSteerVec3d_E();
-   virtual Vec<int>GetSteerVec1d();
-   virtual BOOL NodeInEl(Pt_Object* pN);
-   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
-	 virtual int noDof();
-	 virtual int GetfaceList(cFace* Faces[6]);
-	 virtual int GetLinkList(cLink* Links[200]);
-   virtual G_Object* GetNode(int i);
-   virtual C3dVector Get_Normal();
-   virtual void Info();
-   virtual CString ToString();
-   virtual void Reverse();
-   virtual C3dMatrix GetElSys();
-   virtual C3dMatrix GetElSys_Ex(Vec<int> &Steer, Vec<double> &Disp);
-   virtual C3dVector GetTestPt();
-   virtual C3dVector GetFirstEdge();
-   virtual double QualAspect();
-   virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
-   virtual CString GetName();
-   virtual int GetVarHeaders(CString sVar[]);
-   virtual int GetVarValues(CString sVar[]);
-   virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
-   double GetArea2d();
+	virtual int MaxBW();
+	virtual Mat E_Object4::GetStiffMat(PropTable* PropsT,MatTable* MatT);
+	virtual Mat E_Object4::GetStiffMat_Ex(PropTable* PropsT, MatTable* MatT);
+	Mat E_Object4::GetB_1pt(double &det);
+	virtual Vec<int>GetSteerVec3d();
+	virtual Vec<int> GetSteerVec3d_E();
+	virtual Vec<int>GetSteerVec1d();
+	virtual BOOL NodeInEl(Pt_Object* pN);
+	virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
+	virtual int noDof();
+	virtual int GetfaceList(cFace* Faces[6]);
+	virtual int GetLinkList(cLink* Links[200]);
+	virtual G_Object* GetNode(int i);
+	virtual C3dVector Get_Normal();
+	virtual void Info();
+	virtual CString ToString();
+	virtual void Reverse();
+	virtual C3dMatrix GetElSys();
+	virtual C3dMatrix GetElSys_Ex(Vec<int> &Steer, Vec<double> &Disp);
+	virtual C3dVector GetTestPt();
+	virtual C3dVector GetFirstEdge();
+	virtual double QualAspect();
+	virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+	virtual CString GetName();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
+	double GetArea2d();
+	virtual Mat GetElNodalMass(PropTable* PropsT, MatTable* MatT);
 };
 
 

@@ -323,6 +323,7 @@ ON_COMMAND(ID_FEMTOOLS_MESHSIZEONCURVES, &CM3daDoc::OnFemtoolsMeshsizeoncurves)
 //ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, &CM3daDoc::OnUpdateEditRedo)
 //ON_COMMAND(ID_FILE_OPEN, &CM3daDoc::OnFileOpen)
 ON_COMMAND(ID_CURVETOOLS_TEXT, &CM3daDoc::OnCurvetoolsText)
+ON_COMMAND(ID_PROPERTY_PCOMP, &CM3daDoc::OnPropertyPcomp)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5411,6 +5412,22 @@ void CM3daDoc::OnCurvetoolsText()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("TEXTCR");
 		sLastcmd = "TEXTCR";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnPropertyPcomp()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("PRPCOMP");
+		sLastcmd = "PRPCOMP";
 	}
 	else
 	{

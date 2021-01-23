@@ -1266,6 +1266,18 @@ CString sTit;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zPRPCOMP_Mnu : public zMnu
+{
+public:
+	int  iNLab;
+	int iPID;
+	int iNoLay = 0;
+	CString sLay[50];
+	double dNSM;
+	CString sTit;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zPRSPGT_Mnu: public zMnu
 {
 public:
