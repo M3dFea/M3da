@@ -1384,15 +1384,15 @@ public:
   virtual ~CPcompEditor();
   Entity* pEnt;
   Lamina Laminate[200];
-  void AddVisLayer(double dA, double dZ);
-  int iNoLayers;
+  void AddVisLayer(double dA, double dZ, double dT);
+  int iNoLayers=0;
   HDC hdc;
   HGLRC hrc;
   HDC hdcOld;
   HGLRC hrcOld;
-  CWnd* pDrg;
+  CWnd* pDrg = NULL;
   C3dMatrix vMat;
-  int m_nPixelFormat;
+  int m_nPixelFormat=0;
   void InitOGL();
   void OglDraw();
   void Build(); //build the visual layers from the PCOMP

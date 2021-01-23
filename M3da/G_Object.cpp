@@ -47782,10 +47782,11 @@ vMat.MakeUnit();
 }
 
 
-void CPcompEditor::AddVisLayer(double dA, double dZ)
+void CPcompEditor::AddVisLayer(double dA, double dZ,double dT)
 {
   Laminate[iNoLayers].SetAng(dA);
   Laminate[iNoLayers].SetZ(dZ);
+  Laminate[iNoLayers].SetThk(dT);
   iNoLayers++;
 }
 
@@ -47841,20 +47842,26 @@ void CPcompEditor::Build()
 	int i;
 	double dTheta;
 	double dZ;
+	double dT;
 	double dS;
 	PCOMP* pP = (PCOMP*)pEnt;
-	vMat.Rotate(-85, 0, 7.5);
+	vMat.Rotate(-75, 0, 10);
 	dS = 0.5 / pP->GetThk();
 	dZ = -pP->GetThk() / 2;
 	dZ *= dS;
-	for (i = 0; i < pP->iNoLays; i++)
+	dTheta = pP->Theta[0];
+	dZ += 0.5 * dS * pP->T[0];
+	dT = dS * pP->T[0];
+	AddVisLayer(dTheta, dZ, dT);
+	for (i = 1; i < pP->iNoLays; i++)
 	{
 		dTheta = pP->Theta[i];
-		dZ += dS * pP->T[i];
-		AddVisLayer(dTheta, dZ);
-		AddVisLayer(0, 1);
-
+		dZ += 0.5*dS * pP->T[i-1];
+		dZ += 0.5 * dS * pP->T[i];
+		dT = dS * pP->T[i];
+		AddVisLayer(dTheta, dZ, dT);
 	}
+
 }
 
 void CPcompEditor::InitOGL()
