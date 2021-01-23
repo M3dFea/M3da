@@ -4878,32 +4878,54 @@ return RetVal;
 
 int zTEST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  goto MenuEnd;
-}
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("/ENTER PID OR PICK ELEMENT");
+			CInMsg = "NULL";
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg != "MouseInp") && (CInMsg != "D") && (CInMsg != "NULL"))
+			{
+				C3dVector GetPt;
+				int iPt = ExtractPt(CInMsg, &GetPt);
+				cDBase->ViewLam((int)GetPt.x);
+				RetVal = 1;
+			}
+			else if (CInMsg == "MouseInp")
+			{
+				if (cDBase->S_Count == S_initCnt + 1)
+				{
+					if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 3)
+					{
+						E_Object* pE = (E_Object*)cDBase->S_Buff[cDBase->S_Count - 1];
+						cDBase->ViewLam(pE->PID);
+					}
+					RetVal = 1;
+				}
+			}
+		}
 
-if (iStat == 0)
-{
-  //cDBase->CreatTestPCOMPS();
-  cDBase->Test3();   //PCOMP EDITOR
-  RetVal=1;
-}
-
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  RetVal = 1;
-}
-}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
 MenuEnd:
-return RetVal;
+	return RetVal;
 }   
 
 int zCVMOW_Mnu::DoMenu(CString CInMsg,CPoint Pt)

@@ -471,6 +471,7 @@ public:
   virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
   afx_msg void OnCurvetoolsText();
   afx_msg void OnPropertyPcomp();
+  afx_msg void OnMaterialOrthotropic();
 };
 
 

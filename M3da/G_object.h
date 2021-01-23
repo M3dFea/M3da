@@ -1395,6 +1395,7 @@ public:
   int m_nPixelFormat;
   void InitOGL();
   void OglDraw();
+  void Build(); //build the visual layers from the PCOMP
   enum { IDD = IDD_PCOMPEDIT };
   virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
   DECLARE_MESSAGE_MAP()

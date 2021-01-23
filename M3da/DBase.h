@@ -567,7 +567,6 @@ void SelAllWGs();
 void NodesOnCurve(NCurve* pC, int iNo, cLinkedList* pN);
 void GenNodesOnCurve(int iNo, cLinkedList* pN);
 void Test2();
-void Test3();
 void TestMPM2();
 void TestFL();     //Test Face list display
 void Dsp_CtrlPts();
@@ -601,6 +600,7 @@ void SetDOFStringA(ObjList* Items, CString sDOF);
 void SetDOFStringB(ObjList* Items, CString sDOF);
 void ShellOffsets(ObjList* Items,double dOff);
 void ElSweep(ObjList* Items,C3dVector tVec,int iNoOff);
+void ViewLam(int iP);
 //******************************************************************
 //                  Drap Demo 22/062020 BlowsR
 //******************************************************************

@@ -33744,54 +33744,54 @@ CString MAT8::ToString()
 {
 char S[200]="";
 CString src="";
-sprintf_s(S,"%8s%8i%8s%8s%8s%8s%8s%8s%8s\n","MAT8    ",iID,e8(dE1),e8(dE2),e8(dNU12),e8(dG12),e8(dG1Z),e8(dG2Z),e8(dRHO));
+sprintf_s(S,"%8s%8i%8s%8s%8s%8s%8s%8s%8s\n","MAT8    ",iID, e8(dE1),e8(dE2),e8(dNU12),e8(dG12),e8(dG1Z),e8(dG2Z),e8(dRHO));
 src=S;
-sprintf_s(S,"        %8s%8s",e8(dA1),e8(dA2));
+sprintf_s(S,"        %8s%8s", e8(dA1),e8(dA2));
 src+=S;
 if (dTREF==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(dTREF));
+   sprintf_s(S,"%8s", e8(dTREF));
 src+=S;
 if (dXt==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(dXt));
+   sprintf_s(S,"%8s", e8(dXt));
 src+=S;
 if (dXc==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(dXc));
+   sprintf_s(S,"%8s", e8(dXc));
 src+=S;
 if (dYt==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(dYt));
+   sprintf_s(S,"%8s", e8(dYt));
 src+=S;
 if (dYc==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(dYc));
+   sprintf_s(S,"%8s", e8(dYc));
 src+=S;
 if (dS==0)
    sprintf_s(S,"%8s\n","        ");
 else
-   sprintf_s(S,"%8s\n",e8(dS));
+   sprintf_s(S,"%8s\n", e8(dS));
 src+=S;
 if (dGE==0)
    sprintf_s(S,"        %8s","        ");
 else
-   sprintf_s(S,"        %8s",e8(dGE));
+   sprintf_s(S,"        %8s", e8(dGE));
 src+=S;
 if (F12==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(F12));
+   sprintf_s(S,"%8s", e8(F12));
 src+=S;
 if (STRN==0)
    sprintf_s(S,"%8s\n","        ");
 else
-   sprintf_s(S,"%8s\n",e8(STRN));
+   sprintf_s(S,"%8s\n", e8(STRN));
 src+=S;
 return (src);
 }
@@ -33905,7 +33905,10 @@ int MAT8::GetVarValues(CString sVar[])
   sprintf_s(S1, "%g", F12);
   sVar[16] = S1;
   iNo++;
-  sprintf_s(S1, "%i", STRN);
+  if (STRN==0)
+      sprintf_s(S1, "%s", "        ");
+  else
+	  sprintf_s(S1, "%g", STRN);
   sVar[17] = S1;
   iNo++;
   return (iNo);
@@ -33933,7 +33936,7 @@ void MAT8::PutVarValues(int iNo, CString sVar[])
   dS = atof(sVar[14]);
   dGE = atof(sVar[15]);
   F12 = atof(sVar[16]);
-  STRN = atoi(sVar[17]);
+  STRN = atof(sVar[17]);
 }
 
 //*************************************************************************
@@ -47825,12 +47828,34 @@ BOOL CPcompEditor::OnInitDialog()
   // TODO:  Add extra initialization here
   pDrg = new CWnd;
   pDrg->Create(_T("STATIC"), _T("Hi"), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
-        CRect(20, 20, 300, 300), this, 1234);
+        CRect(0, 0, 500, 500), this, 1234);
   InitOGL();
+  Build();
   return TRUE;  // return TRUE unless you set the focus to a control
                 // EXCEPTION: OCX Property Pages should return FALSE
 }
 
+
+void CPcompEditor::Build()
+{
+	int i;
+	double dTheta;
+	double dZ;
+	double dS;
+	PCOMP* pP = (PCOMP*)pEnt;
+	vMat.Rotate(-85, 0, 7.5);
+	dS = 0.5 / pP->GetThk();
+	dZ = -pP->GetThk() / 2;
+	dZ *= dS;
+	for (i = 0; i < pP->iNoLays; i++)
+	{
+		dTheta = pP->Theta[i];
+		dZ += dS * pP->T[i];
+		AddVisLayer(dTheta, dZ);
+		AddVisLayer(0, 1);
+
+	}
+}
 
 void CPcompEditor::InitOGL()
 {
@@ -47926,19 +47951,7 @@ void CPcompEditor::OnBnClickedButton1()
 {
   // TODO: Add your control notification handler code here
   //OglDraw();
-  vMat.Rotate(-85,0,7.5);
-
-  AddVisLayer(0.0, -0.5);
-  AddVisLayer(45.0,-0.4);
-  AddVisLayer(90.0, -0.3);
-  AddVisLayer(45.0, -0.2);
-  AddVisLayer(0.0,  -0.1);
-  AddVisLayer(90.0, 0);
-  AddVisLayer(0.0, 0.1);
-  AddVisLayer(45.0, 0.2);
-  AddVisLayer(90.0, 0.3);
-  AddVisLayer(45.0, 0.4);
-  AddVisLayer(0.0, 0.5);
+	Build();
 }
 
 void CPcompEditor::OnPaint()

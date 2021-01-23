@@ -10292,17 +10292,6 @@ ReDraw();
 
 
 
-void DBase::Test3()
-{
-  //outtext1("TEST PROCEDURE");
-	//C3dVector vIn;
-	//vIn.Set(1, 1, 1);
-	//AddText("Hello World", vIn);
-  //displaySymTable();
-  CPcompEditor Dlg;
-  //Dlg.pEnt = P;
-  Dlg.DoModal();
-}
 
 
 //*******************************************************
@@ -16301,6 +16290,28 @@ void DBase::EditProp(int PID)
 
   }
 }
+
+void DBase::ViewLam(int iP)
+{
+	Property* P = NULL;
+	P = PropsT->GetItem(iP);
+	if (P != NULL)
+	{
+		if (P->iType == 2)
+		{
+			CPcompEditor Dlg;
+			Dlg.pEnt = P;
+			Dlg.DoModal();
+			InvalidateOGL();
+			ReGen();
+		}
+	}
+	else
+	{
+
+	}
+}
+
 
 void DBase::EditObject()
 {
