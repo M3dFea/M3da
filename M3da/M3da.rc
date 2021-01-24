@@ -385,6 +385,7 @@ BEGIN
             MENUITEM "Change Material",             ID_PROPERTYMODIFY_CHANGEMATERIAL
             MENUITEM "Edit Property Values",        ID_PROPERTYMODIFY_EDITPROPERTYVALUES
             MENUITEM "Edit Material Values",        ID_PROPERTY_EDITMATERIALVALUES
+            MENUITEM "Display Laminate Stack",      ID_PROPERTY_DISPLAYLAMINATESTACK
         END
         POPUP "List"
         BEGIN
@@ -1186,6 +1187,7 @@ BEGIN
     ID_EDIT_REDO33332       "Redo Last"
     ID_CURVETOOLS_TEXT      "Add Text"
     ID_PROPERTY_PCOMP       "Create PCOMP Laminate Property"
+    ID_PROPERTY_DISPLAYLAMINATESTACK "Display Laminate Stack Sequence"
 END
 
 #endif    // English (United States) resources

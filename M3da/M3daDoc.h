@@ -472,6 +472,7 @@ public:
   afx_msg void OnCurvetoolsText();
   afx_msg void OnPropertyPcomp();
   afx_msg void OnMaterialOrthotropic();
+  afx_msg void OnPropertyDisplaylaminatestack();
 };
 
 

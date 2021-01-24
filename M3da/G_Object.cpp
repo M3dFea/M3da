@@ -32,6 +32,40 @@ float cBarMin= (float) 1e+20;
 float cBarVecMax;
 float cBarVecMin;
 
+CString ExtractSubString2(int iP, CString sIn)
+{
+	sIn.Replace(",", " ");
+	int i;
+	int iS = 0;
+	int iLen = sIn.GetLength();
+	CString sOut;
+	int iOCnt = 0;
+	int iCBlock = 0;
+	BOOL bF = FALSE;
+	for (i = 0; i < iLen; i++)
+	{
+		if (sIn[i] != ' ')
+		{
+			if (bF == FALSE)
+			{
+				bF = TRUE;
+				iCBlock++;
+			}
+
+			if (iCBlock == iP)
+			{
+				sOut += sIn[i];
+				iOCnt++;
+			}
+		}
+		else
+		{
+			bF = FALSE;
+		}
+	}
+	return(sOut);
+}
+
 void SetColBar(float fMin,float fMax)
 {
 //if (fMax>cBarMax)
@@ -13582,7 +13616,6 @@ double E_Object3::GetArea2d()
 //*************************************************************************************
 Mat E_Object3::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 {
-
 	int nip = 0;
 	Mat coord;
 	Mat deriv;
@@ -13599,6 +13632,7 @@ Mat E_Object3::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 	int iS;
 	int MID = -1;
 	double dthk = 0.0;
+	double dTotthk = 0.0;
 	double dRho = 0;
 	double dNSM = 0;
 	char S1[80];
@@ -13616,10 +13650,49 @@ Mat E_Object3::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 			PSHELL* pSh = (PSHELL*)pS;
 			dthk = pSh->dT;
 			dNSM = pSh->dNSM;
+			MID = pS->GetDefMatID();
+			if (MatT != NULL)
+				pM = MatT->GetItem(MID);
+			if (pM != NULL)
+				dRho = pM->GetDensity();
 		}
-		MID = pS->GetDefMatID();
-		if (MatT != NULL)
-			pM = MatT->GetItem(MID);
+		else if (pS->iType == 2)
+		{
+			PCOMP* pSh = (PCOMP*)pS;
+			dNSM = pSh->dNSM;
+			dTotthk = 0.0;
+			dRho = 0.0;
+			for (i = 0; i < pSh->iNoLays; i++)
+			{
+				dthk = pSh->T[i];
+				dTotthk += dthk;
+				dNSM = pSh->dNSM;
+				MID = pS->GetDefMatID();
+				if (MatT != NULL)
+					pM = MatT->GetItem(pSh->MID[i]);
+				if (pM != NULL)
+				{
+					dRho += pM->GetDensity() * dthk;
+					//effective density
+				}
+			}
+			if (dTotthk > 0)
+			{
+				dRho /= dTotthk;
+				dthk = dTotthk;
+			}
+			else
+			{
+				dRho = 0;
+				dthk = 0;
+			}
+		}
+		else
+		{
+			sprintf_s(S1, "ERROR: Invalid Property EL %i", iLabel);
+			outtext1(S1);
+		}
+
 	}
 	else
 	{
@@ -13627,8 +13700,7 @@ Mat E_Object3::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 		outtext1(S1);
 	}
 
-	if (pM != NULL)
-		dRho = pM->GetDensity();
+
 	iDof = 2; nip = 1; iS = 3;
 	//*********************JUST FOR TEST*******************************
 	Mat AA(iNoNodes, 1);
@@ -16052,6 +16124,7 @@ Mat E_Object4::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 	int iS;
 	int MID = -1;
 	double dthk = 0.0;
+	double dTotthk = 0.0;
 	double dRho = 0;
 	double dNSM = 0;
 	char S1[80];
@@ -16069,10 +16142,49 @@ Mat E_Object4::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 			PSHELL* pSh = (PSHELL*)pS;
 			dthk = pSh->dT;
 			dNSM = pSh->dNSM;
+			MID = pS->GetDefMatID();
+			if (MatT != NULL)
+				pM = MatT->GetItem(MID);
+			if (pM != NULL)
+				dRho = pM->GetDensity();
 		}
-		MID = pS->GetDefMatID();
-		if (MatT != NULL)
-			pM = MatT->GetItem(MID);
+		else if (pS->iType == 2)
+		{
+			PCOMP* pSh = (PCOMP*)pS;
+			dNSM = pSh->dNSM;
+			dTotthk = 0.0;
+			dRho = 0.0;
+			for (i = 0; i < pSh->iNoLays; i++)
+			{
+				dthk = pSh->T[i];
+				dTotthk += dthk;
+				dNSM = pSh->dNSM;
+				MID = pS->GetDefMatID();
+				if (MatT != NULL)
+					pM = MatT->GetItem(pSh->MID[i]);
+				if (pM != NULL)
+				{
+					dRho += pM->GetDensity()*dthk;
+					//effective density
+				}
+			}
+			if (dTotthk > 0)
+			{
+				dRho /= dTotthk;
+				dthk = dTotthk;
+			}
+			else
+			{
+				dRho = 0;
+				dthk = 0;
+			}
+		}
+		else
+		{
+			sprintf_s(S1, "ERROR: Invalid Property EL %i", iLabel);
+			outtext1(S1);
+		}
+
 	}
 	else
 	{
@@ -16080,8 +16192,7 @@ Mat E_Object4::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 		outtext1(S1);
 	}
 
-	if (pM != NULL)
-		dRho = pM->GetDensity();
+
 	iDof = 2; nip = 4; iS = 3;
 	//*********************JUST FOR TEST*******************************
 	Mat AA(iNoNodes, 1);
@@ -34287,8 +34398,8 @@ CString PCOMP::ToString()
 
 void PCOMP::ExportNAS(FILE* pFile)
 {
-	fprintf(pFile, "$%s\n", sTitle);
-	fprintf(pFile, "%s", ToString());
+	fprintf(pFile, "$%s\n" , sTitle);
+	fprintf(pFile, "%s",ToString());
 }
 
 PCOMP* PCOMP::Copy()
@@ -34396,8 +34507,22 @@ int PCOMP::GetVarValues(CString sVar[])
   sprintf_s(S1, "%g", dSB);
   sVar[iNo] = S1;
   iNo++;
-  sprintf_s(S1, "%i", FT);
-  sVar[iNo] = S1;
+  if (FT == 1)
+	  sVar[iNo] = "HILL";
+  else if (FT == 2)
+	  sVar[iNo] = "HOFF";
+  else if (FT == 3)
+	  sVar[iNo] = "TSAI";
+  else if (FT == 4)
+	  sVar[iNo] = "STRESS";
+  else if (FT == 5)
+	  sVar[iNo] = "STRN";
+  else if (FT == 6)
+	  sVar[iNo] = "LARCO2";
+  else if (FT == 7)
+	  sVar[iNo] = "PUCK";
+  else if (FT == 8)
+	  sVar[iNo] = "MCT";
   iNo++;
   sprintf_s(S1, "%g", dRefT);
   sVar[iNo] = S1;
@@ -34405,7 +34530,10 @@ int PCOMP::GetVarValues(CString sVar[])
   sprintf_s(S1, "%g", dGE);
   sVar[iNo] = S1;
   iNo++;
-  sprintf_s(S1, "%i", bLAM);
+  if (bLAM)
+    sprintf_s(S1, "%s", "SYM");
+  else
+	sprintf_s(S1, "%s", "");
   sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iNoLays);
@@ -34424,7 +34552,53 @@ int PCOMP::GetVarValues(CString sVar[])
 
 void PCOMP::PutVarValues(int iNo, CString sVar[])
 {
-
+	int i;
+	int iMID;
+	double dThk;
+	double dTheta;
+	CString sFT;
+	CString sSYM;
+	dZ0 = atof(sVar[0]);
+	dNSM = atof(sVar[1]);
+	dSB = atof(sVar[2]);
+	sFT = ExtractSubString2(1, sVar[3]);
+	FT = 4;
+	if (sFT == "HILL")
+		FT = 1;
+	else if (sFT == "HOFF")
+		FT = 2;
+	else if (sFT == "TSAI")
+		FT = 3;
+	else if (sFT == "STRESS")
+		FT = 4;
+	else if (sFT == "STRN")
+		FT = 5;
+	else if (sFT == "LARCO2")
+		FT = 6;
+	else if (sFT == "PUCK")
+		FT = 7;
+	else if (sFT == "MCT")
+		FT = 8;
+	dRefT = atof(sVar[4]);
+	dGE = atof(sVar[5]);
+	sSYM = ExtractSubString2(1, sVar[6]);
+	if (sSYM == "SYM")
+		bLAM=TRUE;
+	else
+		bLAM = FALSE;
+	int iNoL= atoi(sVar[7]);
+	int iP = 0;
+	for (i = 8; i < iNo; i++)
+	{
+		iMID = atoi(ExtractSubString2(1, sVar[i]));
+		dThk = atof(ExtractSubString2(2, sVar[i]));
+		dTheta = atof(ExtractSubString2(3, sVar[i]));
+		MID[iP] = iMID;
+		T[iP] = dThk;
+		Theta[iP] = dTheta;
+		iP++;
+	}
+	//dZ0 = -0.5 * GetThk();
 }
 
 
@@ -47456,6 +47630,7 @@ CEntEditDialog::CEntEditDialog()
   pO = NULL;
   PT = NULL;
   m_iItemBeingEdited==1;
+  eEdit = NULL;
 }
 
 BOOL CEntEditDialog::OnInitDialog()
@@ -47690,6 +47865,7 @@ void CEntEditDialog::OnBnClickedMfclink2()
 Lamina::Lamina()
 {
   dZOFFS=0;
+  dMAng = 0;
   pVertex[0].Set(-0.7,-0.5,0);
   pVertex[1].Set(0.7, -0.5, 0);
   pVertex[2].Set(0.7, 0.5, 0);
@@ -47726,18 +47902,54 @@ void Lamina::OglDraw()
   R.MakeUnit();
   R.Rotate(0, 0, dMAng);
   C3dVector vTmp;
+  C3dVector p1;
+  C3dVector p2;
+  C3dVector p3;
+  C3dVector p4;
   vTmp=R*pVertex[0];
+
   glColor3fv(cols[144]);
+  //glBegin(GL_POLYGON);
+  //  vTmp = R*pVertex[0];
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z ));
+  //  vTmp = R*pVertex[1];
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z ));
+  //  vTmp = R*pVertex[2];
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z ));
+  //  vTmp = R*pVertex[3];
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z ));
+  //glEnd();
+  p1.Set(-0.7, 0, dZOFFS - 0.5 * dThk);
+  p2.Set(0.7, 0, dZOFFS - 0.5 * dThk);
+  p3.Set(0.7, 0, dZOFFS + 0.5 * dThk);
+  p4.Set(-0.7, 0, dZOFFS + 0.5 * dThk);
+  p1 = R * p1;
+  p2 = R * p2;
+  p3 = R * p3;
+  p4 = R * p4;
+  glColor3fv(cols[4]);
   glBegin(GL_POLYGON);
-    vTmp = R*pVertex[0];
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
-    vTmp = R*pVertex[1];
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
-    vTmp = R*pVertex[2];
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
-    vTmp = R*pVertex[3];
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
+	glVertex3f((float)(p1.x), (float)(p1.y), (float)(p1.z));
+	glVertex3f((float)(p2.x), (float)(p2.y), (float)(p2.z));
+	glVertex3f((float)(p3.x), (float)(p3.y), (float)(p3.z));
+	glVertex3f((float)(p4.x), (float)(p4.y), (float)(p4.z));
   glEnd();
+  glColor3fv(cols[0]);
+  glLineWidth(2.0);
+  glBegin(GL_LINES);
+    glVertex3f((float)(p1.x), (float)(p1.y), (float)(p1.z));
+    glVertex3f((float)(p2.x), (float)(p2.y), (float)(p2.z));
+
+	glVertex3f((float)(p2.x), (float)(p2.y), (float)(p2.z));
+	glVertex3f((float)(p3.x), (float)(p3.y), (float)(p3.z));
+
+	glVertex3f((float)(p3.x), (float)(p3.y), (float)(p3.z));
+	glVertex3f((float)(p4.x), (float)(p4.y), (float)(p4.z));
+
+	glVertex3f((float)(p4.x), (float)(p4.y), (float)(p4.z));
+	glVertex3f((float)(p1.x), (float)(p1.y), (float)(p1.z));
+  glEnd();
+  glLineWidth(2.0);
 
   //Draw fibres
   double dWid;
@@ -47752,17 +47964,17 @@ void Lamina::OglDraw()
   vE=pVertex[1];
   glColor3fv(cols[0]);
   
-  glBegin(GL_LINES);
-  for (iC =0; iC<iInc+1; iC++)
-  {
-    vTmp = R*vS;
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
-    vTmp = R*vE;   
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
-    vS.y += dWidInc;
-    vE.y += dWidInc;
-  }
-  glEnd();
+  //glBegin(GL_LINES);
+  //for (iC =0; iC<iInc+1; iC++)
+  //{
+  //  vTmp = R*vS;
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z));
+  //  vTmp = R*vE;   
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z));
+  //  vS.y += dWidInc;
+  //  vE.y += dWidInc;
+  //}
+  //glEnd();
 
 }
 
@@ -47825,6 +48037,13 @@ void CPcompEditor::OnBnClickedOk()
 BOOL CPcompEditor::OnInitDialog()
 {
   CDialog::OnInitDialog();
+  //SIZE DIALOG BOX TO FIT COLOURS
+  CRect oSize;
+  this->SetWindowText("Laminate Stacker");
+  this->GetWindowRect(&oSize);
+  oSize.right = oSize.left + 500;
+  oSize.bottom = oSize.top + 600;
+  this->MoveWindow(oSize, 0);
 
   // TODO:  Add extra initialization here
   pDrg = new CWnd;
@@ -47845,9 +48064,9 @@ void CPcompEditor::Build()
 	double dT;
 	double dS;
 	PCOMP* pP = (PCOMP*)pEnt;
-	vMat.Rotate(-75, 0, 10);
-	dS = 0.5 / pP->GetThk();
-	dZ = -pP->GetThk() / 2;
+	vMat.Rotate(-90, 0, 5);
+	dS = 1.0 / pP->GetThk();
+	dZ = pP->dZ0;
 	dZ *= dS;
 	dTheta = pP->Theta[0];
 	dZ += 0.5 * dS * pP->T[0];

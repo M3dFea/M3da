@@ -846,13 +846,13 @@ if (iStat == 0)
 	  pNext->Init(cDBase,-1)	;
 	  this->DoMenu(CInMsg,Pt);
   }
-  else if (CInMsg == "TEST")
+  else if (CInMsg == "DSPLAM")
   { 
 	  iResumePos=0;
     iCancelPos=100;
     cDBase->DB_ActiveBuffSet(2);
 	  cDBase->DB_ClearBuff();
-	  pNext = new zTEST_Mnu();
+	  pNext = new zDSPLAM_Mnu();
 	  pNext->Init(cDBase,-1)	;
 	  this->DoMenu(CInMsg,Pt);
   }
@@ -4927,6 +4927,58 @@ int zTEST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 MenuEnd:
 	return RetVal;
 }   
+
+int zDSPLAM_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("/ENTER PID OR PICK ELEMENT");
+			CInMsg = "NULL";
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg != "MouseInp") && (CInMsg != "D") && (CInMsg != "NULL"))
+			{
+				C3dVector GetPt;
+				int iPt = ExtractPt(CInMsg, &GetPt);
+				cDBase->ViewLam((int)GetPt.x);
+				RetVal = 1;
+			}
+			else if (CInMsg == "MouseInp")
+			{
+				if (cDBase->S_Count == S_initCnt + 1)
+				{
+					if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 3)
+					{
+						E_Object* pE = (E_Object*)cDBase->S_Buff[cDBase->S_Count - 1];
+						cDBase->ViewLam(pE->PID);
+					}
+					RetVal = 1;
+				}
+			}
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zCVMOW_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -13126,9 +13178,10 @@ int zMATEDIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
 		cDBase->FILTER.Clear();
 		cDBase->FILTER.SetFilter(3);
-      outtext2("/ENTER MID OR PICK ELEMENT");
-      CInMsg = "NULL";
-      iStat = 1;
+		outtext2("/ENTER MID OR PICK ELEMENT");
+		CInMsg = "NULL";
+		iStat = 1;
+		SetFocus();
     }
     if (iStat == 1)
     {
@@ -13180,9 +13233,10 @@ int zPREDIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
 		cDBase->FILTER.Clear();
 		cDBase->FILTER.SetFilter(3);
-      outtext2("/ENTER PID OR PICK ELEMENT");
-      CInMsg = "NULL";
-      iStat = 1;
+		outtext2("/ENTER PID OR PICK ELEMENT");
+		CInMsg = "NULL";
+		iStat = 1;
+		SetFocus();
     }
     if (iStat == 1)
     {

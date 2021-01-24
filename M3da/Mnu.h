@@ -908,6 +908,12 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zDSPLAM_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zCVMOW_Mnu: public zMnu
 {
 public:
