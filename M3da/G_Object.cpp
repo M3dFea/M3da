@@ -47891,6 +47891,11 @@ void Lamina::SetThk(double dT)
   dThk = dT;
 }
 
+void Lamina::SetMID(int ID)
+{
+	iMID = ID;
+}
+
 void Lamina::SetAng(double dA)
 {
   dMAng=dA;
@@ -47899,6 +47904,7 @@ void Lamina::SetAng(double dA)
 void Lamina::OglDraw()
 {
   C3dMatrix R;
+  char s1[8];
   R.MakeUnit();
   R.Rotate(0, 0, dMAng);
   C3dVector vTmp;
@@ -47951,6 +47957,16 @@ void Lamina::OglDraw()
   glEnd();
   glLineWidth(2.0);
 
+  p1.Set(0.75, 0, dZOFFS);
+  //p1 = R * p1;
+  sprintf_s(s1, "%g", dMAng);
+  OglString(0, p1.x, p1.y, p1.z, &s1[0]);
+  p1.Set(-0.95, 0, dZOFFS);
+  //p1 = R * p1;
+  sprintf_s(s1, "%i", iMID);
+  OglString(0, p1.x, p1.y, p1.z, &s1[0]);
+
+
   //Draw fibres
   double dWid;
   double dWidInc;
@@ -47994,11 +48010,12 @@ vMat.MakeUnit();
 }
 
 
-void CPcompEditor::AddVisLayer(double dA, double dZ,double dT)
+void CPcompEditor::AddVisLayer(double dA, double dZ,double dT,int iM)
 {
   Laminate[iNoLayers].SetAng(dA);
   Laminate[iNoLayers].SetZ(dZ);
   Laminate[iNoLayers].SetThk(dT);
+  Laminate[iNoLayers].SetMID(iM);
   iNoLayers++;
 }
 
@@ -48063,22 +48080,25 @@ void CPcompEditor::Build()
 	double dZ;
 	double dT;
 	double dS;
+	int iM;
 	PCOMP* pP = (PCOMP*)pEnt;
 	vMat.Rotate(-90, 0, 5);
 	dS = 1.0 / pP->GetThk();
 	dZ = pP->dZ0;
 	dZ *= dS;
 	dTheta = pP->Theta[0];
+	iM = pP->MID[0];
 	dZ += 0.5 * dS * pP->T[0];
 	dT = dS * pP->T[0];
-	AddVisLayer(dTheta, dZ, dT);
+	AddVisLayer(dTheta, dZ, dT, iM);
 	for (i = 1; i < pP->iNoLays; i++)
 	{
 		dTheta = pP->Theta[i];
+		iM = pP->MID[i];
 		dZ += 0.5*dS * pP->T[i-1];
 		dZ += 0.5 * dS * pP->T[i];
 		dT = dS * pP->T[i];
-		AddVisLayer(dTheta, dZ, dT);
+		AddVisLayer(dTheta, dZ, dT, iM);
 	}
 
 }

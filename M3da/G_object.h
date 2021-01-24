@@ -1362,6 +1362,7 @@ class Lamina
 {
 public:
   double dMAng;
+  int iMID;
   double dThk;
   double dZOFFS;
   C3dVector pVertex[4];
@@ -1370,6 +1371,7 @@ public:
   void SetZ(double dZ);
   void SetAng(double dA);
   void SetThk(double dT);
+  void SetMID(int ID);
   void OglDraw();
 };
 
@@ -1384,7 +1386,7 @@ public:
   virtual ~CPcompEditor();
   Entity* pEnt;
   Lamina Laminate[200];
-  void AddVisLayer(double dA, double dZ, double dT);
+  void AddVisLayer(double dA, double dZ, double dT, int iM);
   int iNoLayers=0;
   HDC hdc;
   HGLRC hrc;
