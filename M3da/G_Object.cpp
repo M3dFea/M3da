@@ -33732,7 +33732,7 @@ MAT1::MAT1()
 {
 sTitle="";
 iID = -1;
-iType = 1;
+iType = 7;
 dE=210e9;
 dG=0;
 dNU=0.29;
