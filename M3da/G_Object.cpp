@@ -36681,12 +36681,12 @@ pC.y  = mOrientMat.m_10;
 pC.z  = mOrientMat.m_20;
 pB+=Origin;
 pC+=Origin;
-if (RID = -1)
+if (RID == -1)
 {
 	RID = 0;
 }
-fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8s%8s%8s\n",sType,iLabel, RID,e8(Origin.x),e8(Origin.y),e8(Origin.z),e8(pB.x),e8(pB.y),e8(pB.z));
-fprintf(pFile,"%8s%8s%8s%8s\n","        ",e8(pC.x),e8(pC.y),e8(pC.z));
+fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8s%8s%8s\n",sType.GetString(),iLabel, RID,e8(Origin.x).GetString(),e8(Origin.y).GetString(),e8(Origin.z).GetString(),e8(pB.x).GetString(),e8(pB.y).GetString(),e8(pB.z).GetString());
+fprintf(pFile,"%8s%8s%8s%8s\n","        ",e8(pC.x).GetString(),e8(pC.y).GetString(),e8(pC.z).GetString());
 }
 
 CString CoordSys::ToString()
@@ -36742,7 +36742,33 @@ void CoordSys::Info()
   outtext1(OutT); 
 }
 
+int CoordSys::GetVarHeaders(CString sVar[])
+{
+	sVar[0] = "Coord System Type";
+	sVar[1] = "Definition Coord System";
+	return(8);
+}
 
+
+int CoordSys::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", CysType);
+	sVar[0] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", RID);
+	sVar[1] = S1;
+	iNo++;
+	return (iNo);
+}
+
+
+void CoordSys::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	CysType = atoi(sVar[0]);
+	RID = atoi(sVar[1]);
+}
 
 C3dVector CoordSys::Get_Centroid() 
 {

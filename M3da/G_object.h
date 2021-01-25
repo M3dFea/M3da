@@ -2645,6 +2645,9 @@ virtual void Info ();
 virtual CString ToString ();
 virtual void ExportNAS(FILE* pFile);
 C3dMatrix GetTMat();
+virtual int GetVarHeaders(CString sVar[]);
+virtual int GetVarValues(CString sVar[]);
+virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 class E_Object : public G_Object

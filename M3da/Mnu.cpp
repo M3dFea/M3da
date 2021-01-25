@@ -4706,7 +4706,7 @@ else if (iStat == 3)
 }
 else if (iStat == 4)
 {
-	  outtext2("/ENTER LABEL");
+	outtext2("/ENTER LABEL");
     iResumePos=5;
     iCancelPos=100;
     pNext = new zKEY_Mnu();
@@ -4715,17 +4715,28 @@ else if (iStat == 4)
 }
 else if (iStat == 5)
 {
+	outtext2("/ENTER DEF SYS (Def 0)");
+	iResumePos = 6;
+	iCancelPos = 100;
+	pNext = new zKEY_Mnu();
+	pNext->Init(cDBase, -1);
+	DoNext(&CInMsg, Pt);
+}
+else if (iStat == 6)
+{
   C3dVector p1;
   C3dVector p2;
   C3dVector p3;
   C3dVector Typ;
   C3dVector Lab;
+  C3dVector RID;
+  RID = cDBase->DB_PopBuff();
   Lab=cDBase->DB_PopBuff();
   Typ=cDBase->DB_PopBuff();
   p3=cDBase->DB_PopBuff();
   p2=cDBase->DB_PopBuff();
   p1=cDBase->DB_PopBuff();
-  cDBase->AddCoordSys(p1,p2,p3,(int) Lab.x,(int) Typ.x);
+  cDBase->AddCoordSys(p1,p2,p3,(int) Lab.x,(int) Typ.x, (int)RID.x);
   outtext1("1 Coordinate System Created.");
   RetVal = 1;
 }

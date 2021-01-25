@@ -269,7 +269,7 @@ void ElementMoLab2(int iN);
 void NodeMoRSys(int iSys);
 void FindNode(C3dVector vP);
 void AddNode(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut);
-void AddCoordSys(C3dVector p1,C3dVector p2,C3dVector p3,int Lab,int Typ);
+void AddCoordSys(C3dVector p1,C3dVector p2,C3dVector p3,int Lab,int Typ,int iRID);
 CvPt_Object* AddPt(C3dVector InPt, int iLab,BOOL bRedraw);
 void AddPt2(double x,double y,double z, int iLab);
 NLine* AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw);

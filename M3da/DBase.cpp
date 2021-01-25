@@ -6188,7 +6188,7 @@ else
 }
 }
 
-void DBase::AddCoordSys(C3dVector p1,C3dVector p2,C3dVector p3,int Lab,int Typ)
+void DBase::AddCoordSys(C3dVector p1,C3dVector p2,C3dVector p3,int Lab,int Typ,int iRID)
 {
 C3dVector vO;
 C3dVector vX;
@@ -6214,7 +6214,7 @@ rMat.m_02 = vZ.x;
 rMat.m_12 = vZ.y;
 rMat.m_22 = vZ.z;
 if (Typ==0) Typ=1;
-CoordSys* pRet = pCurrentMesh->AddSys(vO,rMat,-1,Typ,Lab,55);
+CoordSys* pRet = pCurrentMesh->AddSys(vO,rMat,iRID,Typ,Lab,55);
 Dsp_Add(pRet); 
 AddTempGraphics(pRet);
 ReDraw();
