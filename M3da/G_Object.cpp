@@ -12411,20 +12411,26 @@ Selectable=1;
     C3dVector vOff;
     vN=Get_Normal();
     //Need to calculate the offsets here
+	double dt = 0;
+	double dPCompOff = 0;
+	if (pPr != NULL)
+	{
+		dt = pPr->GetThk();
+		dt *= 0.5;
+		if (pPr->iType == 2)
+		{
+			PCOMP* pPCOMP = (PCOMP*)pPr;
+			dPCompOff = pPCOMP->dZ0 + dt;
+		}
+	}
     if (((iDspFlgs & DSP_OFF)>0) && (dZOFFS!=DBL_MAX))
     {
        vOff=vN;
-       vOff*=dZOFFS;
+	   vOff *= dZOFFS + dPCompOff;
     }
     else
     {
        vOff*=0; 
-    }
-    double dt=0;
-    if (pPr!=NULL)
-    {
-      dt=pPr->GetThk();
-      dt*=0.5;
     }
     vN*=dt;
     if ((iDspFlgs & DSP_THK)>0)
@@ -12573,22 +12579,28 @@ C3dVector Vn;
 C3dVector vN;
 C3dVector vOff;
 vN=Get_Normal();
+double dt = 0;
+double dPCompOff = 0;
+if (pPr != NULL)
+{
+	dt = pPr->GetThk();
+	dt *= 0.5;
+	if (pPr->iType == 2)
+	{
+		PCOMP* pPCOMP = (PCOMP*)pPr;
+		dPCompOff = pPCOMP->dZ0 + dt;
+	}
+}
 if (((iDspFlgs & DSP_OFF)>0) && (dZOFFS!=DBL_MAX))
 {
   vOff=vN;
-  vOff*=dZOFFS;
+  vOff *= dZOFFS + dPCompOff;
 }
 else
 {
   vOff*=0; 
 }
 
-double dt=0;
-if (pPr!=NULL)
-{
-  dt=pPr->GetThk();
-  dt*=0.5;
-}
 vN*=dt;
 Vn =Get_Normal();
 Vn.Normalize();
