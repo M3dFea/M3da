@@ -2000,8 +2000,8 @@ public:
    //virtual void S_Box(CPoint P1,CPoint P2,ObjList* pSel);
 };
 
-const int MAX_CVPTS = 300;
-const int MAX_CTPTS = 300;
+const int MAX_CVPTS = 1000;
+const int MAX_CTPTS = 1000;
 const int MAX_CVS = 200;
 const int MAX_LOOPCVS = 200;
 const int MAX_INT_LOOPS = 100;

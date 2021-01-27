@@ -50,12 +50,14 @@ if (pNext != NULL)
 int zMnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 BOOL  bNextBlock;
+BOOL  bNextBlock2;
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
 {
 if (iStat == 0)						
 {
-  bNextBlock=FALSE;
+  bNextBlock = FALSE;
+  bNextBlock2 = FALSE;
   if (CInMsg == "NDCR")
   { 
 	iResumePos=0;
@@ -1230,6 +1232,7 @@ if (iStat == 0)
   {
     bNextBlock=TRUE;
   }
+
   if (bNextBlock) //SECOND IF BLOCK CONTINUATION
   {
   if (CInMsg == "FILALL")
@@ -2392,28 +2395,37 @@ if (iStat == 0)
 	pNext->Init(cDBase,-1)	;
 	this->DoMenu(CInMsg,Pt);
   }
-  else if (CInMsg == "ELMOLAB2")
-  { 
-	  iResumePos=0;
-      iCancelPos=100;
-      cDBase->DB_ActiveBuffSet(2);
-	  cDBase->DB_ClearBuff();
-	  pNext = new zELMOLAB2_Mnu();
-	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,Pt);
-  }
-  else if (CInMsg == "NULL")
-  {
-    outtext2("/COMMAND:");
-  }
-  else if (CInMsg == "MouseInp")
-  {
-    
-  }
   else
   {
-    outtext2("/COMMAND:");
+    bNextBlock2 = TRUE;
   }
+  }
+  //THIRD IF BLOCK CONTINUATION
+  //INSERT NEW FUNCTIONS BLOWS R
+  if (bNextBlock2)
+  { 
+	  if (CInMsg == "ELREV")
+	  { 
+		  iResumePos=0;
+		  iCancelPos=100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zELREV_Mnu();
+		  pNext->Init(cDBase,-1)	;
+		  this->DoMenu(CInMsg,Pt);
+	  }
+	  else if (CInMsg == "NULL")
+	  {
+		outtext2("/COMMAND:");
+	  }
+	  else if (CInMsg == "MouseInp")
+	  {
+    
+	  }
+	  else
+	  {
+		outtext2("/COMMAND:");
+	  }
   }
 }
 else
