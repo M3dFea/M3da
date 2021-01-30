@@ -13871,6 +13871,7 @@ void E_Object1::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 	  // TODO: add storing code here
       E_Object::Serialize(ar,iV,MESH);
       ar << pVertex->iLabel;
+	  ar << sLab;
       ar << iCID;
       ar << dM;
       ar << dX1;
@@ -13888,6 +13889,8 @@ void E_Object1::Serialize(CArchive& ar,int iV,ME_Object* MESH)
       E_Object::Serialize(ar,iV,MESH);
       ar>>iNd;
       pVertex = MESH->GetNode(iNd);
+	  if (iV < -55)
+		  ar >> sLab;
       ar >> iCID;
       ar >> dM;
       ar >> dX1;
@@ -13906,14 +13909,14 @@ void E_Object1::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 void E_Object1::ExportUNV(FILE* pFile)
 {
 fprintf(pFile,"%10i%10i%10i%10i%10i%10i\n",iLabel,iType,PIDunv,iMatID,iColour-150,iNoNodes);
-fprintf(pFile,"%10i",pVertex->iLabel);
-fprintf(pFile,"\n","");
+fprintf(pFile,"%10i\n",pVertex->iLabel);
 }
 
 void E_Object1::ExportNAS(FILE* pFile)
 {
-fprintf(pFile,"%8s%8i%8i%8i%8s%8s%8s%8s\n","CONM2   ",iLabel,pVertex->iLabel,iCID,e8(dM),e8(dX1),e8(dX2),e8(dX3));
-fprintf(pFile,"%8s%8s%8s%8s%8s%8s%8s\n","        ",e8(dI11),e8(dI21),e8(dI22),e8(dI31),e8(dI32),e8(dI33));
+	fprintf(pFile, "$%s\n", sLab.GetString());
+	fprintf(pFile,"%8s%8i%8i%8i%8s%8s%8s%8s\n","CONM2   ",iLabel,pVertex->iLabel,iCID,e8(dM).GetString(),e8(dX1).GetString(),e8(dX2).GetString(),e8(dX3).GetString());
+	fprintf(pFile,"%8s%8s%8s%8s%8s%8s%8s\n","        ",e8(dI11).GetString(),e8(dI21).GetString(),e8(dI22).GetString(),e8(dI31).GetString(),e8(dI32).GetString(),e8(dI33).GetString());
 }
 
 void E_Object1::Transform(C3dMatrix TMat)
@@ -14069,15 +14072,30 @@ pDC->LineTo((int) pVertex->DSP_Point->x-5,(int) pVertex->DSP_Point->y-5);
 void E_Object1::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
 char sLab[20];
+C3dVector d;
 C3dVector vCent;
+double dS = 0;
+double dFS = 1.0;
+double S = 0;
+d.x = 0; d.y = 0; d.z = 0;
 vCent=this->Get_Centroid();
+ME_Object* ME = (ME_Object*)this->pParent;
+
+S = ME->dScale;
+dFS = ME->dResFactor;
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
+	if (pVertex->pResD != NULL)
+	{
+		d = pVertex->pResD->GetVec();
+		d -= ME->vRelDispOff;
+		d *= S * dFS;
+	}
 	Selectable=1;
 	glColor3fv(cols[GetCol()]);
     glPointSize(16.0f); 
 	glBegin(GL_POINTS);
-    glVertex3f((float) vCent.x,(float) vCent.y,(float) vCent.z);
+    glVertex3f((float) vCent.x+d.x,(float) vCent.y+d.y,(float) vCent.z+d.z);
     glEnd();
 }
 else
@@ -14114,6 +14132,8 @@ return (vT);
 int E_Object1::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "COMMENT";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "CID";
@@ -14152,6 +14172,8 @@ int E_Object1::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sVar[iNo] = sLab;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -14200,19 +14222,20 @@ void E_Object1::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 	Pt_Object* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-	PID = atoi(sVar[0]);
-	iCID = atoi(sVar[1]);
-	dM = atof(sVar[2]);;
-	dX1 = atof(sVar[3]);;
-	dX2 = atof(sVar[4]);;
-	dX3 = atof(sVar[5]);;
-	dI11 = atof(sVar[6]);;
-	dI21 = atof(sVar[7]);;
-	dI22 = atof(sVar[8]);;
-	dI31 = atof(sVar[9]);;
-	dI32 = atof(sVar[10]);;
-	dI33 = atof(sVar[11]);;
-	int N1 = atof(sVar[12]);;
+	sLab = sVar[0];
+	PID = atoi(sVar[1]);
+	iCID = atoi(sVar[2]);
+	dM = atof(sVar[3]);;
+	dX1 = atof(sVar[4]);;
+	dX2 = atof(sVar[5]);;
+	dX3 = atof(sVar[6]);;
+	dI11 = atof(sVar[7]);;
+	dI21 = atof(sVar[8]);;
+	dI22 = atof(sVar[9]);;
+	dI31 = atof(sVar[10]);;
+	dI32 = atof(sVar[11]);;
+	dI33 = atof(sVar[12]);;
+	int N1 = atof(sVar[13]);;
 	if (pVertex->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);

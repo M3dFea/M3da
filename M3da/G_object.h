@@ -2915,17 +2915,18 @@ class E_Object1 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object1 )
 public:
-   int iCID;
-   double dM;
-   double dX1;
-   double dX2;
-   double dX3;
-   double dI11;
-   double dI21;
-   double dI22;
-   double dI31;
-   double dI32;
-   double dI33;
+   int iCID=0;
+   CString sLab = "";
+   double dM = 0;
+   double dX1 = 0;
+   double dX2 = 0;
+   double dX3 = 0;
+   double dI11 = 0;
+   double dI21 = 0;
+   double dI22 = 0;
+   double dI31 = 0;
+   double dI32 = 0;
+   double dI33 = 0;
    E_Object1();
    ~E_Object1();
    Pt_Object* pVertex;
