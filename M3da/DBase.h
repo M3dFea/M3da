@@ -670,6 +670,7 @@ void CreatePrBox(CString sT,int iPID,int iMID,double dW,double dH,double dWT,dou
 void CreatePrShell(CString sT,int iPID,int iMID,double dT,double dNSM);
 void CreatePrPCOMP(CString sT, int iPID, double dNSM, int iNoLay, CString sLay[]);
 void CreatePrSpringT(CString sT,int iPID,double dkx,double dky,double dkz,double dkt);
+void CreatePrBUSH(CString sT, int iPID, double dk1, double dk2, double dk3, double dk4, double dk5, double dk6);
 void CreatePrSpringR(CString sT,int iPID,double dkx,double dky,double dkz,double dkt);
 void CreatePrLumpedMass(CString sT, int iPID, double dM);
 void CreatePrSolid(CString sT,int iPID,int iMID);

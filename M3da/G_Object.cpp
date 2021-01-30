@@ -8893,7 +8893,7 @@ if (Pr!=NULL)
   }
   else if (iType == 136)
   {
-      if (Pr->iType==136) 
+      if ((Pr->iType==136) || (Pr->iType == 138))
       {
        PID=Pr->iID;
        bC=TRUE;
@@ -32120,7 +32120,7 @@ int PSPRINGR::GetVarHeaders(CString sVar[])
   sVar[0] = "Rotational Stiffness in X (Rx)";
   sVar[1] = "Rotational Stiffness in Y (Ry)";
   sVar[2] = "Rotational Stiffness in Z (Rz)";
-  sVar[3] = "Conduction Coefficeint (kcoeff)";
+  sVar[3] = "Conduction Coefficeint (kcoePBUSHff)";
   return(4);
 }
 
@@ -32129,6 +32129,166 @@ void PSPRINGR::ExportNAS(FILE* pFile)
 	fprintf(pFile, "$%s\n", sTitle);
 	fprintf(pFile, "%8s%8i%8s%8s%8s%8s%8s%8s%8s\n", "PBUSH   ", iID, "       K","        ","       K","       K", e8(dkx), e8(dky), e8(dkz));
 }
+
+
+//***************************************************************************
+// P B U S H
+//***************************************************************************
+IMPLEMENT_DYNAMIC(PBUSH, CObject)
+
+PBUSH::PBUSH()
+{
+	sTitle = "";
+	iID = -1;
+	iType = 138;
+	sFlg = "K";
+	dK1 = 0.0;
+	dK2 = 0.0;
+	dK3 = 0.0;
+	dK1 = 0.0;
+	dK2 = 0.0;
+	dK3 = 0.0;
+}
+
+PBUSH* PBUSH::Copy()
+{
+	PBUSH* pREt = new PBUSH();
+	pREt->iID = iID;
+	pREt->sTitle = sTitle;
+	pREt->iType = iType;
+	pREt->sFlg = sFlg;
+	pREt->dK1 = dK1;
+	pREt->dK2 = dK2;
+	pREt->dK3 = dK3;
+	pREt->dK4 = dK4;
+	pREt->dK5 = dK5;
+	pREt->dK6 = dK6;
+	return (pREt);
+}
+
+void PBUSH::Serialize(CArchive& ar, int iV)
+{
+	if (ar.IsStoring())
+	{
+		ar << iID;
+		ar << sTitle;
+		ar << iType;
+		ar << sFlg;
+		ar << dK1;
+		ar << dK2;
+		ar << dK3;
+		ar << dK4;
+		ar << dK5;
+		ar << dK6;
+	}
+	else
+	{
+		ar >> iID;
+		ar >> sTitle;
+		ar >> iType;
+		ar >> sFlg;
+		ar >> dK1;
+		ar >> dK2;
+		ar >> dK3;
+		ar >> dK4;
+		ar >> dK5;
+		ar >> dK6;
+	}
+}
+
+
+void PBUSH::List()
+{
+	char S1[200];
+	CString OutT;
+	outtext1("PROPERTY LISTING:-");
+	sprintf_s(S1, "%s %i %s %s", "PID", iID, "TYPE ", "CBUSH SPRING");
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %s", "TITLE : ", sTitle);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Kx    : ", dK1);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Ky    : ", dK2);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Kz    : ", dK3);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Krx    : ", dK4);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Kry    : ", dK5);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Krz    : ", dK6);
+	OutT = S1;
+	outtext1(OutT);
+
+}
+
+int PBUSH::GetVarHeaders(CString sVar[])
+{
+	sVar[0] = "Flag";
+	sVar[1] = "K1";
+	sVar[2] = "K2";
+	sVar[3] = "K3";
+	sVar[4] = "K4";
+	sVar[5] = "K5";
+	sVar[6] = "K6";
+	return(7);
+}
+
+
+int PBUSH::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sVar[iNo] = sFlg;
+	iNo++;
+	sprintf_s(S1, "%g", dK1);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dK2);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dK3);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dK4);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dK5);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dK6);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void PBUSH::PutVarValues(int iNo, CString sVar[])
+{
+	sFlg = sVar[0];
+	dK1 = atof(sVar[1]);
+	dK2 = atof(sVar[2]);
+	dK3 = atof(sVar[3]);
+	dK4 = atof(sVar[4]);
+	dK5 = atof(sVar[5]);
+	dK6 = atof(sVar[6]);
+}
+
+void PBUSH::ExportNAS(FILE* pFile)
+{
+	fprintf(pFile, "$%s\n", sTitle);
+	fprintf(pFile, "%8s%8i%8s%8s%8s%8s%8s%8s%8s\n", "PBUSH   ", iID, sFlg, e8(dK1).GetString(), e8(dK2).GetString(), e8(dK3).GetString(), e8(dK4).GetString(), e8(dK5).GetString(), e8(dK6).GetString());
+}
+
+
+
+
 
 IMPLEMENT_DYNAMIC(PSOLID , CObject)
 
@@ -46285,6 +46445,9 @@ void PropTable::Serialize(CArchive& ar,int iV)
         case 137:
           pEnts[i] = new PSPRINGR;
           break;
+		case 138:
+			pEnts[i] = new PBUSH();
+			break;
         case 161:
           pEnts[i] = new PMASS;
           break;

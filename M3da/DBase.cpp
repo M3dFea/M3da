@@ -17456,6 +17456,21 @@ PropsT->AddItem(pST);
 outtext1("New Translational Spring Property Created.");
 }
 
+void DBase::CreatePrBUSH(CString sT, int iPID, double dk1, double dk2, double dk3, double dk4, double dk5, double dk6)
+{
+	PBUSH* pST = new PBUSH();
+	pST->sTitle = sT;
+	pST->iID = iPID;
+	pST->dK1 = dk1;
+	pST->dK2 = dk2;
+	pST->dK3 = dk3;
+	pST->dK4 = dk4;
+	pST->dK5 = dk5;
+	pST->dK6 = dk6;
+	PropsT->AddItem(pST);
+	outtext1("New Nastran PBUSH Property Created.");
+}
+
 void DBase::CreatePrLumpedMass(CString sT, int iPID, double dM)
 {
   PMASS* pST = new PMASS();

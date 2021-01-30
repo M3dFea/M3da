@@ -2414,6 +2414,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase,-1)	;
 		  this->DoMenu(CInMsg,Pt);
 	  }
+	  else if (CInMsg == "PRBUSH")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zPRBUSH_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "NULL")
 	  {
 		outtext2("/COMMAND:");
@@ -10117,6 +10127,206 @@ MenuEnd:
 return RetVal;
 }
 
+//NASTRAN BUSH ELEMENT (BASIC FORM FOR K ONLY)
+int zPRBUSH_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		C3dVector ptVec;
+		if (iStat == 0)
+		{
+			outtext2("/ENTER PROPERTY TITLE");
+			SetFocus();
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sTit = CInMsg;
+			iStat = 2;
+		}
+		////////////////Get defualt pid//////////////////////////////  
+		iNLab = 1;
+		if (cDBase->pCurrentMesh != NULL)
+		{
+			iNLab = cDBase->PropsT->NextID();
+		}
+		char s1[200];
+		sprintf_s(s1, "%s%i%s", "ENTER NEW PID (", iNLab, ")");
+		////////////////////////////////////////////////////////////
+		if (iStat == 2)
+		{
+			outtext2(s1);
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			iPID = atoi(CInMsg);
+			if (iPID < 1)
+			{
+				iPID = iNLab;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			outtext2("/ENTER K1");
+			iStat = 5;
+			goto MenuEnd;
+		}
+		if (iStat == 5)
+		{
+			dk1 = atof(CInMsg);
+			if (dk1 < 0)
+			{
+				iStat = 4;
+				outtext1("ERROR: Invalid K1.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 6;
+			}
+		}
+		if (iStat == 6)
+		{
+			outtext2("/ENTER K2");
+			iStat = 7;
+			goto MenuEnd;
+		}
+		if (iStat == 7)
+		{
+			dk2 = atof(CInMsg);
+			if (dk2 < 0)
+			{
+				iStat = 6;
+				outtext1("ERROR: Invalid K2.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 8;
+			}
+		}
+		if (iStat == 8)
+		{
+			outtext2("/ENTER K3");
+			iStat = 9;
+			goto MenuEnd;
+		}
+		if (iStat == 9)
+		{
+			dk3 = atof(CInMsg);
+			if (dk3 < 0)
+			{
+				iStat = 8;
+				outtext1("ERROR: Invalid K3.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 10;
+			}
+		}
+		if (iStat == 10)
+		{
+			outtext2("/ENTER K4");
+			iStat = 11;
+			goto MenuEnd;
+		}
+		if (iStat == 11)
+		{
+			dk4 = atof(CInMsg);
+			if (dk4 < 0)
+			{
+				iStat = 10;
+				outtext1("ERROR: Invalid K4.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 12;
+			}
+		}
+
+		if (iStat == 12)
+		{
+			outtext2("/ENTER K5");
+			iStat = 13;
+			goto MenuEnd;
+		}
+		if (iStat == 13)
+		{
+			dk5 = atof(CInMsg);
+			if (dk5 < 0)
+			{
+				iStat = 12;
+				outtext1("ERROR: Invalid K5.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 14;
+			}
+		}
+
+		if (iStat == 14)
+		{
+			outtext2("/ENTER K6");
+			iStat = 15;
+			goto MenuEnd;
+		}
+		if (iStat == 15)
+		{
+			dk5 = atof(CInMsg);
+			if (dk5 < 0)
+			{
+				iStat = 14;
+				outtext1("ERROR: Invalid K6.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 16;
+			}
+		}
+
+
+
+		if (iStat == 16)
+		{
+			RetVal = 1;
+			if (cDBase->pCurrentMesh != NULL)
+			{
+				cDBase->CreatePrBUSH(sTit, iPID, dk1, dk2, dk3, dk4, dk5, dk6);
+			}
+			outtext1("End of Property Definition.");
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 int zPRMASS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   CString CInMsg2 = CInMsg;

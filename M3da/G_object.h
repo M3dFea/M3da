@@ -1024,6 +1024,27 @@ virtual void PutVarValues(int iNo, CString sVar[]);
 virtual void ExportNAS(FILE* pFile);
 };
 
+class PBUSH : public Property
+{
+	DECLARE_DYNAMIC(PBUSH)
+public:
+	CString sFlg = "K";
+	double dK1;
+	double dK2;
+	double dK3;
+	double dK4;
+	double dK5;
+	double dK6;
+	PBUSH();
+	virtual void Serialize(CArchive& ar, int iV);
+	virtual PBUSH* Copy();
+	virtual void List();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(int iNo, CString sVar[]);
+	virtual void ExportNAS(FILE* pFile);
+};
+
 class PMASS : public Property
 {
   DECLARE_DYNAMIC(PMASS)
