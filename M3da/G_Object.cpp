@@ -12224,8 +12224,9 @@ void E_Object3::Serialize(CArchive& ar,int iV,ME_Object* MESH)
     pVertex[1] = MESH->GetNode(iNd);
     ar>>iNd;
     pVertex[2] = MESH->GetNode(iNd);
+	pPr = NULL;
 	}
-  pPr=NULL;
+ 
 }
 
 void E_Object3::ExportNAS(FILE* pFile)
@@ -15178,8 +15179,9 @@ void E_Object4::Serialize(CArchive& ar,int iV,ME_Object* MESH)
     pVertex[2] = MESH->GetNode(iNd);
     ar>>iNd;
     pVertex[3] = MESH->GetNode(iNd);
+	pPr = NULL;
 	}
-  pPr=NULL;
+  
 }
 
 
@@ -22331,11 +22333,9 @@ return (imax);
 void ME_Object::UpdatePropRef(PropTable* pT)
 {
 int i;
-Property* p;
+Property* p=NULL;
 for (i=0;i<iElNo;i++)
 {
-if (pElems[i]->iLabel==68700267)
-  i=i;
   p=pT->GetItem(pElems[i]->PID);
   if (p!=NULL)
   {
