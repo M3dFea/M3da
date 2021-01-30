@@ -48284,7 +48284,7 @@ BOOL CPcompEditor::OnInitDialog()
   CDialog::OnInitDialog();
   //SIZE DIALOG BOX TO FIT COLOURS
   CRect oSize;
-  this->SetWindowText("Laminate Stacker");
+  this->SetWindowText("Laminate Stack Viewer");
   this->GetWindowRect(&oSize);
   oSize.right = oSize.left + 500;
   oSize.bottom = oSize.top + 600;
