@@ -34361,6 +34361,8 @@ CString PCOMP::ToString()
 	else
 		sSB = "        ";
 	CString sFT = "        ";
+	if (FT == 0)
+		sFT = "        ";
 	if (FT == 1)
 		sFT = "    HILL";
 	else if (FT == 2)
@@ -34380,7 +34382,7 @@ CString PCOMP::ToString()
 	CString sLAM = "        ";
 	if (bLAM)
 		sLAM = "SYM     ";
-	sprintf_s(S, "%8s%8i%8s%8s%8s%8s%8s%8s%8s\n", "PCOMP   ", iID, e8(dZ0), e8(dNSM), sSB, sFT,e8(dRefT),e8(dGE),sLAM);
+	sprintf_s(S, "%8s%8i%8s%8s%8s%8s%8s%8s%8s\n", "PCOMP   ", iID, e8(dZ0).GetString(), e8(dNSM).GetString(), sSB.GetString(), sFT.GetString(),e8(dRefT).GetString(),e8(dGE),sLAM.GetString());
 	src = S;
 	int iLcnt = 0;
 	for (i = 0; i < iNoLays; i++)
@@ -34392,7 +34394,7 @@ CString PCOMP::ToString()
 			sO = "     YES";
 		if (iLcnt == 0)
 		{
-			sprintf_s(S, "%8i%8s%8s%8s", MID[i], e8(T[i]), e8(Theta[i]), sO);
+			sprintf_s(S, "%8i%8s%8s%8s", MID[i], e8(T[i]).GetString(), e8(Theta[i]).GetString(), sO);
 			src += S;
 			iLcnt = 1;
 		}
@@ -34410,8 +34412,8 @@ CString PCOMP::ToString()
 
 void PCOMP::ExportNAS(FILE* pFile)
 {
-	fprintf(pFile, "$%s\n" , sTitle);
-	fprintf(pFile, "%s",ToString());
+	fprintf(pFile, "$%s\n" , sTitle.GetString());
+	fprintf(pFile, "%s",ToString().GetString());
 }
 
 PCOMP* PCOMP::Copy()
@@ -34468,7 +34470,7 @@ iType= 2;
 dZ0=-0.5;
 dNSM=0;
 dSB=0;
-FT=4;
+FT=0;
 dRefT=0;
 dGE=0;
 bLAM=FALSE;
@@ -34519,6 +34521,8 @@ int PCOMP::GetVarValues(CString sVar[])
   sprintf_s(S1, "%g", dSB);
   sVar[iNo] = S1;
   iNo++;
+  if (FT == 0)
+	  sVar[iNo] = "";
   if (FT == 1)
 	  sVar[iNo] = "HILL";
   else if (FT == 2)
@@ -34574,7 +34578,7 @@ void PCOMP::PutVarValues(int iNo, CString sVar[])
 	dNSM = atof(sVar[1]);
 	dSB = atof(sVar[2]);
 	sFT = ExtractSubString2(1, sVar[3]);
-	FT = 4;
+	FT = 0;
 	if (sFT == "HILL")
 		FT = 1;
 	else if (sFT == "HOFF")
