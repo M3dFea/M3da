@@ -12966,7 +12966,7 @@ if (this->pCurrentMesh!=NULL)
     int Min=timeStart.GetMinute();
     int Sec=timeStart.GetSecond();
 
-    if (Year<2020)
+    if (Year<2030)
     {
       fprintf(pFile2,"%s\n","$**********************************************************");
       fprintf(pFile2,"%s\n","$      NASTRAN DECK EXPORTED FROM M3D");

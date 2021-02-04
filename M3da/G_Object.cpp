@@ -14075,7 +14075,7 @@ char sLab[20];
 C3dVector d;
 C3dVector vCent;
 double dS = 0;
-double dFS = 1.0;
+double dFS = 0.0;
 double S = 0;
 d.x = 0; d.y = 0; d.z = 0;
 vCent=this->Get_Centroid();
@@ -14085,11 +14085,14 @@ S = ME->dScale;
 dFS = ME->dResFactor;
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
-	if (pVertex->pResD != NULL)
+	if ((iDspFlgs & DSP_RESDEF) == 0)
 	{
-		d = pVertex->pResD->GetVec();
-		d -= ME->vRelDispOff;
-		d *= S * dFS;
+		if (pVertex->pResD != NULL)
+		{
+			d = pVertex->pResD->GetVec();
+			d -= ME->vRelDispOff;
+			d *= S * dFS;
+		}
 	}
 	Selectable=1;
 	glColor3fv(cols[GetCol()]);
@@ -14242,6 +14245,14 @@ void E_Object1::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 		if (pN != NULL)
 			pVertex = pN;
 	}
+}
+
+
+void E_Object1::Info()
+{
+	char S1[80];
+	sprintf_s(S1, "LAB: %i GRID: %i MASS: %f ", iLabel, pVertex->iLabel, dM);
+	outtext1(S1);
 }
 
 IMPLEMENT_DYNAMIC( E_CellS , CObject )
@@ -33906,7 +33917,7 @@ void MAT1::Serialize(CArchive& ar,int iV)
 
 void MAT1::ExportNAS(FILE* pFile)
 {
-fprintf(pFile,"$%s\n",sTitle);
+fprintf(pFile,"$%s\n",sTitle.GetString());
 CString sG = "        ";
 CString sV = "        ";
 CString CTE;
@@ -34040,7 +34051,8 @@ void MAT8::Serialize(CArchive& ar,int iV)
 
 void MAT8::ExportNAS(FILE* pFile)
 {
-fprintf(pFile,"%s",ToString());
+fprintf(pFile, "$%s\n", sTitle.GetString());
+fprintf(pFile,"%s",ToString().GetString());
 //fprintf(pFile,"%8s%8i%8s%8s%8s%8s%8s%8s%8s\n","MAT8    ",iID,e8(dE1),e8(dE2),e8(dNU12),e8(dG12),e8(dG1Z),e8(dG2Z),e8(dRHO));
 //fprintf(pFile,"%8s%8s%8s%8s%8s%8s%8s%8s%8s\n","        ",e8(dA1),e8(dA2),e8(dTREF),e8(dXt),e8(dXc),e8(dYt),e8(dYc),e8(dS));
 //fprintf(pFile,"%8s%8s%8s\n","        ",e8(dGE),e8(F12),e8(STRN));
@@ -34050,54 +34062,54 @@ CString MAT8::ToString()
 {
 char S[200]="";
 CString src="";
-sprintf_s(S,"%8s%8i%8s%8s%8s%8s%8s%8s%8s\n","MAT8    ",iID, e8(dE1),e8(dE2),e8(dNU12),e8(dG12),e8(dG1Z),e8(dG2Z),e8(dRHO));
+sprintf_s(S,"%8s%8i%8s%8s%8s%8s%8s%8s%8s\n","MAT8    ",iID, e8(dE1).GetString(),e8(dE2).GetString(),e8(dNU12).GetString(),e8(dG12).GetString(),e8(dG1Z).GetString(),e8(dG2Z).GetString(),e8(dRHO).GetString());
 src=S;
-sprintf_s(S,"        %8s%8s", e8(dA1),e8(dA2));
+sprintf_s(S,"        %8s%8s", e8(dA1).GetString(),e8(dA2).GetString());
 src+=S;
 if (dTREF==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s", e8(dTREF));
+   sprintf_s(S,"%8s", e8(dTREF).GetString());
 src+=S;
 if (dXt==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s", e8(dXt));
+   sprintf_s(S,"%8s", e8(dXt).GetString());
 src+=S;
 if (dXc==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s", e8(dXc));
+   sprintf_s(S,"%8s", e8(dXc).GetString());
 src+=S;
 if (dYt==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s", e8(dYt));
+   sprintf_s(S,"%8s", e8(dYt).GetString());
 src+=S;
 if (dYc==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s", e8(dYc));
+   sprintf_s(S,"%8s", e8(dYc).GetString());
 src+=S;
 if (dS==0)
    sprintf_s(S,"%8s\n","        ");
 else
-   sprintf_s(S,"%8s\n", e8(dS));
+   sprintf_s(S,"%8s\n", e8(dS).GetString());
 src+=S;
 if (dGE==0)
    sprintf_s(S,"        %8s","        ");
 else
-   sprintf_s(S,"        %8s", e8(dGE));
+   sprintf_s(S,"        %8s", e8(dGE).GetString());
 src+=S;
 if (F12==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s", e8(F12));
+   sprintf_s(S,"%8s", e8(F12).GetString());
 src+=S;
 if (STRN==0)
    sprintf_s(S,"%8s\n","        ");
 else
-   sprintf_s(S,"%8s\n", e8(STRN));
+   sprintf_s(S,"%8s\n", e8(STRN).GetString());
 src+=S;
 return (src);
 }
@@ -46618,6 +46630,7 @@ CResSelDialog::CResSelDialog()
   iCurResSet=-1;
   iResVal=-1;
   iSecResID=-1;
+  bIsVec = FALSE;
 }
 
 void CResSelDialog::SetData(BOOL isVec, ResSet* pInRes[], int iInNoRes, int iInCurResSet, int iInResVal, int inSecResID)
@@ -46643,7 +46656,7 @@ if (iNoRes>0)
 {
   for (i=0;i<iNoRes;i++)
   {
-    sprintf_s(OutT,"%i: LC %i : %s",i,pRes[i]->LC,pRes[i]->sName);
+    sprintf_s(OutT,"%i: LC %i : %s",i,pRes[i]->LC,pRes[i]->sName.GetString());
     pResList->AddString(OutT);
   }
 }

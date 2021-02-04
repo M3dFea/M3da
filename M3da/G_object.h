@@ -2973,6 +2973,7 @@ public:
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
    virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+   virtual void Info();
 };
 
 class E_Object3 : public E_Object
