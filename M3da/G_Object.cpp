@@ -47884,14 +47884,68 @@ CEntEditDialog::CEntEditDialog()
   PT = NULL;
   m_iItemBeingEdited==1;
   eEdit = NULL;
+  iNoLayers = 0;
+  hdcOld = wglGetCurrentDC();
+  hrcOld = wglGetCurrentContext();
+  hrc = NULL;
+  hdc = NULL;
+  vMat.MakeUnit();
+}
+
+CEntEditDialog::~CEntEditDialog()
+{
+	if (hrc != NULL)
+	{
+		wglMakeCurrent(NULL, NULL);
+		wglDeleteContext(hrc);
+	}
+
+	if (pDrg != NULL)
+		delete(pDrg);
+	wglMakeCurrent(hdcOld, hrcOld);
 }
 
 BOOL CEntEditDialog::OnInitDialog()
 {
+	int iW = 650;
+	int iH = 650;
+	int iBoff = 130;
+
   CDialog::OnInitDialog();
+  this->SetWindowText("Entity Editor");
   eEdit = (CEdit*) GetDlgItem(IDC_EDIT_FLOAT);
-  if (pEnt!=NULL)
-    Populate2();
+  CRect oSize;
+  CRect oSize2;
+  this->GetWindowRect(&oSize);
+  oSize.right = oSize.left + iW;
+  oSize.bottom = oSize.top + iH;
+  this->MoveWindow(oSize, 0);
+  oSize2.top = 100;
+  oSize2.left = 0;
+  oSize2.bottom = iH - iBoff;
+  oSize2.right = iW;
+  CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_LIST1);
+  if (oLB != NULL)
+	  oLB->MoveWindow(oSize2, 0);
+
+
+  if (pEnt != NULL)
+  {
+	  Populate2();
+	  if (pEnt->iType == 2)
+	  {
+		  oSize.right = oSize.left + iW+iW;
+		  oSize.bottom = oSize.top + iH;
+		  this->MoveWindow(oSize, 0);
+		  pDrg = new cWndOGL();
+		  pDrg->Create(_T("STATIC"), _T("Hi"), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
+			  CRect(iW, 0, iW+iW, iH), this, 1234);
+		  InitOGL();
+		  Build();
+
+	  }
+	  
+  }
   if (pO != NULL)
 	Populate1();
   return TRUE;  // return TRUE unless you set the focus to a control
@@ -47968,6 +48022,134 @@ for (i = 0; i<iNo; i++)
 
 }
 
+void CEntEditDialog::Build()
+{
+	int i;
+	double dTheta;
+	double dZ;
+	double dT;
+	double dS;
+	int iM;
+	PCOMP* pP = (PCOMP*)pEnt;
+	vMat.Rotate(-90, 0, 5);
+	dS = 1.0 / pP->GetThk();
+	dZ = pP->dZ0;
+	dZ *= dS;
+	dTheta = pP->Theta[0];
+	iM = pP->MID[0];
+	dZ += 0.5 * dS * pP->T[0];
+	dT = dS * pP->T[0];
+	AddVisLayer(dTheta, dZ, dT, iM);
+	for (i = 1; i < pP->iNoLays; i++)
+	{
+		dTheta = pP->Theta[i];
+		iM = pP->MID[i];
+		dZ += 0.5 * dS * pP->T[i - 1];
+		dZ += 0.5 * dS * pP->T[i];
+		dT = dS * pP->T[i];
+		AddVisLayer(dTheta, dZ, dT, iM);
+	}
+
+}
+
+void CEntEditDialog::InitOGL()
+{
+	static PIXELFORMATDESCRIPTOR pfd =
+	{
+	  sizeof(PIXELFORMATDESCRIPTOR),  // size of this pfd
+	  1,                              // version number
+	  PFD_DRAW_TO_WINDOW |            // support window
+	  PFD_SUPPORT_OPENGL |          // support OpenGL
+	  PFD_DOUBLEBUFFER,             // double buffered
+	  PFD_TYPE_RGBA,                  // RGBA type
+	  24,                             // 24-bit color depth
+	  0, 0, 0, 0, 0, 0,               // color bits ignored
+	  0,                              // no alpha buffer
+	  0,                              // shift bit ignored
+	  0,                              // no accumulation buffer
+	  0, 0, 0, 0,                     // accum bits ignored
+	  32,                             // 32-bit z-buffer
+	  0,                              // no stencil buffer
+	  0,                              // no auxiliary buffer
+	  PFD_MAIN_PLANE,                 // main layer
+	  0,                              // reserved
+	  0, 0, 0                         // layer masks ignored
+	};
+
+	// Get device context only once.
+	hdc = pDrg->GetDC()->m_hDC;
+	// Pixel format.
+	m_nPixelFormat = ChoosePixelFormat(hdc, &pfd);
+	SetPixelFormat(hdc, m_nPixelFormat, &pfd);
+
+	// Create the OpenGL Rendering Context.
+	hrc = wglCreateContext(hdc);
+	wglMakeCurrent(hdc, hrc);
+
+
+
+	// Send draw request
+	//OnDraw(NULL);
+}
+
+void CEntEditDialog::OglDraw()
+{
+
+	glClearColor(255.0f, 255.0f, 255.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearDepth(1.0f);
+	CRect cR;
+	pDrg->GetWindowRect(&cR);
+	int iW = cR.Width();
+	int iH = cR.Height();
+	glViewport(0, 0, iW, iH);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	OglMat mOGLmat = vMat.GetOglMat();
+	glMultMatrixf(mOGLmat.fMat);
+	//gluPerspective(35.0f, (float)cx / (float)cy, 0.01f, 2000.0f);
+	glMatrixMode(GL_MODELVIEW);
+	glPointSize(10.0f);
+	glColor3f((float)0.0, (float)0.0, (float)0.9);
+	glBegin(GL_POINTS);
+	glVertex3f(20.0, 30.0, 10.0);
+	glVertex3f(140.0, 30.0, 20.0);
+	glVertex3f(50.0, 50.0, 30.0);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.5, 0.0, 0.0);
+	glVertex3f(0.0, 0.5, 0.0);
+	glEnd();
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	char sLab[20];
+
+	int i;
+	for (i = 0; i < iNoLayers; i++)
+		Laminate[i].OglDraw();
+	sprintf_s(sLab, "%s", "Z");
+	OglString(1, 0.0, 0.0, 0.7, &sLab[0]);
+	glBegin(GL_LINES);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.0, 0.0, 0.7);
+	glEnd();
+	sprintf_s(sLab, "%s", "1");
+	OglString(1, 0.7, 0.0, 0.0, &sLab[0]);
+	glBegin(GL_LINES);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.7, 0.0, 0.0);
+	glEnd();
+
+	glFinish();
+	SwapBuffers(wglGetCurrentDC());
+}
+
+void CEntEditDialog::AddVisLayer(double dA, double dZ, double dT, int iM)
+{
+	Laminate[iNoLayers].SetAng(dA);
+	Laminate[iNoLayers].SetZ(dZ);
+	Laminate[iNoLayers].SetThk(dT);
+	Laminate[iNoLayers].SetMID(iM);
+	iNoLayers++;
+}
 
 
 BEGIN_MESSAGE_MAP(CEntEditDialog, CDialog)
@@ -47975,6 +48157,7 @@ ON_WM_LBUTTONDOWN()
 ON_BN_CLICKED(IDOK, &CEntEditDialog::OnBnClickedOk)
 ON_BN_CLICKED(IDC_ENTLIST, &CEntEditDialog::OnBnClickedEntlist)
 ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &CEntEditDialog::OnDblclkList1)
+ON_WM_PAINT()
 END_MESSAGE_MAP()
 
 
@@ -48533,3 +48716,25 @@ Ndata::~Ndata()
 
 
 
+
+
+void CEntEditDialog::OnPaint()
+{
+	
+	CPaintDC dc(this); // device context for painting
+					   // TODO: Add your message handler code here
+					   // Do not call CDialog::OnPaint() for painting messages
+	if (pDrg!=NULL)
+	  OglDraw();
+}
+BEGIN_MESSAGE_MAP(cWndOGL, CWnd)
+	ON_WM_PAINT()
+END_MESSAGE_MAP()
+
+
+void cWndOGL::OnPaint()
+{
+	//CPaintDC dc(this); // device context for painting
+					   // TODO: Add your message handler code here
+					   // Do not call CWnd::OnPaint() for painting messages
+}

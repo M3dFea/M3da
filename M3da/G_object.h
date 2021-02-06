@@ -209,6 +209,7 @@ class ParPt;
 class SolSets;
 class CEntEditDialog;
 class Ndata;
+class Lamina;
 //DIPLAY FLAGS
 const int DSP_ALL = 0xFFFFFFF;
 const int DSP_LINE = 0x00000001;
@@ -1348,10 +1349,48 @@ public:
   afx_msg void OnBnClickedButton2();
 };
 
+class Lamina
+{
+public:
+	double dMAng;
+	int iMID;
+	double dThk;
+	double dZOFFS;
+	C3dVector pVertex[4];
+	Lamina();
+	~Lamina();
+	void SetZ(double dZ);
+	void SetAng(double dA);
+	void SetThk(double dT);
+	void SetMID(int ID);
+	void OglDraw();
+};
+
+
+class cWndOGL : public CWnd
+{
+public:
+	DECLARE_MESSAGE_MAP()
+	afx_msg void OnPaint();
+};
 
 class CEntEditDialog : public CDialog
 {
 public:
+	Lamina Laminate[200];
+	
+	int iNoLayers = 0;
+	HDC hdc;
+	HGLRC hrc;
+	HDC hdcOld;
+	HGLRC hrcOld;
+	cWndOGL* pDrg = NULL;
+	C3dMatrix vMat;
+	int m_nPixelFormat = 0;
+	void InitOGL();
+	void AddVisLayer(double dA, double dZ, double dT, int iM);
+	void OglDraw();
+	void Build(); //build the visual layers from the PCOMP
   enum {IDD = IDD_ENTEDITOR};
   virtual void DoDataExchange(CDataExchange* pDX);
   CListCtrl m_List;
@@ -1365,6 +1404,7 @@ public:
   G_Object* pO=NULL;
   PropTable* PT=NULL;
   CEntEditDialog();
+  virtual ~CEntEditDialog();
   virtual BOOL OnInitDialog();
   void Populate1();
   void Populate2();
@@ -1376,25 +1416,11 @@ public:
   afx_msg void OnBnClickedEntlist();
   afx_msg void OnDblclkList1(NMHDR *pNMHDR, LRESULT *pResult);
   afx_msg void OnBnClickedMfclink2();
+  afx_msg void OnPaint();
 };
 
 
-class Lamina
-{
-public:
-  double dMAng;
-  int iMID;
-  double dThk;
-  double dZOFFS;
-  C3dVector pVertex[4];
-  Lamina();
-  ~Lamina();
-  void SetZ(double dZ);
-  void SetAng(double dA);
-  void SetThk(double dT);
-  void SetMID(int ID);
-  void OglDraw();
-};
+
 
 
 
@@ -1407,7 +1433,7 @@ public:
   virtual ~CPcompEditor();
   Entity* pEnt;
   Lamina Laminate[200];
-  void AddVisLayer(double dA, double dZ, double dT, int iM);
+  
   int iNoLayers=0;
   HDC hdc;
   HGLRC hrc;
@@ -1418,6 +1444,7 @@ public:
   int m_nPixelFormat=0;
   void InitOGL();
   void OglDraw();
+  void AddVisLayer(double dA, double dZ, double dT, int iM);
   void Build(); //build the visual layers from the PCOMP
   enum { IDD = IDD_PCOMPEDIT };
   virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
