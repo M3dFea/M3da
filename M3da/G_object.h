@@ -2963,6 +2963,7 @@ public:
    virtual void ExportUNV(FILE* pFile);
    virtual BOOL NodeInEl(Pt_Object* pN);
    virtual G_Object* GetNode(int i);
+   virtual CString ToString();
    virtual void ExportNAS(FILE* pFile);
    virtual void Transform(C3dMatrix TMat);
    virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);

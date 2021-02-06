@@ -11524,8 +11524,8 @@ if (iType==11)
 
 CString E_Object2R::ToString()
 {
-CString sRT;
-char S1[80];
+CString sRT="";
+char S1[80]="";
 if (iType==11)
 {
   sprintf_s(S1,"%8s%8i%8i%8i%8i\n","CROD    ",iLabel,PID,pVertex[0]->iLabel,pVertex[1]->iLabel);
@@ -13914,9 +13914,21 @@ fprintf(pFile,"%10i\n",pVertex->iLabel);
 
 void E_Object1::ExportNAS(FILE* pFile)
 {
-	fprintf(pFile, "$%s\n", sLab.GetString());
-	fprintf(pFile,"%8s%8i%8i%8i%8s%8s%8s%8s\n","CONM2   ",iLabel,pVertex->iLabel,iCID,e8(dM).GetString(),e8(dX1).GetString(),e8(dX2).GetString(),e8(dX3).GetString());
-	fprintf(pFile,"%8s%8s%8s%8s%8s%8s%8s\n","        ",e8(dI11).GetString(),e8(dI21).GetString(),e8(dI22).GetString(),e8(dI31).GetString(),e8(dI32).GetString(),e8(dI33).GetString());
+	fprintf(pFile, "$s", ToString().GetString());
+
+}
+
+CString E_Object1::ToString()
+{
+	char S[80] = "";
+	CString src = "";
+	sprintf_s(S, "$%s\n", sLab.GetString());
+	src = S;
+	sprintf_s(S, "%8s%8i%8i%8i%8s%8s%8s%8s\n", "CONM2   ", iLabel, pVertex->iLabel, iCID, e8(dM).GetString(), e8(dX1).GetString(), e8(dX2).GetString(), e8(dX3).GetString());
+	src += S;
+	sprintf_s(S, "%8s%8s%8s%8s%8s%8s%8s\n", "        ", e8(dI11).GetString(), e8(dI21).GetString(), e8(dI22).GetString(), e8(dI31).GetString(), e8(dI32).GetString(), e8(dI33).GetString());
+	src += S;
+	return (src);
 }
 
 void E_Object1::Transform(C3dMatrix TMat)
