@@ -34809,9 +34809,9 @@ void PCOMP::PutVarValues(int iNo, CString sVar[])
 		bLAM=TRUE;
 	else
 		bLAM = FALSE;
-	int iNoL= atoi(sVar[7]);
+	iNoLays= atoi(sVar[7]);
 	int iP = 0;
-	for (i = 8; i < iNo; i++)
+	for (i = 8; i < 8+ iNoLays; i++)
 	{
 		iMID = atoi(ExtractSubString2(1, sVar[i]));
 		dThk = atof(ExtractSubString2(2, sVar[i]));
@@ -48019,7 +48019,14 @@ for (i = 0; i<iNo; i++)
   nItem = m_List.InsertItem(i, sVName[i]);
   m_List.SetItemText(nItem, 1, sVVals[i]);
 }
-
+if (pEnt->iType == 2)
+{
+	for (i = 0; i < 100; i++)
+	{
+		nItem = m_List.InsertItem(iNo, "");
+		iNo++;
+	}
+}
 }
 
 void CEntEditDialog::Build()
@@ -48209,7 +48216,7 @@ void CEntEditDialog::OnBnClickedOk()
 {
   // TODO: Add your control notification handler code here
   int i;
-  CString sVVals[50];
+  CString sVVals[500];
   CEdit* pT = (CEdit*) GetDlgItem(IDC_PTITLE);
   if ((pEnt!=NULL) || (pO!=NULL))
   {
