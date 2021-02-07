@@ -48239,6 +48239,10 @@ ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, &CEntEditDialog::OnLvnItemchangedList1)
 ON_NOTIFY(LVN_ITEMCHANGING, IDC_LIST1, &CEntEditDialog::OnLvnItemchangingList1)
 //ON_NOTIFY(NM_RETURN, IDC_LIST1, &CEntEditDialog::OnNMReturnList1)
 //ON_NOTIFY(NM_RETURN, IDC_LIST1, &CEntEditDialog::OnNMReturnList1)
+//ON_NOTIFY(LVN_ODCACHEHINT, IDC_LIST1, &CEntEditDialog::OnLvnOdcachehintList1)
+//ON_NOTIFY(LVN_KEYDOWN, IDC_LIST1, &CEntEditDialog::OnLvnKeydownList1)
+ON_NOTIFY(NM_RETURN, IDC_LIST1, &CEntEditDialog::OnNMReturnList1)
+ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
 
 
@@ -48270,6 +48274,14 @@ BOOL CEntEditDialog::PreTranslateMessage(MSG* pMsg)
     eEdit->ShowWindow(SW_HIDE);
     m_List.SetItemText(m_iItemBeingEdited, 1, sNew);
     m_iItemBeingEdited=-1;
+	if (pEnt != NULL)
+	{
+		if (pEnt->iType == 2)
+		{
+			Build2();
+			OglDraw();
+		}
+	}
     return TRUE;
   }
   else
@@ -48830,14 +48842,7 @@ void CEntEditDialog::OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 	// TODO: Add your control notification handler code here
 	*pResult = 0;
-	if (pEnt != NULL)
-	{
-		if (pEnt->iType == 2)
-		{
-			Build2();
-			OglDraw();
-		}
-	}
+
 }
 
 
@@ -48852,3 +48857,34 @@ void CEntEditDialog::OnLvnItemchangingList1(NMHDR* pNMHDR, LRESULT* pResult)
 
 
 
+
+
+//void CEntEditDialog::OnLvnOdcachehintList1(NMHDR* pNMHDR, LRESULT* pResult)
+//{
+//	LPNMLVCACHEHINT pCacheHint = reinterpret_cast<LPNMLVCACHEHINT>(pNMHDR);
+//	// TODO: Add your control notification handler code here
+//	*pResult = 0;
+//}
+
+
+//void CEntEditDialog::OnLvnKeydownList1(NMHDR* pNMHDR, LRESULT* pResult)
+//{
+//	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
+//	// TODO: Add your control notification handler code here
+//	*pResult = 0;
+//}
+
+
+void CEntEditDialog::OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+}
+
+
+void CEntEditDialog::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	CDialog::OnKeyDown(nChar, nRepCnt, nFlags);
+}

@@ -1423,6 +1423,10 @@ public:
   afx_msg void OnLvnItemchangingList1(NMHDR* pNMHDR, LRESULT* pResult);
 //  afx_msg void OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult);
 //  afx_msg void OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult);
+//  afx_msg void OnLvnOdcachehintList1(NMHDR* pNMHDR, LRESULT* pResult);
+//  afx_msg void OnLvnKeydownList1(NMHDR* pNMHDR, LRESULT* pResult);
+  afx_msg void OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult);
+  afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
 
