@@ -34705,6 +34705,8 @@ int PCOMP::GetVarHeaders(CString sVar[])
   iNo++;
   sVar[iNo] = "No Off Layers ";
   iNo++;
+  sVar[iNo] = "Total Thickness ";
+  iNo++;
   for (i = 0; i<iNoLays; i++)
   {
     sprintf_s(S1, "Layer %i",i+1);
@@ -34762,6 +34764,9 @@ int PCOMP::GetVarValues(CString sVar[])
   sprintf_s(S1, "%i", iNoLays);
   sVar[iNo] = S1;
   iNo++;
+  sprintf_s(S1, "%g", GetThk());
+  sVar[iNo] = S1;
+  iNo++;
   int i;
   for (i=0;i<iNoLays;i++)
   {
@@ -34811,7 +34816,7 @@ void PCOMP::PutVarValues(int iNo, CString sVar[])
 		bLAM = FALSE;
 	iNoLays= atoi(sVar[7]);
 	int iP = 0;
-	for (i = 8; i < 8+ iNoLays; i++)
+	for (i = 9; i < 9+ iNoLays; i++)
 	{
 		iMID = atoi(ExtractSubString2(1, sVar[i]));
 		dThk = atof(ExtractSubString2(2, sVar[i]));
@@ -48059,6 +48064,70 @@ void CEntEditDialog::Build()
 
 }
 
+void CEntEditDialog::Build2()
+{
+	char S1[80];
+	CString sTemp = "";
+	int i=0;
+	double dTheta[100];
+	double dZ;
+	double dT[100];
+	double dS;
+	int iM[100];
+	int iC = 9;
+	int iLC = 0;
+	double dThk = 0;
+	//Reset layer to 0 and rebuild
+	iNoLayers = 0;
+	BOOL bExit = FALSE;
+	do
+	{
+		sTemp = m_List.GetItemText(iC, 1);
+		iM[iLC] = atoi(ExtractSubString2(1, sTemp));
+		dT[iLC] = atof(ExtractSubString2(2, sTemp));
+		dTheta[iLC] = atof(ExtractSubString2(3, sTemp));
+		if (iM[iLC] < 1)
+		{
+			bExit = TRUE;
+		}
+		else
+		{
+			iLC++;
+			iC++;
+		}
+	} while (!bExit);
+	//Caculate thickness
+	dThk = 0;
+	for (i = 0; i < iLC; i++)
+	{
+		dThk += dT[i];
+	}
+	sprintf_s(S1, "%i", iLC);
+	sTemp = S1;
+	m_List.SetItemText(7, 1, sTemp);
+	sprintf_s(S1, "%g", dThk);
+	sTemp = S1;
+	m_List.SetItemText(8, 1, sTemp);
+	sTemp = m_List.GetItemText(0, 1);
+	dZ = atof(sTemp);
+	//vMat.Rotate(-90, 0, 5);
+	dS = 1.0 / dThk;
+
+	dZ *= dS;
+	dZ += 0.5 * dS * dT[0];
+	AddVisLayer(dTheta[0], dZ, dS * dT[0], iM[0]);
+	for (i = 1; i < iLC; i++)
+	{
+	//	dTheta = pP->Theta[i];
+	//	iM = pP->MID[i];
+		dZ += 0.5 * dS * dT[i - 1];
+		dZ += 0.5 * dS * dT[i];
+	//	dT = dS * pP->T[i];
+	AddVisLayer(dTheta[i], dZ, dS * dT[i], iM[i]);
+	}
+
+}
+
 void CEntEditDialog::InitOGL()
 {
 	static PIXELFORMATDESCRIPTOR pfd =
@@ -48165,6 +48234,11 @@ ON_BN_CLICKED(IDOK, &CEntEditDialog::OnBnClickedOk)
 ON_BN_CLICKED(IDC_ENTLIST, &CEntEditDialog::OnBnClickedEntlist)
 ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &CEntEditDialog::OnDblclkList1)
 ON_WM_PAINT()
+ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, &CEntEditDialog::OnLvnItemchangedList1)
+//ON_NOTIFY(LVN_ENDLABELEDIT, IDC_LIST1, &CEntEditDialog::OnLvnEndlabeleditList1)
+ON_NOTIFY(LVN_ITEMCHANGING, IDC_LIST1, &CEntEditDialog::OnLvnItemchangingList1)
+//ON_NOTIFY(NM_RETURN, IDC_LIST1, &CEntEditDialog::OnNMReturnList1)
+//ON_NOTIFY(NM_RETURN, IDC_LIST1, &CEntEditDialog::OnNMReturnList1)
 END_MESSAGE_MAP()
 
 
@@ -48176,6 +48250,7 @@ void CEntEditDialog::OnEnChangeEditFloat()
   // with the ENM_CHANGE flag ORed into the mask.
 
   // TODO:  Add your control notification handler code here
+	
 }
 
 
@@ -48233,7 +48308,7 @@ void CEntEditDialog::OnBnClickedOk()
 	if (pO != NULL)
 	  pO->PutVarValues(PT,iNo, sVVals);
   }
-  CDialog::OnOK();
+  //CDialog::OnOK();
 }
 
 
@@ -48308,6 +48383,7 @@ void CEntEditDialog::OnBnClickedMfclink2()
 Lamina::Lamina()
 {
   dZOFFS=0;
+  dThk = 0;
   dMAng = 0;
   pVertex[0].Set(-0.7,-0.5,0);
   pVertex[1].Set(0.7, -0.5, 0);
@@ -48731,8 +48807,10 @@ void CEntEditDialog::OnPaint()
 	CPaintDC dc(this); // device context for painting
 					   // TODO: Add your message handler code here
 					   // Do not call CDialog::OnPaint() for painting messages
-	if (pDrg!=NULL)
-	  OglDraw();
+	if (pDrg != NULL)
+	{
+		OglDraw();
+	}
 }
 BEGIN_MESSAGE_MAP(cWndOGL, CWnd)
 	ON_WM_PAINT()
@@ -48745,3 +48823,32 @@ void cWndOGL::OnPaint()
 					   // TODO: Add your message handler code here
 					   // Do not call CWnd::OnPaint() for painting messages
 }
+
+
+void CEntEditDialog::OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+	if (pEnt != NULL)
+	{
+		if (pEnt->iType == 2)
+		{
+			Build2();
+			OglDraw();
+		}
+	}
+}
+
+
+
+void CEntEditDialog::OnLvnItemchangingList1(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
+}
+
+
+

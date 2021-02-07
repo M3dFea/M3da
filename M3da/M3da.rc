@@ -234,6 +234,7 @@ BEGIN
                 MENUITEM "Solid",                       ID_PROPERTY_SOLID
                 MENUITEM "2D Plain Stress",             ID_PROPERTY_2DPLAINSTRESS
                 MENUITEM "PCOMP",                       ID_PROPERTY_PCOMP
+                MENUITEM "PBUSH",                       ID_PROPERTY_PBUSH
             END
             MENUITEM "Node",                        ID_CREATE_NODE
             MENUITEM "Node MoveTo",                 ID_CREATE_NODEMOVETO
@@ -1188,6 +1189,7 @@ BEGIN
     ID_CURVETOOLS_TEXT      "Add Text"
     ID_PROPERTY_PCOMP       "Create PCOMP Laminate Property"
     ID_PROPERTY_DISPLAYLAMINATESTACK "Display Laminate Stack Sequence"
+    ID_PROPERTY_PBUSH       "Create a Nastran PBUSH spring property"
 END
 
 #endif    // English (United States) resources
@@ -1588,7 +1590,7 @@ BEGIN
     LTEXT           "ID:",IDC_PID,17,25,23,11
     EDITTEXT        IDC_ENTID,41,25,32,12,ES_AUTOHSCROLL | WS_DISABLED
     PUSHBUTTON      "List",IDC_ENTLIST,7,223,30,14
-    CONTROL         "",IDC_LIST1,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,41,285,171,WS_EX_STATICEDGE
+    CONTROL         "",IDC_LIST1,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,41,285,171,WS_EX_DLGMODALFRAME | WS_EX_LEFTSCROLLBAR | WS_EX_STATICEDGE
 END
 
 IDD_PCOMPEDIT DIALOGEX 0, 0, 285, 278

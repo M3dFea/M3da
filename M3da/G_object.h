@@ -1391,6 +1391,7 @@ public:
 	void AddVisLayer(double dA, double dZ, double dT, int iM);
 	void OglDraw();
 	void Build(); //build the visual layers from the PCOMP
+	void Build2();//Build from table so paint can update when pcomp changes
   enum {IDD = IDD_ENTEDITOR};
   virtual void DoDataExchange(CDataExchange* pDX);
   CListCtrl m_List;
@@ -1417,6 +1418,11 @@ public:
   afx_msg void OnDblclkList1(NMHDR *pNMHDR, LRESULT *pResult);
   afx_msg void OnBnClickedMfclink2();
   afx_msg void OnPaint();
+  afx_msg void OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult);
+//  afx_msg void OnLvnEndlabeleditList1(NMHDR* pNMHDR, LRESULT* pResult);
+  afx_msg void OnLvnItemchangingList1(NMHDR* pNMHDR, LRESULT* pResult);
+//  afx_msg void OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult);
+//  afx_msg void OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult);
 };
 
 

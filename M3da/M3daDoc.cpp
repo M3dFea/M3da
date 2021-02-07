@@ -326,6 +326,7 @@ ON_COMMAND(ID_CURVETOOLS_TEXT, &CM3daDoc::OnCurvetoolsText)
 ON_COMMAND(ID_PROPERTY_PCOMP, &CM3daDoc::OnPropertyPcomp)
 ON_COMMAND(ID_MATERIAL_ORTHOTROPIC, &CM3daDoc::OnMaterialOrthotropic)
 ON_COMMAND(ID_PROPERTY_DISPLAYLAMINATESTACK, &CM3daDoc::OnPropertyDisplaylaminatestack)
+ON_COMMAND(ID_PROPERTY_PBUSH, &CM3daDoc::OnPropertyPbush)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -2998,8 +2999,11 @@ void CM3daDoc::OnPropertySolid()
 if (pMnu->isNULL())
 {
   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-  outtextMSG2("PRSOLID");
-  sLastcmd="PRSOLID";
+  //outtextMSG2("PRSOLID");
+  //sLastcmd="PRSOLID";
+  int iNLab = cDBase->PropsT->NextID();
+  cDBase->CreatePrSolid("Solid Property", iNLab, -1);
+  cDBase->EditProp(iNLab);
 }
 else
 {
@@ -3015,8 +3019,11 @@ void CM3daDoc::OnPropertyBeam()
 if (pMnu->isNULL())
 {
   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-  outtextMSG2("PRBROD");
-  sLastcmd="PRBROD";
+  //outtextMSG2("PRBROD");
+  //sLastcmd="PRBROD";
+  int iNLab = cDBase->PropsT->NextID();
+  cDBase->CreatePrRod("ROD Beam Property", iNLab, -1, 0.015);
+  cDBase->EditProp(iNLab);
 }
 else
 {
@@ -3032,8 +3039,11 @@ void CM3daDoc::OnPropertyRod()
 if (pMnu->isNULL())
 {
   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-  outtextMSG2("PRROD");
-  sLastcmd="PRROD";
+  //outtextMSG2("PRROD");
+  //sLastcmd="PRROD";
+  int iNLab = cDBase->PropsT->NextID();
+  cDBase->CreatePRod("Rod Element", iNLab, -1, 0.0000785398, 4.90874e-10 + 4.90874e-10);
+  cDBase->EditProp(iNLab);
 }
 else
 {
@@ -3048,8 +3058,11 @@ void CM3daDoc::OnPropertyBeambar()
 if (pMnu->isNULL())
 {
   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-  outtextMSG2("PRBBAR");
-  sLastcmd="PRBBAR";
+  //outtextMSG2("PRBBAR");
+  //sLastcmd="PRBBAR";
+  int iNLab = cDBase->PropsT->NextID();
+  cDBase->CreatePrBar("BAR Beam Property", iNLab, -1, 0.010, 0.015);
+  cDBase->EditProp(iNLab);
 }
 else
 {
@@ -3067,6 +3080,10 @@ if (pMnu->isNULL())
   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
   outtextMSG2("PRBTUBE");
   sLastcmd="PRBTUBE";
+  int iNLab = cDBase->PropsT->NextID();
+  cDBase->CreatePrTube("TUBE Beam Property", iNLab, -1, 0.015, 0.01);
+  cDBase->EditProp(iNLab);
+
 }
 else
 {
@@ -3081,8 +3098,11 @@ void CM3daDoc::OnPropertyBeambox()
 if (pMnu->isNULL())
 {
   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-  outtextMSG2("PRBBOX");
-  sLastcmd="PRBBOX";
+  //outtextMSG2("PRBBOX");
+  //sLastcmd="PRBBOX";
+  int iNLab = cDBase->PropsT->NextID();
+  cDBase->CreatePrBox("BOX Beam Property", iNLab, -1, 0.01, 0.015, 0.005, 0.0025);
+  cDBase->EditProp(iNLab);
 }
 else
 {
@@ -3097,8 +3117,12 @@ void CM3daDoc::OnPropertyShell()
 if (pMnu->isNULL())
 {
   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-  outtextMSG2("PRSHELL");
-  sLastcmd="PRSHELL";
+  //outtextMSG2("PRSHELL");
+  //sLastcmd="PRSHELL";
+  int iNLab = cDBase->PropsT->NextID();
+  cDBase->CreatePrShell("NAME", iNLab, -1, 1, 0);
+  cDBase->EditProp(iNLab);
+  
 }
 else
 {
@@ -3131,8 +3155,12 @@ void CM3daDoc::OnMaterialIsentropic()
 if (pMnu->isNULL())
 {
   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-  outtextMSG2("MMAT1");
-  sLastcmd="MMAT1";
+  //outtextMSG2("MMAT1");
+  //sLastcmd="MMAT1";
+  int iNLab = cDBase->MatT->NextID();
+  cDBase->CreateMat1("Al Material", iNLab, 70.0e9, 0.33, 2750.0, 23.0e-6, 150.0);
+  cDBase->EditMat(iNLab,FALSE);
+
 }
 else
 {
@@ -4662,8 +4690,11 @@ void CM3daDoc::OnPropertyRotationalspring()
   if (pMnu->isNULL())
 	{
 	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-    outtextMSG2("PRSPGR");
-    sLastcmd="PRSPGR";
+    //outtextMSG2("PRSPGR");
+    //sLastcmd="PRSPGR";
+	  int iNLab = cDBase->PropsT->NextID();
+	  cDBase->CreatePrSpringR("Rotational Spring", iNLab, 1.0e5, 1.0e5, 1.0e5, 1000);
+	  cDBase->EditProp(iNLab);
 	}
 	else
 	{
@@ -4677,8 +4708,11 @@ void CM3daDoc::OnPropertyTranslationalspring()
   if (pMnu->isNULL())
 	{
 	  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-    outtextMSG2("PRSPGT");
-    sLastcmd="PRSPGT";
+    //outtextMSG2("PRSPGT");
+    //sLastcmd="PRSPGT";
+	  int iNLab = cDBase->PropsT->NextID();
+	  cDBase->CreatePrSpringT("Translational Spring", iNLab, 1.0e7, 1.0e7, 1.0e7, 1000);
+	  cDBase->EditProp(iNLab);
 	}
 	else
 	{
@@ -4750,8 +4784,11 @@ void CM3daDoc::OnPropertyLumpedmass()
   if (pMnu->isNULL())
   {
     SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-    outtextMSG2("PRMASS");
-    sLastcmd = "PRMASS";
+    //outtextMSG2("PRMASS");
+    //sLastcmd = "PRMASS";
+	int iNLab = cDBase->PropsT->NextID();
+	cDBase->CreatePrLumpedMass("Lumped Mass Property", iNLab, 0.1);
+	cDBase->EditProp(iNLab);
   }
   else
   {
@@ -4932,8 +4969,11 @@ void CM3daDoc::OnPropertyBeamBasic()
 	if (pMnu->isNULL())
 	{
 		SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-		outtextMSG2("PRBAR2");
-		sLastcmd = "PRBAR2";
+		//outtextMSG2("PRBAR2");
+		//sLastcmd = "PRBAR2";
+		int iNLab = cDBase->PropsT->NextID();
+		cDBase->CreatePRBar2("Bar Property", iNLab, -1, 0.0000785398, 4.90874e-10, 4.90874e-10, 4.90874e-10+ 4.90874e-10);
+		cDBase->EditProp(iNLab);
 	}
 	else
 	{
@@ -5428,8 +5468,13 @@ void CM3daDoc::OnPropertyPcomp()
 	if (pMnu->isNULL())
 	{
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
-		outtextMSG2("PRPCOMP");
-		sLastcmd = "PRPCOMP";
+		//outtextMSG2("PRPCOMP");
+		//sLastcmd = "PRPCOMP";
+		int iNLab = cDBase->PropsT->NextID();
+		CString sLay[50];
+		sLay[0] = "1,1,0";
+		cDBase->CreatePrPCOMP("NAME", iNLab, 0.0, 1, sLay);
+		cDBase->EditProp(iNLab);
 	}
 	else
 	{
@@ -5444,8 +5489,13 @@ void CM3daDoc::OnMaterialOrthotropic()
 	if (pMnu->isNULL())
 	{
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
-		outtextMSG2("MMAT8");
-		sLastcmd = "MMAT8";
+		//outtextMSG2("MMAT8");
+		//sLastcmd = "MMAT8";
+		int iNLab = cDBase->MatT->NextID();
+		cDBase->CreateMat8("NASTRAN MAT8 Property", iNLab, 0, 0, 0,
+			0, 0, 0, 0,
+			0, 0, 0);
+		cDBase->EditMat(iNLab, FALSE);
 	}
 	else
 	{
@@ -5462,6 +5512,26 @@ void CM3daDoc::OnPropertyDisplaylaminatestack()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("DSPLAM");
 		sLastcmd = "DSPLAM";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnPropertyPbush()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		//outtextMSG2("PRBUSH");
+		//sLastcmd="PRBUSH";
+		int iNLab = cDBase->PropsT->NextID();
+		cDBase->CreatePrBUSH("NASTRAN PBUSH Property", iNLab, 1.0e7, 1.0e7, 1.0e7, 1.0e4, 1.0e4, 1.0e4);
+		cDBase->EditProp(iNLab);
+
 	}
 	else
 	{

@@ -473,6 +473,7 @@ public:
   afx_msg void OnPropertyPcomp();
   afx_msg void OnMaterialOrthotropic();
   afx_msg void OnPropertyDisplaylaminatestack();
+  afx_msg void OnPropertyPbush();
 };
 
 

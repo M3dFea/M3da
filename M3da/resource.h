@@ -513,13 +513,14 @@
 #define ID_BUTTON33334                  33334
 #define ID_PROPERTY_PCOMP               33335
 #define ID_PROPERTY_DISPLAYLAMINATESTACK 33336
+#define ID_PROPERTY_PBUSH               33337
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        361
-#define _APS_NEXT_COMMAND_VALUE         33337
+#define _APS_NEXT_COMMAND_VALUE         33338
 #define _APS_NEXT_CONTROL_VALUE         1055
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
