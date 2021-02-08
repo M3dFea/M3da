@@ -31960,8 +31960,9 @@ void PMASS::List()
 
 int PMASS::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Point Mass (M)";
-  return(1);
+  sVar[0] = "Data:-";
+  sVar[1] = "Point Mass (M)";
+  return(2);
 }
 
 
@@ -31969,6 +31970,8 @@ int PMASS::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sVar[iNo] = "";
+  iNo++;
   sprintf_s(S1, "%g", dM);
   sVar[iNo] = S1;
   iNo++;
@@ -31977,7 +31980,7 @@ int PMASS::GetVarValues(CString sVar[])
 
 void PMASS::PutVarValues(int iNo, CString sVar[])
 {
-  dM = atof(sVar[0]);
+  dM = atof(sVar[1]);
 }
 
 IMPLEMENT_DYNAMIC(PSPRINGT , CObject)
@@ -32058,11 +32061,12 @@ void PSPRINGT::List()
 
 int PSPRINGT::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Translational Stiffness in X (Kx)";
-  sVar[1] = "Translational Stiffness in Y (Ky)";
-  sVar[2] = "Translational Stiffness in Z (Kz)";
-  sVar[3] = "Conduction Coefficeint (kcoeff)";
-  return(4);
+  sVar[0] = "Data:-";
+  sVar[1] = "Translational Stiffness in X (Kx)";
+  sVar[2] = "Translational Stiffness in Y (Ky)";
+  sVar[3] = "Translational Stiffness in Z (Kz)";
+  sVar[4] = "Conduction Coefficeint (kcoeff)";
+  return(5);
 }
 
 
@@ -32070,6 +32074,8 @@ int PSPRINGT::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sVar[iNo] = "";
+  iNo++;
   sprintf_s(S1, "%g", dkx);
   sVar[iNo] = S1;
   iNo++;
@@ -32087,10 +32093,10 @@ int PSPRINGT::GetVarValues(CString sVar[])
 
 void PSPRINGT::PutVarValues(int iNo, CString sVar[])
 {
-  dkx = atof(sVar[0]);
-  dky = atof(sVar[1]);
-  dkz = atof(sVar[2]);
-  dkcoeff = atof(sVar[3]);
+  dkx = atof(sVar[1]);
+  dky = atof(sVar[2]);
+  dkz = atof(sVar[3]);
+  dkcoeff = atof(sVar[4]);
 }
 
 void PSPRINGT::ExportNAS(FILE* pFile)
@@ -32139,11 +32145,12 @@ void PSPRINGR::List()
 
 int PSPRINGR::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Rotational Stiffness in X (Rx)";
-  sVar[1] = "Rotational Stiffness in Y (Ry)";
-  sVar[2] = "Rotational Stiffness in Z (Rz)";
-  sVar[3] = "Conduction Coefficeint (kcoePBUSHff)";
-  return(4);
+  sVar[0] = "Data:-";
+  sVar[1] = "Rotational Stiffness in X (Rx)";
+  sVar[2] = "Rotational Stiffness in Y (Ry)";
+  sVar[3] = "Rotational Stiffness in Z (Rz)";
+  sVar[4] = "Conduction Coefficeint (kcoePBUSHff)";
+  return(5);
 }
 
 void PSPRINGR::ExportNAS(FILE* pFile)
@@ -32253,14 +32260,15 @@ void PBUSH::List()
 
 int PBUSH::GetVarHeaders(CString sVar[])
 {
-	sVar[0] = "Flag";
-	sVar[1] = "K1";
-	sVar[2] = "K2";
-	sVar[3] = "K3";
-	sVar[4] = "K4";
-	sVar[5] = "K5";
-	sVar[6] = "K6";
-	return(7);
+	sVar[0] = "Data:-";
+	sVar[1] = "Flag";
+	sVar[2] = "K1";
+	sVar[3] = "K2";
+	sVar[4] = "K3";
+	sVar[5] = "K4";
+	sVar[6] = "K5";
+	sVar[7] = "K6";
+	return(8);
 }
 
 
@@ -32268,6 +32276,8 @@ int PBUSH::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sVar[iNo] = "";
+	iNo++;
 	sVar[iNo] = sFlg;
 	iNo++;
 	sprintf_s(S1, "%g", dK1);
@@ -32293,13 +32303,13 @@ int PBUSH::GetVarValues(CString sVar[])
 
 void PBUSH::PutVarValues(int iNo, CString sVar[])
 {
-	sFlg = sVar[0];
-	dK1 = atof(sVar[1]);
-	dK2 = atof(sVar[2]);
-	dK3 = atof(sVar[3]);
-	dK4 = atof(sVar[4]);
-	dK5 = atof(sVar[5]);
-	dK6 = atof(sVar[6]);
+	sFlg = sVar[1];
+	dK1 = atof(sVar[2]);
+	dK2 = atof(sVar[3]);
+	dK3 = atof(sVar[4]);
+	dK4 = atof(sVar[5]);
+	dK5 = atof(sVar[6]);
+	dK6 = atof(sVar[7]);
 }
 
 void PBUSH::ExportNAS(FILE* pFile)
@@ -32427,8 +32437,9 @@ return (pREt);
 
 int PSOLID::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Material ID (MID)";
-  sVar[1] = "Material coord system (MCID) ";
+  sVar[0] = "Data:-";
+  sVar[1] = "Material ID (MID)";
+  sVar[2] = "Material coord system (MCID) ";
   return(3);
 }
 
@@ -32437,11 +32448,13 @@ int PSOLID::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sVar[0] = "";
+  iNo++;
   sprintf_s(S1, "%i", iMID);
-  sVar[0] = S1;
+  sVar[1] = S1;
   iNo++;
   sprintf_s(S1, "%i", iCORDM);
-  sVar[1] = S1;
+  sVar[2] = S1;
   iNo++;
   return (iNo);
 }
@@ -32449,8 +32462,8 @@ int PSOLID::GetVarValues(CString sVar[])
 
 void PSOLID::PutVarValues(int iNo, CString sVar[])
 {
-  iMID = atoi(sVar[0]);
-  iCORDM = atoi(sVar[1]);
+  iMID = atoi(sVar[1]);
+  iCORDM = atoi(sVar[2]);
 }
 
 IMPLEMENT_DYNAMIC(PBAR , CObject)
@@ -32547,13 +32560,14 @@ if (iMID==thisMat)
 
 int PBAR::GetVarHeaders(CString sVar[])
 {
-	sVar[0] = "Material ID (MID)";
-	sVar[1] = "Area (A)";
-	sVar[2] = "Second Moment of Inertia (I1 (Izz))";
-	sVar[3] = "Second Moment of Inertia (I2 (Iyy))";
-	sVar[4] = "Torsional Constant (J)";
-	sVar[5] = "Non Strut Mass";
-	return(6);
+	sVar[0] = "Data:-";
+	sVar[1] = "Material ID (MID)";
+	sVar[2] = "Area (A)";
+	sVar[3] = "Second Moment of Inertia (I1 (Izz))";
+	sVar[4] = "Second Moment of Inertia (I2 (Iyy))";
+	sVar[5] = "Torsional Constant (J)";
+	sVar[6] = "Non Strut Mass";
+	return(7);
 }
 
 
@@ -32561,35 +32575,37 @@ int PBAR::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sVar[iNo] = "";
+	iNo++;
 	sprintf_s(S1, "%i", iMID);
-	sVar[0] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dA);
-	sVar[1] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dI1);
-	sVar[2] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dI2);
-	sVar[3] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dJ);
-	sVar[4] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dNSM);
-	sVar[5] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	return (iNo);
 }
 
 void PBAR::PutVarValues(int iNo, CString sVar[])
 {
-	iMID = atoi(sVar[0]);
-	dA = atof(sVar[1]);
-	dI1 = atof(sVar[2]);
-	dI2 = atof(sVar[3]);
-	dJ = atof(sVar[4]);
-	dNSM = atof(sVar[5]);
+	iMID = atoi(sVar[1]);
+	dA = atof(sVar[2]);
+	dI1 = atof(sVar[3]);
+	dI2 = atof(sVar[4]);
+	dJ = atof(sVar[5]);
+	dNSM = atof(sVar[6]);
 	CreateSec();
 }
 
@@ -32973,6 +32989,8 @@ int PBARL::GetVarHeaders(CString sVar[])
 	int iNo = 0;
 	int i;
 	char S1[8] = "";
+	sVar[iNo] = "Data:-";
+	iNo++;
 	sVar[iNo] = "Material ID (MID)";
 	iNo++;
 	sVar[iNo] = "Section";
@@ -32995,6 +33013,8 @@ int PBARL::GetVarValues(CString sVar[])
 	int iNo = 0;
 	int i;
 	char S1[80] = "";
+	sVar[iNo] = "";
+	iNo++;
 	sprintf_s(S1, "%i", iMID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -33015,7 +33035,7 @@ int PBARL::GetVarValues(CString sVar[])
 
 void PBARL::PutVarValues(int iNo, CString sVar[])
 {
-	int iC = 0;
+	int iC = 1;
 	int i;
 	iMID = atoi(sVar[iC]);
 	iC++;
@@ -33444,10 +33464,11 @@ fprintf(pFile,"%8s%8i%8i%8s%8s\n","PROD    ",iID,iMID,e8(A),e8(J));
 
 int PROD::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Material ID (MID)";
-  sVar[1] = "Secton area (A)";
-  sVar[2] = "Torsional constant (J)";
-  return(3);
+  sVar[0] = "Data:-";
+  sVar[1] = "Material ID (MID)";
+  sVar[2] = "Secton area (A)";
+  sVar[3] = "Torsional constant (J)";
+  return(4);
 }
 
 
@@ -33455,6 +33476,8 @@ int PROD::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sVar[iNo] = "";
+  iNo++;
   sprintf_s(S1, "%i", iMID);
   sVar[iNo] = S1;
   iNo++;
@@ -33469,9 +33492,9 @@ int PROD::GetVarValues(CString sVar[])
 
 void PROD::PutVarValues(int iNo, CString sVar[])
 {
-  iMID = atoi(sVar[0]);
-  A = atof(sVar[1]);
-  J = atof(sVar[2]);
+  iMID = atoi(sVar[1]);
+  A = atof(sVar[2]);
+  J = atof(sVar[3]);
   CreateSec();
 }
 
@@ -33692,17 +33715,18 @@ PSHELL::PSHELL()
 
 int PSHELL::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Material ID 1 (MID)";
-  sVar[1] = "Thickness (T)";
-  sVar[2] = "Material ID 2 (MID2)";
-  sVar[3] = "Bending stiffness parameter (12IT3)";
-  sVar[4] = "Material transverse shear (MID3)";
-  sVar[5] = "Transverse shear ratio  (TS/T)";
-  sVar[6] = "Non structural mass  (NSM)";
-  sVar[7] = "Fibre dist for stresses (Z1)";
-  sVar[8] = "Fibre dist for stresses (Z2)";
-  sVar[9] = "Material embrane-bending coupling (MID4)";
-  return(10);
+  sVar[0] = "Data:-";
+  sVar[1] = "Material ID 1 (MID)";
+  sVar[2] = "Thickness (T)";
+  sVar[3] = "Material ID 2 (MID2)";
+  sVar[4] = "Bending stiffness parameter (12IT3)";
+  sVar[5] = "Material transverse shear (MID3)";
+  sVar[6] = "Transverse shear ratio  (TS/T)";
+  sVar[7] = "Non structural mass  (NSM)";
+  sVar[8] = "Fibre dist for stresses (Z1)";
+  sVar[9] = "Fibre dist for stresses (Z2)";
+  sVar[10] = "Material membrane-bending coupling (MID4)";
+  return(11);
 }
 
 
@@ -33710,35 +33734,37 @@ int PSHELL::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sVar[iNo] = "";
+  iNo++;
   sprintf_s(S1, "%i", iMID1);
-  sVar[0] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dT);
-  sVar[1] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMID2);
-  sVar[2] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", d12IT3);
-  sVar[3] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMID3);
-  sVar[4] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dTST);
-  sVar[5] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dNSM);
-  sVar[6] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dZ1);
-  sVar[7] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dZ2);
-  sVar[8] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMID4);
-  sVar[9] = S1;
+  sVar[iNo] = S1;
   iNo++;
   return (iNo);
 }
@@ -33746,16 +33772,16 @@ int PSHELL::GetVarValues(CString sVar[])
 
 void PSHELL::PutVarValues(int iNo, CString sVar[])
 {
-iMID1  = atoi(sVar[0]);
-dT     = atof(sVar[1]);
-iMID2  = atoi(sVar[2]);
-d12IT3 = atof(sVar[3]);
-iMID3  = atoi(sVar[4]);
-dTST   = atof(sVar[5]);
-dNSM   = atof(sVar[6]);
-dZ1    = atof(sVar[7]);
-dZ2    = atof(sVar[8]);
-iMID4  = atoi(sVar[9]);
+iMID1  = atoi(sVar[1]);
+dT     = atof(sVar[2]);
+iMID2  = atoi(sVar[3]);
+d12IT3 = atof(sVar[4]);
+iMID3  = atoi(sVar[5]);
+dTST   = atof(sVar[6]);
+dNSM   = atof(sVar[7]);
+dZ1    = atof(sVar[8]);
+dZ2    = atof(sVar[9]);
+iMID4  = atoi(sVar[10]);
 }
 
 //MAt1
@@ -33828,15 +33854,16 @@ void MAT1::Info()
 
 int MAT1::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Young Modulus (E)";
-  sVar[1] = "Shear Modulus (G)";
-  sVar[2] = "Poisions Ratio )NU)";
-  sVar[3] = "Density (RHO)";
-  sVar[4] = "Coeff Thermal Expansion (CTE)";
-  sVar[5] = "Reference Temperatue (TREF)";
-  sVar[6] = "Material Coordinate Sys (MCID)";
-  sVar[7] = "Thermal Conductivity (k)";
-  return(8);
+  sVar[0] = "Data:-";
+  sVar[1] = "Young Modulus (E)";
+  sVar[2] = "Shear Modulus (G)";
+  sVar[3] = "Poisions Ratio )NU)";
+  sVar[4] = "Density (RHO)";
+  sVar[5] = "Coeff Thermal Expansion (CTE)";
+  sVar[6] = "Reference Temperatue (TREF)";
+  sVar[7] = "Material Coordinate Sys (MCID)";
+  sVar[8] = "Thermal Conductivity (k)";
+  return(9);
 }
 
 
@@ -33844,29 +33871,31 @@ int MAT1::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sVar[iNo] = "";
+  iNo++;
   sprintf_s(S1, "%g", dE);
-  sVar[0] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dG);
-  sVar[1] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dNU);
-  sVar[2] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dRHO);
-  sVar[3] = S1;
+  sVar[iNo] = S1;
   iNo++; 
   sprintf_s(S1, "%g", dA);
-  sVar[4] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dTREF);
-  sVar[5] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMCSID);
-  sVar[6] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dk);
-  sVar[7] = S1;
+  sVar[iNo] = S1;
   iNo++;
   return (iNo);
 }
@@ -33874,14 +33903,14 @@ int MAT1::GetVarValues(CString sVar[])
 
 void MAT1::PutVarValues(int iNo, CString sVar[])
 {
-  dE = atof(sVar[0]);
-  dG = atof(sVar[1]);
-  dNU = atof(sVar[2]);
-  dRHO = atof(sVar[3]);
-  dA = atof(sVar[4]);
-  dTREF = atof(sVar[5]);
-  iMCSID = atoi(sVar[6]);
-  dk = atof(sVar[7]);
+  dE = atof(sVar[1]);
+  dG = atof(sVar[2]);
+  dNU = atof(sVar[3]);
+  dRHO = atof(sVar[4]);
+  dA = atof(sVar[5]);
+  dTREF = atof(sVar[6]);
+  iMCSID = atoi(sVar[7]);
+  dk = atof(sVar[8]);
 }
 
 
@@ -34156,26 +34185,27 @@ STRN = 0;
 
 int MAT8::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Young Modulus longitudinal (E1)";
-  sVar[1] = "Young Modulus lateral (E2)";
-  sVar[2] = "Poisions ratio (NU12)";
-  sVar[3] = "In-plane shear modulus(G12)";
-  sVar[4] = "Transverse shear modulus 1-Z plane.(G1Z)";
-  sVar[5] = "Transverse shear modulus 2-Z plane.(G2Z)";
-  sVar[6] = "Density (RHO)";
-  sVar[7] = "Coeff thermal expansion 1 Dir (A1)";
-  sVar[8] = "Coeff thermal expansion 2 Dir (A2)";
-  sVar[9] = "Reference Temperatue (TREF)";
-  sVar[10] = "Allow tensile stress 1 Dir (dXt)";
-  sVar[11] = "Allow compressive stress 1 Dir (dXc)";
-  sVar[12] = "Allow tensile stress 2 Dir (dYt)";
-  sVar[13] = "Allow compressive stress 2 Dir (dYc)";
-  sVar[14] = "Allow stress/strain in-plane shear (S)";
-  sVar[15] = "Structural damping coefficient (GE)";
-  sVar[16] = "Tsai-Wu interactive term (F12)";
-  sVar[17] = "Xt,Xc,Yt,Yc are STRN if 1 (STRN)";
+  sVar[0] = "Data:-";
+  sVar[1] = "Young Modulus longitudinal (E1)";
+  sVar[2] = "Young Modulus lateral (E2)";
+  sVar[3] = "Poisions ratio (NU12)";
+  sVar[4] = "In-plane shear modulus(G12)";
+  sVar[5] = "Transverse shear modulus 1-Z plane.(G1Z)";
+  sVar[6] = "Transverse shear modulus 2-Z plane.(G2Z)";
+  sVar[7] = "Density (RHO)";
+  sVar[8] = "Coeff thermal expansion 1 Dir (A1)";
+  sVar[9] = "Coeff thermal expansion 2 Dir (A2)";
+  sVar[10] = "Reference Temperatue (TREF)";
+  sVar[11] = "Allow tensile stress 1 Dir (dXt)";
+  sVar[12] = "Allow compressive stress 1 Dir (dXc)";
+  sVar[13] = "Allow tensile stress 2 Dir (dYt)";
+  sVar[14] = "Allow compressive stress 2 Dir (dYc)";
+  sVar[15] = "Allow stress/strain in-plane shear (S)";
+  sVar[16] = "Structural damping coefficient (GE)";
+  sVar[17] = "Tsai-Wu interactive term (F12)";
+  sVar[18] = "Xt,Xc,Yt,Yc are STRN if 1 (STRN)";
   //sVar[7] = "Thermal Conductivity (k)";
-  return(18);
+  return(19);
 }
 
 
@@ -34183,62 +34213,64 @@ int MAT8::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sVar[iNo] = "";
+  iNo++;
   sprintf_s(S1, "%g", dE1);
-  sVar[0] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dE2);
-  sVar[1] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dNU12);
-  sVar[2] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dG12);
-  sVar[3] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dG1Z);
-  sVar[4] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dG2Z);
-  sVar[5] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dRHO);
-  sVar[6] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dA1);
-  sVar[7] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dA2);
-  sVar[8] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dTREF);
-  sVar[9] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dXt);
-  sVar[10] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dXc);
-  sVar[11] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dYt);
-  sVar[12] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dYc);
-  sVar[13] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dS);
-  sVar[14] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dGE);
-  sVar[15] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", F12);
-  sVar[16] = S1;
+  sVar[iNo] = S1;
   iNo++;
   if (STRN==0)
       sprintf_s(S1, "%s", "        ");
   else
 	  sprintf_s(S1, "%g", STRN);
-  sVar[17] = S1;
+  sVar[iNo] = S1;
   iNo++;
   return (iNo);
 }
@@ -34246,26 +34278,26 @@ int MAT8::GetVarValues(CString sVar[])
 
 void MAT8::PutVarValues(int iNo, CString sVar[])
 {
-  dE1 = atof(sVar[0]);
-  dE2 = atof(sVar[1]);
-  dNU12 = atof(sVar[2]);
-  dG12 = atof(sVar[3]);
-  dG1Z = atof(sVar[4]);
-  dG2Z = atof(sVar[5]);
-  dRHO = atof(sVar[6]);
+  dE1 = atof(sVar[1]);
+  dE2 = atof(sVar[2]);
+  dNU12 = atof(sVar[3]);
+  dG12 = atof(sVar[4]);
+  dG1Z = atof(sVar[5]);
+  dG2Z = atof(sVar[6]);
+  dRHO = atof(sVar[7]);
 
-  dA1 = atof(sVar[7]);
-  dA2 = atof(sVar[8]);
-  dTREF = atof(sVar[9]);
-  dXt = atof(sVar[10]);
-  dXc = atof(sVar[11]);
-  dYt = atof(sVar[12]);
-  dYc = atof(sVar[13]);
+  dA1 = atof(sVar[8]);
+  dA2 = atof(sVar[9]);
+  dTREF = atof(sVar[10]);
+  dXt = atof(sVar[11]);
+  dXc = atof(sVar[12]);
+  dYt = atof(sVar[13]);
+  dYc = atof(sVar[14]);
 
-  dS = atof(sVar[14]);
-  dGE = atof(sVar[15]);
-  F12 = atof(sVar[16]);
-  STRN = atof(sVar[17]);
+  dS = atof(sVar[15]);
+  dGE = atof(sVar[16]);
+  F12 = atof(sVar[17]);
+  STRN = atof(sVar[18]);
 }
 
 //*************************************************************************
@@ -34360,6 +34392,8 @@ int PCOMPG::GetVarHeaders(CString sVar[])
 	int iNo = 0;
 	int i;
 	char S1[80] = "";
+	sVar[iNo] = "Data:-";
+	iNo++;
 	sVar[iNo] = "Dist to bottom surf (Z0)";
 	iNo++;
 	sVar[iNo] = "Non structural mass (NSM)";
@@ -34390,6 +34424,8 @@ int PCOMPG::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sVar[iNo] = "";
+	iNo++;
 	sprintf_s(S1, "%g", dZ0);
 	sVar[iNo] = S1;
 	iNo++;
@@ -34688,6 +34724,8 @@ int PCOMP::GetVarHeaders(CString sVar[])
   int iNo=0;
   int i;
   char S1[80] = "";
+  sVar[iNo] = "Data:-";
+  iNo++;
   sVar[iNo] = "Dist to bottom surf (Z0)";
   iNo++;
   sVar[iNo] = "Non structural mass (NSM)";
@@ -34720,6 +34758,8 @@ int PCOMP::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sVar[iNo] = "";
+  iNo++;
   sprintf_s(S1, "%g", dZ0);
   sVar[iNo] = S1;
   iNo++;
@@ -34785,10 +34825,10 @@ void PCOMP::PutVarValues(int iNo, CString sVar[])
 	double dTheta;
 	CString sFT;
 	CString sSYM;
-	dZ0 = atof(sVar[0]);
-	dNSM = atof(sVar[1]);
-	dSB = atof(sVar[2]);
-	sFT = ExtractSubString2(1, sVar[3]);
+	dZ0 = atof(sVar[1]);
+	dNSM = atof(sVar[2]);
+	dSB = atof(sVar[3]);
+	sFT = ExtractSubString2(1, sVar[4]);
 	FT = 0;
 	if (sFT == "HILL")
 		FT = 1;
@@ -34806,16 +34846,16 @@ void PCOMP::PutVarValues(int iNo, CString sVar[])
 		FT = 7;
 	else if (sFT == "MCT")
 		FT = 8;
-	dRefT = atof(sVar[4]);
-	dGE = atof(sVar[5]);
-	sSYM = ExtractSubString2(1, sVar[6]);
+	dRefT = atof(sVar[5]);
+	dGE = atof(sVar[6]);
+	sSYM = ExtractSubString2(1, sVar[7]);
 	if (sSYM == "SYM")
 		bLAM=TRUE;
 	else
 		bLAM = FALSE;
-	iNoLays= atoi(sVar[7]);
+	iNoLays= atoi(sVar[8]);
 	int iP = 0;
-	for (i = 9; i < 9+ iNoLays; i++)
+	for (i = 10; i < 10+ iNoLays; i++)
 	{
 		iMID = atoi(ExtractSubString2(1, sVar[i]));
 		dThk = atof(ExtractSubString2(2, sVar[i]));
@@ -48073,7 +48113,7 @@ void CEntEditDialog::Build2()
 	double dT[100];
 	double dS;
 	int iM[100];
-	int iC = 9;
+	int iC = 10;
 	int iLC = 0;
 	double dThk = 0;
 	//Reset layer to 0 and rebuild
@@ -48103,11 +48143,11 @@ void CEntEditDialog::Build2()
 	}
 	sprintf_s(S1, "%i", iLC);
 	sTemp = S1;
-	m_List.SetItemText(7, 1, sTemp);
+	m_List.SetItemText(8, 1, sTemp);
 	sprintf_s(S1, "%g", dThk);
 	sTemp = S1;
-	m_List.SetItemText(8, 1, sTemp);
-	sTemp = m_List.GetItemText(0, 1);
+	m_List.SetItemText(9, 1, sTemp);
+	sTemp = m_List.GetItemText(1, 1);
 	dZ = atof(sTemp);
 	//vMat.Rotate(-90, 0, 5);
 	dS = 1.0 / dThk;
