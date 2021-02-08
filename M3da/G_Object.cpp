@@ -47971,6 +47971,24 @@ BOOL CEntEditDialog::OnInitDialog()
   CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_LIST1);
   if (oLB != NULL)
 	  oLB->MoveWindow(oSize2, 0);
+  CButton* cBtn = (CButton*)this->GetDlgItem(IDC_ENTLIST);
+  oSize2.top = iH- iBoff;
+  oSize2.left = 0;
+  oSize2.bottom = iH - iBoff+50;
+  oSize2.right = 100;
+  cBtn->MoveWindow(oSize2, 0);
+  cBtn = (CButton*)this->GetDlgItem(IDOK);
+  oSize2.top = iH - iBoff;
+  oSize2.left = 100;
+  oSize2.bottom = iH - iBoff + 50;
+  oSize2.right = 250;
+  cBtn->MoveWindow(oSize2, 0);
+  cBtn = (CButton*)this->GetDlgItem(IDCANCEL);
+  oSize2.top = iH - iBoff;
+  oSize2.left = 250;
+  oSize2.bottom = iH - iBoff + 50;
+  oSize2.right = 350;
+  cBtn->MoveWindow(oSize2, 0);
 
 
   if (pEnt != NULL)
