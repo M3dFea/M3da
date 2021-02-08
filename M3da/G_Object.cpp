@@ -13914,8 +13914,7 @@ fprintf(pFile,"%10i\n",pVertex->iLabel);
 
 void E_Object1::ExportNAS(FILE* pFile)
 {
-	fprintf(pFile, "$s", ToString().GetString());
-
+	fprintf(pFile, "%s", ToString().GetString());
 }
 
 CString E_Object1::ToString()
@@ -48123,7 +48122,7 @@ void CEntEditDialog::Build2()
 		dZ += 0.5 * dS * dT[i - 1];
 		dZ += 0.5 * dS * dT[i];
 	//	dT = dS * pP->T[i];
-	AddVisLayer(dTheta[i], dZ, dS * dT[i], iM[i]);
+		AddVisLayer(dTheta[i], dZ, dS * dT[i], iM[i]);
 	}
 
 }
