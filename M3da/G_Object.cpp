@@ -14261,8 +14261,9 @@ void E_Object1::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 void E_Object1::Info()
 {
-	char S1[80];
-	sprintf_s(S1, "LAB: %i GRID: %i MASS: %f ", iLabel, pVertex->iLabel, dM);
+	char S1[200];
+
+	sprintf_s(S1, "%s,EID,%i,GRID,%i,MASS,%f,XYZ, %f,%f,%f ",sLab.GetString(), iLabel, pVertex->iLabel, dM, pVertex->Pt_Point->x, pVertex->Pt_Point->y, pVertex->Pt_Point->z);
 	outtext1(S1);
 }
 
@@ -34823,6 +34824,7 @@ void PCOMP::PutVarValues(int iNo, CString sVar[])
 	int iMID;
 	double dThk;
 	double dTheta;
+	int iOut;
 	CString sFT;
 	CString sSYM;
 	dZ0 = atof(sVar[1]);
@@ -34849,6 +34851,7 @@ void PCOMP::PutVarValues(int iNo, CString sVar[])
 	dRefT = atof(sVar[5]);
 	dGE = atof(sVar[6]);
 	sSYM = ExtractSubString2(1, sVar[7]);
+
 	if (sSYM == "SYM")
 		bLAM=TRUE;
 	else
@@ -34860,9 +34863,14 @@ void PCOMP::PutVarValues(int iNo, CString sVar[])
 		iMID = atoi(ExtractSubString2(1, sVar[i]));
 		dThk = atof(ExtractSubString2(2, sVar[i]));
 		dTheta = atof(ExtractSubString2(3, sVar[i]));
+		iOut = atoi(ExtractSubString2(4, sVar[i]));
 		MID[iP] = iMID;
 		T[iP] = dThk;
 		Theta[iP] = dTheta;
+		if (iOut == 0)
+			sOut[iP] = FALSE;
+		else
+			sOut[iP] = TRUE;
 		iP++;
 	}
 	//dZ0 = -0.5 * GetThk();

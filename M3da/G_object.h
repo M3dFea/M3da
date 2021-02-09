@@ -2988,7 +2988,7 @@ public:
    E_Object1();
    ~E_Object1();
    Pt_Object* pVertex;
-   virtual void Create(Pt_Object* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
+   virtual void Create(Pt_Object* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
    virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
