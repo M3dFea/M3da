@@ -2424,6 +2424,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "RESENVMAX")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zRESENVMAX_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "NULL")
 	  {
 		outtext2("/COMMAND:");
@@ -15619,6 +15629,51 @@ MenuEnd:
 	return RetVal;
 }
 
+int zRESENVMAX_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("/ENTER RESSETS TO ENV MAX (SETID,VAR,OPT)");
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			if (CInMsg == "D")
+			{
+				iStat = 2;
+			}
+			else
+			{
+				sSeq[iNo] = CInMsg;
+				iNo++;
+				iStat = 0;
+				DoMenu(CInMsg, Pt);
+			}
+		}
+		if (iStat == 2)
+		{
+			cDBase->ResSetEnvMax(sSeq, iNo);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zRESSETDEFSCL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
