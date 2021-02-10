@@ -19245,10 +19245,10 @@ void ME_Object::ResEnvMin(CString sSeq[], int iNo)
 			Res* pR = pC->Get(pElems[i]->iLabel, iOPT[j]);
 			if (pR != NULL)
 			{
-				Res1* pRes = (Res1*)pENV->Get(pElems[i]->iLabel, 0);
+				Res4* pRes = (Res4*)pENV->Get(pElems[i]->iLabel, 0);
 				//pRes->ID = pR->ID;
 				dVal = *pR->GetAddress(iVAR[j]);
-				if (dVal < pRes->v[0])
+				if (dVal < pRes->v[3])
 				{
 					pRes->v[0] = iRS[j];
 					pRes->v[1] = iVAR[j];
@@ -19322,10 +19322,10 @@ void ME_Object::ResEnvMax(CString sSeq[], int iNo)
 			Res* pR = pC->Get(pElems[i]->iLabel, iOPT[j]);
 			if (pR != NULL)
 			{
-				Res1* pRes =(Res1*) pENV->Get(pElems[i]->iLabel, 0);
+				Res4* pRes =(Res4*) pENV->Get(pElems[i]->iLabel, 0);
 				//pRes->ID = pR->ID;
 				dVal= *pR->GetAddress(iVAR[j]);
-				if (dVal > pRes->v[0])
+				if (dVal > pRes->v[3])
 				{
 					pRes->v[0] = iRS[j];
 					pRes->v[1] = iVAR[j];
