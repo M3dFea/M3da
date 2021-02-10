@@ -19183,6 +19183,83 @@ iCVarDef=-1;
 iPostOpt=0;
 }
 
+void ME_Object::ResEnvMin(CString sSeq[], int iNo)
+{
+	int iRS[50];
+	int iVAR[50];
+	int iOPT[50];
+	//ExtractSubString2(int iP, CString sIn)
+
+	int i;
+	int j;
+	for (i = 0; i < iNo; i++)
+	{
+		iRS[i] = atoi(ExtractSubString2(1, sSeq[i]));
+		iVAR[i] = atoi(ExtractSubString2(2, sSeq[i]));
+		iOPT[i] = atoi(ExtractSubString2(3, sSeq[i]));
+	}
+
+	double dVal;
+	ResSet* pENV = NULL;
+	ResSet* pC = NULL;
+
+	//Create New ResSet
+	ResultsSets[iNoRes] = new ResSet();
+	ResultsSets[iNoRes]->sFile = "None";
+	ResultsSets[iNoRes]->sTitle = "Envelop Min";
+	ResultsSets[iNoRes]->sSubTitle = "Derived Results";
+	ResultsSets[iNoRes]->ACODE = ResultsSets[iRS[0]]->ACODE;
+	ResultsSets[iNoRes]->TCODE = ResultsSets[iRS[0]]->TCODE;
+	ResultsSets[iNoRes]->TYPE = ResultsSets[iRS[0]]->TYPE;
+	ResultsSets[iNoRes]->LC = 0;
+	ResultsSets[iNoRes]->WID = 1;;
+	pENV = ResultsSets[iNoRes];
+	pENV->iNoV = 4;
+	pENV->sName = "ENV MIN";
+	iNoRes++;
+	// create intial results to first set
+	pC = ResultsSets[iRS[0]];
+	pENV->lab[0] = "Res Set ID";
+	pENV->lab[1] = "Varible ID";
+	pENV->lab[2] = "Optional ID";
+	pENV->lab[3] = pC->lab[iVAR[0]];
+	for (i = 0; i < iElNo; i++)
+	{
+		Res* pR = pC->Get(pElems[i]->iLabel, iOPT[0]);
+		if (pR != NULL)
+		{
+			Res4* pRes = new Res4();
+			pRes->ID = pR->ID;
+			pRes->v[0] = iRS[0];
+			pRes->v[1] = iVAR[0];
+			pRes->v[2] = iOPT[0];
+			pRes->v[3] = *pR->GetAddress(iVAR[0]);
+			pENV->Add(pRes);
+		}
+	}
+	for (j = 1; j < iNo; j++)
+	{
+		pC = ResultsSets[iRS[j]];
+		for (i = 0; i < iElNo; i++)
+		{
+			Res* pR = pC->Get(pElems[i]->iLabel, iOPT[j]);
+			if (pR != NULL)
+			{
+				Res1* pRes = (Res1*)pENV->Get(pElems[i]->iLabel, 0);
+				//pRes->ID = pR->ID;
+				dVal = *pR->GetAddress(iVAR[j]);
+				if (dVal < pRes->v[0])
+				{
+					pRes->v[0] = iRS[j];
+					pRes->v[1] = iVAR[j];
+					pRes->v[2] = iOPT[j];
+					pRes->v[3] = dVal;
+				}
+			}
+		}
+	}
+}
+
 void ME_Object::ResEnvMax(CString sSeq[], int iNo)
 {
 	int iRS[50];
@@ -19214,20 +19291,26 @@ void ME_Object::ResEnvMax(CString sSeq[], int iNo)
 	ResultsSets[iNoRes]->LC = 0;
 	ResultsSets[iNoRes]->WID = 1;;
 	pENV = ResultsSets[iNoRes];
-	pENV->iNoV = 1;
+	pENV->iNoV = 4;
 	pENV->sName = "ENV MAX";
 	iNoRes++;
 	// create intial results to first set
 	pC = ResultsSets[iRS[0]];
-	pENV->lab[0] = pC->lab[iVAR[0]];
+	pENV->lab[0] = "Res Set ID";
+	pENV->lab[1] = "Varible ID";
+	pENV->lab[2] = "Optional ID";
+	pENV->lab[3] = pC->lab[iVAR[0]];
 	for (i = 0; i < iElNo; i++)
 	{
 		Res* pR = pC->Get(pElems[i]->iLabel, iOPT[0]);
 		if (pR != NULL)
 		{
-			Res1* pRes = new Res1();
+			Res4* pRes = new Res4();
 			pRes->ID = pR->ID;
-			pRes->v[0] = *pR->GetAddress(iVAR[0]);
+			pRes->v[0] = iRS[0];
+			pRes->v[1] = iVAR[0];
+			pRes->v[2] = iOPT[0];
+			pRes->v[3] = *pR->GetAddress(iVAR[0]);
 			pENV->Add(pRes);
 		}
 	}
@@ -19243,11 +19326,17 @@ void ME_Object::ResEnvMax(CString sSeq[], int iNo)
 				//pRes->ID = pR->ID;
 				dVal= *pR->GetAddress(iVAR[j]);
 				if (dVal > pRes->v[0])
-					pRes->v[0] = dVal;
+				{
+					pRes->v[0] = iRS[j];
+					pRes->v[1] = iVAR[j];
+					pRes->v[2] = iOPT[j];
+					pRes->v[3] = dVal;
+				}
 			}
 		}
 	}
 }
+
 
 
 void ME_Object::PostElResScalar(ResSet* pRes,int iVar,int iOpt,float &fMax,float &fMin)

@@ -15937,6 +15937,17 @@ void DBase::ResSetEnvMax(CString sSeq[],int iNo)
 	}
 }
 
+void DBase::ResSetEnvMin(CString sSeq[], int iNo)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ResEnvMin(sSeq, iNo);
+	}
+	else
+	{
+		outtext1("ERROR: No Mesh Active.");
+	}
+}
 
 void DBase::SetCurrentResSet(int iRS,int iRV,int iOPT)
 {

@@ -3615,6 +3615,7 @@ void ExportGroups(FILE* pFile);
 ResSet* GetResultsSet(int iSet);
 void NullResults();
 void DeleteAllResults();
+void ResEnvMin(CString sSeq[], int iNo);
 void ResEnvMax(CString sSeq[], int iNo);
 void PostElResScalar(ResSet* pRes,int iVar,int iOpt,float &fMax,float &fMin);
 void PostElResDef(ResSet* pRes,int iVar,float &fMax,float &fMin);

@@ -179,6 +179,7 @@ void ListVecSets();
 void DelResSets();
 void ListResSet();
 void ResSetEnvMax(CString sSeq[], int iNo);
+void ResSetEnvMin(CString sSeq[], int iNo);
 void SetCurrentResSet(int iRS, int iRV, int iOPT);
 void DeleteResVec();
 void SetCurrentResVec(int iRS, int iRV, int iD);
