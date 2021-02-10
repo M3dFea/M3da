@@ -25278,8 +25278,11 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==34))
 }
 if ((iCnt>7) && ((ResultsSets[iNoRes]->TYPE==95) || (ResultsSets[iNoRes]->TYPE==97)))
 {
+	double p1;
+	double p2;
+	double vm;
   ResultsSets[iNoRes]->sName=sEL;
-  ResultsSets[iNoRes]->iNoV=10;
+  ResultsSets[iNoRes]->iNoV=11;
   ResultsSets[iNoRes]->sOpName="Layer ";
   ResultsSets[iNoRes]->iDefID=1;
   ResultsSets[iNoRes]->iSecondaryID=0;
@@ -25292,7 +25295,8 @@ if ((iCnt>7) && ((ResultsSets[iNoRes]->TYPE==95) || (ResultsSets[iNoRes]->TYPE==
   ResultsSets[iNoRes]->lab[6]="Shear angle";
   ResultsSets[iNoRes]->lab[7]="Major principal*";
   ResultsSets[iNoRes]->lab[8]="Minor principal";
-  ResultsSets[iNoRes]->lab[9]="von Mises or Maximum shear";
+  ResultsSets[iNoRes]->lab[9]="Maximum shear";
+  ResultsSets[iNoRes]->lab[10] = "Derived VM Stress";
   for (i=7;i<iCnt;i+=11)
   {
     Res15* pRes=new Res15;
@@ -25307,6 +25311,10 @@ if ((iCnt>7) && ((ResultsSets[iNoRes]->TYPE==95) || (ResultsSets[iNoRes]->TYPE==
     pRes->v[7]=*(float*) &Vals[i+8];
 	pRes->v[8]=*(float*) &Vals[i+9];
 	pRes->v[9]=*(float*) &Vals[i+10];
+	p1 = *(float*)&Vals[i + 8];
+	p2 = *(float*)&Vals[i + 9];
+	vm = pow(p1 * p1 - p1 * p2 + p2 * p2, 0.5);
+	pRes->v[10] = vm;
     ResultsSets[iNoRes]->Add(pRes);
   }
 }
