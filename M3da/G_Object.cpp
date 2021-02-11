@@ -19337,7 +19337,39 @@ void ME_Object::ResEnvMax(CString sSeq[], int iNo)
 	}
 }
 
+void ME_Object::ResSetScale(CString sSeq, double dS)
+{
+	int iRS;
+	int iVAR;
+	int iOPT;
+	
 
+	int i;
+	int j;
+	iRS = atoi(ExtractSubString2(1, sSeq));
+	iVAR = atoi(ExtractSubString2(2, sSeq));
+	iOPT = atoi(ExtractSubString2(3, sSeq));
+
+	double dVal;
+	ResSet* pC = NULL;
+	pC = ResultsSets[iRS];
+	if (pC != NULL)
+	{
+		for (i = 0; i < iElNo; i++)
+		{
+			Res* pR = pC->Get(pElems[i]->iLabel, iOPT);
+			if (pR != NULL)
+			{
+				*pR->GetAddress(iVAR) *= dS;
+			}
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Results Set Found.");
+	}
+
+}
 
 void ME_Object::PostElResScalar(ResSet* pRes,int iVar,int iOpt,float &fMax,float &fMin)
 {

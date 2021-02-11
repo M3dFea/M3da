@@ -178,6 +178,7 @@ void ListResSets();
 void ListVecSets();
 void DelResSets();
 void ListResSet();
+void ResSetScale(CString sSeq, double dS);
 void ResSetEnvMax(CString sSeq[], int iNo);
 void ResSetEnvMin(CString sSeq[], int iNo);
 void SetCurrentResSet(int iRS, int iRV, int iOPT);

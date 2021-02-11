@@ -1621,6 +1621,15 @@ public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zRESSCALE_Mnu : public zMnu
+{
+
+public:
+	int iNo = 0;
+	CString sSeq;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zRESENVMIN_Mnu : public zMnu
 {
 

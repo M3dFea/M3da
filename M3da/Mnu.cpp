@@ -2444,6 +2444,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "RESSCALE")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zRESSCALE_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "NULL")
 	  {
 		outtext2("/COMMAND:");
@@ -15673,6 +15683,51 @@ int zRESENVMAX_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		if (iStat == 2)
 		{
 			cDBase->ResSetEnvMax(sSeq, iNo);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zRESSCALE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("/ENTER RESSETS TO SCALE (SETID,VAR,OPT)");
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sSeq = CInMsg;
+			outtext2("/ENTER RESULTS SET SCALE FACTOR");
+			SetFocus();
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->ResSetScale(sSeq, ptVec.x);
 			RetVal = 1;
 		}
 		//Escape clause

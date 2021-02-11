@@ -15924,6 +15924,17 @@ else
   outtext1("ERROR: No Mesh Active.");
 }
 }
+void DBase::ResSetScale(CString sSeq, double dS)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ResSetScale(sSeq, dS);
+	}
+	else
+	{
+		outtext1("ERROR: No Mesh Active.");
+	}
+}
 
 void DBase::ResSetEnvMax(CString sSeq[],int iNo)
 {
