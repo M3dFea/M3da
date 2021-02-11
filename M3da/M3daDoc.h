@@ -474,6 +474,10 @@ public:
   afx_msg void OnMaterialOrthotropic();
   afx_msg void OnPropertyDisplaylaminatestack();
   afx_msg void OnPropertyPbush();
+  afx_msg void OnManipulationDivideinto();
+  afx_msg void OnManipulationEnvelopemaximum();
+  afx_msg void OnManipulationEnvelopeminimum();
+  afx_msg void OnManipulationScale();
 };
 
 

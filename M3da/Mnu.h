@@ -1621,6 +1621,14 @@ public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zRESDIVINTO_Mnu : public zMnu
+{
+
+public:
+	CString sSeq;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zRESSCALE_Mnu : public zMnu
 {
 

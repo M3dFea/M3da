@@ -480,6 +480,13 @@ BEGIN
             MENUITEM "Reverse Colour Bar",          ID_OPTIONS_REVERSECOLOURBAR
             MENUITEM "Vector Display Scale",        ID_OPTIONS_VECTORSCALE
         END
+        POPUP "Manipulation"
+        BEGIN
+            MENUITEM "Envelope Maximum",            ID_MANIPULATION_ENVELOPEMAXIMUM
+            MENUITEM "Envelope Minimum",            ID_MANIPULATION_ENVELOPEMINIMUM
+            MENUITEM "Scale",                       ID_MANIPULATION_SCALE
+            MENUITEM "Divide Into",                 ID_MANIPULATION_DIVIDEINTO
+        END
         MENUITEM "Export Results to TEXT File", ID_POST_EXPORTRESULTSTOTEXTFILE
         MENUITEM "List Nodal Results",          ID_POST_LISTNODALRESULTS
         MENUITEM "List Element Result",         ID_POST_LISTELEMENTRESULT
@@ -1190,6 +1197,13 @@ BEGIN
     ID_PROPERTY_PCOMP       "Create PCOMP Laminate Property"
     ID_PROPERTY_DISPLAYLAMINATESTACK "Display Laminate Stack Sequence"
     ID_PROPERTY_PBUSH       "Create a Nastran PBUSH spring property"
+    ID_MANIPULATION_ENVELOPEMAXIMUM 
+                            "Create an enveloped results set of maximum value"
+    ID_MANIPULATION_ENVELOPEMINIMUM 
+                            "Create an enveloped results set of maximum value"
+    ID_MANIPULATION_SCALE   "Scale a results set variable"
+    ID_MANIPULATION_DIVIDEINTO 
+                            "Divide a results set variable into a number used for RF calculations"
 END
 
 #endif    // English (United States) resources

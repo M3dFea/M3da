@@ -327,6 +327,10 @@ ON_COMMAND(ID_PROPERTY_PCOMP, &CM3daDoc::OnPropertyPcomp)
 ON_COMMAND(ID_MATERIAL_ORTHOTROPIC, &CM3daDoc::OnMaterialOrthotropic)
 ON_COMMAND(ID_PROPERTY_DISPLAYLAMINATESTACK, &CM3daDoc::OnPropertyDisplaylaminatestack)
 ON_COMMAND(ID_PROPERTY_PBUSH, &CM3daDoc::OnPropertyPbush)
+ON_COMMAND(ID_MANIPULATION_DIVIDEINTO, &CM3daDoc::OnManipulationDivideinto)
+ON_COMMAND(ID_MANIPULATION_ENVELOPEMAXIMUM, &CM3daDoc::OnManipulationEnvelopemaximum)
+ON_COMMAND(ID_MANIPULATION_ENVELOPEMINIMUM, &CM3daDoc::OnManipulationEnvelopeminimum)
+ON_COMMAND(ID_MANIPULATION_SCALE, &CM3daDoc::OnManipulationScale)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5532,6 +5536,70 @@ void CM3daDoc::OnPropertyPbush()
 		cDBase->CreatePrBUSH("NASTRAN PBUSH Property", iNLab, 1.0e7, 1.0e7, 1.0e7, 1.0e4, 1.0e4, 1.0e4);
 		cDBase->EditProp(iNLab);
 
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnManipulationDivideinto()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		//SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("RESDIVINTO");
+		sLastcmd = "RESDIVINTO";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnManipulationEnvelopemaximum()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		//SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("RESENVMAX");
+		sLastcmd = "RESENVMAX";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnManipulationEnvelopeminimum()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		//SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("RESENVMIN");
+		sLastcmd = "RESENVMIN";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnManipulationScale()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		//SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("RESSCALE");
+		sLastcmd = "RESSCALE";
 	}
 	else
 	{

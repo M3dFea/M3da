@@ -15936,6 +15936,18 @@ void DBase::ResSetScale(CString sSeq, double dS)
 	}
 }
 
+void DBase::ResSetDivInTo(CString sSeq, double dS)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ResSetDivInTo(sSeq, dS);
+	}
+	else
+	{
+		outtext1("ERROR: No Mesh Active.");
+	}
+}
+
 void DBase::ResSetEnvMax(CString sSeq[],int iNo)
 {
 	if (pCurrentMesh != NULL)

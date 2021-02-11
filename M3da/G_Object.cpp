@@ -19371,6 +19371,44 @@ void ME_Object::ResSetScale(CString sSeq, double dS)
 
 }
 
+void ME_Object::ResSetDivInTo(CString sSeq, double dS)
+{
+	int iRS;
+	int iVAR;
+	int iOPT;
+	double dV;
+
+	int i;
+	int j;
+	iRS = atoi(ExtractSubString2(1, sSeq));
+	iVAR = atoi(ExtractSubString2(2, sSeq));
+	iOPT = atoi(ExtractSubString2(3, sSeq));
+
+	double dVal;
+	ResSet* pC = NULL;
+	pC = ResultsSets[iRS];
+	if (pC != NULL)
+	{
+		for (i = 0; i < iElNo; i++)
+		{
+			Res* pR = pC->Get(pElems[i]->iLabel, iOPT);
+			if (pR != NULL)
+			{
+				dV = *pR->GetAddress(iVAR);
+				if (abs(dV) > 1.0e-36)
+					*pR->GetAddress(iVAR) = dS / dV;
+				else
+					*pR->GetAddress(iVAR) = 1.0e36;
+			}
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Results Set Found.");
+	}
+
+}
+
 void ME_Object::PostElResScalar(ResSet* pRes,int iVar,int iOpt,float &fMax,float &fMin)
 {
 int i;
