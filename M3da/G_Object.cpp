@@ -14263,7 +14263,7 @@ void E_Object1::Info()
 {
 	char S1[200];
 
-	sprintf_s(S1, "%s,EID,%i,GRID,%i,MASS,%f,XYZ, %f,%f,%f ",sLab.GetString(), iLabel, pVertex->iLabel, dM, pVertex->Pt_Point->x, pVertex->Pt_Point->y, pVertex->Pt_Point->z);
+	sprintf_s(S1, "%s,EID,%i,COL,%i,GRID,%i,MASS,%f,XYZ, %f,%f,%f ",sLab.GetString(), iLabel,iColour, pVertex->iLabel, dM, pVertex->Pt_Point->x, pVertex->Pt_Point->y, pVertex->Pt_Point->z);
 	outtext1(S1);
 }
 
