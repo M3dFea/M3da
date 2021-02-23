@@ -12927,7 +12927,7 @@ if (this->pCurrentMesh!=NULL)
     {
     fprintf(pFile2,"%s\n","$**********************************************************");
     fprintf(pFile2,"%s\n","$      NASTRAN DECK EXPORTED FROM M3D");
-    fprintf(pFile2,"%s\n","$      VERSION 5.6");
+    fprintf(pFile2,"%s\n","$      VERSION 5.7");
     fprintf(pFile2,"%s\n","$      www.M3dFea.com");
     fprintf(pFile2,"%s %i:%i:%i\n","$      DATE",Day,Mon,Year);
     fprintf(pFile2,"%s %i:%i:%i\n","$      TIME",Hour,Min,Sec);
@@ -12970,7 +12970,7 @@ if (this->pCurrentMesh!=NULL)
     {
       fprintf(pFile2,"%s\n","$**********************************************************");
       fprintf(pFile2,"%s\n","$      NASTRAN DECK EXPORTED FROM M3D");
-      fprintf(pFile2,"%s\n","$      VERSION 5.6");
+      fprintf(pFile2,"%s\n","$      VERSION 5.7");
       fprintf(pFile2,"%s\n","$      WWW.M3d.org.uk");
       fprintf(pFile2,"%s %i:%i:%i\n","$      DATE",Day,Mon,Year);
       fprintf(pFile2,"%s %i:%i:%i\n","$      TIME",Hour,Min,Sec);
