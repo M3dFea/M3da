@@ -14361,6 +14361,7 @@ E_Object* NASReadCTETRA(NasCard& oC,
 int iNlabs[200];
 int iID;
 int iPID;
+
 iID=atoi(oC.GetField(0));
 iPID=atoi(oC.GetField(1)); 
 iPID=newPids->Get(iPID);
@@ -14368,7 +14369,17 @@ iNlabs[0] = atoi(oC.GetField(2));
 iNlabs[1] = atoi(oC.GetField(3));
 iNlabs[2] = atoi(oC.GetField(4));
 iNlabs[3] = atoi(oC.GetField(5));
-E_Object* pE=(E_Object*) pM->AddEl2(iNlabs,iID,162,111,iPID,1,4,0,0,0,-1,0);
+iNlabs[4] = atoi(oC.GetField(6));
+iNlabs[5] = atoi(oC.GetField(7));
+iNlabs[6] = atoi(oC.GetField(8));
+iNlabs[7] = atoi(oC.GetField(9));
+iNlabs[8] = atoi(oC.GetField(10));
+iNlabs[9] = atoi(oC.GetField(11));
+E_Object* pE;
+if (iNlabs[5]==0)
+   pE=(E_Object*) pM->AddEl2(iNlabs,iID,162,111,iPID,1,4,0,0,0,-1,0);
+else
+   pE = (E_Object*)pM->AddEl2(iNlabs, iID, 162, 310, iPID, 1, 10, 0, 0, 0, -1, 0);
 pE->PIDunv=iPID;
 return (pE);
 }

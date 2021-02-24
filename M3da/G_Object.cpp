@@ -8543,6 +8543,1255 @@ void E_Object34::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 	}
 }
 
+
+//----------------------------------------------------------------------------
+//    E L E M E N T   O B J E C T
+//----------------------------------------------------------------------------
+
+IMPLEMENT_DYNAMIC(E_Object310, CObject)
+
+E_Object310::~E_Object310()
+{
+	pVertex[0] = NULL;
+	pVertex[1] = NULL;
+	pVertex[2] = NULL;
+	pVertex[3] = NULL;
+	pVertex[4] = NULL;
+	pVertex[5] = NULL;
+	pVertex[6] = NULL;
+	pVertex[7] = NULL;
+	pVertex[8] = NULL;
+	pVertex[9] = NULL;
+}
+
+void E_Object310::Info()
+{
+	char S1[80];
+	E_Object::Info();
+	sprintf_s(S1, "PRINARY NODES %i %i %i %i", pVertex[0]->iLabel, pVertex[1]->iLabel, pVertex[2]->iLabel, pVertex[3]->iLabel);
+	outtext1(S1);
+}
+
+void E_Object310::Create(Pt_Object* pInVertex[100], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr)
+{
+	E_Object::Create(iLab, iCol, iType, iPID, iMat, iNo, Parrent, inPr);
+	int i = 0;
+	for (i = 0; i < 10; i++)
+	{
+		pVertex[i] = pInVertex[i];
+	}
+
+}
+
+//Tetrahedron collapse calculation quality check
+//min all combiations of (h*1.24/A) altairs definition
+//http://www.altairuniversity.com/wp-content/uploads/2014/02/elemquality.pdf
+double E_Object310::height(int n1, int n2, int n3, int p)
+{
+	C3dVector v1;
+	C3dVector v2;
+	C3dVector v3;
+	C3dVector v;
+	C3dVector w;
+	C3dVector n;
+	C3dVector vPt;
+	double a;
+	//Nornal to plain
+	v1 = this->pVertex[n1]->Get_Centroid();
+	v2 = this->pVertex[n2]->Get_Centroid();
+	v3 = this->pVertex[n3]->Get_Centroid();
+	vPt = this->pVertex[p]->Get_Centroid();
+	v = v2 - v1;
+	w = v3 - v1;
+	n = v.Cross(w);
+	n.Normalize();
+	vPt -= v1;
+	a = abs(n.Dot(vPt));
+	return (a);
+}
+
+double E_Object310::longEdge()
+{
+	C3dVector v0;
+	C3dVector v1;
+	C3dVector v2;
+	C3dVector v3;
+	C3dVector w;
+	double a;
+	double dLen;
+	v0 = this->pVertex[0]->Get_Centroid();
+	v1 = this->pVertex[1]->Get_Centroid();
+	v2 = this->pVertex[2]->Get_Centroid();
+	v3 = this->pVertex[3]->Get_Centroid();
+	a = (v0 - v1).Mag();
+	dLen = a;
+	a = (v1 - v2).Mag();
+	if (a > dLen)
+		dLen = a;
+	a = (v2 - v0).Mag();
+	if (a > dLen)
+		dLen = a;
+
+	a = (v1 - v3).Mag();
+	if (a > dLen)
+		dLen = a;
+	a = (v2 - v3).Mag();
+	if (a > dLen)
+		dLen = a;
+	a = (v0 - v3).Mag();
+	if (a > dLen)
+		dLen = a;
+
+	return (a);
+}
+
+double E_Object310::area(int n1, int n2, int n3)
+{
+	C3dVector v1;
+	C3dVector v2;
+	C3dVector v3;
+	C3dVector v;
+	C3dVector w;
+	double a;
+	v1 = this->pVertex[n1]->Get_Centroid();
+	v2 = this->pVertex[n2]->Get_Centroid();
+	v3 = this->pVertex[n3]->Get_Centroid();
+	v = v2 - v1;
+	w = v3 - v1;
+	a = (v.Cross(w).Mag()) * 0.5;
+	return (a);
+}
+
+double E_Object310::GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp)
+{
+	double dTemp = 0;
+	double T = 0;
+	int iDOFID;
+	int j;
+	Mat fun;
+	Mat FunPnt(1, 4);
+	*FunPnt.mn(1, 1) = 0.25;
+	*FunPnt.mn(1, 2) = 0.25;
+	*FunPnt.mn(1, 3) = 0.25;
+	*FunPnt.mn(1, 4) = 0.25;   //redundanta 
+	fun = this->ShapeFun(FunPnt, 1);
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		T = 0;;
+		iDOFID = this->pVertex[j]->dof[iDof];
+		if (iDOFID > 0)
+		{
+			T = *Disp.nn(iDOFID);
+		}
+		dTemp += T * *fun.mn(1, j + 1);
+	}
+	fun.clear();
+	FunPnt.clear();
+	return(dTemp);
+}
+
+double E_Object310::TetCollapse()
+{
+	double c0;
+	double c1;
+	double c2;
+	double c3;
+	double dm;
+
+	c0 = height(0, 1, 2, 3);
+	c1 = height(1, 2, 3, 0);
+	c2 = height(0, 2, 3, 1);
+	c3 = height(0, 1, 3, 2);
+	dm = c0;
+	if (c0 < dm)
+		dm = c0;
+	if (c1 < dm)
+		dm = c1;
+	if (c2 < dm)
+		dm = c2;
+	if (c3 < dm)
+		dm = c3;
+
+	dm = (dm * 1.2247) / longEdge();
+
+	return (dm);
+}
+
+
+
+void E_Object310::GetBoundingBox(C3dVector& vll, C3dVector& vur)
+{
+	int i = 0;
+	vll.x = pVertex[i]->Pt_Point->x; vll.y = pVertex[i]->Pt_Point->y; vll.z = pVertex[i]->Pt_Point->z;
+	for (i = 0; i < 4; i++)
+	{
+		if (pVertex[i]->Pt_Point->x < vll.x)
+			vll.x = pVertex[i]->Pt_Point->x;
+		if (pVertex[i]->Pt_Point->x > vur.x)
+			vur.x = pVertex[i]->Pt_Point->x;
+
+		if (pVertex[i]->Pt_Point->y < vll.y)
+			vll.y = pVertex[i]->Pt_Point->y;
+		if (pVertex[i]->Pt_Point->y > vur.y)
+			vur.y = pVertex[i]->Pt_Point->y;
+
+		if (pVertex[i]->Pt_Point->z < vll.z)
+			vll.z = pVertex[i]->Pt_Point->z;
+		if (pVertex[i]->Pt_Point->z > vur.z)
+			vur.z = pVertex[i]->Pt_Point->z;
+	}
+}
+
+double E_Object310::GetTETHeight(C3dVector vFCent)
+{
+	double dS;
+	C3dVector v1;
+	C3dVector v2;
+	C3dVector A;
+	C3dVector B;
+	C3dVector H;
+	A = this->pVertex[1]->Get_Centroid();
+	v2 = this->pVertex[0]->Get_Centroid();
+	A -= v2;
+	A.Normalize();
+	B = this->pVertex[1]->Get_Centroid();
+	v2 = this->pVertex[2]->Get_Centroid();
+	B -= v2;
+	B.Normalize();
+	H = B.Cross(A);
+	H.Normalize();
+
+	B = this->pVertex[3]->Get_Centroid();
+	B -= vFCent;
+	dS = B.Dot(H);
+	return (dS);
+}
+
+double E_Object310::GetCharSize()
+{
+	double dS;
+	double dMax;
+
+	C3dVector vT;
+	C3dVector vT2;
+	vT = pVertex[3]->Pt_Point;
+	vT2 = pVertex[0]->Pt_Point;
+	vT -= vT2;
+	dS = vT.Mag();
+	dMax = dS;
+	vT = pVertex[3]->Pt_Point;
+	vT2 = pVertex[1]->Pt_Point;
+	vT -= vT2;
+	dS = vT.Mag();
+	if (dS > dMax)
+		dMax = dS;
+	vT = pVertex[3]->Pt_Point;
+	vT2 = pVertex[2]->Pt_Point;
+	vT -= vT2;
+	dS = vT.Mag();
+	if (dS > dMax)
+		dMax = dS;
+
+
+	//dS=(pVertex[0]->Pt_Point-pVertex[1]->Pt_Point)->Mag();
+	return (dMax);
+}
+
+//GHANGE THIS
+void E_Object310::Reverse()
+{
+	Pt_Object* pT[8];
+	pT[0] = pVertex[0];
+	pT[1] = pVertex[1];
+	pT[2] = pVertex[2];
+	pT[3] = pVertex[3];
+	pVertex[0] = pT[0];
+	pVertex[1] = pT[2];
+	pVertex[2] = pT[1];
+	pVertex[3] = pT[3];
+}
+
+
+BOOL E_Object310::NodeInEl(Pt_Object* pN)
+{
+	BOOL brc = FALSE;
+	int i = 0;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pN)
+		{
+			brc = TRUE;
+			break;
+		}
+	}
+	return (brc);
+}
+
+void E_Object310::RepNodeInEl(Pt_Object* pThis, Pt_Object* pWith)
+{
+
+	int i = 0;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pThis)
+		{
+			pVertex[i] = pWith;
+			break;
+		}
+	}
+}
+
+G_Object* E_Object310::Copy(G_Object* Parrent)
+{
+	ME_Object* MESH = (ME_Object*)Parrent;
+	E_Object34* gret = new E_Object34;
+	gret->iObjType = iObjType;
+	gret->iLabel = iLabel;
+	gret->iColour = iColour;
+	gret->Drawn = Drawn;
+	gret->Selectable = Selectable;
+	gret->Visable = Visable;
+	gret->PID = PID;
+	gret->PIDunv = PIDunv;
+	gret->iType = iType;
+	gret->iMatID = iMatID;
+	gret->iNoNodes = iNoNodes;
+	gret->pVertex[0] = MESH->GetNode(pVertex[0]->iLabel);
+	gret->pVertex[1] = MESH->GetNode(pVertex[1]->iLabel);
+	gret->pVertex[2] = MESH->GetNode(pVertex[2]->iLabel);
+	gret->pVertex[3] = MESH->GetNode(pVertex[3]->iLabel);
+	gret->pVertex[4] = MESH->GetNode(pVertex[4]->iLabel);
+	gret->pVertex[5] = MESH->GetNode(pVertex[5]->iLabel);
+	gret->pVertex[6] = MESH->GetNode(pVertex[6]->iLabel);
+	gret->pVertex[7] = MESH->GetNode(pVertex[7]->iLabel);
+	gret->pVertex[8] = MESH->GetNode(pVertex[8]->iLabel);
+	gret->pVertex[9] = MESH->GetNode(pVertex[9]->iLabel);
+	gret->pPr = pPr;
+	gret->pParent = MESH;
+	gret->pResV = NULL;
+	return (gret);
+}
+
+G_Object* E_Object310::CopyAppend(int iSInd, ME_Object* Target, ME_Object* Source)
+{
+	int EInd;
+	E_Object34* gret = new E_Object34;
+	gret->iObjType = iObjType;
+	gret->iLabel = iLabel;
+	gret->iColour = iColour;
+	gret->Drawn = Drawn;
+	gret->Selectable = Selectable;
+	gret->Visable = Visable;
+	gret->PID = PID;
+	gret->PIDunv = PIDunv;
+	gret->iType = iType;
+	gret->iMatID = iMatID;
+	gret->iNoNodes = iNoNodes;
+	EInd = Source->GetNodeInd(pVertex[0]);
+	gret->pVertex[0] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[1]);
+	gret->pVertex[1] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[2]);
+	gret->pVertex[2] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[3]);
+	gret->pVertex[3] = Target->pNodes[EInd + iSInd];
+
+	EInd = Source->GetNodeInd(pVertex[4]);
+	gret->pVertex[4] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[5]);
+	gret->pVertex[5] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[6]);
+	gret->pVertex[6] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[7]);
+	gret->pVertex[7] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[8]);
+	gret->pVertex[8] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[9]);
+	gret->pVertex[9] = Target->pNodes[EInd + iSInd];
+	gret->pParent = Target;
+	gret->pResV = NULL;
+	return (gret);
+}
+
+
+G_Object* E_Object310::Copy2(G_Object* Parrent, Pt_Object* pInVertex[200], int inPID, int inMID, int inPIDunv)
+{
+	ME_Object* MESH = (ME_Object*)Parrent;
+	E_Object34* gret = new E_Object34;
+	gret->iObjType = iObjType;
+	gret->iLabel = iLabel;
+	gret->iColour = iColour;
+	gret->Drawn = Drawn;
+	gret->Selectable = Selectable;
+	gret->Visable = Visable;
+	gret->PID = inPID;
+	gret->PIDunv = inPIDunv;
+	gret->iType = iType;
+	gret->iMatID = inMID;
+	gret->iNoNodes = iNoNodes;
+	gret->pVertex[0] = MESH->GetNode(pVertex[0]->iLabel);
+	gret->pVertex[1] = MESH->GetNode(pVertex[1]->iLabel);
+	gret->pVertex[2] = MESH->GetNode(pVertex[2]->iLabel);
+	gret->pVertex[3] = MESH->GetNode(pVertex[3]->iLabel);
+	gret->pVertex[4] = MESH->GetNode(pVertex[4]->iLabel);
+	gret->pVertex[5] = MESH->GetNode(pVertex[5]->iLabel);
+	gret->pVertex[6] = MESH->GetNode(pVertex[6]->iLabel);
+	gret->pVertex[7] = MESH->GetNode(pVertex[7]->iLabel);
+	gret->pVertex[8] = MESH->GetNode(pVertex[8]->iLabel);
+	gret->pVertex[9] = MESH->GetNode(pVertex[9]->iLabel);
+	gret->pPr = pPr;
+	gret->pParent = Parrent;
+	gret->pResV = NULL;
+	return (gret);
+}
+
+void E_Object310::Serialize(CArchive& ar, int iV, ME_Object* MESH)
+
+{
+	int iNd;
+	if (ar.IsStoring())
+	{
+		// TODO: add storing code here
+		E_Object::Serialize(ar, iV, MESH);
+		ar << pVertex[0]->iLabel;
+		ar << pVertex[1]->iLabel;
+		ar << pVertex[2]->iLabel;
+		ar << pVertex[3]->iLabel;
+		ar << pVertex[4]->iLabel;
+		ar << pVertex[5]->iLabel;
+		ar << pVertex[6]->iLabel;
+		ar << pVertex[7]->iLabel;
+		ar << pVertex[8]->iLabel;
+		ar << pVertex[9]->iLabel;
+	}
+	else
+	{
+		E_Object::Serialize(ar, iV, MESH);
+		ar >> iNd;
+		pVertex[0] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[1] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[2] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[3] = MESH->GetNode(iNd);
+
+		ar >> iNd;
+		pVertex[4] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[5] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[6] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[7] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[8] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[9] = MESH->GetNode(iNd);
+	}
+}
+
+int E_Object310::GetLinkList(cLink* Links[200])
+{
+	Links[0] = new cLink;
+	Links[0]->pParent = this;
+	Links[0]->pVertex[0] = pVertex[0];
+	Links[0]->pVertex[1] = pVertex[1];
+	Links[0]->iColour = iColour;
+	Links[1] = new cLink;
+	Links[1]->pParent = this;
+	Links[1]->pVertex[0] = pVertex[1];
+	Links[1]->pVertex[1] = pVertex[2];
+	Links[1]->iColour = iColour;
+	Links[2] = new cLink;
+	Links[2]->pParent = this;
+	Links[2]->pVertex[0] = pVertex[2];
+	Links[2]->pVertex[1] = pVertex[0];
+	Links[2]->iColour = iColour;
+	Links[3] = new cLink;
+	Links[3]->pParent = this;
+	Links[3]->pVertex[0] = pVertex[0];
+	Links[3]->pVertex[1] = pVertex[3];
+	Links[3]->iColour = iColour;
+	Links[4] = new cLink;
+	Links[4]->pParent = this;
+	Links[4]->pVertex[0] = pVertex[1];
+	Links[4]->pVertex[1] = pVertex[3];
+	Links[4]->iColour = iColour;
+	Links[5] = new cLink;
+	Links[5]->pParent = this;
+	Links[5]->pVertex[0] = pVertex[2];
+	Links[5]->pVertex[1] = pVertex[3];
+	Links[5]->iColour = iColour;
+	return (6);
+}
+
+
+
+// Draw Object line
+void E_Object310::Draw(CDC* pDC, int iDrawmode)
+{
+
+	pDC->MoveTo((int)pVertex[0]->DSP_Point->x, (int)pVertex[0]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[1]->DSP_Point->x, (int)pVertex[1]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[2]->DSP_Point->x, (int)pVertex[2]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[0]->DSP_Point->x, (int)pVertex[0]->DSP_Point->y);
+
+
+	pDC->LineTo((int)pVertex[3]->DSP_Point->x, (int)pVertex[3]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[2]->DSP_Point->x, (int)pVertex[2]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[0]->DSP_Point->x, (int)pVertex[0]->DSP_Point->y);
+
+	pDC->MoveTo((int)pVertex[1]->DSP_Point->x, (int)pVertex[1]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[3]->DSP_Point->x, (int)pVertex[3]->DSP_Point->y);
+	pDC->MoveTo((int)pVertex[2]->DSP_Point->x, (int)pVertex[2]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[1]->DSP_Point->x, (int)pVertex[1]->DSP_Point->y);
+
+}
+
+void E_Object310::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	char sLab[20];
+	C3dVector d[4];
+	int i;
+	int ind;
+
+	for (i = 0; i < 4; i++)
+	{
+		d[i].x = 0; d[i].y = 0; d[i].z = 0;
+	}
+	ME_Object* ME = (ME_Object*)this->pParent;
+	double S;
+	S = ME->dScale;
+	double dFS;
+	dFS = ME->dResFactor;
+	ind = ME->iCVar;
+	glLineWidth(1.0);
+	if ((iDspFlgs & DSP_ELEMENTS) > 0)
+	{
+		if ((iDspFlgs & DSP_RESDEF) == 0)
+		{
+			for (i = 0; i < 4; i++)
+			{
+				if (pVertex[i]->pResD != NULL)
+				{
+					d[i] = pVertex[i]->pResD->GetVec();
+					d[i] -= ME->vRelDispOff;
+					d[i] *= S * dFS;
+				}
+			}
+		}
+		Selectable = 1;
+		if ((iDspFlgs & DSP_LINE) > 0)
+		{
+			glColor3fv(cols[iColour]);
+		}
+		else
+		{
+			glColor3fv(cols[0]);
+		}
+		glBegin(GL_LINES);
+		glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+		glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+		glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+		glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+		glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+		glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+		glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+		glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+		glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+		glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+		glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+		glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+		glEnd();
+		C3dVector vCent;
+		vCent = Get_Centroid();
+		if (bDrawLab == TRUE)
+		{
+			sprintf_s(sLab, "E%i", iLabel);
+			OglString(iDspFlgs, vCent.x, vCent.y, vCent.z, &sLab[0]);
+		}
+		if (((iDspFlgs & DSP_RESLAB) == 0) && (pResV != NULL))
+		{
+			sprintf_s(sLab, "%f", *pResV->GetAddress(ind));
+			OglString(iDspFlgs, vCent.x, vCent.y, vCent.z, &sLab[0]);
+		}
+		if ((iDspFlgs & DSP_ELSYS) == 0)
+		{
+			C3dMatrix mS = GetElSys();
+			C3dVector vC = Get_Centroid();
+			mS.Transpose();
+			C3dVector vX = mS.GetColVec(1);
+			C3dVector vY = mS.GetColVec(2);;
+			C3dVector vZ = mS.GetColVec(3);;
+
+			vX *= 0.5 * dS1; vY *= 0.5 * dS1; vZ *= 0.5 * dS1;
+			vX += vC; vY += vC; vZ += vC;
+
+			glBegin(GL_LINES);
+			glVertex3f((float)vC.x, (float)vC.y, (float)vC.z);
+			glVertex3f((float)vX.x, (float)vX.y, (float)vX.z);
+			glVertex3f((float)vC.x, (float)vC.y, (float)vC.z);
+			glVertex3f((float)vY.x, (float)vY.y, (float)vY.z);
+			glVertex3f((float)vC.x, (float)vC.y, (float)vC.z);
+			glVertex3f((float)vZ.x, (float)vZ.y, (float)vZ.z);
+			glEnd();
+			glRasterPos3f((float)vX.x, (float)vX.y, (float)vX.z);
+			glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPX);
+			glRasterPos3f((float)vY.x, (float)vY.y, (float)vY.z);
+			glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPY);
+			glRasterPos3f((float)vZ.x, (float)vZ.y, (float)vZ.z);
+			glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPZ);
+		}
+	}
+	else
+	{
+		Selectable = 0;
+	}
+}
+
+
+void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
+{
+	C3dVector d[4];
+	int i;
+	for (i = 0; i < 4; i++)
+	{
+		d[i].x = 0; d[i].y = 0; d[i].z = 0;
+	}
+	ME_Object* ME = (ME_Object*)this->pParent;
+	double S;
+	S = ME->dScale;
+	double dFS;
+	dFS = ME->dResFactor;
+	glLineWidth(2);
+	float fCols[4] = { 0,0,0,0 };
+	BOOL bD = FALSE;
+	int iVar;
+	iVar = ME->iCVar;
+	//Nodal data
+	if ((pVertex[0]->pResV != NULL) &&
+		(pVertex[1]->pResV != NULL) &&
+		(pVertex[2]->pResV != NULL) &&
+		(pVertex[3]->pResV != NULL))
+	{
+		bD = TRUE;
+		fCols[0] = GetContourCol(*pVertex[0]->pResV->GetAddress(iVar) * dFS);
+		fCols[1] = GetContourCol(*pVertex[1]->pResV->GetAddress(iVar) * dFS);
+		fCols[2] = GetContourCol(*pVertex[2]->pResV->GetAddress(iVar) * dFS);
+		fCols[3] = GetContourCol(*pVertex[3]->pResV->GetAddress(iVar) * dFS);
+	}
+	if (pResV != NULL)
+	{
+		bD = TRUE;
+		fCols[0] = GetContourCol(*pResV->GetAddress(iVar) * dFS);
+		fCols[1] = fCols[0];
+		fCols[2] = fCols[0];
+		fCols[3] = fCols[0];
+	}
+
+	C3dVector v1;
+	C3dVector v2;
+	C3dVector Vn;
+	if ((iDspFlgs & DSP_ELEMENTS) > 0)
+	{
+		if ((iDspFlgs & DSP_RESDEF) == 0)
+		{
+			for (i = 0; i < 4; i++)
+			{
+				if (pVertex[i]->pResD != NULL)
+				{
+					d[i] = pVertex[i]->pResD->GetVec();
+					d[i] -= ME->vRelDispOff;
+					d[i] *= S * dFS;
+				}
+			}
+		}
+		Selectable = 1;
+		glColor3fv(cols[iColour]);
+		if (((iDspFlgs & DSP_CONT) > 0) || (bD == FALSE))
+		{
+			v1.x = pVertex[1]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+			v1.y = pVertex[1]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+			v1.z = pVertex[1]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+			v2.x = pVertex[2]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+			v2.y = pVertex[2]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+			v2.z = pVertex[2]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+			Vn = v1.Cross(v2);
+
+			Vn.Normalize();
+			glBegin(GL_POLYGON);
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+			glEnd();
+
+			v1.x = pVertex[1]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+			v1.y = pVertex[1]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+			v1.z = pVertex[1]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+			v2.x = pVertex[3]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+			v2.y = pVertex[3]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+			v2.z = pVertex[3]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+			Vn = v1.Cross(v2);
+
+			Vn.Normalize();
+			glBegin(GL_POLYGON);
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+			glEnd();
+
+			v1.x = pVertex[2]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+			v1.y = pVertex[2]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+			v1.z = pVertex[2]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+
+			v2.x = pVertex[3]->Pt_Point->x - pVertex[2]->Pt_Point->x;
+			v2.y = pVertex[3]->Pt_Point->y - pVertex[2]->Pt_Point->y;
+			v2.z = pVertex[3]->Pt_Point->z - pVertex[2]->Pt_Point->z;
+			Vn = v1.Cross(v2);
+
+			Vn.Normalize();
+			glBegin(GL_POLYGON);
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+			glEnd();
+
+			v1.x = pVertex[2]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+			v1.y = pVertex[2]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+			v1.z = pVertex[2]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+			v2.x = pVertex[3]->Pt_Point->x - pVertex[2]->Pt_Point->x;
+			v2.y = pVertex[3]->Pt_Point->y - pVertex[2]->Pt_Point->y;
+			v2.z = pVertex[3]->Pt_Point->z - pVertex[2]->Pt_Point->z;
+			Vn = v1.Cross(v2);
+
+			Vn.Normalize();
+			glBegin(GL_POLYGON);
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+			glEnd();
+		}
+		else
+		{
+
+			if (bD)
+			{
+				glColor3fv(cols[124]);
+				glEnable(GL_TEXTURE_1D);
+				v1.x = pVertex[1]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+				v1.y = pVertex[1]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+				v1.z = pVertex[1]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+				v2.x = pVertex[2]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+				v2.y = pVertex[2]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+				v2.z = pVertex[2]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+				Vn = v1.Cross(v2);
+
+				Vn.Normalize();
+				glBegin(GL_POLYGON);
+
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[0]);
+				glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[1]);
+				glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[2]);
+				glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+				glEnd();
+
+				v1.x = pVertex[1]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+				v1.y = pVertex[1]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+				v1.z = pVertex[1]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+				v2.x = pVertex[3]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+				v2.y = pVertex[3]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+				v2.z = pVertex[3]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+				Vn = v1.Cross(v2);
+
+				Vn.Normalize();
+				glBegin(GL_POLYGON);
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[0]);
+				glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[1]);
+				glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[3]);
+				glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+				glEnd();
+
+				v1.x = pVertex[2]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+				v1.y = pVertex[2]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+				v1.z = pVertex[2]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+
+				v2.x = pVertex[3]->Pt_Point->x - pVertex[2]->Pt_Point->x;
+				v2.y = pVertex[3]->Pt_Point->y - pVertex[2]->Pt_Point->y;
+				v2.z = pVertex[3]->Pt_Point->z - pVertex[2]->Pt_Point->z;
+				Vn = v1.Cross(v2);
+
+				Vn.Normalize();
+				glBegin(GL_POLYGON);
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[1]);
+				glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[2]);
+				glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[3]);
+				glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+				glEnd();
+
+				v1.x = pVertex[2]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+				v1.y = pVertex[2]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+				v1.z = pVertex[2]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+				v2.x = pVertex[3]->Pt_Point->x - pVertex[2]->Pt_Point->x;
+				v2.y = pVertex[3]->Pt_Point->y - pVertex[2]->Pt_Point->y;
+				v2.z = pVertex[3]->Pt_Point->z - pVertex[2]->Pt_Point->z;
+				Vn = v1.Cross(v2);
+
+				Vn.Normalize();
+				glBegin(GL_POLYGON);
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[0]);
+				glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[2]);
+				glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[3]);
+				glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+				glEnd();
+				glDisable(GL_TEXTURE_1D);
+			}
+		}
+	}
+	else
+	{
+		Selectable = 0;
+	}
+}
+
+G_Object* E_Object310::GetNode(int i)
+{
+	return (pVertex[i]);
+}
+
+C3dVector E_Object310::GetNodalCoords(int i)
+{
+	C3dVector v;
+	v.x = pVertex[i]->Pt_Point->x;
+	v.y = pVertex[i]->Pt_Point->y;
+	v.z = pVertex[i]->Pt_Point->z;
+	return (v);
+}
+
+int E_Object310::GetfaceList(cFace* Faces[6])
+{
+	int ic;
+	ic = GetCol();
+	Faces[0] = new cFace();
+	Faces[0]->pParent = this;
+	Faces[0]->pVertex[0] = pVertex[0];
+	Faces[0]->pVertex[1] = pVertex[2];
+	Faces[0]->pVertex[2] = pVertex[1];
+	Faces[0]->NoVert = 3;
+	Faces[0]->iColour = iColour;
+
+	Faces[1] = new cFace();
+	Faces[1]->pParent = this;
+	Faces[1]->pVertex[0] = pVertex[0];
+	Faces[1]->pVertex[1] = pVertex[1];
+	Faces[1]->pVertex[2] = pVertex[3];
+	Faces[1]->NoVert = 3;
+	Faces[1]->iColour = iColour;
+
+	Faces[2] = new cFace;
+	Faces[2]->pParent = this;
+	Faces[2]->pVertex[0] = pVertex[1];
+	Faces[2]->pVertex[1] = pVertex[2];
+	Faces[2]->pVertex[2] = pVertex[3];
+	Faces[2]->NoVert = 3;
+	Faces[2]->iColour = iColour;
+
+	Faces[3] = new cFace;
+	Faces[3]->pParent = this;
+	Faces[3]->pVertex[0] = pVertex[0];
+	Faces[3]->pVertex[1] = pVertex[3];
+	Faces[3]->pVertex[2] = pVertex[2];
+	Faces[3]->NoVert = 3;
+	Faces[3]->iColour = iColour;
+	return (4);
+}
+
+void E_Object310::ExportNAS(FILE* pFile)
+{
+
+	fprintf(pFile, "%8s%8i%8i", "CTETRA  ", iLabel, PID);
+	fprintf(pFile, "%8i", pVertex[0]->iLabel);
+	fprintf(pFile, "%8i", pVertex[1]->iLabel);
+	fprintf(pFile, "%8i", pVertex[2]->iLabel);
+	fprintf(pFile, "%8i", pVertex[3]->iLabel);
+	fprintf(pFile, "%8i", pVertex[4]->iLabel);
+	fprintf(pFile, "%8i\n", pVertex[5]->iLabel);
+	fprintf(pFile, "        %8i", pVertex[6]->iLabel);
+	fprintf(pFile, "%8i", pVertex[7]->iLabel);
+	fprintf(pFile, "%8i", pVertex[8]->iLabel);
+	fprintf(pFile, "%8i\n", pVertex[9]->iLabel);
+
+
+}
+
+void E_Object310::ExportUNV(FILE* pFile)
+{
+	int i;
+	fprintf(pFile, "%10i%10i%10i%10i%10i%10i\n", iLabel, iType, PIDunv, iMatID, iColour - 150, iNoNodes);
+	for (i = 0; i < iNoNodes; i++)
+	{
+		fprintf(pFile, "%10i", pVertex[i]->iLabel);
+	}
+	fprintf(pFile, "\n", "");
+}
+
+
+
+
+C3dVector E_Object310::Get_Centroid()
+{
+	Mat fun;
+	Mat FunPnt(1, 4);
+	*FunPnt.mn(1, 1) = 0.25;
+	*FunPnt.mn(1, 2) = 0.25;
+	*FunPnt.mn(1, 3) = 0.25;
+	fun = ShapeFun(FunPnt, 1);
+	C3dVector vT;
+	vT.Set(0, 0, 0);
+	int j = 0;
+	//USING TET4 FOR NOW
+	for (j = 0; j < 4; j++)   //for (j = 0; j < iNoNodes; j++)
+	{
+		vT += pVertex[j]->Get_Centroid() * *fun.mn(1, j + 1);
+	}
+	fun.clear();
+	FunPnt.clear();
+	return (vT);
+}
+
+
+C3dMatrix E_Object310::GetElSys()
+{
+	C3dVector vX;
+	C3dVector vZ;
+	C3dVector vY;
+	vX = pVertex[1]->GetCoords();
+	vX -= pVertex[0]->GetCoords();
+	vX.Normalize();
+	vZ = pVertex[3]->GetCoords();
+	vZ -= pVertex[0]->GetCoords();  //Approx z direction
+	vZ.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	vZ = vX.Cross(vY);
+	C3dMatrix vR;
+	vR.SetColVec(1, vX);
+	vR.SetColVec(2, vY);
+	vR.SetColVec(3, vZ);
+	vR.Transpose();
+	return (vR);
+}
+
+Mat E_Object310::getCoords3d()
+{
+	int i;
+	Mat coord(iNoNodes, 3);
+	for (i = 0; i < iNoNodes; i++)
+	{
+		*coord.mn(i + 1, 1) = pVertex[i]->Pt_Point->x;
+		*coord.mn(i + 1, 2) = pVertex[i]->Pt_Point->y;
+		*coord.mn(i + 1, 3) = pVertex[i]->Pt_Point->z;
+	}
+	return (coord);
+}
+
+Mat E_Object310::Sample(int iNo)
+{
+	Mat Pts(iNo, 4);
+	if (iNo == 1)
+	{
+		*Pts.mn(1, 1) = 0.25;
+		*Pts.mn(1, 2) = 0.25;
+		*Pts.mn(1, 3) = 0.25;
+		*Pts.mn(1, 4) = 1.0 / 6.0;
+	}
+	else if (iNo == 4)
+	{
+		double coord1 = 0.585410196624968;
+		double coord2 = 0.138196601125010;
+		//the weight is divided by 6 because the determinant gives the volume of a
+		//qube and a tetraedron has a 6 times smaller volume (0.25/6.0 = 0.04166666) 
+		double weight = 0.0416666666666666;
+		*Pts.mn(1, 1) = coord1; *Pts.mn(1, 2) = coord2; *Pts.mn(1, 3) = coord2; *Pts.mn(1, 4) = weight;
+		*Pts.mn(2, 1) = coord2; *Pts.mn(2, 2) = coord1; *Pts.mn(2, 3) = coord2; *Pts.mn(2, 4) = weight;
+		*Pts.mn(3, 1) = coord2; *Pts.mn(3, 2) = coord2; *Pts.mn(3, 3) = coord1; *Pts.mn(3, 4) = weight;
+		*Pts.mn(4, 1) = coord2; *Pts.mn(4, 2) = coord2; *Pts.mn(4, 3) = coord2; *Pts.mn(4, 4) = weight;
+	}
+	return (Pts);
+}
+
+
+
+Mat E_Object310::ShapeFun(Mat Points, int i)
+{
+	Mat fun(1, 4);
+	double v1, v2, v3, v4;
+
+	v2 = *Points.mn(i, 1);
+	v3 = *Points.mn(i, 2);
+	v4 = *Points.mn(i, 3);
+	v1 = (1 - v2 - v3 - v4);
+
+	//v1=*Points.mn(i,1);  This how it was in reverse to nastran
+	//v2=*Points.mn(i,2);
+	//v3=*Points.mn(i,3);
+	//v4=(1-v1-v2-v3);
+	*fun.mn(1, 1) = v1;
+	*fun.mn(1, 2) = v2;
+	*fun.mn(1, 3) = v3;
+	*fun.mn(1, 4) = v4;
+	return(fun);
+}
+
+int E_Object310::noDof()
+{
+	return(3);
+}
+
+Mat E_Object310::ShapeDer(Mat Points, int i)
+{
+	Mat der(3, 4);
+	*der.mn(1, 1) = -1;
+	*der.mn(1, 2) = 1;
+	*der.mn(1, 3) = 0;
+	*der.mn(1, 4) = 0;
+
+	*der.mn(2, 1) = -1;
+	*der.mn(2, 2) = 0;
+	*der.mn(2, 3) = 1;
+	*der.mn(2, 4) = 0;
+
+	*der.mn(3, 1) = -1;
+	*der.mn(3, 2) = 0;
+	*der.mn(3, 3) = 0;
+	*der.mn(3, 4) = 1;
+
+
+	//*der.mn(1,1) = 1;  //WAS this way
+	//*der.mn(1,2) = 0;
+	//*der.mn(1,3) = 0;
+	//*der.mn(1,4) = -1;
+	//
+	//*der.mn(2,1) = 0;
+	//*der.mn(2,2) = 1;
+	//*der.mn(2,3) = 0;
+	//*der.mn(2,4) = -1;
+	//
+	//*der.mn(3,1) = 0;
+	//*der.mn(3,2) = 0;
+	//*der.mn(3,3) = 1;
+	//*der.mn(3,4) = -1;
+	return(der);
+}
+
+int E_Object310::MaxBW()
+{
+	int i;
+	int j;
+	int MaxDof;
+	int MinDof;
+	MaxDof = 0;
+	MinDof = 99999999;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		for (j = 0; j < 6; j++)
+		{
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] > MaxDof))
+			{
+				MaxDof = pVertex[i]->dof[j];
+			}
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] < MinDof))
+			{
+				MinDof = pVertex[i]->dof[j];
+			}
+		}
+	}
+	int iRC;
+	if (MaxDof - MinDof < 0)
+	{
+		iRC = 0;
+	}
+	else
+	{
+		iRC = MaxDof - MinDof;
+	}
+	return (iRC);
+}
+
+Vec<int> E_Object310::GetSteerVec3d()
+{
+	Vec<int> V(4 * 3);
+	*V.nn(1) = pVertex[0]->dof[0];
+	*V.nn(2) = pVertex[0]->dof[1];
+	*V.nn(3) = pVertex[0]->dof[2];
+	*V.nn(4) = pVertex[1]->dof[0];
+	*V.nn(5) = pVertex[1]->dof[1];
+	*V.nn(6) = pVertex[1]->dof[2];
+	*V.nn(7) = pVertex[2]->dof[0];
+	*V.nn(8) = pVertex[2]->dof[1];
+	*V.nn(9) = pVertex[2]->dof[2];
+	*V.nn(10) = pVertex[3]->dof[0];
+	*V.nn(11) = pVertex[3]->dof[1];
+	*V.nn(12) = pVertex[3]->dof[2];
+	return(V);
+}
+
+Vec<int> E_Object310::GetSteerVec1d()
+{
+	Vec<int> V(4 * 1);
+	*V.nn(1) = pVertex[0]->dof[0];
+	*V.nn(2) = pVertex[1]->dof[0];
+	*V.nn(3) = pVertex[2]->dof[0];
+	*V.nn(4) = pVertex[3]->dof[0];
+	return(V);
+}
+
+CString E_Object310::GetName()
+{
+	return ("10 Node TET (CTETRA)");
+}
+
+int E_Object310::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = "PID";
+	iNo++;
+	sVar[iNo] = "Mat ID";
+	iNo++;
+	sVar[iNo] = "N1";
+	iNo++;
+	sVar[iNo] = "N2";
+	iNo++;
+	sVar[iNo] = "N3";
+	iNo++;
+	sVar[iNo] = "N4";
+	iNo++;
+	return(iNo);
+}
+
+
+int E_Object310::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", PID);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", iMatID);
+	sVar[iNo] = S1;
+	iNo++;
+
+	sprintf_s(S1, "%i", pVertex[0]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", pVertex[1]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", pVertex[2]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", pVertex[3]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void E_Object310::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+
+	Pt_Object* pN;
+	ME_Object* pMe = (ME_Object*)this->pParent;
+
+	int newPID = atoi(sVar[0]);
+	if (newPID != PID)
+	{
+
+		Property* pr = PT->GetItem(newPID);
+		if (pr != NULL)
+		{
+			BOOL bC = SetProperty(pr);
+			if (bC)
+				outtext1("Property has Been Changed");
+			else
+				outtext1("Invalid Property");
+		}
+
+	}
+
+	int N1 = atoi(sVar[2]);
+	int N2 = atoi(sVar[3]);
+	int N3 = atoi(sVar[4]);
+	int N4 = atoi(sVar[5]);
+	if (pVertex[0]->iLabel != N1)
+	{
+		pN = pMe->GetNode(N1);
+		if (pN != NULL)
+			pVertex[0] = pN;
+
+	}
+	if (pVertex[1]->iLabel != N2)
+	{
+		pN = pMe->GetNode(N2);
+		if (pN != NULL)
+			pVertex[1] = pN;
+
+	}
+	if (pVertex[2]->iLabel != N3)
+	{
+		pN = pMe->GetNode(N3);
+		if (pN != NULL)
+			pVertex[2] = pN;
+
+	}
+	if (pVertex[3]->iLabel != N4)
+	{
+		pN = pMe->GetNode(N4);
+		if (pN != NULL)
+			pVertex[3] = pN;
+
+	}
+}
+
+
+
 IMPLEMENT_DYNAMIC(BCLD, CObject )
 void BCLD::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 
@@ -18673,6 +19922,9 @@ void ME_Object::Serialize(CArchive& ar,int iV)
       case 111:
             pElems[i] = new E_Object34;
             break;
+	  case 310:
+		  pElems[i] = new E_Object310;
+		  break;
       case 112:
             pElems[i] = new E_Object36;
             break;
@@ -22630,12 +23882,13 @@ E_Object* ME_Object::AddEl2(int pVnode[200], int iLab,int iCol,int iType,int iPI
 {
   int iCnt;
   E_Object* cAddedEl;
-  Pt_Object *pENodes[100];
+  Pt_Object *pENodes[200];
   if (TempList!=NULL)
   {
     for (iCnt = 0; iCnt < iNoNodes; iCnt ++)
     {
-      pENodes[iCnt] =(Pt_Object*) TempList->Objs[pVnode[iCnt]];
+	  if (iCnt <200)
+        pENodes[iCnt] =(Pt_Object*) TempList->Objs[pVnode[iCnt]];
     }
   }
   else
@@ -22802,6 +24055,19 @@ else if (iType == 111)
   pERet= pEL34;
   iElNo++;
   }
+else if (iType == 310)
+{
+	E_Object310* pEL310 = new E_Object310();
+	pEL310->Create(pInVertex, iLab, iCol, iType, iPID, iMat, iNo, this, NULL);
+	if (pEL310->ChkNegJac() == TRUE)
+	{
+		pEL310->Reverse();
+		outtext1("ERROR: Reversing.");
+	}
+	pElems[iElNo] = pEL310;
+	pERet = pEL310;
+	iElNo++;
+}
 else if (iType == 122)
   {
   E_ObjectR *pELR = new E_ObjectR();

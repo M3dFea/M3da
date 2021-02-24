@@ -2852,6 +2852,8 @@ public:
    virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
+
+
 class E_Object2 : public E_Object
 {
 DECLARE_DYNAMIC(E_Object2)
@@ -3214,7 +3216,56 @@ public:
 };
 
 
-
+class E_Object310 : public E_Object
+{
+	DECLARE_DYNAMIC(E_Object310)
+public:
+	~E_Object310();
+	Pt_Object* pVertex[10];
+	virtual void Create(Pt_Object* pInVertex[100], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
+	virtual G_Object* Copy(G_Object* Parrent);
+	virtual G_Object* Copy2(G_Object* Parrent, Pt_Object* pInVertex[200], int inPID, int inMID, int inPIDunv);
+	virtual G_Object* CopyAppend(int iSInd, ME_Object* Target, ME_Object* Source);
+	virtual void Serialize(CArchive& ar, int iV, ME_Object* MESH);
+	virtual void Info();
+	virtual void Draw(CDC* pDC, int iDrawmode);
+	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	//virtual void SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran);
+	//virtual void HighLight(CDC* pDC);
+	//virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);
+	virtual C3dVector Get_Centroid();
+	virtual C3dMatrix GetElSys();
+	virtual void ExportUNV(FILE* pFile);
+	virtual void ExportNAS(FILE* pFile);
+	virtual BOOL NodeInEl(Pt_Object* pN);
+	virtual void RepNodeInEl(Pt_Object* pThis, Pt_Object* pWith);
+	virtual Mat getCoords3d();
+	virtual Mat Sample(int iNo);
+	virtual Mat ShapeDer(Mat Points, int i);
+	virtual Mat ShapeFun(Mat Points, int i);
+	virtual Vec<int> GetSteerVec3d();
+	virtual Vec<int>GetSteerVec1d();
+	virtual int MaxBW();
+	virtual int noDof();
+	virtual int GetfaceList(cFace* Faces[6]);
+	virtual int GetLinkList(cLink* Links[200]);
+	virtual G_Object* GetNode(int i);
+	virtual C3dVector GetNodalCoords(int i);
+	virtual void Reverse();
+	virtual double GetCharSize();
+	double GetTETHeight(C3dVector vFCent);
+	virtual void GetBoundingBox(C3dVector& vll, C3dVector& vur);
+	double height(int n1, int n2, int n3, int p);
+	double area(int n1, int n2, int n3);
+	double longEdge();
+	double TetCollapse();
+	double GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp);
+	virtual CString GetName();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+};
 
 class E_ObjectR : public E_Object
 {
