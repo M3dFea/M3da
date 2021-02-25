@@ -217,11 +217,11 @@ else
   dExp=atoi(sExp);
   if ((dExp>4) || (dExp < -4))
   {
-    if (dExp>99)
+    if ((dExp>99) || (dExp < -99))
      {sNum=s8.Left(4);
       sNum=RemTrailingZeros(sNum);
       sExp=s8.Right(3);}
-    else if (dExp>9)
+    else if ((dExp > 9) || (dExp < -9))
      {sNum=s8.Left(5);
       sNum=RemTrailingZeros(sNum);
       sExp=s8.Right(2);}
@@ -2179,7 +2179,7 @@ fprintf(pFile,"%25.16E%25.16E%25.16E\n",Pt_Point->x,Pt_Point->y,Pt_Point->z);
 void Pt_Object::ExportNAS(FILE* pFile, CoordSys* pD)
 {
    //New to handle the DEF system eventually
-  if (iLabel==3000039)
+  if (iLabel==6091)
   {
     int kk;
     kk=0;
