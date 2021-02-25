@@ -9052,11 +9052,11 @@ void E_Object310::Draw(CDC* pDC, int iDrawmode)
 void E_Object310::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
 	char sLab[20];
-	C3dVector d[4];
+	C3dVector d[10];
 	int i;
 	int ind;
 
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 10; i++)
 	{
 		d[i].x = 0; d[i].y = 0; d[i].z = 0;
 	}
@@ -9071,7 +9071,7 @@ void E_Object310::OglDrawW(int iDspFlgs, double dS1, double dS2)
 	{
 		if ((iDspFlgs & DSP_RESDEF) == 0)
 		{
-			for (i = 0; i < 4; i++)
+			for (i = 0; i < 10; i++)
 			{
 				if (pVertex[i]->pResD != NULL)
 				{
@@ -9092,17 +9092,42 @@ void E_Object310::OglDrawW(int iDspFlgs, double dS1, double dS2)
 		}
 		glBegin(GL_LINES);
 		glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+		glVertex3f((float)(pVertex[4]->Pt_Point->x + d[4].x), (float)(pVertex[4]->Pt_Point->y + d[4].y), (float)(pVertex[4]->Pt_Point->z + d[4].z));
+
+		glVertex3f((float)(pVertex[4]->Pt_Point->x + d[4].x), (float)(pVertex[4]->Pt_Point->y + d[4].y), (float)(pVertex[4]->Pt_Point->z + d[4].z));
 		glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+
 		glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+		glVertex3f((float)(pVertex[5]->Pt_Point->x + d[5].x), (float)(pVertex[5]->Pt_Point->y + d[5].y), (float)(pVertex[5]->Pt_Point->z + d[5].z));
+
+		glVertex3f((float)(pVertex[5]->Pt_Point->x + d[5].x), (float)(pVertex[5]->Pt_Point->y + d[5].y), (float)(pVertex[5]->Pt_Point->z + d[5].z));
 		glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+
 		glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+		glVertex3f((float)(pVertex[6]->Pt_Point->x + d[6].x), (float)(pVertex[6]->Pt_Point->y + d[6].y), (float)(pVertex[6]->Pt_Point->z + d[6].z));
+
+		glVertex3f((float)(pVertex[6]->Pt_Point->x + d[6].x), (float)(pVertex[6]->Pt_Point->y + d[6].y), (float)(pVertex[6]->Pt_Point->z + d[6].z));
 		glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+
 		glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+		glVertex3f((float)(pVertex[7]->Pt_Point->x + d[7].x), (float)(pVertex[7]->Pt_Point->y + d[7].y), (float)(pVertex[7]->Pt_Point->z + d[7].z));
+
+		glVertex3f((float)(pVertex[7]->Pt_Point->x + d[7].x), (float)(pVertex[7]->Pt_Point->y + d[7].y), (float)(pVertex[7]->Pt_Point->z + d[7].z));
 		glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+
 		glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+		glVertex3f((float)(pVertex[8]->Pt_Point->x + d[8].x), (float)(pVertex[8]->Pt_Point->y + d[8].y), (float)(pVertex[8]->Pt_Point->z + d[8].z));
+
+		glVertex3f((float)(pVertex[8]->Pt_Point->x + d[8].x), (float)(pVertex[8]->Pt_Point->y + d[8].y), (float)(pVertex[8]->Pt_Point->z + d[8].z));
 		glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+
 		glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+		glVertex3f((float)(pVertex[9]->Pt_Point->x + d[9].x), (float)(pVertex[9]->Pt_Point->y + d[9].y), (float)(pVertex[9]->Pt_Point->z + d[9].z));
+
+		glVertex3f((float)(pVertex[9]->Pt_Point->x + d[9].x), (float)(pVertex[9]->Pt_Point->y + d[9].y), (float)(pVertex[9]->Pt_Point->z + d[9].z));
 		glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+
+
 		glEnd();
 		C3dVector vCent;
 		vCent = Get_Centroid();
