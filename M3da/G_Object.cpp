@@ -19160,19 +19160,25 @@ void ME_Object::Info()
   sprintf_s(S1,"%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour);
   outtext1("MESH OBJECT");
   outtext1(S1); 
-  sprintf_s(S1,"%s%s","Name : ",sName);
+  sprintf_s(S1,"%s%s","Name : ",sName.GetString());
   outtext1(S1);
   sprintf_s(S1, "%s%i", "Number of Nodes : ", iNdNo);
   outtext1(S1); 
   sprintf_s(S1,"%s%i","Number of Elements : ",iElNo);
   outtext1(S1); 
-  sprintf_s(S1, "%s%i", "Max Node Label : ", iNodeLab);
+  sprintf_s(S1, "%s%i", "Min Node Label : ", iNodeMinLab);
   outtext1(S1);
-  sprintf_s(S1, "%s%i", "Max Elem Label : ", iElementLab);
+  sprintf_s(S1, "%s%i", "Min Elem Label : ", iElementMinLab);
   outtext1(S1);
-  sprintf_s(S1, "%s%i", "Max CSYS Label : ", iCYSLab);
+  sprintf_s(S1, "%s%i", "Min CSYS Label : ", iCYSMinLab);
   outtext1(S1);
-  outtext1("    ****");
+  sprintf_s(S1, "%s%i", "Max Node Label : ", iNodeLab-1);
+  outtext1(S1);
+  sprintf_s(S1, "%s%i", "Max Elem Label : ", iElementLab-1);
+  outtext1(S1);
+  sprintf_s(S1, "%s%i", "Max CSYS Label : ", iCYSLab-1);
+  outtext1(S1);
+  outtext1("LOAD / BOUNDARY SETS:-");
   int iS;
   iS = GetLCID(iCurLC);
   sprintf_s(S1, "%s%i", "Current Load Set : ", iS);
@@ -23946,26 +23952,62 @@ int iCnt;
 iNodeLab=0;
 iElementLab=0;
 iCYSLab=0;
-for (iCnt = 0; iCnt < iNdNo; iCnt ++)
+iNodeMinLab=99999999;
+iElementMinLab = 99999999;
+iCYSMinLab = 99999999;
+if (iNdNo == 0)
 {
-   if (pNodes[iCnt]->iLabel>iNodeLab)
-   {
-     iNodeLab=pNodes[iCnt]->iLabel;
-   }
+	iNodeMinLab = 0;
 }
-for (iCnt = 0; iCnt < iElNo; iCnt ++)
+else
 {
-   if (pElems[iCnt]->iLabel>iElementLab)
-   {
-     iElementLab=pElems[iCnt]->iLabel;
-   }
+	for (iCnt = 0; iCnt < iNdNo; iCnt++)
+	{
+		if (pNodes[iCnt]->iLabel > iNodeLab)
+		{
+			iNodeLab = pNodes[iCnt]->iLabel;
+		}
+		if (pNodes[iCnt]->iLabel < iNodeMinLab)
+		{
+			iNodeMinLab = pNodes[iCnt]->iLabel;
+		}
+	}
 }
-for (iCnt = 0; iCnt < iCYS; iCnt ++)
+if (iElNo == 0)
 {
-   if (pSys[iCnt]->iLabel>iCYSLab)
-   {
-     iCYSLab=pSys[iCnt]->iLabel;
-   }
+	iElementMinLab = 0;
+}
+else
+{
+	for (iCnt = 0; iCnt < iElNo; iCnt++)
+	{
+		if (pElems[iCnt]->iLabel > iElementLab)
+		{
+			iElementLab = pElems[iCnt]->iLabel;
+		}
+		if (pElems[iCnt]->iLabel < iElementMinLab)
+		{
+			iElementMinLab = pElems[iCnt]->iLabel;
+		}
+	}
+}
+if (iCYS == 0)
+{
+	iCYSMinLab = 0;
+}
+else
+{
+	for (iCnt = 0; iCnt < iCYS; iCnt++)
+	{
+		if (pSys[iCnt]->iLabel > iCYSLab)
+		{
+			iCYSLab = pSys[iCnt]->iLabel;
+		}
+		if (pSys[iCnt]->iLabel < iCYSMinLab)
+		{
+			iCYSMinLab = pSys[iCnt]->iLabel;
+		}
+	}
 }
 iNodeLab++;
 iElementLab++;

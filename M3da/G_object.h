@@ -3453,6 +3453,9 @@ public:
    int iNodeLab;
    int iElementLab;
    int iCYSLab;
+   int iNodeMinLab;
+   int iElementMinLab;
+   int iCYSMinLab;
    double dScale;
    double dScaleVec;
    double dResFactor; //Factor for animation
