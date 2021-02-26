@@ -38471,12 +38471,12 @@ else
 {
   sType="CORD2R  ";
 }
-pB.x	= mOrientMat.m_02;
-pB.y  = mOrientMat.m_12;
-pB.z  = mOrientMat.m_22;
-pC.x	= mOrientMat.m_00;
-pC.y  = mOrientMat.m_10;
-pC.z  = mOrientMat.m_20;
+pB.x = mOrientMat.m_02;
+pB.y = mOrientMat.m_12;
+pB.z = mOrientMat.m_22;
+pC.x = mOrientMat.m_00;
+pC.y = mOrientMat.m_10;
+pC.z = mOrientMat.m_20;
 pB+=Origin;
 pC+=Origin;
 if (RID == -1)
@@ -38570,8 +38570,20 @@ void CoordSys::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 C3dVector CoordSys::Get_Centroid() 
 {
-
-return (Origin);
+	C3dVector O;
+	O = Origin;
+	int iRID = 0;
+	ME_Object* ME;
+	iRID = this->RID;
+	ME = (ME_Object*)pParent;
+	if ((ME != NULL) && (iRID > 0))
+	{
+		do
+		{
+			iRID = ME->NodeToGlobal(O, iRID);
+		} while (iRID > 0);
+	}
+return (O);
 }
 
 void CoordSys::Translate (C3dVector vIn)
@@ -38613,7 +38625,7 @@ void CoordSys::OglDrawW(int iDspFlgs,double dS1,double dS2)
 C3dVector X;
 C3dVector Y;
 C3dVector Z;
-
+C3dVector O;
 
 if ((iDspFlgs & DSP_COORD)>0)
 {
@@ -38638,18 +38650,34 @@ if ((iDspFlgs & DSP_COORD)>0)
 	X+=Origin;
 	Y+=Origin;
 	Z+=Origin;
+	O = Origin;
+	int iRID=0;
+	int iN = 0;
+	ME_Object* ME;
+	iRID = this->RID;
+	ME = (ME_Object*)pParent;
+	if ((ME != NULL) && (iRID>0))
+	{
+		do
+		{
+			iN = ME->NodeToGlobal(O, iRID);
+			iN = ME->NodeToGlobal(X, iRID);
+			iN = ME->NodeToGlobal(Y, iRID);
+			iRID = ME->NodeToGlobal(Z, iRID);
+		} while (iRID > 0);
+	}
 
 	glColor3fv(cols[GetCol()]);
 	glBegin(GL_LINES);
 
 
-	glVertex3f((float) Origin.x,(float) Origin.y,(float) Origin.z);
+	glVertex3f((float) O.x,(float) O.y,(float)O.z);
 	glVertex3f((float) X.x,(float) X.y,(float) X.z);
 
-	glVertex3f((float) Origin.x,(float) Origin.y,(float) Origin.z);
+	glVertex3f((float)O.x,(float)O.y,(float)O.z);
 	glVertex3f((float) Y.x,(float) Y.y,(float) Y.z);
 
-	glVertex3f((float) Origin.x,(float) Origin.y,(float) Origin.z);
+	glVertex3f((float)O.x,(float)O.y,(float)O.z);
 	glVertex3f((float) Z.x,(float) Z.y,(float) Z.z);
 	glEnd();
 
@@ -38689,12 +38717,12 @@ if ((iDspFlgs & DSP_COORD)>0)
 	  glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPZ);
 	}
 	char sLab[20];
-	C3dVector vCent;
-	vCent=Get_Centroid();
+	//C3dVector vCent;
+	//vCent=Get_Centroid();
 	if (bDrawLab==TRUE)
 	{
 		sprintf_s(sLab,"Cys%i",iLabel);
-		OglString(iDspFlgs,vCent.x,vCent.y,vCent.z,&sLab[0]);
+		OglString(iDspFlgs, O.x, O.y, O.z,&sLab[0]);
 	}
 }
 else
