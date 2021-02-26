@@ -8844,7 +8844,7 @@ void E_Object310::RepNodeInEl(Pt_Object* pThis, Pt_Object* pWith)
 G_Object* E_Object310::Copy(G_Object* Parrent)
 {
 	ME_Object* MESH = (ME_Object*)Parrent;
-	E_Object34* gret = new E_Object34;
+	E_Object310* gret = new E_Object310;
 	gret->iObjType = iObjType;
 	gret->iLabel = iLabel;
 	gret->iColour = iColour;
@@ -8875,7 +8875,7 @@ G_Object* E_Object310::Copy(G_Object* Parrent)
 G_Object* E_Object310::CopyAppend(int iSInd, ME_Object* Target, ME_Object* Source)
 {
 	int EInd;
-	E_Object34* gret = new E_Object34;
+	E_Object310* gret = new E_Object310;
 	gret->iObjType = iObjType;
 	gret->iLabel = iLabel;
 	gret->iColour = iColour;
@@ -8917,7 +8917,7 @@ G_Object* E_Object310::CopyAppend(int iSInd, ME_Object* Target, ME_Object* Sourc
 G_Object* E_Object310::Copy2(G_Object* Parrent, Pt_Object* pInVertex[200], int inPID, int inMID, int inPIDunv)
 {
 	ME_Object* MESH = (ME_Object*)Parrent;
-	E_Object34* gret = new E_Object34;
+	E_Object310* gret = new E_Object310;
 	gret->iObjType = iObjType;
 	gret->iLabel = iLabel;
 	gret->iColour = iColour;
@@ -8929,16 +8929,16 @@ G_Object* E_Object310::Copy2(G_Object* Parrent, Pt_Object* pInVertex[200], int i
 	gret->iType = iType;
 	gret->iMatID = inMID;
 	gret->iNoNodes = iNoNodes;
-	gret->pVertex[0] = MESH->GetNode(pVertex[0]->iLabel);
-	gret->pVertex[1] = MESH->GetNode(pVertex[1]->iLabel);
-	gret->pVertex[2] = MESH->GetNode(pVertex[2]->iLabel);
-	gret->pVertex[3] = MESH->GetNode(pVertex[3]->iLabel);
-	gret->pVertex[4] = MESH->GetNode(pVertex[4]->iLabel);
-	gret->pVertex[5] = MESH->GetNode(pVertex[5]->iLabel);
-	gret->pVertex[6] = MESH->GetNode(pVertex[6]->iLabel);
-	gret->pVertex[7] = MESH->GetNode(pVertex[7]->iLabel);
-	gret->pVertex[8] = MESH->GetNode(pVertex[8]->iLabel);
-	gret->pVertex[9] = MESH->GetNode(pVertex[9]->iLabel);
+	gret->pVertex[0] = pInVertex[0];
+	gret->pVertex[1] = pInVertex[1];
+	gret->pVertex[2] = pInVertex[2];
+	gret->pVertex[3] = pInVertex[3];
+	gret->pVertex[4] = pInVertex[4];
+	gret->pVertex[5] = pInVertex[5];
+	gret->pVertex[6] = pInVertex[6];
+	gret->pVertex[7] = pInVertex[7];
+	gret->pVertex[8] = pInVertex[8];
+	gret->pVertex[9] = pInVertex[9];
 	gret->pPr = pPr;
 	gret->pParent = Parrent;
 	gret->pResV = NULL;
@@ -10199,6 +10199,15 @@ if (Pr!=NULL)
        bC=TRUE;
        pPr=Pr;
       }
+  }
+  else if (iType == 310)
+  {
+  if (Pr->iType == 3)
+  {
+	  PID = Pr->iID;
+	  bC = TRUE;
+	  pPr = Pr;
+  }
   }
   else if (iType == 122)
   {
