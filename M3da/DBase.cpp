@@ -10982,6 +10982,7 @@ else if (iT == 3)
 }
 if (Mesh!=NULL)
 {
+  Mesh->MaxLab();
   pCurrentMesh=Mesh;
   DB_Obj[DB_ObjectCount] =Mesh;
   DB_ObjectCount++;
