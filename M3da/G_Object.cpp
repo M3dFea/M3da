@@ -2179,42 +2179,56 @@ fprintf(pFile,"%25.16E%25.16E%25.16E\n",Pt_Point->x,Pt_Point->y,Pt_Point->z);
 void Pt_Object::ExportNAS(FILE* pFile, CoordSys* pD)
 {
    //New to handle the DEF system eventually
-  if (iLabel==6091)
-  {
-    int kk;
-    kk=0;
-  }
-  C3dVector pt(Pt_Point->x,Pt_Point->y,Pt_Point->z);
-  if (pD!=NULL)
-  {
-    C3dMatrix A=pD->mOrientMat;
-    A.Transpose();
-    if (pD->CysType==1)
-    {
-      pt-=pD->Origin;
-	    pt = A*pt;
-    }
-    else if (pD->CysType==2)
-    {
-      pt-=pD->Origin;
-	    pt = A*pt;
-      C3dVector pCyl;
-      pCyl.x=sqrt(pt.x*pt.x+pt.y*pt.y);
-      pCyl.y=atan2(pt.y,pt.x)*R2D;
-      pCyl.z=pt.z;
-      pt=pCyl;
-    }
-    else if (pD->CysType==3)
-    {
-      pt-=pD->Origin;
-	    pt = A*pt;
-      C3dVector pCyl;
-      pCyl.x=sqrt(pt.x*pt.x+pt.y*pt.y+pt.z*pt.z);
-      pCyl.y=acos(pt.z/pCyl.x)*R2D;
-      pCyl.z=atan2(pt.y,pt.x)*R2D;
-      pt=pCyl;
-    }
-  }
+	if (iLabel == 6091)
+	{
+		int kk;
+		kk = 0;
+	}
+	ME_Object* ME = (ME_Object*) pParent;
+	C3dVector pt(Pt_Point->x, Pt_Point->y, Pt_Point->z);
+	int i;
+	int iDefCYS[10];
+	int iN = 0;
+	int iRID;
+	iRID = this->DefSys;
+	do
+	{
+		iDefCYS[iN] = iRID;
+		iN++;
+		iRID = ME->GetSys(iRID)->RID;
+	} while (iRID > 0);
+
+	for (i = iN - 1; i >= 0; i--)
+	{
+		pD = ME->GetSys(iDefCYS[i]);
+		C3dMatrix A = pD->mOrientMat;
+		A.Transpose();
+		if (pD->CysType == 1)
+		{
+			pt -= pD->Origin;
+			pt = A * pt;
+		}
+		else if (pD->CysType == 2)
+		{
+			pt -= pD->Origin;
+			pt = A * pt;
+			C3dVector pCyl;
+			pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y);
+			pCyl.y = atan2(pt.y, pt.x) * R2D;
+			pCyl.z = pt.z;
+			pt = pCyl;
+		}
+		else if (pD->CysType == 3)
+		{
+			pt -= pD->Origin;
+			pt = A * pt;
+			C3dVector pCyl;
+			pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+			pCyl.y = acos(pt.z / pCyl.x) * R2D;
+			pCyl.z = atan2(pt.y, pt.x) * R2D;
+			pt = pCyl;
+		}
+	}
    fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8i\n","GRID    ",iLabel,DefSys,e8(pt.x),e8(pt.y),e8(pt.z),OutSys);
 }
 
@@ -9178,9 +9192,9 @@ void E_Object310::OglDrawW(int iDspFlgs, double dS1, double dS2)
 
 void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
 {
-	C3dVector d[4];
+	C3dVector d[10];
 	int i;
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 10; i++)
 	{
 		d[i].x = 0; d[i].y = 0; d[i].z = 0;
 	}
@@ -9190,7 +9204,7 @@ void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
 	double dFS;
 	dFS = ME->dResFactor;
 	glLineWidth(2);
-	float fCols[4] = { 0,0,0,0 };
+	float fCols[10] = { 0,0,0,0,0,0,0,0,0,0};
 	BOOL bD = FALSE;
 	int iVar;
 	iVar = ME->iCVar;
@@ -9198,13 +9212,25 @@ void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
 	if ((pVertex[0]->pResV != NULL) &&
 		(pVertex[1]->pResV != NULL) &&
 		(pVertex[2]->pResV != NULL) &&
-		(pVertex[3]->pResV != NULL))
+		(pVertex[3]->pResV != NULL) &&
+		(pVertex[4]->pResV != NULL) &&
+		(pVertex[5]->pResV != NULL) &&
+		(pVertex[6]->pResV != NULL) &&
+		(pVertex[7]->pResV != NULL) &&
+		(pVertex[8]->pResV != NULL) &&
+		(pVertex[9]->pResV != NULL))
 	{
 		bD = TRUE;
 		fCols[0] = GetContourCol(*pVertex[0]->pResV->GetAddress(iVar) * dFS);
 		fCols[1] = GetContourCol(*pVertex[1]->pResV->GetAddress(iVar) * dFS);
 		fCols[2] = GetContourCol(*pVertex[2]->pResV->GetAddress(iVar) * dFS);
 		fCols[3] = GetContourCol(*pVertex[3]->pResV->GetAddress(iVar) * dFS);
+		fCols[4] = GetContourCol(*pVertex[4]->pResV->GetAddress(iVar) * dFS);
+		fCols[5] = GetContourCol(*pVertex[5]->pResV->GetAddress(iVar) * dFS);
+		fCols[6] = GetContourCol(*pVertex[6]->pResV->GetAddress(iVar) * dFS);
+		fCols[7] = GetContourCol(*pVertex[7]->pResV->GetAddress(iVar) * dFS);
+		fCols[8] = GetContourCol(*pVertex[8]->pResV->GetAddress(iVar) * dFS);
+		fCols[9] = GetContourCol(*pVertex[9]->pResV->GetAddress(iVar) * dFS);
 	}
 	if (pResV != NULL)
 	{
@@ -9213,6 +9239,12 @@ void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
 		fCols[1] = fCols[0];
 		fCols[2] = fCols[0];
 		fCols[3] = fCols[0];
+		fCols[4] = fCols[0];
+		fCols[5] = fCols[0];
+		fCols[6] = fCols[0];
+		fCols[7] = fCols[0];
+		fCols[8] = fCols[0];
+		fCols[9] = fCols[0];
 	}
 
 	C3dVector v1;
@@ -9222,7 +9254,7 @@ void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
 	{
 		if ((iDspFlgs & DSP_RESDEF) == 0)
 		{
-			for (i = 0; i < 4; i++)
+			for (i = 0; i < 10; i++)
 			{
 				if (pVertex[i]->pResD != NULL)
 				{
@@ -9250,9 +9282,16 @@ void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[4]->Pt_Point->x + d[4].x), (float)(pVertex[4]->Pt_Point->y + d[4].y), (float)(pVertex[4]->Pt_Point->z + d[4].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[5]->Pt_Point->x + d[5].x), (float)(pVertex[5]->Pt_Point->y + d[5].y), (float)(pVertex[5]->Pt_Point->z + d[5].z));
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[6]->Pt_Point->x + d[6].x), (float)(pVertex[6]->Pt_Point->y + d[6].y), (float)(pVertex[6]->Pt_Point->z + d[6].z));
 			glEnd();
 
 			v1.x = pVertex[1]->Pt_Point->x - pVertex[0]->Pt_Point->x;
@@ -9269,10 +9308,18 @@ void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[4]->Pt_Point->x + d[4].x), (float)(pVertex[4]->Pt_Point->y + d[4].y), (float)(pVertex[4]->Pt_Point->z + d[4].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[8]->Pt_Point->x + d[8].x), (float)(pVertex[8]->Pt_Point->y + d[8].y), (float)(pVertex[8]->Pt_Point->z + d[8].z));
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[7]->Pt_Point->x + d[7].x), (float)(pVertex[7]->Pt_Point->y + d[7].y), (float)(pVertex[7]->Pt_Point->z + d[7].z));
 			glEnd();
+
 
 			v1.x = pVertex[2]->Pt_Point->x - pVertex[1]->Pt_Point->x;
 			v1.y = pVertex[2]->Pt_Point->y - pVertex[1]->Pt_Point->y;
@@ -9288,9 +9335,16 @@ void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[5]->Pt_Point->x + d[5].x), (float)(pVertex[5]->Pt_Point->y + d[5].y), (float)(pVertex[5]->Pt_Point->z + d[5].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[9]->Pt_Point->x + d[9].x), (float)(pVertex[9]->Pt_Point->y + d[9].y), (float)(pVertex[9]->Pt_Point->z + d[9].z));
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[8]->Pt_Point->x + d[8].x), (float)(pVertex[8]->Pt_Point->y + d[8].y), (float)(pVertex[8]->Pt_Point->z + d[8].z));
 			glEnd();
 
 			v1.x = pVertex[2]->Pt_Point->x - pVertex[0]->Pt_Point->x;
@@ -9307,9 +9361,16 @@ void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[6]->Pt_Point->x + d[6].x), (float)(pVertex[6]->Pt_Point->y + d[6].y), (float)(pVertex[6]->Pt_Point->z + d[6].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[9]->Pt_Point->x + d[9].x), (float)(pVertex[9]->Pt_Point->y + d[9].y), (float)(pVertex[9]->Pt_Point->z + d[9].z));
 			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
 			glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[7]->Pt_Point->x + d[7].x), (float)(pVertex[7]->Pt_Point->y + d[7].y), (float)(pVertex[7]->Pt_Point->z + d[7].z));
 			glEnd();
 		}
 		else
@@ -24171,7 +24232,40 @@ else
 return (pERet);
 }
 
-
+void ME_Object::GlobalToLocal(C3dVector& vRet, int iDef)
+{
+	int iRet;
+	iRet = 0;
+	CoordSys* Cys;
+	//int CysID;
+	if (iDef != 0)
+	{
+		Cys = GetSys(iDef);
+		if (Cys == NULL)
+		{
+			outtext1("ERROR: Coordinate Sys Not Found.");
+		}
+		else
+		{
+			C3dMatrix A = Cys->mOrientMat;
+			A.Transpose();
+			iRet = Cys->RID;
+			if (Cys->CysType == 1)
+			{
+				vRet = A * vRet;
+				vRet -= Cys->Origin;
+			}
+			else if (Cys->CysType == 2)
+			{
+				outtext1("ERROR: Not Implemented for Cylindrical.");
+			}
+			else if (Cys->CysType == 3)
+			{
+				outtext1("ERROR: Not Implemented for Sperical.");
+			}
+		}
+	}
+}
 
 int ME_Object::NodeToGlobal(C3dVector &vRet,int iDef)
 {
@@ -33991,8 +34085,8 @@ return (iMID);
 
 void PSOLID::ExportNAS(FILE* pFile)
 {
-fprintf(pFile,"$%s\n",sTitle);
-fprintf(pFile,"%8s%8i%8i%8i%8s%8s%8s%8s\n","PSOLID  ",iID,iMID,iCORDM,sIN,sSTRESS,sISOP,sFCTN);
+fprintf(pFile,"$%s\n",sTitle.GetString());
+fprintf(pFile,"%8s%8i%8i%8i\n","PSOLID  ",iID,iMID,iCORDM);
 }
 
 PSOLID* PSOLID::Copy()

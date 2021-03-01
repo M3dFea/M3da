@@ -3541,6 +3541,7 @@ public:
    ME_Object* GetMesh();    //GetPtr to this
 
    int NodeToGlobal(C3dVector &vRet,int iDef);
+   void GlobalToLocal(C3dVector& vRet, int iDef);
    C3dVector CartToCylCYS(CoordSys* pCy, C3dVector pP);
    int VecToGlobal(Pt_Object* pN,C3dVector &vRet,int iDef);
    Pt_Object* AddNode(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut);
