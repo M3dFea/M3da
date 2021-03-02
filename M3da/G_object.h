@@ -3446,6 +3446,7 @@ public:
    ~ME_Object();
    cFaceList* FcList;
    cLinkList* LkList;
+   CvPt_Object BBox[8]; //bounding box
    int iNdNo;				  //No of Nodes
    int iElNo;//No of Elems	
    int iBCLDs;
@@ -3703,6 +3704,7 @@ C3dVector EigenVector2d(int iEID, C3dVector rX, C3dVector rY, double lambda);
 void CalcPrinStress(double XX,double YY,double ZZ,
                     double XY,double YZ,double XZ,
                     double &P1,double &P2,double &P3);
+virtual void GetBoundingBox(C3dVector& vll, C3dVector& vur);
 };
 
 

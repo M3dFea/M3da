@@ -2191,42 +2191,47 @@ void Pt_Object::ExportNAS(FILE* pFile, CoordSys* pD)
 	int iN = 0;
 	int iRID;
 	iRID = this->DefSys;
-	do
+	if (iRID > 0)
 	{
-		iDefCYS[iN] = iRID;
-		iN++;
-		iRID = ME->GetSys(iRID)->RID;
-	} while (iRID > 0);
-
-	for (i = iN - 1; i >= 0; i--)
-	{
-		pD = ME->GetSys(iDefCYS[i]);
-		C3dMatrix A = pD->mOrientMat;
-		A.Transpose();
-		if (pD->CysType == 1)
+		do
 		{
-			pt -= pD->Origin;
-			pt = A * pt;
-		}
-		else if (pD->CysType == 2)
+			iDefCYS[iN] = iRID;
+			iN++;
+			iRID = ME->GetSys(iRID)->RID;
+		} while (iRID > 0);
+		for (i = iN - 1; i >= 0; i--)
 		{
-			pt -= pD->Origin;
-			pt = A * pt;
-			C3dVector pCyl;
-			pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y);
-			pCyl.y = atan2(pt.y, pt.x) * R2D;
-			pCyl.z = pt.z;
-			pt = pCyl;
-		}
-		else if (pD->CysType == 3)
-		{
-			pt -= pD->Origin;
-			pt = A * pt;
-			C3dVector pCyl;
-			pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
-			pCyl.y = acos(pt.z / pCyl.x) * R2D;
-			pCyl.z = atan2(pt.y, pt.x) * R2D;
-			pt = pCyl;
+			pD = ME->GetSys(iDefCYS[i]);
+			if (pD!= NULL)
+			{
+				C3dMatrix A = pD->mOrientMat;
+				A.Transpose();
+				if (pD->CysType == 1)
+				{
+					pt -= pD->Origin;
+					pt = A * pt;
+				}
+				else if (pD->CysType == 2)
+				{
+					pt -= pD->Origin;
+					pt = A * pt;
+					C3dVector pCyl;
+					pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y);
+					pCyl.y = atan2(pt.y, pt.x) * R2D;
+					pCyl.z = pt.z;
+					pt = pCyl;
+				}
+				else if (pD->CysType == 3)
+				{
+					pt -= pD->Origin;
+					pt = A * pt;
+					C3dVector pCyl;
+					pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+					pCyl.y = acos(pt.z / pCyl.x) * R2D;
+					pCyl.z = atan2(pt.y, pt.x) * R2D;
+					pt = pCyl;
+				}
+			}
 		}
 	}
    fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8i\n","GRID    ",iLabel,DefSys,e8(pt.x),e8(pt.y),e8(pt.z),OutSys);
@@ -5196,6 +5201,7 @@ for (i=0;i<iNoNodes;i++)
 }
 return (brc);
 }
+
 
 void E_Object38::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 
@@ -19175,6 +19181,51 @@ LkList=NULL;
 pSOLS=new SolSets("UNDEFINED");
 }
 
+void ME_Object::GetBoundingBox(C3dVector& vll, C3dVector& vur)
+{
+	int i;
+	C3dVector vMinXYZ;
+	C3dVector vMaxXYZ;
+	BOOL bFirst = TRUE;
+	C3dVector vPt;
+		for (i = 0; i < iNdNo; i++)
+		{
+			vPt = pNodes[i]->Pt_Point;
+			if (bFirst)
+			{
+				vMinXYZ = vPt;
+				vMaxXYZ = vPt;
+				bFirst = FALSE;
+			}
+			else
+			{
+				if (vPt.x < vMinXYZ.x)
+					vMinXYZ.x = vPt.x;
+				if (vPt.y < vMinXYZ.y)
+					vMinXYZ.y = vPt.y;
+				if (vPt.z < vMinXYZ.z)
+					vMinXYZ.z = vPt.z;
+
+				if (vPt.x > vMaxXYZ.x)
+					vMaxXYZ.x = vPt.x;
+				if (vPt.y > vMaxXYZ.y)
+					vMaxXYZ.y = vPt.y;
+				if (vPt.z > vMaxXYZ.z)
+					vMaxXYZ.z = vPt.z;
+			}
+		}
+		vll = vMinXYZ;
+		vur = vMaxXYZ;
+		BBox[0].Pt_Point->Set(vMinXYZ.x, vMinXYZ.y, vMinXYZ.z);
+		BBox[1].Pt_Point->Set(vMinXYZ.x, vMaxXYZ.y, vMinXYZ.z);
+		BBox[2].Pt_Point->Set(vMaxXYZ.x, vMaxXYZ.y, vMinXYZ.z);
+		BBox[3].Pt_Point->Set(vMaxXYZ.x, vMinXYZ.y, vMinXYZ.z);
+		BBox[4].Pt_Point->Set(vMinXYZ.x, vMinXYZ.y, vMaxXYZ.z);
+		BBox[5].Pt_Point->Set(vMinXYZ.x, vMaxXYZ.y, vMaxXYZ.z);
+		BBox[6].Pt_Point->Set(vMaxXYZ.x, vMaxXYZ.y, vMaxXYZ.z);
+		BBox[7].Pt_Point->Set(vMaxXYZ.x, vMinXYZ.y, vMaxXYZ.z);
+}
+
 void ME_Object::Create(CString inName,G_Object* Parrent,int iLab)
 {
 Drawn = 0;
@@ -24837,6 +24888,10 @@ for (i = 0; i < iCYS; i++)
 void ME_Object::SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran)
 {
 int i;
+C3dVector ll, uu;
+GetBoundingBox(ll, uu);
+for (i = 0; i < 8; i++)
+	BBox[i].SetToScr(pModMat, pScrTran);
 if (iNdNo > 0)
 {
   for (i = 0; i < iNdNo; i++)
@@ -24932,14 +24987,38 @@ if (iCYS > 0)
 
 void ME_Object::HighLight(CDC* pDC)
 {
-int i;
-if (iElNo > 0)
-  {
-  for (i = 0; i < iElNo; i++)
-    {
-    pElems[i]->Draw(pDC,4);	
-    }
-  }
+	int i = 0;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	for (i = 1; i < 4; i++)
+		pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 0;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+
+	i = 4;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	for (i = 5; i < 8; i++)
+		pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 4;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+
+	i = 0;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 4;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 1;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 5;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 2;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 6;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 3;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 7;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+
+
 }
 
 
