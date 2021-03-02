@@ -20192,12 +20192,15 @@ for (i=0;i<iElNo;i++)
     case 111:
       rME->pElems[i] = (E_Object34*) pElems[i]->Copy(rME);
       break;
-	  case 112:
+	case 112:
       rME->pElems[i] = (E_Object36*) pElems[i]->Copy(rME);
       break;
     case 122:
       rME->pElems[i] = (E_ObjectR*) pElems[i]->Copy(rME);
       break;
+	case 310:
+	  rME->pElems[i] = (E_Object310*) pElems[i]->Copy(rME);
+	  break;
   }
   rME->pElems[i]->pParent = rME;
 }
