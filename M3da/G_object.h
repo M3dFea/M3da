@@ -3709,6 +3709,11 @@ void CalcPrinStress(double XX,double YY,double ZZ,
                     double XY,double YZ,double XZ,
                     double &P1,double &P2,double &P3);
 virtual void GetBoundingBox(C3dVector& vll, C3dVector& vur);
+virtual CString GetName();
+virtual int GetVarHeaders(CString sVar[]);
+virtual int GetVarValues(CString sVar[]);
+virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+
 };
 
 

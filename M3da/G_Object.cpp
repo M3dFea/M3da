@@ -19228,6 +19228,33 @@ LkList=NULL;
 pSOLS=new SolSets("UNDEFINED");
 }
 
+CString ME_Object::GetName()
+{
+	return ("Mesh Object)");
+}
+
+int ME_Object::GetVarHeaders(CString sVar[])
+{
+	sVar[0] = "Name";
+	return(1);
+}
+
+int ME_Object::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = sName;
+	iNo++;
+	return (iNo);
+}
+
+void ME_Object::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	sName = sVar[0];
+}
+
+
+
+
 void ME_Object::GetBoundingBox(C3dVector& vll, C3dVector& vur)
 {
 	int i;
