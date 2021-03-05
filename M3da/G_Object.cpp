@@ -49869,7 +49869,11 @@ BOOL CEntEditDialog::OnInitDialog()
 	  
   }
   if (pO != NULL)
-	Populate1();
+  {
+	  CEdit* pI = (CEdit*)GetDlgItem(IDC_ENTID);
+	  pI->EnableWindow(FALSE);
+	  Populate1();
+  }
   return TRUE;  // return TRUE unless you set the focus to a control
                 // EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -50221,11 +50225,18 @@ void CEntEditDialog::OnBnClickedOk()
   // TODO: Add your control notification handler code here
   int i;
   CString sVVals[500];
+  CString sID;
   CEdit* pT = (CEdit*) GetDlgItem(IDC_PTITLE);
+  CEdit* pI = (CEdit*) GetDlgItem(IDC_ENTID);
   if ((pEnt!=NULL) || (pO!=NULL))
   {
-	if (pEnt != NULL)
-		pT->GetWindowTextA(pEnt->sTitle);
+	  if (pEnt != NULL)
+	  {
+		  pT->GetWindowTextA(pEnt->sTitle);
+		  pI->GetWindowTextA(sID);
+		  pEnt->iID = atoi(sID);
+		  //Need to check we can no id conflics
+	  }
     for (i=0;i<iNo;i++)
     {
       sVVals[i] = m_List.GetItemText(i,1);
