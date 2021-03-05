@@ -48417,6 +48417,21 @@ void Table::DeleteAll()
 	iNo = 0;
 }
 
+void Table::Delete(Entity* pO)
+{
+	int i;
+	for (i = 0; i < iNo; i++)
+	{
+		if (pEnts[i] == pO)
+		{
+			delete(pEnts[i]);
+			pEnts[i] = pEnts[iNo - 1];
+			iNo--;
+		}
+	}
+	iNo = 0;
+}
+
 
 
 void Table::AddItem(Entity* pIn)
@@ -49850,6 +49865,20 @@ BOOL CEntEditDialog::OnInitDialog()
   oSize2.right = 350;
   cBtn->MoveWindow(oSize2, 0);
 
+  cBtn = (CButton*)this->GetDlgItem(IDCDELETE);
+  oSize2.top = iH - iBoff;
+  oSize2.left = iW-120;
+  oSize2.bottom = iH - iBoff + 50;
+  oSize2.right = iW-20;
+  cBtn->MoveWindow(oSize2, 0);
+  if (pEnt != NULL)
+  {
+	  cBtn->EnableWindow(TRUE);
+  }
+  else
+  {
+	  cBtn->EnableWindow(FALSE);
+  }
 
   if (pEnt != NULL)
   {
@@ -50164,6 +50193,8 @@ ON_NOTIFY(LVN_ITEMCHANGING, IDC_LIST1, &CEntEditDialog::OnLvnItemchangingList1)
 //ON_NOTIFY(LVN_KEYDOWN, IDC_LIST1, &CEntEditDialog::OnLvnKeydownList1)
 ON_NOTIFY(NM_RETURN, IDC_LIST1, &CEntEditDialog::OnNMReturnList1)
 ON_WM_KEYDOWN()
+ON_BN_CLICKED(IDCDELETE, &CEntEditDialog::OnBnClickedCdelete)
+ON_BN_CLICKED(IDCANCEL, &CEntEditDialog::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
@@ -50815,4 +50846,19 @@ void CEntEditDialog::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	// TODO: Add your message handler code here and/or call default
 
 	CDialog::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+
+void CEntEditDialog::OnBnClickedCdelete()
+{
+	// TODO: Add your control notification handler code here
+	bDel = TRUE;
+	CDialog::OnCancel();
+}
+
+
+void CEntEditDialog::OnBnClickedCancel()
+{
+	// TODO: Add your control notification handler code here
+	CDialog::OnCancel();
 }

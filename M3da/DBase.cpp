@@ -16325,6 +16325,8 @@ void DBase::EditMat(int MID,BOOL bPID)
     CEntEditDialog Dlg;
     Dlg.pEnt = M;
     Dlg.DoModal();
+	if (Dlg.bDel == TRUE)
+		MatT->Delete(M);
   }
   else
   {
@@ -16341,6 +16343,8 @@ void DBase::EditProp(int PID)
     CEntEditDialog Dlg;
     Dlg.pEnt = P;
     Dlg.DoModal();
+	if (Dlg.bDel == TRUE)
+		PropsT->Delete(P);
 	InvalidateOGL();
 	ReGen();
   }

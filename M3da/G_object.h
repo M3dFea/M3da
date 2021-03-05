@@ -1401,6 +1401,7 @@ public:
   int m_iItemBeingEdited;
   int iNo=0;
   int iNo2=0;
+  BOOL bDel = FALSE;
   Entity* pEnt=NULL;
   G_Object* pO=NULL;
   PropTable* PT=NULL;
@@ -1427,6 +1428,8 @@ public:
 //  afx_msg void OnLvnKeydownList1(NMHDR* pNMHDR, LRESULT* pResult);
   afx_msg void OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult);
   afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+  afx_msg void OnBnClickedCdelete();
+  afx_msg void OnBnClickedCancel();
 };
 
 
@@ -3345,6 +3348,7 @@ Table();
 Entity* pEnts[MAX_ENTS];
 int iNo;
 virtual void DeleteAll();
+void Delete(Entity* pO);
 virtual void AddItem(Entity* pIn);
 virtual Entity* GetItem(int iID);
 virtual int NextID();

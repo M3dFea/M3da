@@ -3,6 +3,7 @@
 // Used by M3da.rc
 //
 #define IDC_GROUPDELS                   3
+#define IDCDELETE                       3
 #define ID_CR                           4
 #define IDC_ACT_STEP                    4
 #define ID_ACT                          5
