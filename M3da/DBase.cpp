@@ -8759,7 +8759,7 @@ E_Object* DBase::AddEl(int iPos,BOOL AddDsp)
 int iNo=pCurrentMesh->GetNoNode(iCurElemType);
 BOOL bChk = TRUE;
 E_Object* cAddedEl;
-Pt_Object *pENodes[100];
+Pt_Object *pENodes[200];
 cAddedEl=NULL;
 int i;
 char S1[80];
