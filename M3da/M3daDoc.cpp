@@ -331,6 +331,7 @@ ON_COMMAND(ID_MANIPULATION_DIVIDEINTO, &CM3daDoc::OnManipulationDivideinto)
 ON_COMMAND(ID_MANIPULATION_ENVELOPEMAXIMUM, &CM3daDoc::OnManipulationEnvelopemaximum)
 ON_COMMAND(ID_MANIPULATION_ENVELOPEMINIMUM, &CM3daDoc::OnManipulationEnvelopeminimum)
 ON_COMMAND(ID_MANIPULATION_SCALE, &CM3daDoc::OnManipulationScale)
+ON_COMMAND(ID_EDIT_TOGGLEON, &CM3daDoc::OnEditToggleon)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5604,5 +5605,24 @@ void CM3daDoc::OnManipulationScale()
 	else
 	{
 		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnEditToggleon()
+{
+	// TODO: Add your command handler code here
+	if (bUndo)
+	{
+		bUndo = FALSE;
+		ReSet();
+		SetUndoLevels(0);
+	}
+	else
+	{
+		bUndo = TRUE;
+		ReSet();
+		SetUndoLevels(4);
+		CheckPoint();
 	}
 }

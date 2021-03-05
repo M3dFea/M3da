@@ -126,6 +126,7 @@ BEGIN
         MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
         MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM "Toggle on/off undo",          ID_EDIT_TOGGLEON
     END
     POPUP "&View"
     BEGIN

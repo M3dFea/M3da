@@ -519,13 +519,14 @@
 #define ID_MANIPULATION_ENVELOPEMINIMUM 33340
 #define ID_MANIPULATION_SCALE           33341
 #define ID_MANIPULATION_DIVIDEINTO      33342
+#define ID_EDIT_TOGGLEON                33343
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        361
-#define _APS_NEXT_COMMAND_VALUE         33343
+#define _APS_NEXT_COMMAND_VALUE         33344
 #define _APS_NEXT_CONTROL_VALUE         1055
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

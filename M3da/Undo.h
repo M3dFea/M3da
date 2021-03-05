@@ -23,7 +23,7 @@ private:
     void Load(CMemFile*);
     void Store(CMemFile*);
     void ClearRedoList();
-
+    
 public:
 
     // Here are the hooks into the CDocument class
@@ -32,7 +32,9 @@ public:
 
     // User accessable functions
     CUndo(long undolevels = 4, long = 32768);    // Constructor
-    ~CUndo();            // Destructor
+    ~CUndo();   // Destructor
+
+
     BOOL CanUndo();      // Returns TRUE if can Undo
     BOOL CanRedo();      // Returns TRUE if can Redo
     void Undo();         // Restore next Undo state
@@ -41,6 +43,7 @@ public:
     void EnableCheckPoint();
     void DisableCheckPoint();
 	void ReSet();
+    void SetUndoLevels(int iNo);
 };
 
 // Constructor
@@ -106,6 +109,11 @@ CanUndo()
     return (m_undolist.GetCount() > 1);
 }
 
+inline void CUndo::SetUndoLevels(int iNo)
+{
+    m_undoLevels = iNo;
+}
+
 // Checks redo availability, may be used to enable menus
 inline BOOL CUndo::
 CanRedo() 
@@ -151,7 +159,8 @@ Load(CMemFile* file)
 inline void CUndo::
 CheckPoint() 
 {
-    if (m_chkpt <= 0) {
+    if ((m_chkpt <= 0) && (m_undoLevels>0))
+    {
         CMemFile* file = new CMemFile(m_growsize);
         Store(file);
         AddUndo(file);

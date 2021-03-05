@@ -17887,7 +17887,54 @@ void E_ObjectR::Info()
   outtext1(sDOF); 
 }
 
+CString E_ObjectR::GetName()
+{
+	return ("Rigid Spider (RBE2)");
+}
 
+int E_ObjectR::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = "Centre Node";
+	iNo++;
+	sVar[iNo] = "DOF String";
+	iNo++;
+	sVar[iNo] = "CTE Alpha";
+	iNo++;
+	return(iNo);
+
+}
+
+
+int E_ObjectR::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", pVertex[0]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sVar[iNo] = GetDOFString(iDOF);
+	iNo++;
+	sprintf_s(S1, "%g", dALPHA);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void E_ObjectR::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	ME_Object* pMe = (ME_Object*)this->pParent;
+	Pt_Object* pN;
+	int N1 = atoi(sVar[0]);
+	if ((pVertex[0]->iLabel != N1) && (pMe!=NULL))
+	{
+		pN = pMe->GetNode(N1);
+		if (pN != NULL)
+			pVertex[0] = pN;
+	}
+	SetDOFString(sVar[1]);
+	dALPHA = atof(sVar[2]);;
+}
 
 
 

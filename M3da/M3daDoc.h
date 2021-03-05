@@ -14,6 +14,7 @@ protected: // create from serialization only
 
 // Attributes
 public:
+BOOL bUndo = TRUE;
 BOOL bFinalChkPt = FALSE;
 BOOL bOnFirst=TRUE;
 CView* pCView;
@@ -478,6 +479,7 @@ public:
   afx_msg void OnManipulationEnvelopemaximum();
   afx_msg void OnManipulationEnvelopeminimum();
   afx_msg void OnManipulationScale();
+  afx_msg void OnEditToggleon();
 };
 
 
