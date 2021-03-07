@@ -2193,15 +2193,18 @@ void Pt_Object::ExportNAS(FILE* pFile, CoordSys* pD)
 	iRID = this->DefSys;
 	if (iRID > 0)
 	{
-		do
-		{
-			iDefCYS[iN] = iRID;
-			iN++;
-			iRID = ME->GetSys(iRID)->RID;
-		} while (iRID > 0);
-		for (i = iN - 1; i >= 0; i--)
-		{
-			pD = ME->GetSys(iDefCYS[i]);
+		//do
+		//{
+		//	iDefCYS[iN] = iRID;
+		//	iN++;
+		//	iRID = ME->GetSys(iRID)->RID;
+		//} while (iRID > 0);
+		//for (i = iN - 1; i >= 0; i--)
+		//{
+			// was -> pD = ME->GetSys(iDefCYS[i]);
+		//Write the grid in the local definition coord sys
+		//iRIF
+			pD = ME->GetSys(iRID);
 			if (pD!= NULL)
 			{
 				C3dMatrix A = pD->mOrientMat;
@@ -2232,7 +2235,7 @@ void Pt_Object::ExportNAS(FILE* pFile, CoordSys* pD)
 					pt = pCyl;
 				}
 			}
-		}
+		//}
 	}
    fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8i\n","GRID    ",iLabel,DefSys,e8(pt.x),e8(pt.y),e8(pt.z),OutSys);
 }
