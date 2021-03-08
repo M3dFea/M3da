@@ -15450,6 +15450,7 @@ ImportNASTRANELEM(sF,RetMesh,newPids);
 delete(RetMesh->TempList);
 RetMesh->TempList = NULL;
 RetMesh->UpdatePropRef(PropsT);
+RetMesh->CoordToGlocal();
 outtext1("Finished Read.");
 delete (newPids);
 delete (newMats);

@@ -2179,12 +2179,7 @@ fprintf(pFile,"%25.16E%25.16E%25.16E\n",Pt_Point->x,Pt_Point->y,Pt_Point->z);
 void Pt_Object::ExportNAS(FILE* pFile, CoordSys* pD)
 {
    //New to handle the DEF system eventually
-	if (iLabel == 6091)
-	{
-		int kk;
-		kk = 0;
-	}
-	ME_Object* ME = (ME_Object*) pParent;
+	//ME_Object* ME = (ME_Object*) pParent;
 	C3dVector pt(Pt_Point->x, Pt_Point->y, Pt_Point->z);
 	int i;
 	int iDefCYS[10];
@@ -2204,7 +2199,7 @@ void Pt_Object::ExportNAS(FILE* pFile, CoordSys* pD)
 			// was -> pD = ME->GetSys(iDefCYS[i]);
 		//Write the grid in the local definition coord sys
 		//iRIF
-			pD = ME->GetSys(iRID);
+			//pD = ME->GetSys(iRID);
 			if (pD!= NULL)
 			{
 				C3dMatrix A = pD->mOrientMat;
@@ -2471,7 +2466,7 @@ int Pt_Object::GetVarHeaders(CString sVar[])
 
 	sVar[iNo] = "Def CYS";
 	iNo++;
-	sVar[iNo] = "Out Angle";
+	sVar[iNo] = "Out CYS";
 	iNo++;
 	sVar[iNo] = "X";
 	iNo++;
@@ -20575,7 +20570,7 @@ for (i=0;i<iCYS;i++)
 fprintf(pFile,"%s\n","$********************NODES*********************************");
 for (i=0;i<iNdNo;i++)
 {
-  CoordSys* pDef = GetSys(pNodes[i]->DefSys);
+    CoordSys* pDef = GetSys(pNodes[i]->DefSys);
 	pNodes[i]->ExportNAS(pFile,pDef);
 }
 fprintf(pFile,"%s\n","$*******************ELEMENTS******************************");
@@ -24082,6 +24077,50 @@ for(i=0;i<iElNo;i++)
   }
 }
 return (imax);
+}
+
+void ME_Object::CoordToGlocal()
+{
+	int i;
+	int iRID;
+	CoordSys* pC;
+	CoordSys* pCNext;
+
+	for (i = 0; i < iCYS; i++)
+	{
+		pC = (CoordSys*) pSys[i];
+		iRID = pC->RID;
+		if (pC->iLabel == 3)
+			iRID = iRID;
+		
+		if (iRID > 0)
+		{
+			do
+			{
+				pCNext= GetSys(iRID);
+				if (pCNext == NULL)
+				{
+					outtext1("ERROR: Coordinate Sys Not Found.");
+				}
+				else
+				{
+					//vRet = A * vRet;
+					//vRet += Cys->Origin;
+					iRID = pCNext->RID;
+					//iRID = ME->NodeToGlobal(Z, iRID);
+					C3dMatrix A = pCNext->mOrientMat;
+					pC->Origin = A * pC->Origin;
+					pC->Origin += pCNext->Origin;
+					pC->mOrientMat = A * pC->mOrientMat;
+					if (pCNext->bG)
+						iRID = 0;
+				}
+			} while (iRID > 0);
+
+		}
+		pC->bG = TRUE;
+	}
+//CoordSys* pSys[MAX_FESIZE];     //Cys
 }
 
 void ME_Object::UpdatePropRef(PropTable* pT)
@@ -38759,10 +38798,18 @@ return (cSys);
 
 void CoordSys::ExportNAS(FILE* pFile)
 {
+ME_Object* ME = (ME_Object *) this->pParent;
 C3dVector pB;
 C3dVector pC;
+C3dVector pO;
+C3dMatrix RMat;
+C3dMatrix RMatDEF;
 CString sType;
 CString sRID; 
+CoordSys* pSys;
+RMat = mOrientMat;
+RMatDEF.MakeUnit();
+pO = Origin;
 if (CysType==3)
 {
   sType="CORD2S  ";
@@ -38775,19 +38822,37 @@ else
 {
   sType="CORD2R  ";
 }
-pB.x = mOrientMat.m_02;
-pB.y = mOrientMat.m_12;
-pB.z = mOrientMat.m_22;
-pC.x = mOrientMat.m_00;
-pC.y = mOrientMat.m_10;
-pC.z = mOrientMat.m_20;
-pB+=Origin;
-pC+=Origin;
 if (RID == -1)
 {
 	RID = 0;
 }
-fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8s%8s%8s\n",sType.GetString(),iLabel, RID,e8(Origin.x).GetString(),e8(Origin.y).GetString(),e8(Origin.z).GetString(),e8(pB.x).GetString(),e8(pB.y).GetString(),e8(pB.z).GetString());
+else
+{
+	if (ME != NULL)
+	{
+		pSys = ME->GetSys(RID);
+		if (pSys != NULL)
+		{
+			RMatDEF = pSys->mOrientMat;
+			RMatDEF.Transpose();
+			//RMat = RMat* RMatDEF;
+			pO -= pSys->Origin;
+			pO = RMatDEF * pO;
+		}
+	}
+}
+pB.x = RMat.m_02;
+pB.y = RMat.m_12;
+pB.z = RMat.m_22;
+pC.x = RMat.m_00;
+pC.y = RMat.m_10;
+pC.z = RMat.m_20;
+pB = RMatDEF * pB;
+pC = RMatDEF * pC;
+pB+= pO;
+pC+= pO;
+
+fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8s%8s%8s\n",sType.GetString(),iLabel, RID,e8(pO.x).GetString(),e8(pO.y).GetString(),e8(pO.z).GetString(),e8(pB.x).GetString(),e8(pB.y).GetString(),e8(pB.z).GetString());
 fprintf(pFile,"%8s%8s%8s%8s\n","        ",e8(pC.x).GetString(),e8(pC.y).GetString(),e8(pC.z).GetString());
 }
 
@@ -38844,11 +38909,17 @@ void CoordSys::Info()
   outtext1(OutT); 
 }
 
+CString CoordSys::GetName()
+{
+	return ("Coordinate System");
+}
+
 int CoordSys::GetVarHeaders(CString sVar[])
 {
+
 	sVar[0] = "Coord System Type";
 	sVar[1] = "Definition Coord System";
-	return(8);
+	return(3);
 }
 
 
@@ -38876,17 +38947,17 @@ C3dVector CoordSys::Get_Centroid()
 {
 	C3dVector O;
 	O = Origin;
-	int iRID = 0;
-	ME_Object* ME;
-	iRID = this->RID;
-	ME = (ME_Object*)pParent;
-	if ((ME != NULL) && (iRID > 0))
-	{
-		do
-		{
-			iRID = ME->NodeToGlobal(O, iRID);
-		} while (iRID > 0);
-	}
+	//int iRID = 0;
+	//ME_Object* ME;
+	//iRID = this->RID;
+	//ME = (ME_Object*)pParent;
+	//if ((ME != NULL) && (iRID > 0))
+	//{
+	//	do
+	//	{
+	//		iRID = ME->NodeToGlobal(O, iRID);
+	//	} while (iRID > 0);
+	//}
 return (O);
 }
 
@@ -38955,21 +39026,21 @@ if ((iDspFlgs & DSP_COORD)>0)
 	Y+=Origin;
 	Z+=Origin;
 	O = Origin;
-	int iRID=0;
-	int iN = 0;
-	ME_Object* ME;
-	iRID = this->RID;
-	ME = (ME_Object*)pParent;
-	if ((ME != NULL) && (iRID>0))
-	{
-		do
-		{
-			iN = ME->NodeToGlobal(O, iRID);
-			iN = ME->NodeToGlobal(X, iRID);
-			iN = ME->NodeToGlobal(Y, iRID);
-			iRID = ME->NodeToGlobal(Z, iRID);
-		} while (iRID > 0);
-	}
+	//int iRID=0;
+	//int iN = 0;
+	//ME_Object* ME;
+	//iRID = this->RID;
+	//ME = (ME_Object*)pParent;
+	//if ((ME != NULL) && (iRID>0))
+	//{
+	//	do
+	//	{
+	//		iN = ME->NodeToGlobal(O, iRID);
+			//iN = ME->NodeToGlobal(X, iRID);
+	//		iN = ME->NodeToGlobal(Y, iRID);
+	//		iRID = ME->NodeToGlobal(Z, iRID);
+	//	} while (iRID > 0);
+	//}
 
 	glColor3fv(cols[GetCol()]);
 	glBegin(GL_LINES);

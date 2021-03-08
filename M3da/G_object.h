@@ -2691,6 +2691,7 @@ C3dVector Origin;
 C3dVector DSP_Point;
 C3dMatrix mOrientMat;
 C3dMatrix DispMat;
+BOOL bG = FALSE; //flag to indicated the cys has beee set to global
 int CysType; // 1 rec,2 cyl,3sph
 int RID;
 double dScl;
@@ -2706,6 +2707,7 @@ virtual void Info ();
 virtual CString ToString ();
 virtual void ExportNAS(FILE* pFile);
 C3dMatrix GetTMat();
+virtual CString GetName();
 virtual int GetVarHeaders(CString sVar[]);
 virtual int GetVarValues(CString sVar[]);
 virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
@@ -3546,6 +3548,7 @@ public:
    Pt_Object* pNodes[MAX_FESIZE];  //Nodes
    E_Object* pElems[MAX_FESIZE];   //Elements
    BCLD* pBCLDs[MAX_FESIZE];
+   void CoordToGlocal();
    void UpdatePropRef(PropTable* pT);
    ME_Object* GetMesh();    //GetPtr to this
 
