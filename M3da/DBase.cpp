@@ -8776,23 +8776,25 @@ iNo=S_Count-iPos;
 if (bChk==TRUE)
 {
 //Check to see if all nodes are in cur mesh
-	if (pCurrentMesh->sName!="NULL")
-	{ 
-		for (i = 0; i < iNo; i++)
+
+  for (i=0;i<iNo;i++)
+  {
+    if (S_Buff[i]->iObjType==1)
+	  {
+	    pENodes[i]=(Pt_Object*) S_Buff[i];
+		if (pCurrentMesh->sName != "NULL")
 		{
-			if (S_Buff[i]->iObjType == 1)
-			{
-				pENodes[i] = (Pt_Object*)S_Buff[i];
-				if (S_Buff[i]->pParent != pCurrentMesh)
-				{
-					bChk = FALSE;
-				}
-			}
-			else
+			if (S_Buff[i]->pParent != pCurrentMesh)
 			{
 				bChk = FALSE;
 			}
 		}
+	  }
+	  else
+      {
+	    bChk=FALSE;
+	  }
+	
   }
 Pt_Object* cAddedNode;
 if (bChk==TRUE)

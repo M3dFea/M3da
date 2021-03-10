@@ -20033,69 +20033,72 @@ void ME_Object::Serialize(CArchive& ar,int iV)
 {
   int i;
   int iE;
-	if (ar.IsStoring())
-	{
-		// TODO: add storing code here
-      G_Object::Serialize(ar,iV);
-      ar<<sName;
-	  ar<<bDrawN;
-	  ar<<TransMat.m_00; ar<<TransMat.m_01; ar<<TransMat.m_02; ar<<TransMat.m_03;
-	  ar<<TransMat.m_10; ar<<TransMat.m_11; ar<<TransMat.m_12; ar<<TransMat.m_13;
-	  ar<<TransMat.m_20; ar<<TransMat.m_21; ar<<TransMat.m_22; ar<<TransMat.m_23;
-	  ar<<TransMat.m_30; ar<<TransMat.m_31; ar<<TransMat.m_32; ar<<TransMat.m_33;
-      ar<<iCYS;
-	  for (i=0;i<iCYS;i++)
-      {
-      pSys[i]->Serialize(ar,iV);
-      }
-      ar<<iNdNo;
-      for (i=0;i<iNdNo;i++)
-      {
-        pNodes[i]->Serialize(ar,iV);
-      }
-      ar << iElNo;
-      for (i=0;i<iElNo;i++)
-      {
-        ar<<pElems[i]->iType;
-        pElems[i]->Serialize(ar,iV,this);
-      }
-	  // LOAD AND BOUNDARY SETS
-      ar<<iCurLC;
-      ar<<iNoLCs;
-	  for (i=0;i<iNoLCs;i++)
-      {
-        LCS[i]->Serialize(ar,iV,this);
+  if (ar.IsStoring())
+  {
+	  if (sName!="NULL")
+	  {
+		  // TODO: add storing code here
+		  G_Object::Serialize(ar, iV);
+			  ar << sName;
+			  ar << bDrawN;
+			  ar << TransMat.m_00; ar << TransMat.m_01; ar << TransMat.m_02; ar << TransMat.m_03;
+			  ar << TransMat.m_10; ar << TransMat.m_11; ar << TransMat.m_12; ar << TransMat.m_13;
+			  ar << TransMat.m_20; ar << TransMat.m_21; ar << TransMat.m_22; ar << TransMat.m_23;
+			  ar << TransMat.m_30; ar << TransMat.m_31; ar << TransMat.m_32; ar << TransMat.m_33;
+			  ar << iCYS;
+			  for (i = 0; i < iCYS; i++)
+			  {
+				  pSys[i]->Serialize(ar, iV);
+			  }
+		  ar << iNdNo;
+		  for (i = 0; i < iNdNo; i++)
+		  {
+			  pNodes[i]->Serialize(ar, iV);
+		  }
+		  ar << iElNo;
+		  for (i = 0; i < iElNo; i++)
+		  {
+			  ar << pElems[i]->iType;
+			  pElems[i]->Serialize(ar, iV, this);
+		  }
+		  // LOAD AND BOUNDARY SETS
+		  ar << iCurLC;
+		  ar << iNoLCs;
+		  for (i = 0; i < iNoLCs; i++)
+		  {
+			  LCS[i]->Serialize(ar, iV, this);
+		  }
+		  ar << iCurBC;
+		  ar << iNoBCs;
+		  for (i = 0; i < iNoBCs; i++)
+		  {
+			  BCS[i]->Serialize(ar, iV, this);
+		  }
+		  ar << iCurTSet;
+		  ar << iNoTSets;
+		  for (i = 0; i < iNoTSets; i++)
+		  {
+			  TSETS[i]->Serialize(ar, iV, this);
+		  }
+		  pSOLS->Serialize(ar, iV);
 	  }
-      ar<<iCurBC;
-      ar<<iNoBCs;
-	  for (i=0;i<iNoBCs;i++)
-      {
-        BCS[i]->Serialize(ar,iV,this);
-	  }
-      ar<<iCurTSet;
-      ar<<iNoTSets;
-	  for (i=0;i<iNoTSets;i++)
-      {
-        TSETS[i]->Serialize(ar,iV,this);
-	  }
-      pSOLS->Serialize(ar,iV);
-	  }
+  }
 	  else
 	  {
         G_Object::Serialize(ar,iV);
         ar>>sName;
 	    ar>>bDrawN;
-    ar>>TransMat.m_00; ar>>TransMat.m_01; ar>>TransMat.m_02; ar>>TransMat.m_03;
-	  ar>>TransMat.m_10; ar>>TransMat.m_11; ar>>TransMat.m_12; ar>>TransMat.m_13;
-	  ar>>TransMat.m_20; ar>>TransMat.m_21; ar>>TransMat.m_22; ar>>TransMat.m_23;
-	  ar>>TransMat.m_30; ar>>TransMat.m_31; ar>>TransMat.m_32; ar>>TransMat.m_33;
-    ar>>iCYS;
-	  for (i=0;i<iCYS;i++)
-    {
-      pSys[i]= new CoordSys;
-      pSys[i]->Serialize(ar,iV);
-      pSys[i]->pParent=this;
-    }
+        ar>>TransMat.m_00; ar>>TransMat.m_01; ar>>TransMat.m_02; ar>>TransMat.m_03;
+	    ar>>TransMat.m_10; ar>>TransMat.m_11; ar>>TransMat.m_12; ar>>TransMat.m_13;
+	    ar>>TransMat.m_20; ar>>TransMat.m_21; ar>>TransMat.m_22; ar>>TransMat.m_23;
+	    ar>>TransMat.m_30; ar>>TransMat.m_31; ar>>TransMat.m_32; ar>>TransMat.m_33;
+        ar>>iCYS;
+	    for (i=0;i<iCYS;i++)
+        {
+          pSys[i]= new CoordSys;
+          pSys[i]->Serialize(ar,iV);
+          pSys[i]->pParent=this;
+        }
 	  ar>>iNdNo;
     if (iNdNo>5000)
       {TempList=new ObjTempList();}
