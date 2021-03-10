@@ -20036,55 +20036,55 @@ void ME_Object::Serialize(CArchive& ar,int iV)
 	if (ar.IsStoring())
 	{
 		// TODO: add storing code here
-    G_Object::Serialize(ar,iV);
-    ar<<sName;
+      G_Object::Serialize(ar,iV);
+      ar<<sName;
 	  ar<<bDrawN;
 	  ar<<TransMat.m_00; ar<<TransMat.m_01; ar<<TransMat.m_02; ar<<TransMat.m_03;
 	  ar<<TransMat.m_10; ar<<TransMat.m_11; ar<<TransMat.m_12; ar<<TransMat.m_13;
 	  ar<<TransMat.m_20; ar<<TransMat.m_21; ar<<TransMat.m_22; ar<<TransMat.m_23;
 	  ar<<TransMat.m_30; ar<<TransMat.m_31; ar<<TransMat.m_32; ar<<TransMat.m_33;
-    ar<<iCYS;
+      ar<<iCYS;
 	  for (i=0;i<iCYS;i++)
-    {
+      {
       pSys[i]->Serialize(ar,iV);
-    }
-    ar<<iNdNo;
-    for (i=0;i<iNdNo;i++)
-    {
-      pNodes[i]->Serialize(ar,iV);
-    }
-    ar << iElNo;
-    for (i=0;i<iElNo;i++)
-    {
-      ar<<pElems[i]->iType;
-      pElems[i]->Serialize(ar,iV,this);
-    }
+      }
+      ar<<iNdNo;
+      for (i=0;i<iNdNo;i++)
+      {
+        pNodes[i]->Serialize(ar,iV);
+      }
+      ar << iElNo;
+      for (i=0;i<iElNo;i++)
+      {
+        ar<<pElems[i]->iType;
+        pElems[i]->Serialize(ar,iV,this);
+      }
 	  // LOAD AND BOUNDARY SETS
-    ar<<iCurLC;
-    ar<<iNoLCs;
+      ar<<iCurLC;
+      ar<<iNoLCs;
 	  for (i=0;i<iNoLCs;i++)
-    {
-      LCS[i]->Serialize(ar,iV,this);
+      {
+        LCS[i]->Serialize(ar,iV,this);
 	  }
-    ar<<iCurBC;
-    ar<<iNoBCs;
+      ar<<iCurBC;
+      ar<<iNoBCs;
 	  for (i=0;i<iNoBCs;i++)
-    {
-      BCS[i]->Serialize(ar,iV,this);
+      {
+        BCS[i]->Serialize(ar,iV,this);
 	  }
-    ar<<iCurTSet;
-    ar<<iNoTSets;
+      ar<<iCurTSet;
+      ar<<iNoTSets;
 	  for (i=0;i<iNoTSets;i++)
-    {
-      TSETS[i]->Serialize(ar,iV,this);
+      {
+        TSETS[i]->Serialize(ar,iV,this);
 	  }
-    pSOLS->Serialize(ar,iV);
-	}
-	else
-	{
-    G_Object::Serialize(ar,iV);
-    ar>>sName;
-	  ar>>bDrawN;
+      pSOLS->Serialize(ar,iV);
+	  }
+	  else
+	  {
+        G_Object::Serialize(ar,iV);
+        ar>>sName;
+	    ar>>bDrawN;
     ar>>TransMat.m_00; ar>>TransMat.m_01; ar>>TransMat.m_02; ar>>TransMat.m_03;
 	  ar>>TransMat.m_10; ar>>TransMat.m_11; ar>>TransMat.m_12; ar>>TransMat.m_13;
 	  ar>>TransMat.m_20; ar>>TransMat.m_21; ar>>TransMat.m_22; ar>>TransMat.m_23;
@@ -24083,16 +24083,12 @@ void ME_Object::CoordToGlocal()
 {
 	int i;
 	int iRID;
-	CoordSys* pC;
-	CoordSys* pCNext;
-
+	CoordSys* pC=NULL;
+	CoordSys* pCNext=NULL;
 	for (i = 0; i < iCYS; i++)
 	{
 		pC = (CoordSys*) pSys[i];
 		iRID = pC->RID;
-		if (pC->iLabel == 3)
-			iRID = iRID;
-		
 		if (iRID > 0)
 		{
 			do
@@ -24104,23 +24100,19 @@ void ME_Object::CoordToGlocal()
 				}
 				else
 				{
-					//vRet = A * vRet;
-					//vRet += Cys->Origin;
 					iRID = pCNext->RID;
-					//iRID = ME->NodeToGlobal(Z, iRID);
 					C3dMatrix A = pCNext->mOrientMat;
 					pC->Origin = A * pC->Origin;
 					pC->Origin += pCNext->Origin;
 					pC->mOrientMat = A * pC->mOrientMat;
 					if (pCNext->bG)
-						iRID = 0;
+						iRID = 0;  //Has been transformed already - quit
 				}
 			} while (iRID > 0);
 
 		}
 		pC->bG = TRUE;
 	}
-//CoordSys* pSys[MAX_FESIZE];     //Cys
 }
 
 void ME_Object::UpdatePropRef(PropTable* pT)
@@ -48503,7 +48495,6 @@ void Table::Delete(Entity* pO)
 			iNo--;
 		}
 	}
-	iNo = 0;
 }
 
 
