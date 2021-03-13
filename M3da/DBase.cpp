@@ -1139,10 +1139,10 @@ void DBase::Serialize(CArchive& ar)
 				break;
 			case 4 :
 				DB_Obj[i] = new ME_Object;
-				DB_Obj[i]->Serialize(ar,iVER);
-				pM = (ME_Object*) DB_Obj[i];
+				DB_Obj[i]->Serialize(ar, iVER);
+				pM = (ME_Object*)DB_Obj[i];
 				pM->UpdatePropRef(PropsT);
-				//pM->Visable = TRUE;
+					//pM->Visable = TRUE;
 				break;
 			case 5 :
 				DB_Obj[i] = new Symbol();

@@ -20035,8 +20035,7 @@ void ME_Object::Serialize(CArchive& ar,int iV)
   int iE;
   if (ar.IsStoring())
   {
-	  if (sName!="NULL")
-	  {
+
 		  // TODO: add storing code here
 		  G_Object::Serialize(ar, iV);
 			  ar << sName;
@@ -20050,17 +20049,25 @@ void ME_Object::Serialize(CArchive& ar,int iV)
 			  {
 				  pSys[i]->Serialize(ar, iV);
 			  }
-		  ar << iNdNo;
-		  for (i = 0; i < iNdNo; i++)
-		  {
-			  pNodes[i]->Serialize(ar, iV);
-		  }
-		  ar << iElNo;
-		  for (i = 0; i < iElNo; i++)
-		  {
-			  ar << pElems[i]->iType;
-			  pElems[i]->Serialize(ar, iV, this);
-		  }
+			  if (sName != "NULL")
+			  {
+		         ar << iNdNo;
+		         for (i = 0; i < iNdNo; i++)
+		         {
+			        pNodes[i]->Serialize(ar, iV);
+		         }
+		         ar << iElNo;
+				 for (i = 0; i < iElNo; i++)
+				 {
+					 ar << pElems[i]->iType;
+					 pElems[i]->Serialize(ar, iV, this);
+				 }
+		      }
+			  else
+			  {
+				  ar << 0;
+				  ar << 0;
+			  }
 		  // LOAD AND BOUNDARY SETS
 		  ar << iCurLC;
 		  ar << iNoLCs;
@@ -20081,7 +20088,7 @@ void ME_Object::Serialize(CArchive& ar,int iV)
 			  TSETS[i]->Serialize(ar, iV, this);
 		  }
 		  pSOLS->Serialize(ar, iV);
-	  }
+	  
   }
 	  else
 	  {
@@ -38833,6 +38840,10 @@ else
 			//RMat = RMat* RMatDEF;
 			pO -= pSys->Origin;
 			pO = RMatDEF * pO;
+		}
+		else
+		{
+			outtext1("ERROR: Co-ordinate System not found. ");
 		}
 	}
 }
