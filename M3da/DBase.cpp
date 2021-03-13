@@ -14235,10 +14235,10 @@ sOmid=oC.GetField(4);
 iONID=-1;
 if (sOmid.Find(".")==-1)
 {
-  iONID=atoi(oC.GetField(4));
+  iONID=atoi(oC.GetField(7));
 }
 
-E_Object2* pE=(E_Object2*) pM->AddEl2(iNlabs,iID,7,136,iPID,1,2,0,0,0,-1,0);
+E_Object2* pE=(E_Object2*) pM->AddEl2(iNlabs,iID,7,136,iPID,1,2,0,0,0, iONID,0);
 pE->PIDunv=iPID;
 return(pE);
 }
@@ -14592,7 +14592,7 @@ void NASReadPBUSH(NasCard& oC,
 	              BOOL Relab)
 {
 	PBUSH* pS = new PBUSH();
-	pS->iType = 136;
+	pS->iType = 138;
 	pS->sTitle = "PBUSH CARD";
 	pS->sFlg = "K";
 	pS->iID = atoi(oC.GetField(0));

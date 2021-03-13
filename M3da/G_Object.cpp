@@ -2157,7 +2157,54 @@ CString Pt_Object::ToString()
 {
 CString sRT;
 char S1[80];
-sprintf_s(S1,"%8s%8i%8i%8s%8s%8s%8i\n","GRID    ",iLabel,DefSys,e8(Pt_Point->x),e8(Pt_Point->y),e8(Pt_Point->z),OutSys);
+//New to handle the DEF system eventually
+  //ME_Object* ME = (ME_Object*) pParent;
+C3dVector pt(Pt_Point->x, Pt_Point->y, Pt_Point->z);
+int i;
+int iDefCYS[10];
+int iN = 0;
+int iRID;
+CoordSys* pD;
+ME_Object* ME;
+
+iRID = this->DefSys;
+if (iRID > 0)
+{
+	ME = (ME_Object*) this->pParent;
+	pD = ME->GetSys(iRID);
+	if (pD != NULL)
+	{
+		C3dMatrix A = pD->mOrientMat;
+		A.Transpose();
+		if (pD->CysType == 1)
+		{
+			pt -= pD->Origin;
+			pt = A * pt;
+		}
+		else if (pD->CysType == 2)
+		{
+			pt -= pD->Origin;
+			pt = A * pt;
+			C3dVector pCyl;
+			pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y);
+			pCyl.y = atan2(pt.y, pt.x) * R2D;
+			pCyl.z = pt.z;
+			pt = pCyl;
+		}
+		else if (pD->CysType == 3)
+		{
+			pt -= pD->Origin;
+			pt = A * pt;
+			C3dVector pCyl;
+			pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+			pCyl.y = acos(pt.z / pCyl.x) * R2D;
+			pCyl.z = atan2(pt.y, pt.x) * R2D;
+			pt = pCyl;
+		}
+	}
+	//}
+}
+sprintf_s(S1,"%8s%8i%8i%8s%8s%8s%8i\n","GRID    ",iLabel,DefSys,e8(Pt_Point->x).GetString(),e8(Pt_Point->y).GetString(),e8(Pt_Point->z).GetString(),OutSys);
 sRT=S1;
 return(sRT);
 }
@@ -2188,18 +2235,7 @@ void Pt_Object::ExportNAS(FILE* pFile, CoordSys* pD)
 	iRID = this->DefSys;
 	if (iRID > 0)
 	{
-		//do
-		//{
-		//	iDefCYS[iN] = iRID;
-		//	iN++;
-		//	iRID = ME->GetSys(iRID)->RID;
-		//} while (iRID > 0);
-		//for (i = iN - 1; i >= 0; i--)
-		//{
-			// was -> pD = ME->GetSys(iDefCYS[i]);
-		//Write the grid in the local definition coord sys
-		//iRIF
-			//pD = ME->GetSys(iRID);
+
 			if (pD!= NULL)
 			{
 				C3dMatrix A = pD->mOrientMat;
@@ -11099,7 +11135,7 @@ for (i=0;i<2;i++)
 A=0;
 B=0;
 C=0;
-iCSYS=-1;
+iCSYS= iMat;
 }
 
 int E_Object2::noDof()
@@ -11747,6 +11783,24 @@ for (i=0;i<iNoNodes;i++)
 fprintf(pFile,"\n","");
 }
 
+CString E_Object2::ToString()
+{
+	char S[80] = "";
+	CString src = "";
+	C3dMatrix TMat;
+	int iCS;
+	if (iCSYS < 0)
+		iCS = 0;
+	else
+		iCS = iCSYS;
+
+	if (iType == 136)
+	{
+		sprintf_s(S , "%8s%8i%8i%8i%8i%8s%8s%8s%8i\n", "CBUSH   ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel, "", "", "", iCS);
+		src = S;
+	}
+	return (src);
+}
 
 void E_Object2::ExportNAS(FILE* pFile)
 {
@@ -13094,6 +13148,80 @@ gret->pPr=pPr;
 gret->pParent=Parrent;
 gret->pResV = NULL;
 return (gret);
+}
+
+CString E_Object2B::ToString()
+{
+	char S[80] = "";
+	CString src = "";
+	C3dMatrix TMat;
+
+	if (iType == 21)
+	{
+		sprintf_s(S, "%8s%8i%8i%8i%8i", "CBAR    ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel);
+		src = S;
+	}
+	else if (iType == 22)
+	{
+		sprintf_s(S, "%8s%8i%8i%8i%8i", "CBEAM   ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel);
+		src = S;
+	}
+	if (iONID > 0)
+	{
+		sprintf_s(S, "%8i\n", iONID);
+		src += S;
+	}
+	else
+	{
+		TMat.MakeUnit();
+		if (pVertex[0]->OutSys > 0)
+		{
+			ME_Object* pM = (ME_Object*)this->pParent;
+			CoordSys* pSys = pM->GetSys(pVertex[0]->OutSys);
+			if (pSys != NULL)
+			{
+				TMat = pSys->GetTMat();
+				TMat.Transpose();
+			}
+		}
+		C3dVector vU;
+		vU = TMat * vUp;
+		sprintf_s(S, "%8s%8s%8s\n", e8(vU.x), e8(vU.y), e8(vU.z));
+		src += S;
+	}
+	sprintf_s(S, "%8s%8s%8s", "        ", GetDOFString(iDOFA), GetDOFString(iDOFB));
+	src += S;
+	TMat.MakeUnit();
+	if (pVertex[0]->OutSys > 0)
+	{
+		ME_Object* pM = (ME_Object*)this->pParent;
+		CoordSys* pSys = pM->GetSys(pVertex[0]->OutSys);
+		if (pSys != NULL)
+		{
+			TMat = pSys->GetTMat();
+			TMat.Transpose();
+		}
+	}
+	C3dVector vD1;
+	vD1 = TMat * OffA;
+	sprintf_s(S, "%8s%8s%8s", e8(vD1.x), e8(vD1.y), e8(vD1.z));
+	src += S;
+	TMat.MakeUnit();
+	if (pVertex[0]->OutSys > 0)
+	{
+		ME_Object* pM = (ME_Object*)this->pParent;
+		CoordSys* pSys = pM->GetSys(pVertex[1]->OutSys);
+		if (pSys != NULL)
+		{
+			TMat = pSys->GetTMat();
+			TMat.Transpose();
+		}
+	}
+	C3dVector vD2;
+	vD2 = TMat * OffB;
+	sprintf_s(S, "%8s%8s%8s\n", e8(vD2.x), e8(vD2.y), e8(vD2.z));
+	src += S;
+	return(src);
 }
 
 void E_Object2B::ExportNAS(FILE* pFile)
@@ -24320,7 +24448,7 @@ else if (iType == 161)
 else if ((iType == 136) || (iType == 137))
   {
   E_Object2 *pEL2 = new E_Object2();
-  pEL2->Create(pInVertex,iLab,iCol,iType,iPID,iMat,iNo,this,NULL);
+  pEL2->Create(pInVertex,iLab,iCol,iType,iPID, iMatCys,iNo,this,NULL);
   pElems[iElNo] = pEL2;
   pERet= pEL2;
   iElNo++;

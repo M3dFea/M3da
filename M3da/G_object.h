@@ -2884,6 +2884,7 @@ public:
   void SetUpVec(C3dVector vIn);
   void SetSec(int iA,int iB,int iC);
   virtual void ExportUNV(FILE* pFile);
+  virtual CString ToString();
   virtual void ExportNAS(FILE* pFile);
   virtual void ExportUPVecs(FILE* pFile);
   virtual BOOL NodeInEl(Pt_Object* pN);
@@ -2963,6 +2964,7 @@ class E_Object2B : public E_Object2R
 DECLARE_DYNAMIC(E_Object2B)
 public:
 E_Object2B();
+virtual CString ToString();
 virtual void ExportNAS(FILE* pFile);
 virtual int noDof();
 virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
