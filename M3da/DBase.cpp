@@ -14585,6 +14585,33 @@ pS->CreateSec();
 pM->AddItem(pS);
 }
 
+void NASReadPBUSH(NasCard& oC,
+	              PropTable* pM,
+	              NEList* cPID,
+	              int iType,
+	              BOOL Relab)
+{
+	PBUSH* pS = new PBUSH();
+	pS->iType = 136;
+	pS->sTitle = "PBUSH CARD";
+	pS->sFlg = "K";
+	pS->iID = atoi(oC.GetField(0));
+	pS->dK1 = (ae(oC.GetField(2)));
+	pS->dK2 = (ae(oC.GetField(3)));
+	pS->dK3 = (ae(oC.GetField(4)));
+	pS->dK4 = (ae(oC.GetField(5)));
+	pS->dK5 = (ae(oC.GetField(6)));
+	pS->dK6 = (ae(oC.GetField(7)));
+	int NextID;
+	if (Relab)
+		NextID = pM->NextID();
+	else
+		NextID = pS->iID;
+	cPID->Add(pS->iID, NextID);
+	pS->iID = NextID;
+	pM->AddItem(pS);
+}
+
 BOOL NASReadPBEAM_C2(FILE* pFile,CString* L1,CString* LNext,PBEAM* pS)
 {
 char s1[200];
@@ -15116,6 +15143,8 @@ else if ((s8 == "PSOLID  ") || (s8 == "PSOLID* "))
   brc = TRUE;
 else if ((s8 == "PBAR    ") || (s8 == "PBAR*   ")) 
   brc = TRUE;
+else if ((s8 == "PBUSH   ") || (s8 == "PBUSH*  "))
+  brc = TRUE;
 else if ((s8 == "PROD    ") || (s8 == "PROD*   ")) 
   brc = TRUE;
 else if ((s8 == "PBEAM   ") || (s8 == "PBEAM*  ")) 
@@ -15246,6 +15275,8 @@ if (pFile!=NULL)
         {NASReadPBAR(oCard,PropsT,PIDs,2,FALSE);}
       else if ((sKwrd.Find("PROD ") == 0))
         {NASReadPROD(oCard,PropsT,PIDs,2,FALSE);}
+	  else if ((sKwrd.Find("PBUSH") == 0))
+	    {NASReadPBUSH(oCard, PropsT, PIDs, 2, FALSE);}
       else if ((sKwrd.Find("PBEAM") == 0))
         {NASReadPBEAM(oCard,PropsT,PIDs,2,FALSE);} //NOT DONE
      else if ((sKwrd.Find("MAT1") == 0))
