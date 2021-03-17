@@ -14815,7 +14815,10 @@ pS->iType=1;
 pS->sTitle="MAT1 CARD";
 pS->iID=atoi(oC.GetField(0));
 pS->dE=(ae(oC.GetField(1)));
-pS->dG=(aeB(oC.GetField(2)));
+if (oC.GetField(2)!="        ")
+  pS->dG=(aeB(oC.GetField(2)));
+else
+  pS->dG = 0;
 pS->dNU=atof(oC.GetField(3));
 pS->dRHO=atof(oC.GetField(4));
 pS->dA=(ae(oC.GetField(5)));
