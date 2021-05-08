@@ -14924,7 +14924,7 @@ for (i=1;i<=9;i++)
 
 for (i=6;i<=18;i+=6)
 {
-  *KMf.mn(i,i)=100;  //DRILLING STIFFNES
+  *KMf.mn(i,i)=0.01;  //DRILLING STIFFNES
 }
 //Transform to global
 //M3.Transpose();
@@ -16569,7 +16569,7 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 
 	for (i = 6; i <= 24; i += 6)
 	{   //BECAREFUL MAKING THIS VALUE LARGE MESSES THINGS UP
-		*KMf.mn(i, i) = 100;       //DRILLING STIFFNESS
+		*KMf.mn(i, i) = 0.01;       //DRILLING STIFFNESS
 	}
 	//Transform to global
 	//M3.Transpose();
@@ -16596,6 +16596,7 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 	Mat TT;
 	T = KMf * TMAT;
 	TT = TMATT * T;
+
 	KM.clear();
 	KM2.clear();
 	KM3.clear();

@@ -16380,13 +16380,19 @@ void DBase::EditProp(int PID)
   P = PropsT->GetItem(PID);
   if (P != NULL)
   {
-    CEntEditDialog Dlg;
-    Dlg.pEnt = P;
-    Dlg.DoModal();
-	if (Dlg.bDel == TRUE)
-		PropsT->Delete(P);
-	InvalidateOGL();
-	ReGen();
+    CEntEditDialog* Dlg = NULL;
+	Dlg = new CEntEditDialog();
+	if (Dlg != NULL)
+	{
+		Dlg->pEnt = P;
+		Dlg->DoModal();
+		if (Dlg->bDel == TRUE)
+			PropsT->Delete(P);
+		delete (Dlg);
+		Dlg = NULL;
+		InvalidateOGL();
+		ReGen();
+	}
   }
   else
   {
