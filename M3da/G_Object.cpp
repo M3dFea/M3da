@@ -26577,7 +26577,7 @@ C3dVector ME_Object::EigenVector2d(int iEID, C3dVector rX, C3dVector rY, double 
 	rX.x -= lambda;
 	rY.y -= lambda;
 	char s80[80];
-	//Assume trail X=1 for eigen vetoy
+	//Assume trail X=1 for eigen vector
 	if (rX.y != 0)
 	{
 		res.x = 1;
