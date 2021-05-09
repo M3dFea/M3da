@@ -27215,11 +27215,11 @@ if ((iCnt>7) && (isGood))
 	pRes->v[12]=*(float*) &Vals[i+12];
 	pRes->v[13]=*(float*) &Vals[i+13];
 	pRes->v[14]=*(float*) &Vals[i+14];
-	pRes->v[15]=*(float*) &Vals[i+15];
-	pRes->v[16]=*(float*) &Vals[i+16];
+	pRes->v[15]=*(float*) &Vals[i+15]; //Minor prin
 	p1=*(float*) &Vals[i+14];
 	p2=*(float*) &Vals[i+15];
 	vm=pow(p1*p1-p1*p2+p2*p2,0.5);
+	pRes->v[16] = 0.5 * (p1 - p2);
 	pRes->v[17]=vm;
     ResultsSets[iNoRes]->Add(pRes);
   }
