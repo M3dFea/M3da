@@ -17922,6 +17922,39 @@ PropsT->AddItem(pBar);
 outtext1("New BAR Section Created.");
 }
 
+void DBase::CreatePrT2(CString sT, int iPID, int iMID, double dW, double dH, double dWT, double dHT)
+{
+	PBARL* pBar = new PBARL();
+	pBar->sSecType = "T2";
+	pBar->sTitle = sT;
+	pBar->iMID = iMID;
+	pBar->iID = iPID;
+	pBar->iNoDims = 4;
+	pBar->dDIMs[0] = dW;
+	pBar->dDIMs[1] = dH;
+	pBar->dDIMs[2] = dWT;
+	pBar->dDIMs[3] = dHT;
+	pBar->CreateSec();
+	PropsT->AddItem(pBar);
+	outtext1("New T2 Beam Section Created.");
+}
+
+void DBase::CreatePrCHAN2(CString sT, int iPID, int iMID, double dW, double dH, double dWT, double dHT)
+{
+	PBARL* pBar = new PBARL();
+	pBar->sSecType = "CHAN2";
+	pBar->sTitle = sT;
+	pBar->iMID = iMID;
+	pBar->iID = iPID;
+	pBar->iNoDims = 4;
+	pBar->dDIMs[0] = dHT;
+	pBar->dDIMs[1] = dWT;
+	pBar->dDIMs[2] = dH;
+	pBar->dDIMs[3] = dW;
+	pBar->CreateSec();
+	PropsT->AddItem(pBar);
+	outtext1("New CHAN2 Beam Section Created.");
+}
 
 void DBase::CreatePrTube(CString sT,int iPID,int iMID,double dR,double dr)
 {

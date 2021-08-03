@@ -671,6 +671,8 @@ void CreatePRod(CString sT,int iPID,int iMID,double dA,double dJ);
 void CreatePrTube(CString sT,int iPID,int iMID,double dR,double dr);
 void CreatePrBar(CString sT,int iPID,int iMID,double dW,double dH);
 void CreatePrBox(CString sT,int iPID,int iMID,double dW,double dH,double dWT,double dHT);
+void CreatePrT2(CString sT, int iPID, int iMID, double dW, double dH, double dWT, double dHT);
+void CreatePrCHAN2(CString sT, int iPID, int iMID, double dW, double dH, double dWT, double dHT);
 void CreatePrShell(CString sT,int iPID,int iMID,double dT,double dNSM);
 void CreatePrPCOMP(CString sT, int iPID, double dNSM, int iNoLay, CString sLay[]);
 void CreatePrSpringT(CString sT,int iPID,double dkx,double dky,double dkz,double dkt);

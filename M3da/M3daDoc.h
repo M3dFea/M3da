@@ -480,6 +480,8 @@ public:
   afx_msg void OnManipulationEnvelopeminimum();
   afx_msg void OnManipulationScale();
   afx_msg void OnEditToggleon();
+  afx_msg void OnPropertyBeamT2();
+  afx_msg void OnPropertyBeamChan2();
 };
 
 

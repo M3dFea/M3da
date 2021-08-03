@@ -521,13 +521,17 @@
 #define ID_MANIPULATION_SCALE           33341
 #define ID_MANIPULATION_DIVIDEINTO      33342
 #define ID_EDIT_TOGGLEON                33343
+#define ID_PROPERTY_BEAM33344           33344
+#define ID_PROPERTY_BEAM33345           33345
+#define ID_PROPERTY_BEAM_T2             33346
+#define ID_PROPERTY_BEAM_CHAN2          33347
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        361
-#define _APS_NEXT_COMMAND_VALUE         33344
+#define _APS_NEXT_COMMAND_VALUE         33348
 #define _APS_NEXT_CONTROL_VALUE         1055
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

@@ -332,6 +332,8 @@ ON_COMMAND(ID_MANIPULATION_ENVELOPEMAXIMUM, &CM3daDoc::OnManipulationEnvelopemax
 ON_COMMAND(ID_MANIPULATION_ENVELOPEMINIMUM, &CM3daDoc::OnManipulationEnvelopeminimum)
 ON_COMMAND(ID_MANIPULATION_SCALE, &CM3daDoc::OnManipulationScale)
 ON_COMMAND(ID_EDIT_TOGGLEON, &CM3daDoc::OnEditToggleon)
+ON_COMMAND(ID_PROPERTY_BEAM_T2, &CM3daDoc::OnPropertyBeamT2)
+ON_COMMAND(ID_PROPERTY_BEAM_CHAN2, &CM3daDoc::OnPropertyBeamChan2)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5624,5 +5626,41 @@ void CM3daDoc::OnEditToggleon()
 		ReSet();
 		SetUndoLevels(4);
 		CheckPoint();
+	}
+}
+
+
+void CM3daDoc::OnPropertyBeamT2()
+{
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		//outtextMSG2("PRBBAR");
+		//sLastcmd="PRBBAR";
+		int iNLab = cDBase->PropsT->NextID();
+		cDBase->CreatePrT2("T2 Beam Property", iNLab, -1, 1.0, 2.0,0.5,0.2);
+		cDBase->EditProp(iNLab);
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnPropertyBeamChan2()
+{
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		//outtextMSG2("PRBBAR");
+		//sLastcmd="PRBBAR";
+		int iNLab = cDBase->PropsT->NextID();
+		cDBase->CreatePrCHAN2("CHAN2 Beam Property", iNLab, -1, 2, 1, 0.5, 0.2);
+		cDBase->EditProp(iNLab);
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
 	}
 }

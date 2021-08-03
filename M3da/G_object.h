@@ -810,6 +810,8 @@ virtual ~BSec();
 void Create();
 void CreateDefSec(double W,int iC);
 void CreateBox(double W,double H,double Wthk,double Hthk);
+void CreateT2(double W, double H, double Wthk, double Hthk);
+void CreateCHAN2(double d1, double d2, double d3, double d4);
 void CreateBar(double W,double H);
 void CreateRod(double R);
 void CreateTube(double R,double r);

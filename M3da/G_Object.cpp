@@ -16435,7 +16435,7 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 	int k;
 	dee.Create(2, 2);
 	G = 0.5*dE / (1 + dv);
-	kk = 5.0 / 6.0;
+	kk =  5.0 / 6.0;
 	*dee.mn(1, 1) = kk * G*dthk;
 	*dee.mn(2, 2) = kk * G*dthk;
 	*dee.mn(1, 2) = 0;
@@ -16606,7 +16606,7 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 	T.clear();
 	V.clear();
 	V1.clear();
-
+	//TT.diag();
 	return (TT);
 }
 
@@ -35132,6 +35132,14 @@ if (sSecType.Find("BOX")>-1)
 {
   DspSec.CreateBox(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3]);
 }
+else if (sSecType.Find("T2") > -1)
+{
+	DspSec.CreateT2(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3]);
+}
+else if (sSecType.Find("CHAN2") > -1)
+{
+	DspSec.CreateCHAN2(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3]);
+}
 else if (sSecType.Find("BAR")>-1)
 {
   DspSec.CreateBar(dDIMs[0],dDIMs[1]);
@@ -35303,6 +35311,23 @@ else if (sSecType.Find("BOX")!=-1)
   Iyy=Ho*Wo*Wo*Wo/12-Hi*Wi*Wi*Wi/12;
   Izz=Wo*Ho*Ho*Ho/12-Wi*Hi*Hi*Hi/12;
   J=Izz+Iyy;
+}
+else if (sSecType.Find("T2") != -1)
+{
+	double h = dDIMs[1];
+	double b = dDIMs[0];
+	double tw =  dDIMs[3];
+	double tf =  dDIMs[2];
+	double Ayc = 0;
+	double yc = 0;
+	double Iyo = 0;
+	A = b*tf+(h-tf)*tw;
+	Ayc = tw * h * h * 0.5 + (b - tw) * tf * tf * 0.5;
+    yc = Ayc / A;
+	Iyo = tw * h * h * h / 3 + (b - tw)*tf * tf * tf / 3;
+	Izz = Iyo - A * yc * yc;
+	Iyy = (h - tf) * tw * tw * tw / 12 + tf * b * b * b / 12;
+	J = Izz + Iyy;
 }
 else
 {
@@ -48151,6 +48176,48 @@ AddInPt(-W,+H);
 AddInPt(+W,+H);
 AddInPt(+W,-H);
 AddInPt(-W,-H);
+}
+
+void BSec::CreateT2(double W, double H, double Wthk, double Hthk)
+{
+	Clear();
+	//For some reason the section is upside down need to check why
+	H *= -1;
+	Wthk *= -1;
+	W /= 2;
+	H /= 2;
+	AddOutPt(-W, -H);
+	AddOutPt(-W, -H+ Wthk);
+	AddOutPt(-Hthk/2, -H + Wthk);
+	AddOutPt(-Hthk / 2, H);
+	AddOutPt(Hthk / 2, H);
+	AddOutPt(Hthk / 2, -H + Wthk);
+	AddOutPt(W, -H + Wthk);
+	AddOutPt(W, -H);
+	AddOutPt(-W, -H);
+}
+
+void BSec::CreateCHAN2(double d1, double d2, double d3, double d4)
+{
+	Clear();
+
+	double dX=d4;
+	double dY=d3;
+	double dXt=d1;
+	double dYt=d2;
+	dX /= 2;
+	dY /= 2;
+	dY *= -1;
+	dYt *= -1;
+	AddOutPt(-dX, -dY);
+	AddOutPt(-dX, dY);
+	AddOutPt(-dX+dXt, dY);
+	AddOutPt(-dX + dXt, -dY+dYt);
+	AddOutPt(dX - dXt, -dY + dYt);
+	AddOutPt(dX - dXt, dY);
+	AddOutPt(dX, dY);
+	AddOutPt(dX, -dY);
+	AddOutPt(-dX, -dY);
 }
 
 void BSec::CreateBar(double W,double H)

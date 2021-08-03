@@ -231,6 +231,8 @@ BEGIN
                 MENUITEM "Beam-BAR",                    ID_PROPERTY_BEAMBAR
                 MENUITEM "Beam-TUBE",                   ID_PROPERTY_BEAMTUBE
                 MENUITEM "Beam-BOX",                    ID_PROPERTY_BEAMBOX
+                MENUITEM "Beam-T2",                     ID_PROPERTY_BEAM_T2
+                MENUITEM "Beam-CHAN2",                  ID_PROPERTY_BEAM_CHAN2
                 MENUITEM "Shell",                       ID_PROPERTY_SHELL
                 MENUITEM "Solid",                       ID_PROPERTY_SOLID
                 MENUITEM "2D Plain Stress",             ID_PROPERTY_2DPLAINSTRESS
@@ -1205,6 +1207,12 @@ BEGIN
     ID_MANIPULATION_SCALE   "Scale a results set variable"
     ID_MANIPULATION_DIVIDEINTO 
                             "Divide a results set variable into a number used for RF calculations"
+END
+
+STRINGTABLE
+BEGIN
+    ID_PROPERTY_BEAM33344   "Create Beam T2 Section"
+    ID_PROPERTY_BEAM33345   "Create Beam Channel 2 Section"
 END
 
 #endif    // English (United States) resources
