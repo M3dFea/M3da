@@ -815,7 +815,7 @@ void CreateCHAN2(double d1, double d2, double d3, double d4);
 void CreateBar(double W,double H);
 void CreateRod(double R);
 void CreateTube(double R,double r);
-void CreateI(double WH,double BW,double TW,double WT,double BWT,double TWT);
+void CreateI2(double WH,double BW,double TW,double WT,double BWT,double TWT);
 void Clear();
 void Serialize(CArchive& ar,int iV);
 void OglDraw(int iDspFlgs,C3dMatrix TA,C3dMatrix TB,C3dVector d0,C3dVector d1,float C1,float C2,BOOL bD);

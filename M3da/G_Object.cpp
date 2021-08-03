@@ -35152,9 +35152,9 @@ else if (sSecType.Find("TUBE")>-1)
 {
   DspSec.CreateTube(dDIMs[0],dDIMs[1]);
 }
-else if (sSecType.Find("I  ")>-1)
+else if (sSecType.Find("I2")>-1)
 {
-  DspSec.CreateI(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3],dDIMs[4],dDIMs[5]);
+  DspSec.CreateI2(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3],dDIMs[4],dDIMs[5]);
 }
 this->CalcProps();
 }
@@ -48232,7 +48232,7 @@ AddOutPt(+W,-H);
 AddOutPt(-W,-H);
 }
 
-void BSec::CreateI(double WH,double BW,double TW,double WT,double BWT,double TWT)
+void BSec::CreateI2(double WH,double BW,double TW,double WT,double BWT,double TWT)
 {
 Clear();
 WH/=2;

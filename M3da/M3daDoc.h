@@ -482,6 +482,7 @@ public:
   afx_msg void OnEditToggleon();
   afx_msg void OnPropertyBeamT2();
   afx_msg void OnPropertyBeamChan2();
+  afx_msg void OnPropertyBeamI2();
 };
 
 

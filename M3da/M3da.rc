@@ -233,6 +233,7 @@ BEGIN
                 MENUITEM "Beam-BOX",                    ID_PROPERTY_BEAMBOX
                 MENUITEM "Beam-T2",                     ID_PROPERTY_BEAM_T2
                 MENUITEM "Beam-CHAN2",                  ID_PROPERTY_BEAM_CHAN2
+                MENUITEM "Beam-I2",                     ID_PROPERTY_BEAM_I2
                 MENUITEM "Shell",                       ID_PROPERTY_SHELL
                 MENUITEM "Solid",                       ID_PROPERTY_SOLID
                 MENUITEM "2D Plain Stress",             ID_PROPERTY_2DPLAINSTRESS
@@ -847,6 +848,9 @@ BEGIN
     ID_ELEMENTMODIFIY_BEAMUPVECTORS "Set the beam orientation vector."
     ID_ELEMENTMODIFIY_BEAMOFFSET "Set beam offset vector."
     ID_ELEMENTMODIFIY_SHELLOFFSET "Set shell element offset."
+    ID_PROPERTY_BEAM        "Craete Beam Rod Section (NASTRAN ROD)"
+    ID_PROPERTY_BEAMBAR     "Create Beam Bar Section (NASTRAN BAR)"
+    ID_PROPERTY_BEAMTUBE    "Create Beam Tube Section (NASTRAN TUBE)"
 END
 
 STRINGTABLE
@@ -864,6 +868,7 @@ END
 
 STRINGTABLE
 BEGIN
+    ID_PROPERTY_BEAMBOX     "Create Beams Box Section (NASTRAN BOX)"
     ID_MATERIAL_ORTHOTROPIC "Create Orthotropic Material (MAT8) not available in M3d solves"
     ID_PROPERTYMODIFY_CHANGEMATERIAL 
                             "Change the material assigned to a property."
@@ -1145,6 +1150,7 @@ BEGIN
     ID_PROPERTYMODIFY_EDITPROPERTYVALUES "Edit Properties Values"
     ID_PROPERTY_EDITMATERIALVALUES "Edit Material Values"
     ID_PROPERTY_BEAM33273   "Basic Beam "
+    ID_PROPERTY_BEAM_BASIC  "Create a General Beam Section by Entering All Properties"
     ID_POST_LISTNODALRESULTS "List Nodal Results Values"
     ID_CURVEMODIFY_INSERTKNOT "Insert Knot into Knot Vector"
 END
@@ -1213,6 +1219,9 @@ STRINGTABLE
 BEGIN
     ID_PROPERTY_BEAM33344   "Create Beam T2 Section"
     ID_PROPERTY_BEAM33345   "Create Beam Channel 2 Section"
+    ID_PROPERTY_BEAM_T2     "Create Beam T Sections (NASTRAN T2)"
+    ID_PROPERTY_BEAM_CHAN2  "Create Beam Channel Section (NASTRAN CHAN2)"
+    ID_PROPERTY_BEAM_I2     "Create Beam I Section (NASTRAN I2)"
 END
 
 #endif    // English (United States) resources

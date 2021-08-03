@@ -17956,6 +17956,26 @@ void DBase::CreatePrCHAN2(CString sT, int iPID, int iMID, double dW, double dH, 
 	outtext1("New CHAN2 Beam Section Created.");
 }
 
+void DBase::CreatePrI2(CString sT, int iPID, int iMID, double d1, double d2, double d3, double d4, double d5, double d6)
+{
+	PBARL* pBar = new PBARL();
+	pBar->sSecType = "I2";
+	pBar->sTitle = sT;
+	pBar->iMID = iMID;
+	pBar->iID = iPID;
+	pBar->iNoDims = 6;
+	pBar->dDIMs[0] = d1;
+	pBar->dDIMs[1] = d2;
+	pBar->dDIMs[2] = d3;
+	pBar->dDIMs[3] = d4;
+	pBar->dDIMs[4] = d5;
+	pBar->dDIMs[5] = d6;
+	pBar->CreateSec();
+	PropsT->AddItem(pBar);
+	outtext1("New I2 Beam Section Created.");
+}
+
+
 void DBase::CreatePrTube(CString sT,int iPID,int iMID,double dR,double dr)
 {
 PBARL* pBar = new PBARL();
