@@ -34980,6 +34980,8 @@ A=0;
 Izz=0;
 Iyy=0;
 J=0;
+ybar=0;
+zbar=0;
 }
 
 int PBARL::GetVarHeaders(CString sVar[])
@@ -35113,6 +35115,10 @@ void PBARL::List()
   outtext1(_T(S1)); 
   sprintf_s(S1,"%s %f","J     : ",J);
   outtext1(_T(S1)); 
+  sprintf_s(S1, "%s %f", "yBar     : ", ybar);
+  outtext1(_T(S1));
+  sprintf_s(S1, "%s %f", "zBar     : ", zbar);
+  outtext1(_T(S1));
   sprintf_s(S1,"%s %f","NSM   : ",dNSM);
   outtext1(_T(S1)); 
   sprintf_s(S1,"%s %i","IDIMS : ",iNoDims);
@@ -35127,18 +35133,10 @@ void PBARL::List()
 
 void PBARL::CreateSec()
 {
-
+this->CalcProps();
 if (sSecType.Find("BOX")>-1)
 {
   DspSec.CreateBox(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3]);
-}
-else if (sSecType.Find("T2") > -1)
-{
-	DspSec.CreateT2(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3]);
-}
-else if (sSecType.Find("CHAN2") > -1)
-{
-	DspSec.CreateCHAN2(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3]);
 }
 else if (sSecType.Find("BAR")>-1)
 {
@@ -35152,11 +35150,19 @@ else if (sSecType.Find("TUBE")>-1)
 {
   DspSec.CreateTube(dDIMs[0],dDIMs[1]);
 }
+else if (sSecType.Find("T2") > -1)
+{
+	DspSec.CreateT2(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3], ybar);
+}
+else if (sSecType.Find("CHAN2") > -1)
+{
+	DspSec.CreateCHAN2(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3], ybar);
+}
 else if (sSecType.Find("I2")>-1)
 {
-  DspSec.CreateI2(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3],dDIMs[4],dDIMs[5]);
+  DspSec.CreateI2(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3],dDIMs[4],dDIMs[5],ybar);
 }
-this->CalcProps();
+
 }
 
 int PBARL::GetMat()
@@ -35324,10 +35330,59 @@ else if (sSecType.Find("T2") != -1)
 	A = b*tf+(h-tf)*tw;
 	Ayc = tw * h * h * 0.5 + (b - tw) * tf * tf * 0.5;
     yc = Ayc / A;
+	ybar = yc;
 	Iyo = tw * h * h * h / 3 + (b - tw)*tf * tf * tf / 3;
 	Izz = Iyo - A * yc * yc;
 	Iyy = (h - tf) * tw * tw * tw / 12 + tf * b * b * b / 12;
-	J = Izz + Iyy;
+	double dd;
+	dd = h - tf / 2;
+
+	J = (b * tf * tf * tf + dd * tw * tw * tw) / 3;
+}
+else if (sSecType.Find("CHAN2") != -1)
+{
+	double h = dDIMs[2];
+	double w = dDIMs[3];
+	double wt = dDIMs[1];
+	double ft = dDIMs[0];
+	double AI = 0; //First moment of area
+	double c = 0;
+
+	A = w * h - (w - 2 * ft) * (h - wt);
+	AI = h * ft * h + (w - 2 * ft) * wt * wt / 2;
+	ybar = AI / A;
+	Iyy = h * w * w * w / 12 - (h - wt) * (w - 2 * ft) * (w - 2 * ft) * (w - 2 * ft) / 12;
+	Izz = ft * h * h * h / 6 + 2 * h * ft * (h / 2 - ybar) * (h / 2 - ybar);
+	c = w - 2*ft;
+	Izz += c * wt * wt * wt / 12 + c * wt * (ybar - wt / 2) * (ybar - wt / 2);
+	double bb;
+	double dd;
+	//https://www.projectengineer.net/what-is-the-torsion-constant/
+	bb = h - wt / 2;
+	dd = w - ft;
+	J = (2 * bb * ft * ft * ft + dd * wt * w * wt) / 3;
+}
+else if (sSecType.Find("I2") != -1)
+{
+	double h = dDIMs[0];
+	double wb = dDIMs[1];;
+	double wt = dDIMs[2];;
+	double tw = dDIMs[3];;
+	double tbf = dDIMs[4];;
+	double ttf = dDIMs[5];;
+	double fh;
+	double AY;
+	fh = h - tbf - ttf;
+	A = wb * tbf + wt * ttf + fh * tw;
+	AY = wb * tbf * tbf / 2 + wt * ttf * (h - ttf / 2) + fh * tw * (fh / 2 + tbf);
+	ybar = AY / A;
+	Iyy = tbf * wb * wb * wb / 12 + ttf * wt * wt * wt / 12 + fh * tw * tw * tw / 12;
+	Izz = wb * tbf * tbf * tbf / 12 + wb * tbf * (ybar - tbf / 2) * (ybar - tbf / 2);
+	Izz += wt * ttf * ttf * ttf / 12 + wt * ttf * (h - ttf / 2 - ybar) * (h - ttf / 2 - ybar);
+	Izz += tw * fh * fh * fh / 12 + tw * fh * (fh / 2 + tbf - ybar) * (fh / 2 + tbf - ybar);
+	double dd;
+	dd = h - (ttf + tbf) / 0.5;
+	J = (wt * ttf * ttf * ttf + wb * tbf * tbf * tbf + dd * tw * tw * tw) / 3;
 }
 else
 {
@@ -48178,46 +48233,43 @@ AddInPt(+W,-H);
 AddInPt(-W,-H);
 }
 
-void BSec::CreateT2(double W, double H, double Wthk, double Hthk)
+void BSec::CreateT2(double W, double H, double Wthk, double Hthk,double yb)
 {
 	Clear();
 	//For some reason the section is upside down need to check why
-	H *= -1;
-	Wthk *= -1;
 	W /= 2;
-	H /= 2;
-	AddOutPt(-W, -H);
-	AddOutPt(-W, -H+ Wthk);
-	AddOutPt(-Hthk/2, -H + Wthk);
+
+	AddOutPt(-W, 0);
+	AddOutPt(-W, Wthk);
+	AddOutPt(-Hthk/2,  Wthk);
 	AddOutPt(-Hthk / 2, H);
 	AddOutPt(Hthk / 2, H);
-	AddOutPt(Hthk / 2, -H + Wthk);
-	AddOutPt(W, -H + Wthk);
-	AddOutPt(W, -H);
-	AddOutPt(-W, -H);
+	AddOutPt(Hthk / 2, Wthk);
+	AddOutPt(W, Wthk);
+	AddOutPt(W, 0);
+	AddOutPt(-W, 0);
+	MoveY(yb);
 }
 
-void BSec::CreateCHAN2(double d1, double d2, double d3, double d4)
+void BSec::CreateCHAN2(double d1, double d2, double d3, double d4, double yb)
 {
 	Clear();
 
-	double dX=d4;
-	double dY=d3;
-	double dXt=d1;
-	double dYt=d2;
-	dX /= 2;
-	dY /= 2;
-	dY *= -1;
-	dYt *= -1;
-	AddOutPt(-dX, -dY);
-	AddOutPt(-dX, dY);
-	AddOutPt(-dX+dXt, dY);
-	AddOutPt(-dX + dXt, -dY+dYt);
-	AddOutPt(dX - dXt, -dY + dYt);
-	AddOutPt(dX - dXt, dY);
-	AddOutPt(dX, dY);
-	AddOutPt(dX, -dY);
-	AddOutPt(-dX, -dY);
+	double dW=d4;
+	double dH=d3;
+	double dWt=d1;
+	double dFt=d2;
+	dW /= 2;
+	AddOutPt(-dW, 0);
+	AddOutPt(-dW, dH);
+	AddOutPt(-dW+dWt, dH);
+	AddOutPt(-dW + dWt, dFt);
+	AddOutPt(dW - dWt, dFt);
+	AddOutPt(dW - dWt, dH);
+	AddOutPt(dW, dH);
+	AddOutPt(dW, 0);
+	AddOutPt(-dW, 0);
+	MoveY(yb);
 }
 
 void BSec::CreateBar(double W,double H)
@@ -48232,25 +48284,31 @@ AddOutPt(+W,-H);
 AddOutPt(-W,-H);
 }
 
-void BSec::CreateI2(double WH,double BW,double TW,double WT,double BWT,double TWT)
+void BSec::CreateI2(double d1,double d2,double d3,double d4,double d5,double d6,double yb)
 {
 Clear();
-WH/=2;
-BW/=2;
-TW/=2;
-AddOutPt(-BW,-WH);
-AddOutPt(+BW,-WH);
-AddOutPt(+BW,-WH+BWT);
-AddOutPt(+WT/2,-WH+BWT);
-AddOutPt(+WT/2, WH-TWT);
-AddOutPt(TW, WH-TWT);
-AddOutPt(TW, WH);
-AddOutPt(-TW, WH);
-AddOutPt(-TW, WH-TWT);
-AddOutPt(-WT/2, WH-TWT);
-AddOutPt(-WT/2, -WH+BWT);
-AddOutPt(-BW,-WH+BWT);
-AddOutPt(-BW,-WH);
+double dh = d1;
+double dw1 = d2;
+double dw2 = d3;
+double dwt = d4;
+double dft1 = d5;
+double dft2 = d6;
+dw1 /= 2;
+dw2 /= 2;
+AddOutPt(-dw1,0);
+AddOutPt(-dw1, dft1); 
+AddOutPt(-dwt/2, dft1);	
+AddOutPt(-dwt / 2, dh-dft2);
+AddOutPt(-dw2, dh - dft2);
+AddOutPt(-dw2, dh);
+AddOutPt(dw2, dh);
+AddOutPt(dw2, dh - dft2);
+AddOutPt(dwt / 2, dh - dft2);
+AddOutPt(dwt / 2, dft1);
+AddOutPt(dw1, dft1);
+AddOutPt(dw1, 0);
+AddOutPt(-dw1, 0);
+MoveY(yb);
 }
 
 
@@ -48485,6 +48543,20 @@ if (iLnCnt2<MAX_SECPTS)
   pLnLoop2[iLnCnt2].Set(X1,Y1,0);
   iLnCnt2++;
 }
+}
+
+
+void BSec::MoveY(double yBar)
+{
+	int i;
+	for (i = 0; i < iLnCnt1; i++)
+	{
+		pLnLoop1[i].y -= yBar;
+	}
+	for (i=0;i<iLnCnt2;i++)
+	{
+		pLnLoop2[i].y -= yBar;
+	}
 }
 
 IMPLEMENT_DYNAMIC(MatTable, CObject )

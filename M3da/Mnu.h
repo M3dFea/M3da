@@ -1403,6 +1403,22 @@ public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zPRBI2_Mnu : public zMnu
+{
+public:
+	int iNLab;
+	int iPID;
+	int iMID;
+	double d1;
+	double d2;
+	double d3;
+	double d4;
+	double d5;
+	double d6;
+	CString sTit;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zMMAT1_Mnu: public zMnu
 {
 public:

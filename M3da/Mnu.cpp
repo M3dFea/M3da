@@ -2444,6 +2444,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "PRBI2")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zPRBI2_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "RESENVMAX")
 	  {
 		  iResumePos = 0;
@@ -11087,7 +11097,7 @@ int zPRBCHAN2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 6)
 		{
-			outtext2("/ENTER FLANGE WIDTH (beam Z)");
+			outtext2("/ENTER WEB WIDTH (beam Z)");
 			iStat = 7;
 			goto MenuEnd;
 		}
@@ -11107,7 +11117,7 @@ int zPRBCHAN2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 8)
 		{
-			outtext2("/ENTER WEB HEIGHT (beam Y)");
+			outtext2("/ENTER FLANGE HEIGHT (beam Y)");
 			iStat = 9;
 			goto MenuEnd;
 		}
@@ -11127,7 +11137,7 @@ int zPRBCHAN2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 10)
 		{
-			outtext2("/ENTER FLANGE THK");
+			outtext2("/ENTER WEB THK");
 			iStat = 11;
 			goto MenuEnd;
 		}
@@ -11147,7 +11157,7 @@ int zPRBCHAN2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 12)
 		{
-			outtext2("/ENTER WEB THK");
+			outtext2("/ENTER FLANGE THK");
 			iStat = 13;
 			goto MenuEnd;
 		}
@@ -11174,6 +11184,225 @@ int zPRBCHAN2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			if (cDBase->pCurrentMesh != NULL)
 			{
 				cDBase->CreatePrCHAN2(sTit, iPID, iMID, dW, dH, dWT, dHT);
+			}
+			outtext1("End of Property Definition.");
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zPRBI2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		C3dVector ptVec;
+		if (iStat == 0)
+		{
+			outtext2("/ENTER PROPERTY TITLE");
+			SetFocus();
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sTit = CInMsg;
+			iStat = 2;
+		}
+		////////////////Get defualy pid//////////////////////////////  
+		iNLab = 1;
+		if (cDBase->pCurrentMesh != NULL)
+		{
+			iNLab = cDBase->PropsT->NextID();
+		}
+		char s1[200];
+		CString sT;
+		sprintf_s(s1, "%s%i%s", "ENTER NEW PID (", iNLab, ")");
+		////////////////////////////////////////////////////////////
+
+		if (iStat == 2)
+		{
+			outtext2(s1);
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			iPID = atoi(CInMsg);
+			if (iPID < 1)
+			{
+				iPID = iNLab;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			outtext2("/ENTER MID");
+			iStat = 5;
+			goto MenuEnd;
+		}
+		if (iStat == 5)
+		{
+			iMID = atoi(CInMsg);
+			if (iMID < 1)
+			{
+				iStat = 4;
+				outtext1("ERROR: Invalid Material ID.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 6;
+			}
+		}
+		if (iStat == 6)
+		{
+			outtext2("/ENTER WEB HEIGHT (beam Y)");
+			iStat = 7;
+			goto MenuEnd;
+		}
+		if (iStat == 7)
+		{
+			d1 = atof(CInMsg);
+			if (d1 < 0)
+			{
+				iStat = 6;
+				outtext1("ERROR: Invalid height.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 8;
+			}
+		}
+		if (iStat == 8)
+		{
+			outtext2("/ENTER BOTTOM FLANGE WIDTH (beam Z)");
+			iStat = 9;
+			goto MenuEnd;
+		}
+		if (iStat == 9)
+		{
+			d2 = atof(CInMsg);
+			if (d2 < 0)
+			{
+				iStat = 8;
+				outtext1("ERROR: Invalid width.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 10;
+			}
+		}
+		if (iStat == 10)
+		{
+			outtext2("/ENTER TOP FLANGE WIDTH (beam Z)");
+			iStat = 11;
+			goto MenuEnd;
+		}
+		if (iStat == 11)
+		{
+			d3 = atof(CInMsg);
+			if (d3 < 0)
+			{
+				iStat = 10;
+				outtext1("ERROR: Invalid Width.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 12;
+			}
+		}
+		if (iStat == 12)
+		{
+			outtext2("/ENTER WEB THK");
+			iStat = 13;
+			goto MenuEnd;
+		}
+		if (iStat == 13)
+		{
+			d4 = atof(CInMsg);
+			if (d4 < 0)
+			{
+				iStat = 12;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 14;
+			}
+		}
+		if (iStat == 14)
+		{
+			outtext2("/ENTER BOTTOM FLG THK");
+			iStat = 15;
+			goto MenuEnd;
+		}
+		if (iStat == 15)
+		{
+			d5 = atof(CInMsg);
+			if (d5 < 0)
+			{
+				iStat = 14;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 16;
+			}
+		}
+		if (iStat == 16)
+		{
+			outtext2("/ENTER TOP FLG THK");
+			iStat = 17;
+			goto MenuEnd;
+		}
+		if (iStat == 17)
+		{
+			d6 = atof(CInMsg);
+			if (d6 < 0)
+			{
+				iStat = 16;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 18;
+			}
+		}
+
+
+		if (iStat == 18)
+		{
+			RetVal = 1;
+			if (cDBase->pCurrentMesh != NULL)
+			{
+				cDBase->CreatePrI2(sTit, iPID, iMID, d1, d2, d3, d4,d5,d6);
 			}
 			outtext1("End of Property Definition.");
 		}
