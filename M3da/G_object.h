@@ -811,6 +811,7 @@ void Create();
 void CreateBar(double W, double H);
 void CreateDefSec(double W,int iC);
 void CreateBox(double W,double H,double Wthk,double Hthk);
+void CreateL(double W, double H, double Wthk, double Hthk, double yb, double zb);
 void CreateRod(double R);
 void CreateTube(double R,double r);
 void CreateT2(double W, double H, double Wthk, double Hthk,double yb);
@@ -823,6 +824,7 @@ void OglDrawW(int iDspFlgs,C3dMatrix TMat,C3dVector d0,C3dVector d1);
 void AddOutPt(double X1,double Y1);
 void AddInPt(double X1,double Y1);
 void MoveY(double yBar);
+void MoveX(double zBar);
 
 //BSec* Copy();
 

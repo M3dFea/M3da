@@ -335,6 +335,7 @@ ON_COMMAND(ID_EDIT_TOGGLEON, &CM3daDoc::OnEditToggleon)
 ON_COMMAND(ID_PROPERTY_BEAM_T2, &CM3daDoc::OnPropertyBeamT2)
 ON_COMMAND(ID_PROPERTY_BEAM_CHAN2, &CM3daDoc::OnPropertyBeamChan2)
 ON_COMMAND(ID_PROPERTY_BEAM_I2, &CM3daDoc::OnPropertyBeamI2)
+ON_COMMAND(ID_PROPERTY_BEAM_L, &CM3daDoc::OnPropertyBeamL)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5682,5 +5683,22 @@ void CM3daDoc::OnPropertyBeamI2()
 	else
 	{
 	outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnPropertyBeamL()
+{
+	if (pMnu->isNULL())
+	{
+		// TODO: Add your command handler code here
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		int iNLab = cDBase->PropsT->NextID();
+		cDBase->CreatePrL("L Beam Property", iNLab, -1, 0.07, 0.07, 0.008, 0.008);
+		cDBase->EditProp(iNLab);
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
 	}
 }

@@ -234,6 +234,7 @@ BEGIN
                 MENUITEM "Beam-T2",                     ID_PROPERTY_BEAM_T2
                 MENUITEM "Beam-CHAN2",                  ID_PROPERTY_BEAM_CHAN2
                 MENUITEM "Beam-I2",                     ID_PROPERTY_BEAM_I2
+                MENUITEM "BEAM-L",                      ID_PROPERTY_BEAM_L
                 MENUITEM "Shell",                       ID_PROPERTY_SHELL
                 MENUITEM "Solid",                       ID_PROPERTY_SOLID
                 MENUITEM "2D Plain Stress",             ID_PROPERTY_2DPLAINSTRESS
@@ -1222,6 +1223,9 @@ BEGIN
     ID_PROPERTY_BEAM_T2     "Create Beam T Sections (NASTRAN T2)"
     ID_PROPERTY_BEAM_CHAN2  "Create Beam Channel Section (NASTRAN CHAN2)"
     ID_PROPERTY_BEAM_I2     "Create Beam I Section (NASTRAN I2)"
+    ID_PROPERTY_BEAM33350   "Create Beam L Section (NOT IN NASTRAN)"
+    ID_PROPERTY_BEAM33351   "Create Beam I Section (NASTRAN I2)"
+    ID_PROPERTY_BEAM_L      "Create Beam L Section (NASTRAN I2)"
 END
 
 #endif    // English (United States) resources

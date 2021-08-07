@@ -27042,8 +27042,8 @@ if ((iCnt>5) && (ResultsSets[iNoRes]->TYPE==34))
     pRes->v[3]=*(float*) &Vals[i+4];
     pRes->v[4]=*(float*) &Vals[i+5];
     pRes->v[5]=*(float*) &Vals[i+6];
-	pRes->v[4]=*(float*) &Vals[i+7];
-    pRes->v[5]=*(float*) &Vals[i+8];
+	pRes->v[6]=*(float*) &Vals[i+7];
+    pRes->v[7]=*(float*) &Vals[i+8];
     ResultsSets[iNoRes]->Add(pRes);
   }
 }
@@ -35107,13 +35107,13 @@ void PBARL::List()
   outtext1(_T(S1));
   sprintf_s(S1,"%s %i","MAT1  : ",iMID);
   outtext1(_T(S1)); 
-  sprintf_s(S1,"%s %f","A     : ",A);
+  sprintf_s(S1,"%s %g","A     : ",A);
   outtext1(_T(S1)); 
-  sprintf_s(S1,"%s %f","Izz   : ",Izz);
+  sprintf_s(S1,"%s %g","Izz   : ",Izz);
   outtext1(_T(S1)); 
-  sprintf_s(S1,"%s %f","Iyy   : ",Iyy);
+  sprintf_s(S1,"%s %g","Iyy   : ",Iyy);
   outtext1(_T(S1)); 
-  sprintf_s(S1,"%s %f","J     : ",J);
+  sprintf_s(S1,"%s %g","J     : ",J);
   outtext1(_T(S1)); 
   sprintf_s(S1, "%s %f", "yBar     : ", ybar);
   outtext1(_T(S1));
@@ -35126,7 +35126,7 @@ void PBARL::List()
   int i;
   for (i=0;i<iNoDims;i++)
   {
-    sprintf_s(S1,"DIM: %i : %f""IDIMS : ",i,dDIMs[i]);
+    sprintf_s(S1,"DIM: %i : %f",i,dDIMs[i]);
     outtext1(_T(S1)); 
   }
 }
@@ -35137,6 +35137,10 @@ this->CalcProps();
 if (sSecType.Find("BOX")>-1)
 {
   DspSec.CreateBox(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3]);
+}
+if (sSecType.Find("L ") > -1)
+{
+	DspSec.CreateL(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3],ybar,zbar);
 }
 else if (sSecType.Find("BAR")>-1)
 {
@@ -35158,7 +35162,7 @@ else if (sSecType.Find("CHAN2") > -1)
 {
 	DspSec.CreateCHAN2(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3], ybar);
 }
-else if (sSecType.Find("I2")>-1)
+else if (sSecType.Find("I ")>-1)
 {
   DspSec.CreateI2(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3],dDIMs[4],dDIMs[5],ybar);
 }
@@ -35313,10 +35317,13 @@ else if (sSecType.Find("BOX")!=-1)
   double Ho=dDIMs[1];
   double Wi=Wo-2*dDIMs[2];
   double Hi=Ho-2*dDIMs[3];
+  double wt = dDIMs[2];
+  double ht = dDIMs[3];
   A=Wo*Ho-Wi*Hi;
   Iyy=Ho*Wo*Wo*Wo/12-Hi*Wi*Wi*Wi/12;
   Izz=Wo*Ho*Ho*Ho/12-Wi*Hi*Hi*Hi/12;
-  J=Izz+Iyy;
+  J=2*wt*ht*(Wo-wt)* (Wo - wt)*(Ho-ht)* (Ho - ht);
+  J /= (Wo * wt + Ho * ht - wt * wt - ht * ht);
 }
 else if (sSecType.Find("T2") != -1)
 {
@@ -35362,7 +35369,7 @@ else if (sSecType.Find("CHAN2") != -1)
 	dd = w - ft;
 	J = (2 * bb * ft * ft * ft + dd * wt * w * wt) / 3;
 }
-else if (sSecType.Find("I2") != -1)
+else if (sSecType.Find("I ") != -1)
 {
 	double h = dDIMs[0];
 	double wb = dDIMs[1];;
@@ -35383,6 +35390,24 @@ else if (sSecType.Find("I2") != -1)
 	double dd;
 	dd = h - (ttf + tbf) / 0.5;
 	J = (wt * ttf * ttf * ttf + wb * tbf * tbf * tbf + dd * tw * tw * tw) / 3;
+}
+else if (sSecType.Find("L ") != -1)
+{
+  double w = dDIMs[0];
+  double h = dDIMs[1];;
+  double ht = dDIMs[2];;
+  double wt = dDIMs[3];;
+  A = w * ht + (h - ht) * wt;
+  ybar = w * ht * ht / 2 + (h - ht) * wt * ((h - ht) / 2 + ht);
+  ybar /= A;
+  zbar = h * wt * wt / 2 + (w - wt) * ht * ((w - wt) / 2 + wt);
+  zbar /= A;
+  Iyy = wt * h * h * h / 12 + wt * h * (h / 2 - ybar) * (h / 2 - ybar);
+  Iyy += (w - wt) * ht * ht * ht / 12 + (w - wt) * ht * (ybar - ht / 2) * (ybar - ht / 2);
+
+  Izz = ht * w * w * w / 12 + ht * w * (w / 2 - zbar) * (w / 2 - zbar);
+  Izz += (h - ht) * wt * wt * wt / 12 + (h - ht) * wt * (zbar - wt / 2) * (zbar - wt / 2);
+  J = (w * w * w * ht + (h - ht) * (h - ht) * (h - ht) * wt) / 3;
 }
 else
 {
@@ -48233,6 +48258,21 @@ AddInPt(+W,-H);
 AddInPt(-W,-H);
 }
 
+void BSec::CreateL(double W, double H, double Wthk, double Hthk , double yb, double zb)
+{
+	Clear();
+	AddOutPt(0, 0);
+	AddOutPt(0, H);
+	AddOutPt(Wthk,H);
+	AddOutPt(Wthk, Hthk);
+	AddOutPt(W, Hthk);
+	AddOutPt(W, 0);
+	AddOutPt(0, 0);
+	MoveY(yb);
+	MoveX(zb);
+}
+
+
 void BSec::CreateT2(double W, double H, double Wthk, double Hthk,double yb)
 {
 	Clear();
@@ -48556,6 +48596,19 @@ void BSec::MoveY(double yBar)
 	for (i=0;i<iLnCnt2;i++)
 	{
 		pLnLoop2[i].y -= yBar;
+	}
+}
+
+void BSec::MoveX(double zBar)
+{
+	int i;
+	for (i = 0; i < iLnCnt1; i++)
+	{
+		pLnLoop1[i].x -= zBar;
+	}
+	for (i = 0; i < iLnCnt2; i++)
+	{
+		pLnLoop2[i].x -= zBar;
 	}
 }
 

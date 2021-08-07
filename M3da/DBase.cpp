@@ -17922,6 +17922,25 @@ PropsT->AddItem(pBar);
 outtext1("New BAR Section Created.");
 }
 
+void DBase::CreatePrL(CString sT, int iPID, int iMID, double dW, double dH, double dWT, double dHT)
+{
+	//NOTE this element is not support in NASTRAN but added fot
+	//M3d solver
+	PBARL* pBar = new PBARL();
+	pBar->sSecType = "L ";
+	pBar->sTitle = sT;
+	pBar->iMID = iMID;
+	pBar->iID = iPID;
+	pBar->iNoDims = 4;
+	pBar->dDIMs[0] = dW;
+	pBar->dDIMs[1] = dH;
+	pBar->dDIMs[2] = dWT;
+	pBar->dDIMs[3] = dHT;
+	pBar->CreateSec();
+	PropsT->AddItem(pBar);
+	outtext1("New BAR Section Created.");
+}
+
 void DBase::CreatePrT2(CString sT, int iPID, int iMID, double dW, double dH, double dWT, double dHT)
 {
 	PBARL* pBar = new PBARL();
@@ -17959,7 +17978,7 @@ void DBase::CreatePrCHAN2(CString sT, int iPID, int iMID, double dW, double dH, 
 void DBase::CreatePrI2(CString sT, int iPID, int iMID, double d1, double d2, double d3, double d4, double d5, double d6)
 {
 	PBARL* pBar = new PBARL();
-	pBar->sSecType = "I2";
+	pBar->sSecType = "I ";
 	pBar->sTitle = sT;
 	pBar->iMID = iMID;
 	pBar->iID = iPID;
