@@ -12232,7 +12232,7 @@ glColor3fv(cols[iColour]);
 C3dVector d[3];
 int i;
 for (i=0;i<2;i++)
-{d[i].x=0;d[i].y=0;d[i].z=0;}
+  {d[i].x=0;d[i].y=0;d[i].z=0;}
 ME_Object* ME=(ME_Object*) this->pParent;
 double S;
 S = ME->dScale;
@@ -12273,23 +12273,28 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
     }
   }
   Selectable=1;
-  if (pPr!=NULL)
+  if ((iDspFlgs & DSP_THK) > 0)
   {
-    BSec* pS = pPr->GetSec();
-    if (pS!=NULL)
-    {
-      C3dMatrix TA=GetBeamTformA();
-      C3dMatrix TB=GetBeamTformB();
-      pS->OglDraw(iDspFlgs,TA,TB,d[0],d[1],fCols[0],fCols[1],bD);
-    }
+	  if (pPr != NULL)
+	  {
+		  BSec* pS = pPr->GetSec();
+		  if (pS != NULL)
+		  {
+			  C3dMatrix TA = GetBeamTformA();
+			  C3dMatrix TB = GetBeamTformB();
+			  glEnable(GL_BLEND);
+			  glBlendFunc(GL_SRC_ALPHA, GL_SRC_COLOR);
+			  pS->OglDraw(iDspFlgs, TA, TB, d[0], d[1], fCols[0], fCols[1], bD);
+			  glDisable(GL_BLEND);
+		  }
+	  }
   }
   else
   {
-    if (((iDspFlgs & DSP_CONT)==0) || (bD=TRUE))
+    if (((iDspFlgs & DSP_CONT)==0) || (bD==TRUE))
     {
       glColor3fv(cols[124]);
       glEnable(GL_TEXTURE_1D);
-
       glBegin(GL_LINES);
         glTexCoord1f(fCols[0]);
         glVertex3f((float)(pVertex[0]->Pt_Point->x+d[0].x),(float)(pVertex[0]->Pt_Point->y+d[0].y),(float)(pVertex[0]->Pt_Point->z+d[0].z));
@@ -12298,7 +12303,14 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
       glEnd();
       glDisable(GL_TEXTURE_1D);
     }
-    
+	else
+	{
+	   glColor3fv(cols[iColour]);
+       glBegin(GL_LINES);
+       glVertex3f((float)(pVertex[0]->Pt_Point->x + OffA.x + d[0].x), (float)(pVertex[0]->Pt_Point->y + OffA.y + d[0].y), (float)(pVertex[0]->Pt_Point->z + OffA.z + d[0].z));
+       glVertex3f((float)(pVertex[1]->Pt_Point->x + OffB.x + d[1].x), (float)(pVertex[1]->Pt_Point->y + OffB.y + d[1].y), (float)(pVertex[1]->Pt_Point->z + OffB.z + d[1].z));
+       glEnd();
+	}
   }
 }
 else
@@ -12354,7 +12366,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
   vCent=Get_Centroid();
   if (bDrawLab==TRUE)
   {
-	  sprintf_s(sLab,"E%i",iLabel);
+	sprintf_s(sLab,"E%i",iLabel);
     OglString(iDspFlgs,vCent.x,vCent.y,vCent.z,&sLab[0]);
   }
   if (((iDspFlgs & DSP_RESLAB)==0) && (pResV!=NULL))
@@ -12362,14 +12374,17 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
      sprintf_s(sLab,"%f",*pResV->GetAddress(ind));
      OglString(iDspFlgs,vCent.x,vCent.y,vCent.z,&sLab[0]);
   }
-  if (pPr!=NULL)
+  if ((iDspFlgs & DSP_THK) > 0)
   {
-    BSec* pS = pPr->GetSec();
-    if (pS!=NULL)
-    {
-      C3dMatrix TMat=GetBeamTform();
-      pS->OglDrawW(iDspFlgs,TMat,d[0],d[1]);
-    }
+	  if (pPr != NULL)
+	  {
+		  BSec* pS = pPr->GetSec();
+		  if (pS != NULL)
+		  {
+			  C3dMatrix TMat = GetBeamTform();
+			  pS->OglDrawW(iDspFlgs, TMat, d[0], d[1]);
+		  }
+	  }
   }
   if ((iDspFlgs & DSP_ELSYS)==0)
   {
@@ -12455,7 +12470,7 @@ C3dVector vZ;
 vX=this->GetDir();;
 vY=vUp;
 vY.Normalize();
-vZ=vY.Cross(vX);
+vZ=vX.Cross(vY);
 vZ.Normalize();
 vY=vZ.Cross(vX);
 TRet.SetColVec(1,vZ);
@@ -12476,7 +12491,7 @@ C3dVector vZ;
 vX=this->GetDir();;
 vY=vUp;
 vY.Normalize();
-vZ=vY.Cross(vX);
+vZ=vX.Cross(vY);
 vZ.Normalize();
 vY=vZ.Cross(vX);
 TRet.SetColVec(1,vZ);
@@ -12499,7 +12514,7 @@ C3dVector vZ;
 vX=this->GetDir();;
 vY=vUp;
 vY.Normalize();
-vZ=vY.Cross(vX);
+vZ=vX.Cross(vY);
 vZ.Normalize();
 vY=vZ.Cross(vX);
 TRet.SetColVec(1,vZ);
@@ -35109,9 +35124,9 @@ void PBARL::List()
   outtext1(_T(S1)); 
   sprintf_s(S1,"%s %g","A     : ",A);
   outtext1(_T(S1)); 
+  sprintf_s(S1, "%s %g", "Iyy   : ", Iyy);
+  outtext1(_T(S1));
   sprintf_s(S1,"%s %g","Izz   : ",Izz);
-  outtext1(_T(S1)); 
-  sprintf_s(S1,"%s %g","Iyy   : ",Iyy);
   outtext1(_T(S1)); 
   sprintf_s(S1,"%s %g","J     : ",J);
   outtext1(_T(S1)); 
@@ -48449,7 +48464,7 @@ C3dVector p4;
 
 
 int j=0;
-if (((iDspFlgs & DSP_CONT)>0) || (bD=FALSE))
+if (((iDspFlgs & DSP_CONT)>0) || (bD==FALSE))
 {
   if (iLnCnt1 > 1)
   {
