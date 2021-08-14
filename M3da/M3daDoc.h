@@ -484,6 +484,8 @@ public:
   afx_msg void OnPropertyBeamChan2();
   afx_msg void OnPropertyBeamI2();
   afx_msg void OnPropertyBeamL();
+  afx_msg void OnElementmodifiyBeamoffsetinbeamy();
+  afx_msg void OnElementmodifiyBeamoffsetinbeamz();
 };
 
 

@@ -7344,6 +7344,74 @@ if (bReGen==TRUE)
 }
 }
 
+void DBase::BeamOffsetY(ObjList* Items, double dy)
+{
+	int iCO;
+	C3dVector tVec;
+	C3dVector tVecR;
+	tVec.Set(0, dy, 0);
+	C3dMatrix EMat;
+	CString OutT;
+	BOOL bReGen = FALSE;
+	for (iCO = 0; iCO < Items->iNo; iCO++)
+	{
+		if (Items->Objs[iCO]->iObjType == 3)
+		{
+			E_Object* pE = (E_Object*)Items->Objs[iCO];
+			if (pE->iType == 21)
+			{
+
+				E_Object2B* pB = (E_Object2B*)pE;
+				EMat = pB->GetElSys();
+				EMat.Transpose();
+				tVecR = EMat*tVec;
+				pB->OffA = tVecR;
+				pB->OffB = tVecR;
+				bReGen = TRUE;
+			}
+		}
+	}
+	if (bReGen == TRUE)
+	{
+		InvalidateOGL();
+		ReDraw();
+	}
+}
+
+void DBase::BeamOffsetZ(ObjList* Items, double dz)
+{
+	int iCO;
+	C3dVector tVec;
+	C3dVector tVecR;
+	tVec.Set(0, 0, dz);
+	C3dMatrix EMat;
+	CString OutT;
+	BOOL bReGen = FALSE;
+	for (iCO = 0; iCO < Items->iNo; iCO++)
+	{
+		if (Items->Objs[iCO]->iObjType == 3)
+		{
+			E_Object* pE = (E_Object*)Items->Objs[iCO];
+			if (pE->iType == 21)
+			{
+
+				E_Object2B* pB = (E_Object2B*)pE;
+				EMat = pB->GetElSys();
+				EMat.Transpose();
+				tVecR = EMat*tVec;
+				pB->OffA = tVecR;
+				pB->OffB = tVecR;
+				bReGen = TRUE;
+			}
+		}
+	}
+	if (bReGen == TRUE)
+	{
+		InvalidateOGL();
+		ReDraw();
+	}
+}
+
 void DBase::SetDOFStringA(ObjList* Items, CString sDOF)
 {
 	int iCO;

@@ -380,7 +380,9 @@ BEGIN
             MENUITEM "Spring Coord System",         ID_ELEMENTMODIFIY_SPRINGCOORDSYSTEM
             MENUITEM "Shell Mat Corrd System",      ID_ELEMENTMODIFIY_SHELLMATCORRDSYSTEM
             MENUITEM "Beam Up Vectors",             ID_ELEMENTMODIFIY_BEAMUPVECTORS
-            MENUITEM "Beam Offset",                 ID_ELEMENTMODIFIY_BEAMOFFSET
+            MENUITEM "Beam Offset by Vector",       ID_ELEMENTMODIFIY_BEAMOFFSET
+            MENUITEM "Beam Offset in Beam Y",       ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMY
+            MENUITEM "Beam Offset in Beam Z",       ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMZ
             MENUITEM "Beam End A Release",          ID_ELEMENTMODIFIY_BEAMENDARELEASE
             MENUITEM "Beam End B Release",          ID_ELEMENTMODIFIY_BEAMENDBRELEASE
             MENUITEM "Shell Offset",                ID_ELEMENTMODIFIY_SHELLOFFSET
@@ -1226,6 +1228,10 @@ BEGIN
     ID_PROPERTY_BEAM33350   "Create Beam L Section (NOT IN NASTRAN)"
     ID_PROPERTY_BEAM33351   "Create Beam I Section (NASTRAN I2)"
     ID_PROPERTY_BEAM_L      "Create Beam L Section (NASTRAN I2)"
+    ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMY 
+                            "Offset Beam Elements in Element Y direction"
+    ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMZ 
+                            "Offset Beam Elements in Element Z direction"
 END
 
 #endif    // English (United States) resources

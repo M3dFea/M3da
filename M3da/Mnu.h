@@ -374,6 +374,18 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zBOFFY_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zBOFFZ_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zFILET_Mnu: public zMnu
 {
 public:

@@ -2434,6 +2434,26 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "BOFFY")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zBOFFY_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "BOFFZ")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zBOFFZ_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "PRBCHAN2")
 	  {
 		  iResumePos = 0;
@@ -12802,7 +12822,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(3);
-	outtext2("/PICK BEAM ELEMENT TO SET UPVEC");
+	outtext2("/PICK BEAM ELEMENTS TO SET UPVEC");
 	iStat=1;
 }
 if (iStat == 1)
@@ -12872,7 +12892,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(3);
-	outtext2("/PICK BEAM ELEMENT TO SET END RELEASE");
+	outtext2("/PICK BEAM ELEMENTS TO OFFSET");
 	iStat=1;
 }
 if (iStat == 1)
@@ -13126,6 +13146,145 @@ MenuEnd:
 return RetVal;
 }
 
+int zBOFFY_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("/PICK BEAM ELEMENTS TO OFFSETS IN BEAM Y");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg2 == "D") || (CInMsg2 == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, 1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			cDBase->S_Des();
+			cDBase->ReDraw();
+			iStat = 3;
+		}
+		if (iStat == 3)
+		{
+			outtext2("/ENTER DISTANCE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->BeamOffsetY(cDBase->OTemp, ptVec.x);
+			cDBase->S_Res();
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zBOFFZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("/PICK BEAM ELEMENTS TO OFFSETS IN BEAM Z");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg2 == "D") || (CInMsg2 == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, 1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			cDBase->S_Des();
+			cDBase->ReDraw();
+			iStat = 3;
+		}
+		if (iStat == 3)
+		{
+			outtext2("/ENTER DISTANCE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->BeamOffsetZ(cDBase->OTemp, ptVec.x);
+			cDBase->S_Res();
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zNDCO_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
