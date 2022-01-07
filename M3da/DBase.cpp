@@ -2601,33 +2601,23 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 			}
 		}
 		pCandidateNodes->Clear();
-		GetCandiatesNode(pE, pFrontNodes, vC, 0.7*dC, pCandidateNodes);
-		//GetCandiatesNode(pE,pFrontNodes, vB, 0.77*dC, pCandidateNodes);
+		GetCandiatesNode(pE, pFrontNodes, vC, 1.0*dC, pCandidateNodes);
 		GetAdjFaces(pCandidateFaces, pE, pAdjFaces, &dAdjAng, pAdjEl);
-		//vC=GetANodeLoc(pCandidateFaces, pE, pAdjFaces,dC);
-		if (pAdjFaces->iNo > 0)
-		{
-			if (dAdjAng < 100)
-			{
-				nNodeTry = GetOtherNode(pAdjEl, pE);
-				CreateTET(eTET, pE, nNodeTry);
-				bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
-				pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);
-				if ((pIntFace == NULL) && (bV))
-				{
-					nNode = nNodeTry;
-					bIsTet = TRUE;
-				}
-			}
-			//else
-			//{
-			//	for (jj = 0; jj < pAdjFaces->iNo; jj++)
-			//	{
-			//		nNode = GetOtherNode((E_Object3*)pAdjFaces->Objs[jj], pE);
-			//		pCandidateNodes->AddEx(nNode);
-			//	}
-			//}
-		}
+		//if (pAdjFaces->iNo > 100)	  //070122 SEEMS TO WORK BETTER WITH OUT THIS
+		//{
+		//	if (dAdjAng < 95)
+		//	{
+		//		nNodeTry = GetOtherNode(pAdjEl, pE);
+		//		CreateTET(eTET, pE, nNodeTry);
+		//		bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
+		//		pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);
+		//		if ((pIntFace == NULL) && (bV))
+		//		{
+		//			nNode = nNodeTry;
+		//			bIsTet = TRUE;
+		//		}
+		//	}
+		//}
 		if (!bIsTet)
 		{
 			for (itry = 0; itry < pCandidateNodes->iNo; itry++)
@@ -2638,7 +2628,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 				double dH = eTET->GetTETHeight(vB);
 				double aaaa = MinInternalAngTET(eTET);
 				double dss = eTET->GetCharSize();
-				if ((aaaa > dMaxAng) && (aaaa > 5))
+				if ((aaaa > dMaxAng) && (aaaa > 15))
 				{
 					bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
 					pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);

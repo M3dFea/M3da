@@ -14443,9 +14443,13 @@ CString E_Object3::ToString()
 CString sRT;
 char S1[80];
 CString sDir;
-if (iMCys==-1)
+if ((iMCys==-1) && (MAng!=0.0))
 {
   sDir=e8(MAng);
+}
+else if (iMCys == -1)
+{
+	sDir = "        ";
 }
 else
 {
@@ -17327,9 +17331,13 @@ CString sDir;
 if (iLabel==28839)
  iLabel= iLabel;
 
-if (iMCys==-1)
+if ((iMCys==-1) && (MAng!=0.0))
 {
-  sDir=e8(MAng);
+  sDir=e8(MAng); //It is an angle
+}
+else if (iMCys == -1)
+{
+  sDir = "        ";
 }
 else
 {
