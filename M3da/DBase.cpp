@@ -10379,16 +10379,25 @@ void DBase::TestFL()
 	GenAnimationW(DspFlags, 8);
 }
 
+//*******************************************************
+//Insert sphere and render with earth bmp if loaded
+//11/01/22
+//*******************************************************
+void DBase::insPlanet()
+{
+	Planet* pS;
+	pS=new (Planet);
+	if (pWorldBMP != NULL)
+	{
+		pS->AttachTexture(pWorldBMP);
+		AddObj(pS);
+		ReDraw();
+	}
+	else
+		outtext1("LOAD WORLD BITMAP FIRST");
 
-  //Planet* pS;
-  //pS=new (Planet);
-  //if (pWorldBMP!=NULL)
-  //  pS->AttachTexture(pWorldBMP);
-  //else
-  //  outtext1("LOAD WORLD BITMAP");
-  
-  //AddObj(pS);
-  //ReDraw();
+}
+
   //SolveIncompFluids();
 
 

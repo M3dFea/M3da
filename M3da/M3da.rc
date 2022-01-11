@@ -434,6 +434,7 @@ BEGIN
             MENUITEM "Tet Circumsphere",            ID_CHECKS_TETCIRCUMSPHERE
         END
         MENUITEM "Delete",                      ID_TOOLS_DELETE
+        MENUITEM "Insert Planet Earth",         ID_TOOLS_PLANET
     END
     POPUP "LoadsBC"
     BEGIN
@@ -1232,6 +1233,7 @@ BEGIN
                             "Offset Beam Elements in Element Y direction"
     ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMZ 
                             "Offset Beam Elements in Element Z direction"
+    ID_TOOLS_PLANET         "Insert Planet Sphere"
 END
 
 #endif    // English (United States) resources

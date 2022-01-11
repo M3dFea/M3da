@@ -532,13 +532,14 @@
 #define ID_PROPERTY_BEAM_L              33352
 #define ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMY 33353
 #define ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMZ 33354
+#define ID_TOOLS_PLANET                 33355
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        361
-#define _APS_NEXT_COMMAND_VALUE         33355
+#define _APS_NEXT_COMMAND_VALUE         33356
 #define _APS_NEXT_CONTROL_VALUE         1055
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

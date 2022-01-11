@@ -338,6 +338,7 @@ ON_COMMAND(ID_PROPERTY_BEAM_I2, &CM3daDoc::OnPropertyBeamI2)
 ON_COMMAND(ID_PROPERTY_BEAM_L, &CM3daDoc::OnPropertyBeamL)
 ON_COMMAND(ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMY, &CM3daDoc::OnElementmodifiyBeamoffsetinbeamy)
 ON_COMMAND(ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMZ, &CM3daDoc::OnElementmodifiyBeamoffsetinbeamz)
+ON_COMMAND(ID_TOOLS_PLANET, &CM3daDoc::OnToolsPlanet)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5735,4 +5736,11 @@ void CM3daDoc::OnElementmodifiyBeamoffsetinbeamz()
 	{
 		outtext1("Finish Current Operation.");
 	}
+}
+
+
+void CM3daDoc::OnToolsPlanet()
+{
+	// TODO: Add your command handler code here
+	cDBase->insPlanet();
 }

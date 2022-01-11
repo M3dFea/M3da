@@ -573,6 +573,7 @@ void GenNodesOnCurve(int iNo, cLinkedList* pN);
 void Test2();
 void TestMPM2();
 void TestFL();     //Test Face list display
+void insPlanet();
 void Dsp_CtrlPts();
 void Move(ObjList* Nodes,C3dVector vTrVect);
 void Align(ObjList* Objs,C3dVector p1,C3dVector p2,C3dVector p3,
