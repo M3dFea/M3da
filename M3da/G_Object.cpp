@@ -13604,6 +13604,7 @@ E_Object3::E_Object3()
 this->iNoNodes=3;
 this->iType=91;
 this->pParent=NULL;
+iNoRemesh = 0;		  //tempoary for tet mesh gen debug.
 }
 
 void E_Object3::Create(Pt_Object* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int inMCys,double inMAng,G_Object* Parrent,Property* inPr)

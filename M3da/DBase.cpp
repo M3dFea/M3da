@@ -2677,17 +2677,18 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 			}
 		}
 		//if still no TET lets try and delete the TET on the FACE.
-		if ((!bIsTet) && (pIntFace != NULL))  //STILL NO TET AND BOUNDARY PENETRATION
-		{
-			E_Object34* pEDel = GetTETRelFace(pIntFace);
-			if (pEDel != NULL)
-			{
-				sprintf_s(S1, "BOUNDARY VIOLATION DELETEING TET: %i CNT: %i", pEDel->iLabel, iTT);
-				outtext1(S1);
-				DeleteTET(fEls, fNodes, pCandidateFaces, pEDel);
-				bReTry = TRUE;
-			}
-		}
+		//if ((!bIsTet) && (pIntFace != NULL))  //STILL NO TET AND BOUNDARY PENETRATION
+		//{
+		//	E_Object34* pEDel = GetTETRelFace(pIntFace);
+		//	if (pEDel != NULL)
+		//	{
+		//		sprintf_s(S1, "BOUNDARY VIOLATION DELETEING TET: %i CNT: %i", pEDel->iLabel, iTT);
+		//		outtext1(S1);
+		//		DeleteTET(fEls, fNodes, pCandidateFaces, pEDel);
+		//		bReTry = TRUE;
+		//	}
+		//}
+
 		if (bIsTet)
 		{
 			CommitTET(fEls, pCandidateFaces, eTET);
@@ -2700,18 +2701,29 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		else
 		{
 			sprintf_s(S1, "Failed at face: %i cnt: %i", pE->iLabel, iTT);
-			outtext1(S1);
-			outtext1("SWAPING");
-			//bExit=TRUE;
-			G_Object* pp = fEls->Head;
-			fEls->RemNoDelete(pp);
-			fEls->Add(pp);
-			ii++;
+			
+			if (pE->iNoRemesh > 5)
+			{
+				outtext1("MESH GEN FAILED");
+				bExit = TRUE;
+			}
+			else
+			{
+			  outtext1(S1);
+			  outtext1("SWAPING");
+			  //bExit=TRUE;
+			  G_Object* pp = fEls->Head;
+			  pE->iNoRemesh++;
+			  fEls->RemNoDelete(pp);
+			  fEls->Add(pp);
+			  ii++;
+
+		   }
 		}
 		iTT++;
 		if (fEls->Head == NULL)
 			bExit = TRUE;
-		if (iTT % 100 == 0)
+		if (iTT % 200 == 0)
 		{
 			InvalidateOGL();
 			ReDraw();
@@ -4209,6 +4221,14 @@ void DBase::GetCandiatesNode(E_Object3* pFace, ObjList* pFrom, C3dVector vC, dou
 	}
 }
 
+//**************************************************************
+//Pre: pFrom linked list to search
+//     vC search point
+//     dCD critcal distance
+//     pRes results list
+//Post: For aall items in pFrom centroid distance to vC that are within dCD
+//      returned in pRes
+//**************************************************************
 void DBase::GetCandiates(cLinkedList* pFrom,C3dVector vC, double dCD, ObjList* pRes)
 {
   C3dVector vT;
@@ -4220,7 +4240,7 @@ void DBase::GetCandiates(cLinkedList* pFrom,C3dVector vC, double dCD, ObjList* p
   {
     vT= pNext->Get_Centroid();
     dDist=vT.Dist(vC);
-    if (dDist<dCD)         // if node is smaller than critical distance it a posible
+    if (dDist<dCD)         // if distacnce is smaller than critical distance it a posible
 	  pRes->Add(pNext);
 	pNext = (G_Object*)pNext->next;
   }

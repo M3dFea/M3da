@@ -3034,7 +3034,7 @@ class E_Object3 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object3 )
 public:
-  
+	int iNoRemesh;	  //Added tempoary for tet mesh generation debugging 
    int iMCys;
    double MAng;
    double dZOFFS;

@@ -535,6 +535,7 @@ C3dVector& C3dVector::TGet()
 {
 return (*this);
 }
+
 double C3dVector::Dist(C3dVector inPt)
 {
 double dx;
