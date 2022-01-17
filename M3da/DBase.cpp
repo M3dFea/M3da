@@ -2530,6 +2530,7 @@ delete(Els2);
 //*********************************************************************************
 void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 {
+	double dMinAng = 25;  //Minimum internal angle for acceptance
 	char S1[200] = "";
 	E_Object3* pE = NULL;
 	int i;
@@ -2566,14 +2567,23 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 	E_Object3* pIntFace;
 	//fEls->MinSizeSort();
 	bExit = FALSE;
+	ZeroRemeshFlg(fEls);
 	//****************************************************************************
 	do
 	{
+		if (iTT == 703)
+			iTT = iTT;
 		bReTry = FALSE;
 		pIntFace = NULL;
 		dMaxAng = 0;
 		bIsTet = FALSE;
 		pE = (E_Object3*)fEls->Head;
+		dMinAng = 25;
+		if (pE->iNoRemesh > 0)
+			dMinAng = 15;
+		else if (pE->iNoRemesh > 1)
+			bExit = TRUE;
+		pE->iNoRemesh++;
 		vC = pE->Get_Centroid();
 		vB = vC;
 		vN = pE->Get_Normal();
@@ -2603,32 +2613,33 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		pCandidateNodes->Clear();
 		GetCandiatesNode(pE, pFrontNodes, vC, 1.0*dC, pCandidateNodes);
 		GetAdjFaces(pCandidateFaces, pE, pAdjFaces, &dAdjAng, pAdjEl);
-		//if (pAdjFaces->iNo > 100)	  //070122 SEEMS TO WORK BETTER WITH OUT THIS
-		//{
-		//	if (dAdjAng < 95)
-		//	{
-		//		nNodeTry = GetOtherNode(pAdjEl, pE);
-		//		CreateTET(eTET, pE, nNodeTry);
-		//		bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
-		//		pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);
-		//		if ((pIntFace == NULL) && (bV))
-		//		{
-		//			nNode = nNodeTry;
-		//			bIsTet = TRUE;
-		//		}
-		//	}
-		//}
+		if (pAdjFaces->iNo > 0)	  //070122 SEEMS TO WORK BETTER WITH OUT THIS
+		{
+			if (dAdjAng < 60)
+			{
+				nNodeTry = GetOtherNode(pAdjEl, pE);
+				CreateTET(eTET, pE, nNodeTry);
+				bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
+				pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);
+				if ((pIntFace == NULL) && (bV))
+				{
+					nNode = nNodeTry;
+					bIsTet = TRUE;
+				}
+			}
+		}
+
 		if (!bIsTet)
 		{
 			for (itry = 0; itry < pCandidateNodes->iNo; itry++)
 			{
-				vT = pCandidateNodes->Objs[itry]->Get_Centroid();
+			    vT = pCandidateNodes->Objs[itry]->Get_Centroid();
 				nNodeTry = (Pt_Object*)pCandidateNodes->Objs[itry];
 				CreateTET(eTET, pE, nNodeTry);
 				double dH = eTET->GetTETHeight(vB);
 				double aaaa = MinInternalAngTET(eTET);
 				double dss = eTET->GetCharSize();
-				if ((aaaa > dMaxAng) && (aaaa > 15))
+				if ((aaaa > dMaxAng) && (aaaa > dMinAng))
 				{
 					bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
 					pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);
@@ -2677,17 +2688,18 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 			}
 		}
 		//if still no TET lets try and delete the TET on the FACE.
-		//if ((!bIsTet) && (pIntFace != NULL))  //STILL NO TET AND BOUNDARY PENETRATION
-		//{
-		//	E_Object34* pEDel = GetTETRelFace(pIntFace);
-		//	if (pEDel != NULL)
-		//	{
-		//		sprintf_s(S1, "BOUNDARY VIOLATION DELETEING TET: %i CNT: %i", pEDel->iLabel, iTT);
-		//		outtext1(S1);
-		//		DeleteTET(fEls, fNodes, pCandidateFaces, pEDel);
-		//		bReTry = TRUE;
-		//	}
-		//}
+		if ((!bIsTet) && (pIntFace != NULL))  //STILL NO TET AND BOUNDARY PENETRATION
+		{
+			E_Object34* pEDel = GetTETRelFace(pIntFace);
+			if (pEDel != NULL)
+			{
+				sprintf_s(S1, "BOUNDARY VIOLATION DELETEING TET: %i CNT: %i", pEDel->iLabel, iTT);
+				outtext1(S1);
+				DeleteTET(fEls, fNodes, pCandidateFaces, pEDel);
+				bReTry = FALSE;	   //Should be TRUE
+				//bExit = TRUE;
+			}
+		}
 
 		if (bIsTet)
 		{
@@ -2700,25 +2712,13 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		}
 		else
 		{
-			sprintf_s(S1, "Failed at face: %i cnt: %i", pE->iLabel, iTT);
-			
-			if (pE->iNoRemesh > 5)
-			{
-				outtext1("MESH GEN FAILED");
-				bExit = TRUE;
-			}
-			else
-			{
 			  outtext1(S1);
 			  outtext1("SWAPING");
 			  //bExit=TRUE;
 			  G_Object* pp = fEls->Head;
-			  pE->iNoRemesh++;
 			  fEls->RemNoDelete(pp);
 			  fEls->Add(pp);
 			  ii++;
-
-		   }
 		}
 		iTT++;
 		if (fEls->Head == NULL)
@@ -4244,6 +4244,18 @@ void DBase::GetCandiates(cLinkedList* pFrom,C3dVector vC, double dCD, ObjList* p
 	  pRes->Add(pNext);
 	pNext = (G_Object*)pNext->next;
   }
+}
+
+void DBase::ZeroRemeshFlg(cLinkedList* pFrom)
+{
+
+	E_Object3* pNext;
+	pNext =(E_Object3*) pFrom->Head;
+	while (pNext != NULL)
+	{
+		pNext->iNoRemesh = 0;
+		pNext = (E_Object3*) pNext->next;
+	}
 }
 
 void DBase::GetCandiateFaces(E_Object3* pBF,ObjList* pFrom,C3dVector vC, double dCD, ObjList* pRes)

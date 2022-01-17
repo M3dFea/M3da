@@ -408,6 +408,7 @@ E_Object3* GetAdjFace(ObjList* pFrom,Pt_Object* N1,Pt_Object* N2,Pt_Object* N3,E
 double AngleBetweenFaces(E_Object3* pFace1,E_Object3* pFace2);
 void GetAdjFaces(ObjList* pFrom,E_Object3* pFace, ObjList* pRes,double* dAngO,E_Object3*& pNode);
 void GetCandiates(cLinkedList* pFrom,C3dVector vC, double dCD, ObjList* pRes);
+void ZeroRemeshFlg(cLinkedList* pFrom);
 void GetCandiateFaces(E_Object3* pBF,ObjList* pFrom,C3dVector vC, double dCD, ObjList* pRes);
 void GetCandiatesNode(E_Object3* pFace,ObjList* pFrom,C3dVector vC, double dCD, ObjList* pRes);
 void RESLISTEL(ObjList* Els);
