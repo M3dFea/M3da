@@ -10974,9 +10974,9 @@ while (!feof(pFile))
             Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
 			if (iCnt > 0)
 			{
-				if (DataB[0] - 10 == 1)  //Statics only
+				if (DataB[0]  == 13)  //Statics only
 				  AddOSTRRes(DataB, iCnt, sTitle, sSubTitle, inName);
-				if (DataB[0] - 10 == 5)  //FREQUENCY
+				if (DataB[0] == 15)  //FREQUENCY
 				  AddOSTRFRes(DataB, iCnt, sTitle, sSubTitle, inName);
 			}
             //WriteF
