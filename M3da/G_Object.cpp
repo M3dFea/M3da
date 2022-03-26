@@ -28250,7 +28250,11 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 			isGood = TRUE;
 			sEL = "STRAIN GRMS CENTRE CQUAD4";
 		}
-
+		else if (Vals[2] == 74)
+		{
+			isGood = TRUE;
+			sEL = "STRAIN GRMS CENTRE CTRIA";
+		}
 		if ((iCnt > 7) && (isGood))
 		{
 			ResultsSets[iNoRes]->sName = sEL;
