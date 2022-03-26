@@ -2597,7 +2597,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		// in order of distance.
 	    //GetCandiates(fNodes, vC, 2*dC, pCandidateNodes);
 		//GetCandiateFaces(pE,fEls, vC, 2.0*dC, pCandidateFaces);
-		GetCandiates(fEls, vC, 2.0*dC, pCandidateFaces);
+		GetCandiates(fEls, vC,2.0*dC, pCandidateFaces);
 		pFrontNodes->Clear();
 		for (i = 0; i < pCandidateFaces->iNo; i++)
 		{
@@ -10844,6 +10844,13 @@ void DBase::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, 
 	}
 }
 
+void DBase::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOSTRFRes(Vals, iCnt, sTitle, sSubTitle, inName);
+	}
+}
 
 void DBase::AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
 {
@@ -10862,7 +10869,7 @@ int* DataB = (int*) malloc(10000000 * sizeof(int) );
 
 CString sTitle;
 CString sSubTitle;
-char sDataS[5];
+char sDataS[5] = "";
 int iKey;
 int iRecord=0;
 
@@ -10967,8 +10974,10 @@ while (!feof(pFile))
             Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
 			if (iCnt > 0)
 			{
-				if (DataB[0] / 10 == 1)  //Statics only
+				if (DataB[0] - 10 == 1)  //Statics only
 				  AddOSTRRes(DataB, iCnt, sTitle, sSubTitle, inName);
+				if (DataB[0] - 10 == 5)  //FREQUENCY
+				  AddOSTRFRes(DataB, iCnt, sTitle, sSubTitle, inName);
 			}
             //WriteF
       }
@@ -11022,7 +11031,6 @@ while (!feof(pFile))
 	   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle);
 	   if (iCnt > 0)
 	   {
-		   //Non Linear Stress
 		   AddOESRRes(DataB, iCnt, sTitle, sSubTitle, inName);
 	   }
 	   //WriteF
