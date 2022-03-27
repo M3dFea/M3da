@@ -10659,7 +10659,8 @@ void DBase::Readdb(FILE* pFile, int Vals[], int &iCnt, int &iKey, int &iRec, CSt
 	int TCODE;
 	int ELTYPE;
 	int WID;
-	int FORMAT_CODE;
+	int FORMAT_CODE = 0;
+	int STRESS_CODE = 0;
 	float fW;
 	float ff;
 	char sT[8];
@@ -10693,10 +10694,13 @@ void DBase::Readdb(FILE* pFile, int Vals[], int &iCnt, int &iKey, int &iRec, CSt
 		fread(&FORMAT_CODE, 4, 1, pFile);      //9	 format_code - Data types (real or complex)
 		fread(&WID, 4, 1, pFile);              //10	 block width
 		Vals[6] = WID;
-		iCnt = 7;
+		Vals[7] = FORMAT_CODE;
+		fread(&STRESS_CODE, 4, 1, pFile);
+		Vals[8] = STRESS_CODE;
+		iCnt = 10;
 		//if (ACODE=22)
 		  //sprintf_s(s80, "MODE ,%i", iM);
-		for (i = 10; i < 50; i++)
+		for (i = 11; i < 50; i++)
 		{
 			fread(&iWord, 4, 1, pFile);
 		}
@@ -10867,7 +10871,8 @@ void DBase::S_ImportOp2(FILE* pFile,CString inName,int iT)
 {
 int ACODE = 0;
 int TCODE = 0;
-
+int FCODE = 0;
+int SCODE = 0;
 int iCnt;
 
 int* DataB = (int*) malloc(10000000 * sizeof(int) ); 
@@ -10980,6 +10985,8 @@ while (!feof(pFile))
             Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
 			ACODE = DataB[0];
 			TCODE = DataB[1];
+			FCODE = DataB[7];	  //newly added so result can be
+			SCODE = DataB[8];	  //interpreted better
 			if (iCnt > 0)
 			{
 				if (ACODE == 13)  //STATICS

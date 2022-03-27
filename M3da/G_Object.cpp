@@ -26955,7 +26955,7 @@ else if (Vals[2]==1)
   sEL="FORCE CROD";
 }
 
-if ((iCnt>7) && (isGood))
+if ((iCnt>10) && (isGood))
 {
   ResultsSets[iNoRes]->sName=sEL;
   ResultsSets[iNoRes]->iNoV=8;
@@ -26967,7 +26967,7 @@ if ((iCnt>7) && (isGood))
   ResultsSets[iNoRes]->lab[5]="MXY";
   ResultsSets[iNoRes]->lab[6]="TX";
   ResultsSets[iNoRes]->lab[7]="TY";
-  for (i=7;i<iCnt;i+=9)
+  for (i=10;i<iCnt;i+=9)
   {
     Res8* pRes=new Res8;
     pRes->ID=Vals[i] / 10;
@@ -27191,7 +27191,7 @@ else if (Vals[2]==97)
 {
   sEL="STRESS CTRIA LAYERED";
 }
-if ((iCnt>7) && (isGood))
+if ((iCnt>10) && (isGood))
 {
   ResultsSets[iNoRes]->sName=sEL;
   ResultsSets[iNoRes]->iNoV=18;
@@ -27216,7 +27216,7 @@ if ((iCnt>7) && (isGood))
   double p1;
   double p2;
   double vm;
-  for (i=7;i<iCnt;i+=17)
+  for (i=10;i<iCnt;i+=17)
   {
     Res18* pRes=new Res18;
     pRes->ID=Vals[i] / 10;
@@ -27596,7 +27596,7 @@ else if (Vals[2]==97)
 {
   sEL="STRAIN CTRIA LAYERED";
 }
-if ((iCnt>7) && (isGood))
+if ((iCnt>10) && (isGood))
 {
 
 
@@ -27605,7 +27605,7 @@ if ((iCnt>7) && (isGood))
   double dXY;
   double vm;
   bool isLayered = FALSE;
-  for (i=7;i<iCnt;i+=17)
+  for (i=10;i<iCnt;i+=17)
   {
     Res18* pRes=new Res18;
     pRes->ID=Vals[i] / 10;
@@ -28034,14 +28034,14 @@ else if (Vals[2]==88)
 isGood = TRUE;
 sEL = "STRAIN ENERGY";
 
-if ((iCnt>7) && (isGood))
+if ((iCnt>10) && (isGood))
 {
   ResultsSets[iNoRes]->sName=sEL;
   ResultsSets[iNoRes]->iNoV=3;
   ResultsSets[iNoRes]->lab[0]="Energy";
   ResultsSets[iNoRes]->lab[1]="Energy % Tot";
   ResultsSets[iNoRes]->lab[2]="Energy Density";
-  for (i=7;i<iCnt;i+=4)
+  for (i=10;i<iCnt;i+=4)
   {
     Res3* pRes=new Res3;
     pRes->ID=Vals[i] / 10;
@@ -28082,7 +28082,7 @@ void ME_Object::AddOESNRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
       sEL = "STRESS NONLIN CENTRE CTRIA3";
     }
 
-    if ((iCnt>7) && (isGood))
+    if ((iCnt>10) && (isGood))
     {
       ResultsSets[iNoRes]->sName = sEL;
       ResultsSets[iNoRes]->iNoV = 24;
@@ -28110,7 +28110,7 @@ void ME_Object::AddOESNRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
       ResultsSets[iNoRes]->lab[21] = "Strain in y at Z2";
       ResultsSets[iNoRes]->lab[22] = "UNDEF";
       ResultsSets[iNoRes]->lab[23] = "Shear strain in xy at Z2";
-      for (i = 7; i<iCnt; i += 25)
+      for (i = 10; i<iCnt; i += 25)
       {
         Res24* pRes = new Res24;
         pRes->ID = Vals[i] / 10;
@@ -28172,7 +28172,7 @@ void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
 			sEL = "STRESS GRMS CENTRE CQUAD4";
 		}
 
-		if ((iCnt > 7) && (isGood))
+		if ((iCnt > 10) && (isGood))
 		{
 			ResultsSets[iNoRes]->sName = sEL;
 			ResultsSets[iNoRes]->iNoV = 11;
@@ -28187,7 +28187,7 @@ void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
 			ResultsSets[iNoRes]->lab[8] = "Shear stress in xy at Z2";
 			ResultsSets[iNoRes]->lab[9] = "Thales VM at Z2";
 			ResultsSets[iNoRes]->lab[10] = "Thales Max VM at Z1 & Z2";
-			for (i = 7; i < iCnt; i += 9)
+			for (i = 10; i < iCnt; i += 9)
 			{
 				Res11* pRes = new Res11;
 				pRes->ID = Vals[i] / 10;
@@ -28251,7 +28251,7 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 			isGood = TRUE;
 			if (Vals[0] / 10 == 5)  //It's a frequency results
 			{
-				sprintf_s(s30,"%g %s",dFreq, "Hz CRMS STRAIN CQUAD4");
+				sprintf_s(s30,"%g %s",dFreq, "Hz STRAIN CQUAD4");
 				sEL = s30;
 			}
 			else
@@ -28260,7 +28260,7 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 	        }
 		}
 
-		if ((iCnt > 7) && (isGood))
+		if ((iCnt > 10) && (isGood))
 		{
 			ResultsSets[iNoRes]->sName = sEL;
 			ResultsSets[iNoRes]->iNoV = 11;
@@ -28275,7 +28275,7 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 			ResultsSets[iNoRes]->lab[8] = "Shear strain in xy at Z2";
 			ResultsSets[iNoRes]->lab[9] = "Thales VM at Z2";
 			ResultsSets[iNoRes]->lab[10] = "Thales Max VM at Z1 & Z2";
-			for (i = 7; i < iCnt; i += 9)
+			for (i = 10; i < iCnt; i += 9)
 			{
 				Res11* pRes = new Res11;
 				pRes->ID = Vals[i] / 10;
@@ -28337,7 +28337,7 @@ void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTit
 	ResultsSets[iNoRes]->d1 = ModeNo;
 	ResultsSets[iNoRes]->WID = Vals[6];
 
-	if (iCnt > 7)
+	if (iCnt > 10)
 	{
 		sprintf_s(s30, "%s %g %s", "ACCELERATION", ModeNo, "Hz");
 		ResultsSets[iNoRes]->sName = s30;
@@ -28355,7 +28355,7 @@ void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTit
 		ResultsSets[iNoRes]->lab[10] = "(j) RX";
 		ResultsSets[iNoRes]->lab[11] = "(j) RY";
 		ResultsSets[iNoRes]->lab[12] = "(j) RZ";
-		for (i = 7; i < iCnt; i += 14)
+		for (i = 10; i < iCnt; i += 14)
 		{
 			Res13* pRes = new Res13;
 			pRes->ID = Vals[i] / 10;
@@ -28431,7 +28431,7 @@ void ME_Object::AddOUGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitl
 	ResultsSets[iNoRes]->WID = Vals[6];
 
 
-	if (iCnt > 7)
+	if (iCnt > 10)
 	{
 		if (ResultsSets[iNoRes]->ACODE == 22)  //Modes
 			sprintf_s(s30, "DISP MODE %g", ResultsSets[iNoRes]->d1);
@@ -28445,7 +28445,7 @@ void ME_Object::AddOUGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitl
 		ResultsSets[iNoRes]->lab[3] = "RX";
 		ResultsSets[iNoRes]->lab[4] = "RY";
 		ResultsSets[iNoRes]->lab[5] = "RZ";
-		for (i = 7; i < iCnt; i += 8)
+		for (i = 10; i < iCnt; i += 8)
 		{
 			Res6* pRes = new Res6;
 			pRes->ID = Vals[i] / 10;
