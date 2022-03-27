@@ -10649,7 +10649,7 @@ pTheView->GetClientRect(mCView_Rect);
 //only CQUAD4 force read at now
 //Element force data set
 //only CQUAD4 force read at now
-void DBase::Readdb(FILE* pFile, int Vals[], int &iCnt, int &iKey, int &iRec, CString &sTit, CString &sSubTit)
+void DBase::Readdb(FILE* pFile, int Vals[], int &iCnt, int &iKey, int &iRec, CString &sTit, CString &sSubTit,double &dFreq)
 {
 
 	int i;
@@ -10659,7 +10659,9 @@ void DBase::Readdb(FILE* pFile, int Vals[], int &iCnt, int &iKey, int &iRec, CSt
 	int TCODE;
 	int ELTYPE;
 	int WID;
+	int FORMAT_CODE;
 	float fW;
+	float ff;
 	char sT[8];
 	int lLC;
 	int iWCnt;
@@ -10672,24 +10674,24 @@ void DBase::Readdb(FILE* pFile, int Vals[], int &iCnt, int &iKey, int &iRec, CSt
 	if (iNoW == 146)
 	{
 		fread(&sT, 8, 1, pFile);
-		fread(&ACODE, 4, 1, pFile);
-		fread(&TCODE, 4, 1, pFile);
-		fread(&ELTYPE, 4, 1, pFile);
-		fread(&lLC, 4, 1, pFile);
+		fread(&ACODE, 4, 1, pFile);	   //1
+		fread(&TCODE, 4, 1, pFile);	   //2
+		fread(&ELTYPE, 4, 1, pFile);   //3
+		fread(&lLC, 4, 1, pFile);      //4
 		Vals[0] = ACODE;
 		Vals[1] = TCODE;
 		if (TCODE == 18)
 			ELTYPE = 999;
 		Vals[2] = ELTYPE;
 		Vals[3] = lLC;
-
-		fread(&Vals[4], 4, 1, pFile);
-		fread(&Vals[5], 4, 1, pFile);
+		fread(&ff, 4, 1, pFile);  //5 if acode = 5 then this is freq val
+		dFreq = ff;
+		fread(&Vals[5], 4, 1, pFile);  //6
 		//fF = pow(fW, 0.5)/(3.14159265359 *2);
-		fread(&WID, 4, 1, pFile);
-		fread(&WID, 4, 1, pFile);
-		fread(&WID, 4, 1, pFile);
-		fread(&WID, 4, 1, pFile);
+		fread(&WID, 4, 1, pFile);              //7
+		fread(&WID, 4, 1, pFile);              //8
+		fread(&FORMAT_CODE, 4, 1, pFile);      //9	 format_code - Data types (real or complex)
+		fread(&WID, 4, 1, pFile);              //10	 block width
 		Vals[6] = WID;
 		iCnt = 7;
 		//if (ACODE=22)
@@ -10844,11 +10846,11 @@ void DBase::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, 
 	}
 }
 
-void DBase::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+void DBase::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dFreq)
 {
 	if (pCurrentMesh != NULL)
 	{
-		pCurrentMesh->AddOSTRFRes(Vals, iCnt, sTitle, sSubTitle, inName);
+		pCurrentMesh->AddOSTRFRes(Vals, iCnt, sTitle, sSubTitle, inName, dFreq);
 	}
 }
 
@@ -10863,12 +10865,16 @@ void DBase::AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, 
 
 void DBase::S_ImportOp2(FILE* pFile,CString inName,int iT)
 {
+int ACODE = 0;
+int TCODE = 0;
+
 int iCnt;
 
 int* DataB = (int*) malloc(10000000 * sizeof(int) ); 
 
 CString sTitle;
 CString sSubTitle;
+double dFreq=0;
 char sDataS[5] = "";
 int iKey;
 int iRecord=0;
@@ -10919,7 +10925,7 @@ while (!feof(pFile))
       while (iKey != 0)
       {
             iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
 			if (iCnt > 0)
 			{
 				if (DataB[0] / 10 == 1)
@@ -10936,7 +10942,7 @@ while (!feof(pFile))
 	   while (iKey != 0)
 	   {
 		   iCnt = 0;
-		   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle);
+		   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle, dFreq);
 		   if (iCnt > 0)
 		   {
 			   if (DataB[0]/10 == 5)  // Frequency Only
@@ -10953,7 +10959,7 @@ while (!feof(pFile))
       while (iKey != 0)
       {
             iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
 			if (iCnt > 0)
 			{
 				if ((DataB[0] / 10 == 1) || (DataB[0] / 10 == 2))   // Static or Modes
@@ -10971,13 +10977,24 @@ while (!feof(pFile))
       while (iKey != 0)
       {
             iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
+			ACODE = DataB[0];
+			TCODE = DataB[1];
 			if (iCnt > 0)
 			{
-				if (DataB[0]  == 13)  //Statics only
+				if (ACODE == 13)  //STATICS
 				  AddOSTRRes(DataB, iCnt, sTitle, sSubTitle, inName);
-				if (DataB[0] == 15)  //FREQUENCY
-				  AddOSTRFRes(DataB, iCnt, sTitle, sSubTitle, inName);
+				if (ACODE == 15)  //STATIC GRMS (FREQUENCY)
+				  AddOSTRFRes(DataB, iCnt, sTitle, sSubTitle, inName,0.0);
+				if (ACODE /10 == 5)  //FREQUENCY
+					if (TCODE / 1000 == 4)  //Sort 1 real  random
+					{
+					    AddOSTRFRes(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+					}
+					else if (TCODE / 1000 == 1)  //Sort 1 complex
+					{ 
+						//Need to add complex freq results
+					}
 			}
             //WriteF
       }
@@ -10991,7 +11008,7 @@ while (!feof(pFile))
       while (iKey != 0)
       {
             iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
 			if (iCnt > 0)
 			{
 				if (DataB[0] / 10 == 1)  //Statics only
@@ -11009,7 +11026,7 @@ while (!feof(pFile))
       while (iKey != 0)
       {
             iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
 			if (iCnt > 0)
 			{
 				//Non Linear Stress
@@ -11028,7 +11045,7 @@ while (!feof(pFile))
    while (iKey != 0)
    {
 	   iCnt = 0;
-	   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle);
+	   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle, dFreq);
 	   if (iCnt > 0)
 	   {
 		   AddOESRRes(DataB, iCnt, sTitle, sSubTitle, inName);
@@ -11045,7 +11062,7 @@ while (!feof(pFile))
      while (iKey != 0)
      {
        iCnt = 0;
-       Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle);
+       Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle, dFreq);
        if (iCnt>0)
          AddONRGRes(DataB, iCnt, sTitle, sSubTitle, inName);
        //WriteF
@@ -11060,7 +11077,7 @@ while (!feof(pFile))
       while (iKey != 0)
       {
             iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
 			if (iCnt > 0)
 			{
 				if (DataB[0] / 10 == 1)  //Statics only

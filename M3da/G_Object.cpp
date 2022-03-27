@@ -28224,7 +28224,7 @@ void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
 	}
 }
 
-void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq)
 {
 	int i;
 	double ds11;
@@ -28244,17 +28244,22 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 		ResultsSets[iNoRes]->LC = Vals[3];
 		ResultsSets[iNoRes]->WID = Vals[6];
 		CString sEL;
+		char s30[30];
 		BOOL isGood = FALSE;
 		if (Vals[2] == 33)
 		{
 			isGood = TRUE;
-			sEL = "STRAIN GRMS CENTRE CQUAD4";
+			if (Vals[0] / 10 == 5)  //It's a frequency results
+			{
+				sprintf_s(s30,"%g %s",dFreq, "Hz CRMS STRAIN CQUAD4");
+				sEL = s30;
+			}
+			else
+			{
+				sEL = "STRAIN GRMS CQUAD4";
+	        }
 		}
-		else if (Vals[2] == 74)
-		{
-			isGood = TRUE;
-			sEL = "STRAIN GRMS CENTRE CTRIA";
-		}
+
 		if ((iCnt > 7) && (isGood))
 		{
 			ResultsSets[iNoRes]->sName = sEL;
@@ -28263,13 +28268,13 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 			ResultsSets[iNoRes]->lab[1] = "Normal X at Z1";
 			ResultsSets[iNoRes]->lab[2] = "Normal Y at Z1";
 			ResultsSets[iNoRes]->lab[3] = "Shear strain in xy at Z1";
-			ResultsSets[iNoRes]->lab[4] = "Undefined";
+			ResultsSets[iNoRes]->lab[4] = "Thales VM at Z1";
 			ResultsSets[iNoRes]->lab[5] = "Z1 = Fibre distance";
 			ResultsSets[iNoRes]->lab[6] = "Normal X at Z2";
 			ResultsSets[iNoRes]->lab[7] = "Normal Y at Z2";
 			ResultsSets[iNoRes]->lab[8] = "Shear strain in xy at Z2";
-			ResultsSets[iNoRes]->lab[9] = "Undefined";
-			ResultsSets[iNoRes]->lab[10] = "Undefined";
+			ResultsSets[iNoRes]->lab[9] = "Thales VM at Z2";
+			ResultsSets[iNoRes]->lab[10] = "Thales Max VM at Z1 & Z2";
 			for (i = 7; i < iCnt; i += 9)
 			{
 				Res11* pRes = new Res11;
@@ -28278,14 +28283,28 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 				pRes->v[1] = *(float*)&Vals[i + 2];
 				pRes->v[2] = *(float*)&Vals[i + 3];
 				pRes->v[3] = *(float*)&Vals[i + 4];
-				pRes->v[4] = 0;
+				ds11 = pRes->v[1];
+				ds22 = pRes->v[2];
+				ds12 = pRes->v[3];
+				//For proper RMS VM see Pitoiset e.a. [1]
+				//dvm = pow((ds11 * ds11 - ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				//Note the + where - would be but this is Thales method for
+				//GRMS VM note all values are +ve
+				dvm = pow((ds11 * ds11 + ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				pRes->v[4] = dvm;
 				pRes->v[5] = *(float*)&Vals[i + 5];
 				pRes->v[6] = *(float*)&Vals[i + 6];
 				pRes->v[7] = *(float*)&Vals[i + 7];
 				pRes->v[8] = *(float*)&Vals[i + 8];
-				pRes->v[9] = 0;
-
-				pRes->v[10] = 0;
+				ds11 = pRes->v[6];
+				ds22 = pRes->v[7];
+				ds12 = pRes->v[8];
+				dvmMax = dvm;
+				dvm = pow((ds11 * ds11 + ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				pRes->v[9] = dvm;
+				if (dvm > dvmMax)
+					dvmMax = dvm;
+				pRes->v[10] = dvmMax;
 				ResultsSets[iNoRes]->Add(pRes);
 			}
 		}

@@ -601,6 +601,9 @@ int ACODE;
 int TCODE;
 int TYPE;
 int LC;
+int FCODE;			//format code
+int SCODE;			//stress code
+double dFreq;		//Freq
 int WID;
 int iCnt;
 int iNoV;
@@ -3709,7 +3712,7 @@ void AddOES1Res(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inN
 void AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOESNRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
-void AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
+void AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
 void AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
 void ListResSets();
 void ListVecSets();

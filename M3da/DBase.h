@@ -508,7 +508,7 @@ int DB_NoInBuff();
 void DoMsg(int MsgType, CPoint PT1, CPoint PT2);
 void S_Import(FILE* pFile, CString inName,int iT);
 void S_ImportGroups(FILE* pFile);
-void Readdb(FILE* pFile,int Vals[],int &iCnt,int &iKey,int &iRec,CString &sTit,CString &sSubTit);
+void Readdb(FILE* pFile,int Vals[],int &iCnt,int &iKey,int &iRec,CString &sTit,CString &sSubTit,double &dFreq);
 void AddOEFRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
 void AddOUGRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
@@ -516,7 +516,7 @@ void AddOES1Res(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inN
 void AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOESNRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
-void AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
+void AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dFreq);
 void AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
 void S_ImportOp2(FILE* pFile, CString inName,int iT);
 G_Object* GetBasicIGESType(int iD,IgesD (&DirEnt)[100000],IgesP* PDat);
