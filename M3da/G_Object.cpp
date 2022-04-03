@@ -21070,6 +21070,7 @@ if ((pRes!=CResSet) || (iOpt!=iPostOpt))
 		(pRes->TCODE==25) || 
 		(pRes->TCODE == 18) ||
 		(pRes->TCODE == 4004) ||  //GRMS FORCE?
+		(pRes->TCODE == 1005) || 
 		(pRes->TCODE == 4005))  //Not sure where this tcode is documented Grms Rand
     {
     for (i = 0; i < iElNo; i++)
@@ -26911,11 +26912,13 @@ ResultsSets[iNoRes]=new ResSet();
 ResultsSets[iNoRes]->sFile=inName;
 ResultsSets[iNoRes]->sTitle=sTitle;
 ResultsSets[iNoRes]->sSubTitle=sSubTitle;
-ResultsSets[iNoRes]->ACODE=Vals[0];
-ResultsSets[iNoRes]->TCODE=Vals[1];
-ResultsSets[iNoRes]->TYPE=Vals[2];
-ResultsSets[iNoRes]->LC=Vals[3];
-ResultsSets[iNoRes]->WID=Vals[6];
+ResultsSets[iNoRes]->ACODE = Vals[0];
+ResultsSets[iNoRes]->TCODE = Vals[1];
+ResultsSets[iNoRes]->TYPE = Vals[2];
+ResultsSets[iNoRes]->LC = Vals[3];
+ResultsSets[iNoRes]->WID = Vals[6];
+ResultsSets[iNoRes]->FCODE = Vals[7];
+ResultsSets[iNoRes]->SCODE = Vals[8];
 CString sEL;
 BOOL isGood=FALSE;
 
@@ -27098,11 +27101,13 @@ ResultsSets[iNoRes]=new ResSet();
 ResultsSets[iNoRes]->sFile=inName;
 ResultsSets[iNoRes]->sTitle=sTitle;
 ResultsSets[iNoRes]->sSubTitle=sSubTitle;
-ResultsSets[iNoRes]->ACODE=Vals[0];
-ResultsSets[iNoRes]->TCODE=Vals[1];
-ResultsSets[iNoRes]->TYPE=Vals[2];
-ResultsSets[iNoRes]->LC=Vals[3];
-ResultsSets[iNoRes]->WID=Vals[6];
+ResultsSets[iNoRes]->ACODE = Vals[0];
+ResultsSets[iNoRes]->TCODE = Vals[1];
+ResultsSets[iNoRes]->TYPE = Vals[2];
+ResultsSets[iNoRes]->LC = Vals[3];
+ResultsSets[iNoRes]->WID = Vals[6];
+ResultsSets[iNoRes]->FCODE = Vals[7];
+ResultsSets[iNoRes]->SCODE = Vals[8];
 CString sEL;
 BOOL isGood=FALSE;
 
@@ -27546,11 +27551,13 @@ ResultsSets[iNoRes]=new ResSet();
 ResultsSets[iNoRes]->sFile=inName;
 ResultsSets[iNoRes]->sTitle=sTitle;
 ResultsSets[iNoRes]->sSubTitle=sSubTitle;
-ResultsSets[iNoRes]->ACODE=Vals[0];
-ResultsSets[iNoRes]->TCODE=Vals[1];
-ResultsSets[iNoRes]->TYPE=Vals[2];
-ResultsSets[iNoRes]->LC=Vals[3];
-ResultsSets[iNoRes]->WID=Vals[6];
+ResultsSets[iNoRes]->ACODE = Vals[0];
+ResultsSets[iNoRes]->TCODE = Vals[1];
+ResultsSets[iNoRes]->TYPE = Vals[2];
+ResultsSets[iNoRes]->LC = Vals[3];
+ResultsSets[iNoRes]->WID = Vals[6];
+ResultsSets[iNoRes]->FCODE = Vals[7];
+ResultsSets[iNoRes]->SCODE = Vals[8];
 CString sEL;
 BOOL isGood=FALSE;
 
@@ -28013,11 +28020,13 @@ ResultsSets[iNoRes]=new ResSet();
 ResultsSets[iNoRes]->sFile=inName;
 ResultsSets[iNoRes]->sTitle=sTitle;
 ResultsSets[iNoRes]->sSubTitle=sSubTitle;
-ResultsSets[iNoRes]->ACODE=Vals[0];
-ResultsSets[iNoRes]->TCODE=Vals[1];
-ResultsSets[iNoRes]->TYPE=Vals[2];
-ResultsSets[iNoRes]->LC=Vals[3];
-ResultsSets[iNoRes]->WID=Vals[6];
+ResultsSets[iNoRes]->ACODE = Vals[0];
+ResultsSets[iNoRes]->TCODE = Vals[1];
+ResultsSets[iNoRes]->TYPE = Vals[2];
+ResultsSets[iNoRes]->LC = Vals[3];
+ResultsSets[iNoRes]->WID = Vals[6];
+ResultsSets[iNoRes]->FCODE = Vals[7];
+ResultsSets[iNoRes]->SCODE = Vals[8];
 CString sEL;
 BOOL isGood=FALSE;
 if (Vals[2]==90)
@@ -28064,11 +28073,13 @@ void ME_Object::AddOESNRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
     ResultsSets[iNoRes]->sFile = inName;
     ResultsSets[iNoRes]->sTitle = sTitle;
     ResultsSets[iNoRes]->sSubTitle = sSubTitle;
-    ResultsSets[iNoRes]->ACODE = Vals[0];
-    ResultsSets[iNoRes]->TCODE = Vals[1];
-    ResultsSets[iNoRes]->TYPE = Vals[2];
-    ResultsSets[iNoRes]->LC = Vals[3];
-    ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->ACODE = Vals[0];
+	ResultsSets[iNoRes]->TCODE = Vals[1];
+	ResultsSets[iNoRes]->TYPE = Vals[2];
+	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	ResultsSets[iNoRes]->SCODE = Vals[8];
     CString sEL;
     BOOL isGood = FALSE;
     if (Vals[2] == 90)
@@ -28164,6 +28175,8 @@ void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
 		ResultsSets[iNoRes]->TYPE = Vals[2];
 		ResultsSets[iNoRes]->LC = Vals[3];
 		ResultsSets[iNoRes]->WID = Vals[6];
+		ResultsSets[iNoRes]->FCODE = Vals[7];
+		ResultsSets[iNoRes]->SCODE = Vals[8];
 		CString sEL;
 		BOOL isGood = FALSE;
 		if (Vals[2] == 33)
@@ -28243,6 +28256,8 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 		ResultsSets[iNoRes]->TYPE = Vals[2];
 		ResultsSets[iNoRes]->LC = Vals[3];
 		ResultsSets[iNoRes]->WID = Vals[6];
+		ResultsSets[iNoRes]->FCODE = Vals[7];
+		ResultsSets[iNoRes]->SCODE = Vals[8];
 		CString sEL;
 		char s30[30];
 		BOOL isGood = FALSE;
@@ -28251,7 +28266,7 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 			isGood = TRUE;
 			if (Vals[0] / 10 == 5)  //It's a frequency results
 			{
-				sprintf_s(s30,"%g %s",dFreq, "Hz STRAIN CQUAD4");
+				sprintf_s(s30,"%g %s",dFreq, "Hz CRMS STRAIN CQUAD4");
 				sEL = s30;
 			}
 			else
@@ -28261,20 +28276,55 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 		}
 
 		if ((iCnt > 10) && (isGood))
-		{
-			ResultsSets[iNoRes]->sName = sEL;
-			ResultsSets[iNoRes]->iNoV = 11;
-			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
-			ResultsSets[iNoRes]->lab[1] = "Normal X at Z1";
-			ResultsSets[iNoRes]->lab[2] = "Normal Y at Z1";
-			ResultsSets[iNoRes]->lab[3] = "Shear strain in xy at Z1";
-			ResultsSets[iNoRes]->lab[4] = "Thales VM at Z1";
-			ResultsSets[iNoRes]->lab[5] = "Z1 = Fibre distance";
-			ResultsSets[iNoRes]->lab[6] = "Normal X at Z2";
-			ResultsSets[iNoRes]->lab[7] = "Normal Y at Z2";
-			ResultsSets[iNoRes]->lab[8] = "Shear strain in xy at Z2";
-			ResultsSets[iNoRes]->lab[9] = "Thales VM at Z2";
-			ResultsSets[iNoRes]->lab[10] = "Thales Max VM at Z1 & Z2";
+		{	
+			if (ResultsSets[iNoRes]->SCODE == 10)
+			{	//Strain curvature maximum shear or octahedral
+				ResultsSets[iNoRes]->sName = sEL;
+				ResultsSets[iNoRes]->iNoV = 11;
+				ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+				ResultsSets[iNoRes]->lab[1] = "Normal X at Z0";
+				ResultsSets[iNoRes]->lab[2] = "Normal Y at Z0";
+				ResultsSets[iNoRes]->lab[3] = "Shear strain in xy at Z0";
+				ResultsSets[iNoRes]->lab[4] = "void";
+				ResultsSets[iNoRes]->lab[5] = "Z2 = Fibre distance";
+				ResultsSets[iNoRes]->lab[6] = "Curvature X at Z0";
+				ResultsSets[iNoRes]->lab[7] = "Curvature Y at Z0";
+				ResultsSets[iNoRes]->lab[8] = "Curvature in xy at Z0";
+				ResultsSets[iNoRes]->lab[9] = "void";
+				ResultsSets[iNoRes]->lab[10] = "void";
+			}
+			else if (ResultsSets[iNoRes]->SCODE == 14)
+			{	//Strain fiber maimum shear or octahedral
+				ResultsSets[iNoRes]->sName = sEL;
+				ResultsSets[iNoRes]->iNoV = 11;
+				ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+				ResultsSets[iNoRes]->lab[1] = "Normal X at Z1";
+				ResultsSets[iNoRes]->lab[2] = "Normal Y at Z1";
+				ResultsSets[iNoRes]->lab[3] = "Shear strain in xy at Z1";
+				ResultsSets[iNoRes]->lab[4] = "Thales VM at Z1";
+				ResultsSets[iNoRes]->lab[5] = "Z1 = Fibre distance";
+				ResultsSets[iNoRes]->lab[6] = "Normal X at Z2";
+				ResultsSets[iNoRes]->lab[7] = "Normal Y at Z2";
+				ResultsSets[iNoRes]->lab[8] = "Shear strain in xy at Z2";
+				ResultsSets[iNoRes]->lab[9] = "Thales VM at Z2";
+				ResultsSets[iNoRes]->lab[10] = "Thales Max VM at Z1 & Z2";
+			}
+			else
+			{
+				ResultsSets[iNoRes]->sName = sEL;
+				ResultsSets[iNoRes]->iNoV = 11;
+				ResultsSets[iNoRes]->lab[0] = "error void";
+				ResultsSets[iNoRes]->lab[1] = "error void";
+				ResultsSets[iNoRes]->lab[2] = "error void";
+				ResultsSets[iNoRes]->lab[3] = "error void";
+				ResultsSets[iNoRes]->lab[4] = "error void";
+				ResultsSets[iNoRes]->lab[5] = "error void";
+				ResultsSets[iNoRes]->lab[6] = "error void";
+				ResultsSets[iNoRes]->lab[7] = "error void";
+				ResultsSets[iNoRes]->lab[8] = "error void";
+				ResultsSets[iNoRes]->lab[9] = "error void";
+				ResultsSets[iNoRes]->lab[10] = "error void";
+			}
 			for (i = 10; i < iCnt; i += 9)
 			{
 				Res11* pRes = new Res11;
@@ -28312,6 +28362,88 @@ void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTi
 	}
 }
 
+void ME_Object::AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq)
+{
+	int i;
+	double ds11;
+	double ds22;
+	double ds12;
+	double dvmMax;
+	double dvm;
+	if (iCnt > 5)
+	{
+		ResultsSets[iNoRes] = new ResSet();
+		ResultsSets[iNoRes]->sFile = inName;
+		ResultsSets[iNoRes]->sTitle = sTitle;
+		ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+		ResultsSets[iNoRes]->ACODE = Vals[0];
+		ResultsSets[iNoRes]->TCODE = Vals[1];
+		ResultsSets[iNoRes]->TYPE = Vals[2];
+		ResultsSets[iNoRes]->LC = Vals[3];
+		ResultsSets[iNoRes]->WID = Vals[6];
+		ResultsSets[iNoRes]->FCODE = Vals[7];
+		ResultsSets[iNoRes]->SCODE = Vals[8];
+		CString sEL;
+		char s30[30];
+		BOOL isGood = FALSE;
+		//FCODE = 2  Real/imaginary
+		//FCODE = 3  Magnitude/phase
+		if (Vals[2] == 33)
+		{
+			isGood = TRUE;
+			if (Vals[0] / 10 == 5)  //It's a frequency results
+			{
+				sprintf_s(s30, "%g %s", dFreq, "Hz STRAIN CQUAD4");
+				sEL = s30;
+			}
+			else
+			{
+				sEL = "STRAIN GRMS CQUAD4";
+			}
+		}
+
+		if ((iCnt > 10) && (isGood))
+		{
+			ResultsSets[iNoRes]->sName = sEL;
+			ResultsSets[iNoRes]->iNoV = 14;
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "Re Normal X at Z1";
+			ResultsSets[iNoRes]->lab[2] = "Im Normal X at Z1";
+			ResultsSets[iNoRes]->lab[3] = "Re Normal Y at Z1";
+			ResultsSets[iNoRes]->lab[4] = "Im Normal Y at Z1";
+			ResultsSets[iNoRes]->lab[5] = "Re Shear XY at Z1";
+			ResultsSets[iNoRes]->lab[6] = "Im Shear XY at Z1";
+			ResultsSets[iNoRes]->lab[7] = "Z2 = Fibre distance";
+			ResultsSets[iNoRes]->lab[8] = "Re Normal X at Z2";
+			ResultsSets[iNoRes]->lab[9] = "Im Normal X at Z2";
+			ResultsSets[iNoRes]->lab[10] = "Re Normal Y at Z2";
+			ResultsSets[iNoRes]->lab[11] = "Im Normal Y at Z2";
+			ResultsSets[iNoRes]->lab[12] = "Re Shear XY at Z2";
+			ResultsSets[iNoRes]->lab[13] = "Im Shear XY at Z2";
+			for (i = 10; i < iCnt; i += 15)
+			{
+				Res15* pRes = new Res15;
+				pRes->ID = Vals[i] / 10;
+				pRes->v[0] = *(float*)&Vals[i + 1];
+				pRes->v[1] = *(float*)&Vals[i + 2];
+				pRes->v[2] = *(float*)&Vals[i + 3];
+				pRes->v[3] = *(float*)&Vals[i + 4];
+				pRes->v[4] = *(float*)&Vals[i + 5];
+				pRes->v[5] = *(float*)&Vals[i + 6];
+				pRes->v[6] = *(float*)&Vals[i + 7];
+				pRes->v[7] = *(float*)&Vals[i + 8];
+				pRes->v[8] = *(float*)&Vals[i + 9];
+				pRes->v[9] = *(float*)&Vals[i + 10];
+				pRes->v[10] = *(float*)&Vals[i + 11];
+				pRes->v[11] = *(float*)&Vals[i + 12];
+				pRes->v[12] = *(float*)&Vals[i + 13];
+				pRes->v[13] = *(float*)&Vals[i + 14];
+				ResultsSets[iNoRes]->Add(pRes);
+			}
+		}
+		iNoRes++;
+	}
+}
 void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
 {
 	int i;
@@ -28330,6 +28462,9 @@ void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTit
 	ResultsSets[iNoRes]->TCODE = Vals[1];
 	ResultsSets[iNoRes]->TYPE = Vals[2];
 	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	ResultsSets[iNoRes]->SCODE = Vals[8];
 	ModeNo = *(float*)& Vals[4];
 	ModeFreq = *(float*)&Vals[5];
 	ModeFreq = pow(ModeFreq, 0.5) / (3.14159265359 * 2);
@@ -28423,6 +28558,9 @@ void ME_Object::AddOUGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitl
 	ResultsSets[iNoRes]->TCODE = Vals[1];
 	ResultsSets[iNoRes]->TYPE = Vals[2];
 	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	ResultsSets[iNoRes]->SCODE = Vals[8];
 	ModeNo = Vals[4];
 	ModeFreq = *(float*)&Vals[5];
 	ModeFreq = pow(ModeFreq, 0.5) / (3.14159265359 * 2);
@@ -28618,7 +28756,7 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 	Res* pR;
 	CString sDL;
 	BOOL bFirst = TRUE;
-	outtext1("RESONSE LISTING:-");
+	outtext1("RESPONSE LISTING:-");
 	for (i = 0; i < iNoRes; i++)
 	{
 		if (ResultsSets[i]->LC == iLC)

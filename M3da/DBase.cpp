@@ -10858,6 +10858,14 @@ void DBase::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle,
 	}
 }
 
+void DBase::AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOSTRFCPXRes(Vals, iCnt, sTitle, sSubTitle, inName, dFreq);
+	}
+}
+
 void DBase::AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
 {
   if (pCurrentMesh != NULL)
@@ -10986,7 +10994,7 @@ while (!feof(pFile))
 			ACODE = DataB[0];
 			TCODE = DataB[1];
 			FCODE = DataB[7];	  //newly added so result can be
-			SCODE = DataB[8];	  //interpreted better
+			SCODE = DataB[8];	  //interprested m
 			if (iCnt > 0)
 			{
 				if (ACODE == 13)  //STATICS
@@ -11001,6 +11009,7 @@ while (!feof(pFile))
 					else if (TCODE / 1000 == 1)  //Sort 1 complex
 					{ 
 						//Need to add complex freq results
+						//AddOSTRFCPXRes(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
 					}
 			}
             //WriteF

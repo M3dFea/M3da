@@ -3713,6 +3713,7 @@ void AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inN
 void AddOESNRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
 void AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
+void AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
 void AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
 void ListResSets();
 void ListVecSets();

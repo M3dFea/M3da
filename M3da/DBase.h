@@ -517,6 +517,7 @@ void AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inN
 void AddOESNRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
 void AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dFreq);
+void AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
 void AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
 void S_ImportOp2(FILE* pFile, CString inName,int iT);
 G_Object* GetBasicIGESType(int iD,IgesD (&DirEnt)[100000],IgesP* PDat);
