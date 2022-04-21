@@ -14081,6 +14081,7 @@ CoordSys* NASReadCoord(ME_Object* pM,
   X.Normalize();
   Z.Normalize();
   Y = Z.Cross(X);
+  Y.Normalize();
   X = Y.Cross(Z);
   rMat.MakeUnit();
   rMat.m_00 = X.x;
