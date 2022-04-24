@@ -14080,7 +14080,8 @@ CoordSys* NASReadCoord(ME_Object* pM,
   X-=Org;
   X.Normalize();
   Z.Normalize();
-  Y = Z.Cross(X);
+  Y = Z.Cross(X); 
+  //Normalize below added
   Y.Normalize();
   X = Y.Cross(Z);
   rMat.MakeUnit();
