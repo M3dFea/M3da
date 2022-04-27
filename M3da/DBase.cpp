@@ -2454,13 +2454,21 @@ void DBase::ElMass(ObjList* Els)
   int j;
   Mat mm;
   double dM=0;
-
+  C3dVector vC;
+  double mx = 0;
+  double my = 0;
+  double mz = 0;
   for (i = 0; i<Els->iNo; i++)
   {
     E_Object* pE = (E_Object*)Els->Objs[i];
     mm=pE->GetElNodalMass(PropsT, MatT);
+	
     for(j=0;j<pE->iNoNodes;j++)
     {
+	  vC = pE->GetNode(j)->Get_Centroid();
+	  mx += *mm.mn(j + 1, 1) * vC.x;
+	  my += *mm.mn(j + 1, 1) * vC.y;
+	  mz += *mm.mn(j + 1, 1) * vC.z;
       dM+= *mm.mn(j+1, 1);
     }
     mm.clear();
@@ -2468,6 +2476,12 @@ void DBase::ElMass(ObjList* Els)
   outtext1("ELEMENT MASS SUMATION");
   sprintf_s(S1, "Number off Elements summed: %i", Els->iNo);
   sprintf_s(S1, "Mass Total: %g", dM);
+  outtext1(S1);
+  sprintf_s(S1, "CofG X : %g", mx/dM);
+  outtext1(S1);
+  sprintf_s(S1, "CofG Y : %g", my/dM);
+  outtext1(S1);
+  sprintf_s(S1, "CofG Z : %g", mz/dM);
   outtext1(S1);
   
 }
