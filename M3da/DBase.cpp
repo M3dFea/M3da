@@ -2458,6 +2458,14 @@ void DBase::ElMass(ObjList* Els)
   double mx = 0;
   double my = 0;
   double mz = 0;
+  //monents of inertia about origin in basic cys
+  double Ixx = 0;
+  double Iyy = 0;
+  double Izz = 0;
+  double Ixy = 0;
+  double Ixz = 0;
+  double Iyz = 0;
+
   for (i = 0; i<Els->iNo; i++)
   {
     E_Object* pE = (E_Object*)Els->Objs[i];
@@ -2470,6 +2478,13 @@ void DBase::ElMass(ObjList* Els)
 	  my += *mm.mn(j + 1, 1) * vC.y;
 	  mz += *mm.mn(j + 1, 1) * vC.z;
       dM+= *mm.mn(j+1, 1);
+	  //Mass Inertia Matrix Calculation
+	  Ixx += *mm.mn(j + 1, 1) * (vC.y * vC.y + vC.z * vC.z);
+	  Iyy += *mm.mn(j + 1, 1) * (vC.x * vC.x + vC.z * vC.z);
+	  Izz += *mm.mn(j + 1, 1) * (vC.x * vC.x + vC.y * vC.y);
+	  Ixy -= *mm.mn(j + 1, 1) * vC.x * vC.y;
+	  Ixz -= *mm.mn(j + 1, 1) * vC.x * vC.z;;
+	  Iyz -= *mm.mn(j + 1, 1) * vC.y * vC.z;;
     }
     mm.clear();
   }
@@ -2483,7 +2498,19 @@ void DBase::ElMass(ObjList* Els)
   outtext1(S1);
   sprintf_s(S1, "CofG Z : %g", mz/dM);
   outtext1(S1);
-  
+  outtext1("Mass Moment of Inertia");
+  sprintf_s(S1, "Ixx : %g", Ixx);
+  outtext1(S1);
+  sprintf_s(S1, "Iyy : %g", Iyy);
+  outtext1(S1);
+  sprintf_s(S1, "Izz : %g", Izz);
+  outtext1(S1);
+  sprintf_s(S1, "Ixy : %g", Ixy);
+  outtext1(S1);
+  sprintf_s(S1, "Ixz : %g", Ixz);
+  outtext1(S1);
+  sprintf_s(S1, "Iyz : %g", Iyz);
+  outtext1(S1);
 }
 
 //***************************************************************************
