@@ -2490,13 +2490,7 @@ void DBase::ElMass(ObjList* Els)
   }
   outtext1("ELEMENT MASS SUMATION");
   sprintf_s(S1, "Number off Elements summed: %i", Els->iNo);
-  sprintf_s(S1, "Mass Total: %g", dM);
-  outtext1(S1);
-  sprintf_s(S1, "CofG X : %g", mx/dM);
-  outtext1(S1);
-  sprintf_s(S1, "CofG Y : %g", my/dM);
-  outtext1(S1);
-  sprintf_s(S1, "CofG Z : %g", mz/dM);
+  sprintf_s(S1, "CofG X,Y,Z : %g,%g,%g", mx/dM, my / dM, mz / dM);
   outtext1(S1);
   outtext1("Mass Moment of Inertia");
   sprintf_s(S1, "Ixx : %g", Ixx);
@@ -2510,6 +2504,8 @@ void DBase::ElMass(ObjList* Els)
   sprintf_s(S1, "Ixz : %g", Ixz);
   outtext1(S1);
   sprintf_s(S1, "Iyz : %g", Iyz);
+  outtext1(S1);
+  sprintf_s(S1, "Mass Total: %g", dM);
   outtext1(S1);
 }
 
@@ -7797,8 +7793,15 @@ void DBase::ElSweep(ObjList* Items,C3dVector tVec,int iNoOff)
 int i;
 int j;
 int k;
-
-
+double dd = iNoOff;
+//change tp how sweep is done now tVec is the totatl vector
+//to move in iNoOff increments
+if (iNoOff > 0)
+{
+	tVec.x /= dd;
+	tVec.y /= dd;
+	tVec.z /= dd;
+}
 Pt_Object* iNlabs[200]; 
 C3dVector vA;
 Pt_Object* NdNew = NULL;

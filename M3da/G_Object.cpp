@@ -39893,6 +39893,40 @@ G_Object* Text::Copy(G_Object* Parrent)
 	return(cText);
 }
 
+CString Text::GetName()
+{
+	return ("Text");
+}
+
+int Text::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = "Text";
+	iNo++;
+	sVar[iNo] = "Height";
+	iNo++;
+	return(iNo);
+}
+
+
+int Text::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	//sprintf_s(S1, "%s", PID);
+	sVar[iNo] = sText;
+	iNo++;
+	sprintf_s(S1, "%g", dTextHeight);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void Text::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	//iMCys = atoi(sVar[1]);
+	//sText = sVar[0];
+}
 
 
 //26/09/2016
@@ -39912,8 +39946,8 @@ iLabel = -1;
 iColour = 2;
 pParent = NULL;
 pL=NULL;
-
-inPt=NULL;
+vCent = NULL;         //Centroid
+inPt = NULL;
 iSegs=0;
 }
 

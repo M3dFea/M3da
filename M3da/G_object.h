@@ -2031,6 +2031,11 @@ public:
 	virtual void Serialize(CArchive& ar, int iV);
 	virtual C3dVector Get_Centroid();
 	virtual G_Object* Copy(G_Object* Parrent);
+	virtual CString GetName();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+
 };
 
 
@@ -2041,12 +2046,12 @@ class Symbol : public G_Object
 {
 DECLARE_DYNAMIC(Symbol)
 public:
-   Link* pL;
+   Link* pL = NULL;
    CvPt_Object* inPt;          //Insertion Point
    CvPt_Object* vCent;         //Centroid
-   double w;                   //symbol width
-   double h;                   //symbol height
-   int iSegs;
+   double w = 0;                   //symbol width
+   double h = 0;                   //symbol height
+   int iSegs = 0;
    Symbol();
    virtual ~Symbol();
    virtual void Create(int iLab,C3dVector inP,G_Object* Parrent);
