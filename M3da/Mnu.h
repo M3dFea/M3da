@@ -436,6 +436,19 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zELSWEEPNDS_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zELSWEEPNDB_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+
 class zELSWEEPB_Mnu : public zMnu
 {
 public:

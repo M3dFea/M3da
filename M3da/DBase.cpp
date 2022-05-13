@@ -7794,7 +7794,7 @@ int i;
 int j;
 int k;
 double dd = iNoOff;
-//change tp how sweep is done now tVec is the totatl vector
+//change to how sweep is done now tVec is the totatl vector
 //to move in iNoOff increments
 if (iNoOff > 0)
 {
@@ -7921,6 +7921,197 @@ delete(NDF1);
 delete(NDF2);
 }
 
+//******************************************************************
+//Sweep an ordered list of nodes into shell elements along tvec
+void DBase::NDSweepToShell(ObjList* Items, C3dVector tVec, int iNoOff)
+{
+	int i;
+	int j;
+	int k;
+	double dd = iNoOff;
+	//change to how sweep is done now tVec is the totatl vector
+	//to move in iNoOff increments
+	if (iNoOff > 0)
+	{
+		tVec.x /= dd;
+		tVec.y /= dd;
+		tVec.z /= dd;
+	}
+	Pt_Object* iNlabs[200];
+	C3dVector vA;
+	Pt_Object* NdNew = NULL;
+	E_Object* El = NULL;
+	E_Object* ENew = NULL;
+	ObjList* ELF = new ObjList;
+	ObjList* NDF = new ObjList;;
+	ObjList* NDF1 = new ObjList;;
+	ObjList* NDF2 = new ObjList;;
+	NDF->Clear();
+	NDF1->Clear();
+	NDF2->Clear();
+	ELF->Clear();
+	BOOL bFirst = TRUE;
+	if (Items->iNo > 0)
+	{
+		pCurrentMesh->MaxLab();
+		pCurrentMesh->iElementLab++;
+		pCurrentMesh->iNodeLab++;
+		for (i = 0; i < Items->iNo; i++)
+		{
+			if (Items->Objs[i]->iObjType == 1)
+			{
+						NDF->AddEx(Items->Objs[i]);
+			}	
+		}
+		for (i = 0; i < iNoOff + 1; i++)
+		{
+			if (bFirst == TRUE)
+			{
+				//vA = tVec;
+				vA.Set(0, 0, 0);
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					//NdNew = (Pt_Object*)NDF->Objs[j]->Copy(pCurrentMesh);
+					//NdNew->iLabel = pCurrentMesh->iNodeLab;
+					//pCurrentMesh->iNodeLab++;
+					//pCurrentMesh->pNodes[pCurrentMesh->iNdNo] = NdNew;
+					NDF1->Add(NDF->Objs[j]);
+					//pCurrentMesh->iNdNo++;
+					//MoveObj(NdNew, vA);
+				}
+				bFirst = FALSE;
+			}
+			else
+			{
+				vA = tVec;
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					NdNew = (Pt_Object*)NDF1->Objs[j]->Copy(pCurrentMesh);
+					NdNew->iLabel = pCurrentMesh->iNodeLab;
+					pCurrentMesh->iNodeLab++;
+					pCurrentMesh->pNodes[pCurrentMesh->iNdNo] = NdNew;
+					NDF2->Objs[j] = NdNew;
+					pCurrentMesh->iNdNo++;
+					MoveObj(NdNew, vA);
+				}
+				for (k = 0; k < NDF1->iNo-1; k++)
+				{
+						iNlabs[0] = (Pt_Object*) NDF1->Objs[k];
+						iNlabs[1] = (Pt_Object*) NDF2->Objs[k];
+						iNlabs[2] = (Pt_Object*) NDF2->Objs[k+1]; 
+						iNlabs[3] = (Pt_Object*) NDF1->Objs[k+1];
+						ENew = pCurrentMesh->AddEl(iNlabs, pCurrentMesh->iElementLab, 74, 94, -1, 1, 4, 0, 0, 0, 0, -1, 0);
+						pCurrentMesh->iElementLab++;
+				}
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					NDF1->Objs[j] = NDF2->Objs[j];
+				}
+			}
+		}
+		InvalidateOGL();
+		ReDraw();
+	}
+	delete(ELF);
+	delete(NDF);
+	delete(NDF1);
+	delete(NDF2);
+}
+
+//******************************************************************
+//Sweep an ordered list of nodes into beam elements along tvec
+void DBase::NDSweepToBeam(ObjList* Items, C3dVector tVec, int iNoOff)
+{
+	int i;
+	int j;
+	int k;
+	double dd = iNoOff;
+	//change to how sweep is done now tVec is the totatl vector
+	//to move in iNoOff increments
+	if (iNoOff > 0)
+	{
+		tVec.x /= dd;
+		tVec.y /= dd;
+		tVec.z /= dd;
+	}
+	Pt_Object* iNlabs[200];
+	C3dVector vA;
+	Pt_Object* NdNew = NULL;
+	E_Object* El = NULL;
+	E_Object* ENew = NULL;
+	ObjList* ELF = new ObjList;
+	ObjList* NDF = new ObjList;;
+	ObjList* NDF1 = new ObjList;;
+	ObjList* NDF2 = new ObjList;;
+	NDF->Clear();
+	NDF1->Clear();
+	NDF2->Clear();
+	ELF->Clear();
+	BOOL bFirst = TRUE;
+	if (Items->iNo > 0)
+	{
+		pCurrentMesh->MaxLab();
+		pCurrentMesh->iElementLab++;
+		pCurrentMesh->iNodeLab++;
+		for (i = 0; i < Items->iNo; i++)
+		{
+			if (Items->Objs[i]->iObjType == 1)
+			{
+				NDF->AddEx(Items->Objs[i]);
+			}
+		}
+		for (i = 0; i < iNoOff + 1; i++)
+		{
+			if (bFirst == TRUE)
+			{
+				//vA = tVec;
+				vA.Set(0, 0, 0);
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					//NdNew = (Pt_Object*)NDF->Objs[j]->Copy(pCurrentMesh);
+					//NdNew->iLabel = pCurrentMesh->iNodeLab;
+					//pCurrentMesh->iNodeLab++;
+					//pCurrentMesh->pNodes[pCurrentMesh->iNdNo] = NdNew;
+					NDF1->Add(NDF->Objs[j]);
+					//pCurrentMesh->iNdNo++;
+					//MoveObj(NdNew, vA);
+				}
+				bFirst = FALSE;
+			}
+			else
+			{
+				vA = tVec;
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					NdNew = (Pt_Object*)NDF1->Objs[j]->Copy(pCurrentMesh);
+					NdNew->iLabel = pCurrentMesh->iNodeLab;
+					pCurrentMesh->iNodeLab++;
+					pCurrentMesh->pNodes[pCurrentMesh->iNdNo] = NdNew;
+					NDF2->Objs[j] = NdNew;
+					pCurrentMesh->iNdNo++;
+					MoveObj(NdNew, vA);
+				}
+				for (k = 0; k < NDF1->iNo; k++)
+				{
+					iNlabs[0] = (Pt_Object*)NDF1->Objs[k];
+					iNlabs[1] = (Pt_Object*)NDF2->Objs[k];
+					ENew = pCurrentMesh->AddEl(iNlabs, pCurrentMesh->iElementLab, 75, 21, -1, 1, 4, 0, 0, 0, 0, -1, 0);
+					pCurrentMesh->iElementLab++;
+				}
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					NDF1->Objs[j] = NDF2->Objs[j];
+				}
+			}
+		}
+		InvalidateOGL();
+		ReDraw();
+	}
+	delete(ELF);
+	delete(NDF);
+	delete(NDF1);
+	delete(NDF2);
+}
 //*********************************************************************************
 // Pre: Node
 // Post: Nodal averaged normal calculated
@@ -10846,11 +11037,27 @@ if (pCurrentMesh!=NULL)
 }
 }
 
-void DBase::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+void DBase::AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
 {
 	if (pCurrentMesh != NULL)
 	{
-		pCurrentMesh->AddOAG1Res(Vals, iCnt, sTitle, sSubTitle, inName);
+		pCurrentMesh->AddOEFResF(Vals, iCnt, sTitle, sSubTitle, inName,dF);
+	}
+}
+
+void DBase::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dF)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOAG1Res(Vals, iCnt, sTitle, sSubTitle, inName,dF);
+	}
+}
+
+void DBase::AddOQMRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOQMRes(Vals, iCnt, sTitle, sSubTitle, inName, dF);
 	}
 }
 
@@ -10985,8 +11192,10 @@ while (!feof(pFile))
             Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
 			if (iCnt > 0)
 			{
-				if (DataB[0] / 10 == 1)
+				if (DataB[0] / 10 == 1)	//Linear
 					AddOEFRes(DataB, iCnt, sTitle, sSubTitle, inName);
+				else if (DataB[0] / 10 == 5)	//Linear
+					AddOEFResF(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
 			}
             //WriteF
       }
@@ -11003,7 +11212,24 @@ while (!feof(pFile))
 		   if (iCnt > 0)
 		   {
 			   if (DataB[0]/10 == 5)  // Frequency Only
-				   AddOAG1Res(DataB, iCnt, sTitle, sSubTitle, inName);
+				   AddOAG1Res(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+		   }
+		   //WriteF
+	   }
+   }
+   else if ((sDataS[0] == 'O') &&
+	        (sDataS[1] == 'Q') &&
+	        (sDataS[2] == 'M') &&
+	        (iRecord == -3))
+   {   //MPC Forces
+	   while (iKey != 0)
+	   {
+		   iCnt = 0;
+		   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle, dFreq);
+		   if (iCnt > 0)
+		   {
+			   if (DataB[0] / 10 == 5)  // Frequency Only
+				   AddOQMRes(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
 		   }
 		   //WriteF
 	   }

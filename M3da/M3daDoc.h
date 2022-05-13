@@ -487,6 +487,8 @@ public:
   afx_msg void OnElementmodifiyBeamoffsetinbeamy();
   afx_msg void OnElementmodifiyBeamoffsetinbeamz();
   afx_msg void OnToolsPlanet();
+  afx_msg void OnFemtoolsSweepnodestoshells();
+  afx_msg void OnFemtoolsSweepnodestobeams();
 };
 
 

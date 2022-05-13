@@ -510,7 +510,9 @@ void S_Import(FILE* pFile, CString inName,int iT);
 void S_ImportGroups(FILE* pFile);
 void Readdb(FILE* pFile,int Vals[],int &iCnt,int &iKey,int &iRec,CString &sTit,CString &sSubTit,double &dFreq);
 void AddOEFRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
-void AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
+void AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
+void AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
+void AddOQMRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
 void AddOUGRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOES1Res(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
@@ -610,6 +612,8 @@ void SetDOFStringA(ObjList* Items, CString sDOF);
 void SetDOFStringB(ObjList* Items, CString sDOF);
 void ShellOffsets(ObjList* Items,double dOff);
 void ElSweep(ObjList* Items,C3dVector tVec,int iNoOff);
+void NDSweepToShell(ObjList* Items, C3dVector tVec, int iNoOff);
+void NDSweepToBeam(ObjList* Items, C3dVector tVec, int iNoOff);
 void ViewLam(int iP);
 //******************************************************************
 //                  Drap Demo 22/062020 BlowsR

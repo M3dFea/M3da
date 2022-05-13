@@ -265,6 +265,8 @@ BEGIN
             MENUITEM "Free TRI Mesh",               ID_MESH_FREETRIMESH
             MENUITEM "Mapped QUAD Mesh",            ID_MESH_MAPPEDSURFACEMESH
             MENUITEM "Sweep Elements",              ID_MESH_SWEEPELEMENTS
+            MENUITEM "Sweep Nodes to Beams",        ID_FEMTOOLS_SWEEPNODESTOBEAMS
+            MENUITEM "Sweep Nodes to Shells",       ID_FEMTOOLS_SWEEPNODESTOSHELLS
             MENUITEM "Build Assembly Mesh",         ID_MESH_BUILDASSEMBLYMESH
             MENUITEM "Quads Between Nodes",         ID_MESHQND
             MENUITEM "Shell Coat Solid Elements",   ID_MESH_SHELLCOATSOLIDELEMENTS
@@ -1234,6 +1236,8 @@ BEGIN
     ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMZ 
                             "Offset Beam Elements in Element Z direction"
     ID_TOOLS_PLANET         "Insert Planet Sphere"
+    ID_FEMTOOLS_SWEEPNODESTOSHELLS "Sweep nodes into quad shell elements"
+    ID_FEMTOOLS_SWEEPNODESTOBEAMS "Sweep nodes into beam ekements"
 END
 
 #endif    // English (United States) resources

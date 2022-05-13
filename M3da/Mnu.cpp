@@ -2524,6 +2524,26 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "ELSWEEPNDS")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zELSWEEPNDS_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "ELSWEEPNDB")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zELSWEEPNDB_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "ELMOLAB2")
 	  {
 		  iResumePos = 0;
@@ -13445,6 +13465,158 @@ MenuEnd:
 return RetVal;
 }
 
+int zELSWEEPNDS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("/PICK NODES TO SWEEP INTO SHELLS");
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(1);
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			cDBase->S_Count = 0;
+			cDBase->FILTER.SetAll();
+			outtext2("/ENTER TRANSLATION:");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zTVEC_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			outtext2("/ENTER NO");
+			SetFocus();
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector ptNo;
+			C3dVector ptVec;
+			ptNo = cDBase->DB_PopBuff();
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->NDSweepToShell(cDBase->OTemp, ptVec, (int)ptNo.x);
+			cDBase->S_Res();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zELSWEEPNDB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("/PICK NODES TO SWEEP INTO BEAMS");
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(1);
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			cDBase->S_Count = 0;
+			cDBase->FILTER.SetAll();
+			outtext2("/ENTER TRANSLATION:");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zTVEC_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			outtext2("/ENTER NO");
+			SetFocus();
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector ptNo;
+			C3dVector ptVec;
+			ptNo = cDBase->DB_PopBuff();
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->NDSweepToBeam(cDBase->OTemp, ptVec, (int)ptNo.x);
+			cDBase->S_Res();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 int zELSWEEPB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
@@ -16458,7 +16630,7 @@ int zRESLSTRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			outtext2("/ENTER LC, NODE ID FOR RESPONSE DATA");
+			outtext2("/ENTER LC, NODE/ELEM ID FOR RESPONSE DATA");
 			SetFocus();
 			iResumePos = 1;
 			iCancelPos = 100;

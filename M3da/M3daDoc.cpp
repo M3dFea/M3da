@@ -339,6 +339,8 @@ ON_COMMAND(ID_PROPERTY_BEAM_L, &CM3daDoc::OnPropertyBeamL)
 ON_COMMAND(ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMY, &CM3daDoc::OnElementmodifiyBeamoffsetinbeamy)
 ON_COMMAND(ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMZ, &CM3daDoc::OnElementmodifiyBeamoffsetinbeamz)
 ON_COMMAND(ID_TOOLS_PLANET, &CM3daDoc::OnToolsPlanet)
+ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOSHELLS, &CM3daDoc::OnFemtoolsSweepnodestoshells)
+ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOBEAMS, &CM3daDoc::OnFemtoolsSweepnodestobeams)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -3570,8 +3572,8 @@ void CM3daDoc::OnImportOp2()
 		if (pFile!=NULL)
 		  {
 		  cDBase->S_ImportOp2(pFile,sFile,1);
+		  fclose(pFile);
 		  } 
-	fclose(pFile);
 	}
 }
 
@@ -5743,4 +5745,37 @@ void CM3daDoc::OnToolsPlanet()
 {
 	// TODO: Add your command handler code here
 	cDBase->insPlanet();
+}
+
+
+void CM3daDoc::OnFemtoolsSweepnodestoshells()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("ELSWEEPNDS");
+		sLastcmd = "ELSWEEPNDS";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnFemtoolsSweepnodestobeams()
+{
+	// TODO: Add your command handler code here
+		// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("ELSWEEPNDB");
+		sLastcmd = "ELSWEEPNDB";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
 }

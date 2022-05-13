@@ -187,7 +187,7 @@ const float cols[167][3] ={{0.0f,0.0f,0.0f},
 {1.00f, 1.00f, 1.00f},    //165 White
 {0.6f, 0.6f, 0.6f}};      //166Grey
 
-const int MAX_RESSETS=5000;
+const int MAX_RESSETS=50000;
 class Part;
 class ME_Object;
 class G_Object;
@@ -3711,8 +3711,10 @@ void SetColourBar(float fMax,float fMin);
 void BuildDeromedVecs();
 void DeleteDeromedVecs();
 void AddOUGRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
-void AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
+void AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
+void AddOQMRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
 void AddOEFRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
+void AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);  
 void AddOES1Res(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOESNRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);

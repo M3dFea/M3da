@@ -27000,7 +27000,7 @@ if ((iCnt>5) && ((ResultsSets[iNoRes]->TYPE==95) || (ResultsSets[iNoRes]->TYPE==
   int ID;
   char* ss;
   CString S;
-  for (i=7;i<iCnt;i+=9)
+  for (i=10;i<iCnt;i+=9)
   {
     Res5* pRes=new Res5;
 	if (Vals[i]!=-1)
@@ -27034,7 +27034,7 @@ if ((iCnt>5) && (ResultsSets[iNoRes]->TYPE==102))
   ResultsSets[iNoRes]->lab[4]="MY";
   ResultsSets[iNoRes]->lab[5]="MZ";
 
-  for (i=7;i<iCnt;i+=7)
+  for (i=10;i<iCnt;i+=7)
   {
     Res6* pRes=new Res6;
     pRes->ID=Vals[i] / 10;
@@ -27059,7 +27059,7 @@ if ((iCnt>5) && (ResultsSets[iNoRes]->TYPE==34))
   ResultsSets[iNoRes]->lab[5]="TS2";
   ResultsSets[iNoRes]->lab[6]="AF";
   ResultsSets[iNoRes]->lab[7]="TRQ";
-  for (i=7;i<iCnt;i+=9)
+  for (i=10;i<iCnt;i+=9)
   {
     Res8* pRes=new Res8;
     pRes->ID=Vals[i] / 10;
@@ -27081,7 +27081,7 @@ if ((iCnt>5) && (ResultsSets[iNoRes]->TYPE==1))
   ResultsSets[iNoRes]->lab[0]="Axial Force";
   ResultsSets[iNoRes]->lab[1]="Torque";
 
-  for (i=7;i<iCnt;i+=9)
+  for (i=10;i<iCnt;i+=9)
   {
     Res8* pRes=new Res8;
     pRes->ID=Vals[i] / 10;
@@ -27091,6 +27091,126 @@ if ((iCnt>5) && (ResultsSets[iNoRes]->TYPE==1))
   }
 }
 iNoRes++;
+}
+
+
+void ME_Object::AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dF)
+{
+	int i;
+	char s30[30];
+	ResultsSets[iNoRes] = new ResSet();
+	ResultsSets[iNoRes]->sFile = inName;
+	ResultsSets[iNoRes]->sTitle = sTitle;
+	ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+	ResultsSets[iNoRes]->ACODE = Vals[0];
+	ResultsSets[iNoRes]->TCODE = Vals[1];
+	ResultsSets[iNoRes]->TYPE = Vals[2];
+	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	ResultsSets[iNoRes]->SCODE = Vals[8];
+	ResultsSets[iNoRes]->dFreq = dF;
+	int iWID = ResultsSets[iNoRes]->WID;
+	CString sEL;
+	BOOL isGood = FALSE;
+
+	if (Vals[2] == 33)
+	{
+		isGood = TRUE;
+		sEL = "FORCE CQUAD4";
+	}
+	else if (Vals[2] == 74)
+	{
+		isGood = TRUE;
+		sEL = "FORCE CTRIA3";
+	}
+	else if (Vals[2] == 2)
+	{
+		sEL = "FORCE CBEAM (not read)";
+		ResultsSets[iNoRes]->sName = sEL;
+	}
+	else if (Vals[2] == 102)
+	{
+		sEL = "FORCE CBUSH";
+	}
+	else if (Vals[2] == 34)
+	{
+		sEL = "FORCE CBAR";
+	}
+	else if (Vals[2] == 95)
+	{
+		sEL = "FAILURE INDICES CQUAD4";
+	}
+	else if (Vals[2] == 97)
+	{
+		sEL = "FAILURE INDICES CTRIA3";
+	}
+	else if (Vals[2] == 1)
+	{
+		sEL = "FORCE CROD";
+	}
+
+
+	if ((iCnt > 5) && (ResultsSets[iNoRes]->TYPE == 102))
+	{
+		sprintf_s(s30, "%s %g %s", sEL, dF, "Hz");
+		ResultsSets[iNoRes]->sName = s30;
+		ResultsSets[iNoRes]->iNoV = 13;
+		if (ResultsSets[iNoRes]->FCODE == 3)
+		{	 //MAG / PHASE
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "(mag) FX";
+			ResultsSets[iNoRes]->lab[2] = "(mag) FY";
+			ResultsSets[iNoRes]->lab[3] = "(mag) FZ";
+			ResultsSets[iNoRes]->lab[4] = "(mag) MX";
+			ResultsSets[iNoRes]->lab[5] = "(mag) MY";
+			ResultsSets[iNoRes]->lab[6] = "(mag) MZ";
+			ResultsSets[iNoRes]->lab[7] = "(phi) FX";
+			ResultsSets[iNoRes]->lab[8] = "(phi) FY";
+			ResultsSets[iNoRes]->lab[9] = "(phi) FZ";
+			ResultsSets[iNoRes]->lab[10] = "(phi) MX";
+			ResultsSets[iNoRes]->lab[11] = "(phi) MY";
+			ResultsSets[iNoRes]->lab[12] = "(phi) MZ";
+		}
+		else
+		{
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "(real) FX";
+			ResultsSets[iNoRes]->lab[2] = "(real) FY";
+			ResultsSets[iNoRes]->lab[3] = "(real) FZ";
+			ResultsSets[iNoRes]->lab[4] = "(real) MX";
+			ResultsSets[iNoRes]->lab[5] = "(real) MY";
+			ResultsSets[iNoRes]->lab[6] = "(real) MZ";
+			ResultsSets[iNoRes]->lab[7] = "(imag) FX";
+			ResultsSets[iNoRes]->lab[8] = "(imag) FY";
+			ResultsSets[iNoRes]->lab[9] = "(imag) FZ";
+			ResultsSets[iNoRes]->lab[10] = "(imag) MX";
+			ResultsSets[iNoRes]->lab[11] = "(imag) MY";
+			ResultsSets[iNoRes]->lab[12] = "(imag) MZ";
+		}
+
+		for (i = 10; i < iCnt; i += iWID)
+		{
+			Res13* pRes = new Res13;
+			pRes->ID = Vals[i] / 10;
+			pRes->v[0] = dF;
+			pRes->v[1] = *(float*)&Vals[i + 1];
+			pRes->v[2] = *(float*)&Vals[i + 2];
+			pRes->v[3] = *(float*)&Vals[i + 3];
+			pRes->v[4] = *(float*)&Vals[i + 4];
+			pRes->v[5] = *(float*)&Vals[i + 5];
+			pRes->v[6] = *(float*)&Vals[i + 6];
+			pRes->v[7] = *(float*)&Vals[i + 7];
+			pRes->v[8] = *(float*)&Vals[i + 8];
+			pRes->v[9] = *(float*)&Vals[i + 9];
+			pRes->v[10] = *(float*)&Vals[i + 10];
+			pRes->v[11] = *(float*)&Vals[i + 11];
+			pRes->v[12] = *(float*)&Vals[i + 12];
+			ResultsSets[iNoRes]->Add(pRes);
+		}
+	}
+
+	iNoRes++;
 }
 
 void ME_Object::AddOES1Res(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName)
@@ -27272,7 +27392,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==34))
   ResultsSets[iNoRes]->lab[12]="SB maximum";
   ResultsSets[iNoRes]->lab[13]="SB minimum";
   ResultsSets[iNoRes]->lab[14]="Safety margin in comp*";
-  for (i=7;i<iCnt;i+=16)
+  for (i=10;i<iCnt;i+=16)
   {
     Res15* pRes=new Res15;
     pRes->ID=Vals[i] / 10;
@@ -27315,7 +27435,7 @@ if ((iCnt>7) && ((ResultsSets[iNoRes]->TYPE==95) || (ResultsSets[iNoRes]->TYPE==
   ResultsSets[iNoRes]->lab[8]="Minor principal";
   ResultsSets[iNoRes]->lab[9]="Maximum shear";
   ResultsSets[iNoRes]->lab[10] = "Derived VM Stress";
-  for (i=7;i<iCnt;i+=11)
+  for (i=10;i<iCnt;i+=11)
   {
     Res15* pRes=new Res15;
     pRes->ID=Vals[i] / 10;
@@ -27346,7 +27466,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==102))
   ResultsSets[iNoRes]->lab[3]="Rotation x";
   ResultsSets[iNoRes]->lab[4]="Rotation y";
   ResultsSets[iNoRes]->lab[5]="Rotation z";
-  for (i=7;i<iCnt;i+=7)
+  for (i=10;i<iCnt;i+=7)
   {
     Res6* pRes=new Res6;
     pRes->ID=Vals[i] / 10;
@@ -27368,7 +27488,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==1))
   ResultsSets[iNoRes]->lab[2]="Torsional strain";
   ResultsSets[iNoRes]->lab[3]="Torsional safety margin*";
 
-  for (i=7;i<iCnt;i+=5)
+  for (i=10;i<iCnt;i+=5)
   {
     Res4* pRes=new Res4;
     pRes->ID=Vals[i] / 10;
@@ -27414,7 +27534,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==67))    //CHEXA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=193)
+  for (i=10;i<iCnt;i+=193)
   {
     Res189* pRes=new Res189;
     pRes->ID=Vals[i] / 10;
@@ -27467,7 +27587,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==68))    //CPENTA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=151)
+  for (i=10;i<iCnt;i+=151)
   {
     Res147* pRes=new Res147;
     pRes->ID=Vals[i] / 10;
@@ -27518,7 +27638,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==39))    //CTETRA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=109)
+  for (i=10;i<iCnt;i+=109)
   {
     Res105* pRes=new Res105;
     pRes->ID=Vals[i] / 10;
@@ -27749,7 +27869,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==34))
   ResultsSets[iNoRes]->lab[12]="SB maximum";
   ResultsSets[iNoRes]->lab[13]="SB minimum";
   ResultsSets[iNoRes]->lab[14]="Safety margin in comp*";
-  for (i=7;i<iCnt;i+=16)
+  for (i=10;i<iCnt;i+=16)
   {
     Res15* pRes=new Res15;
     pRes->ID=Vals[i] / 10;
@@ -27788,7 +27908,7 @@ ResultsSets[iNoRes]->iSecondaryID=0;
   ResultsSets[iNoRes]->lab[7]="Major principal*";
   ResultsSets[iNoRes]->lab[8]="Minor principal";
   ResultsSets[iNoRes]->lab[9]="von Mises or Maximum shear";
-  for (i=7;i<iCnt;i+=11)
+  for (i=10;i<iCnt;i+=11)
   {
     Res15* pRes=new Res15;
     pRes->ID=Vals[i] / 10;
@@ -27815,7 +27935,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==102))
   ResultsSets[iNoRes]->lab[3]="Rotation x";
   ResultsSets[iNoRes]->lab[4]="Rotation y";
   ResultsSets[iNoRes]->lab[5]="Rotation z";
-  for (i=7;i<iCnt;i+=7)
+  for (i=10;i<iCnt;i+=7)
   {
     Res6* pRes=new Res6;
     pRes->ID=Vals[i] / 10;
@@ -27837,7 +27957,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==1))
   ResultsSets[iNoRes]->lab[2]="Torsional strain";
   ResultsSets[iNoRes]->lab[3]="Torsional safety margin*";
 
-  for (i=7;i<iCnt;i+=5)
+  for (i=10;i<iCnt;i+=5)
   {
     Res4* pRes=new Res4;
     pRes->ID=Vals[i] / 10;
@@ -27883,7 +28003,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==67))    //CHEXA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=193)
+  for (i=10;i<iCnt;i+=193)
   {
     Res189* pRes=new Res189;
     pRes->ID=Vals[i] / 10;
@@ -27936,7 +28056,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==68))    //CPENTA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=151)
+  for (i=10;i<iCnt;i+=151)
   {
     Res147* pRes=new Res147;
     pRes->ID=Vals[i] / 10;
@@ -27987,7 +28107,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==39))    //CTETRA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=109)
+  for (i=10;i<iCnt;i+=109)
   {
     Res105* pRes=new Res105;
     pRes->ID=Vals[i] / 10;
@@ -28444,7 +28564,8 @@ void ME_Object::AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSu
 		iNoRes++;
 	}
 }
-void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+
+void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dF)
 {
 	int i;
 	char s30[30];
@@ -28453,6 +28574,7 @@ void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTit
 	//BuildNodeList();
 	C3dVector vT;
 	C3dVector vR;
+
 	ResultsSets[iNoRes] = new ResSet();
 	//***********************************************
 	ResultsSets[iNoRes]->sFile = inName;
@@ -28465,36 +28587,147 @@ void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTit
 	ResultsSets[iNoRes]->WID = Vals[6];
 	ResultsSets[iNoRes]->FCODE = Vals[7];
 	ResultsSets[iNoRes]->SCODE = Vals[8];
-	ModeNo = *(float*)& Vals[4];
-	ModeFreq = *(float*)&Vals[5];
-	ModeFreq = pow(ModeFreq, 0.5) / (3.14159265359 * 2);
-	ResultsSets[iNoRes]->i1 = ModeNo;
-	ResultsSets[iNoRes]->d1 = ModeNo;
+	//ModeNo = *(float*)& Vals[4];
+	//ModeFreq = *(float*)&Vals[5];
+	//ModeFreq = pow(ModeFreq, 0.5) / (3.14159265359 * 2);
+	ResultsSets[iNoRes]->i1 = 0;
+	ResultsSets[iNoRes]->dFreq = dF;
 	ResultsSets[iNoRes]->WID = Vals[6];
 
 	if (iCnt > 10)
 	{
-		sprintf_s(s30, "%s %g %s", "ACCELERATION", ModeNo, "Hz");
+		sprintf_s(s30, "%s %g %s", "ACCEL", dF, "Hz");
 		ResultsSets[iNoRes]->sName = s30;
 		ResultsSets[iNoRes]->iNoV = 13;
-		ResultsSets[iNoRes]->lab[0] = "Freq";
-		ResultsSets[iNoRes]->lab[1] = "TX";
-		ResultsSets[iNoRes]->lab[2] = "TY";
-		ResultsSets[iNoRes]->lab[3] = "TZ";
-		ResultsSets[iNoRes]->lab[4] = "RX";
-		ResultsSets[iNoRes]->lab[5] = "RY";
-		ResultsSets[iNoRes]->lab[6] = "RZ";
-		ResultsSets[iNoRes]->lab[7] = "(j) X";
-		ResultsSets[iNoRes]->lab[8] = "(j) Y";
-		ResultsSets[iNoRes]->lab[9] = "(j) Z";
-		ResultsSets[iNoRes]->lab[10] = "(j) RX";
-		ResultsSets[iNoRes]->lab[11] = "(j) RY";
-		ResultsSets[iNoRes]->lab[12] = "(j) RZ";
+		if (ResultsSets[iNoRes]->FCODE == 3)
+		{	 //MAG / PHASE
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "TX";
+			ResultsSets[iNoRes]->lab[2] = "TY";
+			ResultsSets[iNoRes]->lab[3] = "TZ";
+			ResultsSets[iNoRes]->lab[4] = "RX";
+			ResultsSets[iNoRes]->lab[5] = "RY";
+			ResultsSets[iNoRes]->lab[6] = "RZ";
+			ResultsSets[iNoRes]->lab[7] = "(Phi) X";
+			ResultsSets[iNoRes]->lab[8] = "(Phi) Y";
+			ResultsSets[iNoRes]->lab[9] = "(Phi) Z";
+			ResultsSets[iNoRes]->lab[10] = "(Phi) RX";
+			ResultsSets[iNoRes]->lab[11] = "(Phi) RY";
+			ResultsSets[iNoRes]->lab[12] = "(Phi) RZ";
+		}
+		else  //REAL - IMAGINARY
+		{
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "TX";
+			ResultsSets[iNoRes]->lab[2] = "TY";
+			ResultsSets[iNoRes]->lab[3] = "TZ";
+			ResultsSets[iNoRes]->lab[4] = "RX";
+			ResultsSets[iNoRes]->lab[5] = "RY";
+			ResultsSets[iNoRes]->lab[6] = "RZ";
+			ResultsSets[iNoRes]->lab[7] = "(j) X";
+			ResultsSets[iNoRes]->lab[8] = "(j) Y";
+			ResultsSets[iNoRes]->lab[9] = "(j) Z";
+			ResultsSets[iNoRes]->lab[10] = "(j) RX";
+			ResultsSets[iNoRes]->lab[11] = "(j) RY";
+			ResultsSets[iNoRes]->lab[12] = "(j) RZ";
+		}
 		for (i = 10; i < iCnt; i += 14)
 		{
 			Res13* pRes = new Res13;
 			pRes->ID = Vals[i] / 10;
-			pRes->v[0] = ModeNo;
+			pRes->v[0] = dF;
+			pRes->v[1] = *(float*)&Vals[i + 2];
+			pRes->v[2] = *(float*)&Vals[i + 3];
+			pRes->v[3] = *(float*)&Vals[i + 4];
+			pRes->v[4] = *(float*)&Vals[i + 5];
+			pRes->v[5] = *(float*)&Vals[i + 6];
+			pRes->v[6] = *(float*)&Vals[i + 7];
+			pRes->v[7] = *(float*)&Vals[i + 8];
+			pRes->v[8] = *(float*)&Vals[i + 9];
+			pRes->v[9] = *(float*)&Vals[i + 10];
+			pRes->v[10] = *(float*)&Vals[i + 11];
+			pRes->v[11] = *(float*)&Vals[i + 12];
+			pRes->v[12] = *(float*)&Vals[i + 13];
+			ResultsSets[iNoRes]->Add(pRes);
+		}
+
+	}
+	//DeleteNodeList();
+	iNoRes++;
+}
+
+
+void ME_Object::AddOQMRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	int i;
+	char s30[30];
+	float ModeNo;
+	float ModeFreq;
+	//BuildNodeList();
+	C3dVector vT;
+	C3dVector vR;
+
+	ResultsSets[iNoRes] = new ResSet();
+	//***********************************************
+	ResultsSets[iNoRes]->sFile = inName;
+	ResultsSets[iNoRes]->sTitle = sTitle;
+	ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+	ResultsSets[iNoRes]->ACODE = Vals[0];
+	ResultsSets[iNoRes]->TCODE = Vals[1];
+	ResultsSets[iNoRes]->TYPE = Vals[2];
+	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	ResultsSets[iNoRes]->SCODE = Vals[8];
+	//ModeNo = *(float*)& Vals[4];
+	//ModeFreq = *(float*)&Vals[5];
+	//ModeFreq = pow(ModeFreq, 0.5) / (3.14159265359 * 2);
+	ResultsSets[iNoRes]->i1 = 0;
+	ResultsSets[iNoRes]->dFreq = dF;
+	ResultsSets[iNoRes]->WID = Vals[6];
+
+	if (iCnt > 10)
+	{
+		sprintf_s(s30, "%s %g %s", "MPCF", dF, "Hz");
+		ResultsSets[iNoRes]->sName = s30;
+		ResultsSets[iNoRes]->iNoV = 13;
+		if (ResultsSets[iNoRes]->FCODE == 3)
+		{	 //MAG / PHASE
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "TX";
+			ResultsSets[iNoRes]->lab[2] = "TY";
+			ResultsSets[iNoRes]->lab[3] = "TZ";
+			ResultsSets[iNoRes]->lab[4] = "RX";
+			ResultsSets[iNoRes]->lab[5] = "RY";
+			ResultsSets[iNoRes]->lab[6] = "RZ";
+			ResultsSets[iNoRes]->lab[7] = "(Phi) X";
+			ResultsSets[iNoRes]->lab[8] = "(Phi) Y";
+			ResultsSets[iNoRes]->lab[9] = "(Phi) Z";
+			ResultsSets[iNoRes]->lab[10] = "(Phi) RX";
+			ResultsSets[iNoRes]->lab[11] = "(Phi) RY";
+			ResultsSets[iNoRes]->lab[12] = "(Phi) RZ";
+		}
+		else  //REAL - IMAGINARY
+		{
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "TX";
+			ResultsSets[iNoRes]->lab[2] = "TY";
+			ResultsSets[iNoRes]->lab[3] = "TZ";
+			ResultsSets[iNoRes]->lab[4] = "RX";
+			ResultsSets[iNoRes]->lab[5] = "RY";
+			ResultsSets[iNoRes]->lab[6] = "RZ";
+			ResultsSets[iNoRes]->lab[7] = "(j) X";
+			ResultsSets[iNoRes]->lab[8] = "(j) Y";
+			ResultsSets[iNoRes]->lab[9] = "(j) Z";
+			ResultsSets[iNoRes]->lab[10] = "(j) RX";
+			ResultsSets[iNoRes]->lab[11] = "(j) RY";
+			ResultsSets[iNoRes]->lab[12] = "(j) RZ";
+		}
+		for (i = 10; i < iCnt; i += 14)
+		{
+			Res13* pRes = new Res13;
+			pRes->ID = Vals[i] / 10;
+			pRes->v[0] = dF;
 			pRes->v[1] = *(float*)&Vals[i + 2];
 			pRes->v[2] = *(float*)&Vals[i + 3];
 			pRes->v[3] = *(float*)&Vals[i + 4];
@@ -28783,6 +29016,7 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 					{
 						sDL = pRS->ToStringDL(pR);
 						outtext1(sDL);
+						break;
 					}
 					pR = pR->next;
 				}
