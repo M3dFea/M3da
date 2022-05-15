@@ -28978,7 +28978,7 @@ if ((iCurResSet>-1) && (CResSet!=NULL))
 
 //*************************************************************
 //  LIST RESPONSE DATA FOR FREQUENCY ANALYSIS
-//  List repose for loadcase LC
+//  List respose for loadcase LC
 //  and for node or element iEnt
 void ME_Object::ResListRespData(int iLC, int iEnt)
 {
@@ -28990,9 +28990,13 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 	CString sDL;
 	BOOL bFirst = TRUE;
 	outtext1("RESPONSE LISTING:-");
+	int iTCode = -1;
+	int iLC2 = -1;
+	iTCode = ResultsSets[iCurResSet]->TCODE;
+	iLC2 = ResultsSets[iCurResSet]->LC;
 	for (i = 0; i < iNoRes; i++)
 	{
-		if (ResultsSets[i]->LC == iLC)
+		if ((ResultsSets[i]->LC == iLC2) && (iTCode == ResultsSets[i]->TCODE))
 		{
 			pRS = ResultsSets[i];
 			if (pRS->ACODE / 10 == 5) //Frequncy data
@@ -29001,11 +29005,11 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 				{
 					outtext1(pRS->sTitle);
 					outtext1(pRS->sSubTitle);
-					sprintf_s(buff, "%s %i", "LC:", pRS->LC);
-					sDL = buff;
-					outtext1(sDL);
-					sDL = pRS->ToStringHead();
-					outtext1(sDL);
+					sprintf_s(buff, "%s	%i	%s	%i", "LC", pRS->LC,  "ID", iEnt);
+					outtext1(buff);
+					//sDL = pRS->ToStringHead();
+					sprintf_s(buff, "%s	%s", pRS->lab[0], pRS->lab[iResVal]);
+					outtext1(buff);
 					bFirst = FALSE;
 				}
 
@@ -29014,8 +29018,9 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 				{
 					if (pR->ID == iEnt)
 					{
-						sDL = pRS->ToStringDL(pR);
-						outtext1(sDL);
+						//sDL = pRS->ToStringDL(pR);
+						sprintf_s(buff, "%g	%g", *pR->GetAddress(0), *pR->GetAddress(iResVal));
+						outtext1(buff);
 						break;
 					}
 					pR = pR->next;
