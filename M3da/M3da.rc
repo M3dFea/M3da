@@ -265,6 +265,8 @@ BEGIN
             MENUITEM "Free TRI Mesh",               ID_MESH_FREETRIMESH
             MENUITEM "Mapped QUAD Mesh",            ID_MESH_MAPPEDSURFACEMESH
             MENUITEM "Sweep Elements",              ID_MESH_SWEEPELEMENTS
+            MENUITEM "Sweep Nodes to Beams",        ID_FEMTOOLS_SWEEPNODESTOBEAMS
+            MENUITEM "Sweep Nodes to Shells",       ID_FEMTOOLS_SWEEPNODESTOSHELLS
             MENUITEM "Build Assembly Mesh",         ID_MESH_BUILDASSEMBLYMESH
             MENUITEM "Quads Between Nodes",         ID_MESHQND
             MENUITEM "Shell Coat Solid Elements",   ID_MESH_SHELLCOATSOLIDELEMENTS
@@ -565,7 +567,7 @@ CAPTION "About M3da"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
-    LTEXT           "M3d, Version 5.9 15/05/2022 64BIT WIN10",IDC_STATIC,43,14,247,8,SS_NOPREFIX
+    LTEXT           "M3d, Version 5.8 08/08/2021 64BIT WIN10",IDC_STATIC,43,14,247,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010",IDC_STATIC,43,26,114,8
     DEFPUSHBUTTON   "OK",IDOK,261,123,50,14,WS_GROUP
     LTEXT           "THE AUTHOR SHALL IN NO EVENT BE LIABLE TO THE USER",IDC_STATIC,42,52,235,8
@@ -1234,6 +1236,8 @@ BEGIN
     ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMZ 
                             "Offset Beam Elements in Element Z direction"
     ID_TOOLS_PLANET         "Insert Planet Sphere"
+    ID_FEMTOOLS_SWEEPNODESTOSHELLS "Sweep nodes into quad shell elements"
+    ID_FEMTOOLS_SWEEPNODESTOBEAMS "Sweep nodes into beam ekements"
 END
 
 #endif    // English (United States) resources
