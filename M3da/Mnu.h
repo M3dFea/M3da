@@ -1634,6 +1634,12 @@ public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zRESLSTRESPFULL_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zRESFRAMES_Mnu : public zMnu
 {
 public:

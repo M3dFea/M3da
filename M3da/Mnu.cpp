@@ -2554,6 +2554,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "RESLSTRESPFULL")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zRESLSTRESPFULL_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "NULL")
 	  {
 		outtext2("/COMMAND:");
@@ -16630,7 +16640,7 @@ int zRESLSTRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			outtext2("/ENTER LC, NODE/ELEM ID FOR RESPONSE DATA");
+			outtext2("/NODE/ELEM ID FOR RESPONSE DATA");
 			SetFocus();
 			iResumePos = 1;
 			iCancelPos = 100;
@@ -16642,7 +16652,44 @@ int zRESLSTRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		{
 			C3dVector ptVec;
 			ptVec = cDBase->DB_PopBuff();
-			cDBase->ResListRespData((int)ptVec.x, (int)ptVec.y);
+			cDBase->ResListRespData((int)ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zRESLSTRESPFULL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("/NODE/ELEM ID FOR RESPONSE DATA");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->ResListRespDataFull((int)ptVec.x);
 			RetVal = 1;
 		}
 		//Escape clause

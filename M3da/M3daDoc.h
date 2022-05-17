@@ -489,6 +489,7 @@ public:
   afx_msg void OnToolsPlanet();
   afx_msg void OnFemtoolsSweepnodestoshells();
   afx_msg void OnFemtoolsSweepnodestobeams();
+  afx_msg void OnPostListresponsedataallvars();
 };
 
 

@@ -499,6 +499,7 @@ BEGIN
         MENUITEM "List Nodal Results",          ID_POST_LISTNODALRESULTS
         MENUITEM "List Element Result",         ID_POST_LISTELEMENTRESULT
         MENUITEM "List Response Data",          ID_POST_LISTRESPONSEDATA
+        MENUITEM "List Response Data All Vars", ID_POST_LISTRESPONSEDATAALLVARS
         MENUITEM "Delete All Results Sets",     ID_POST_DELETEALLRESULTSSETS
     END
     POPUP "&Help"
@@ -1234,6 +1235,8 @@ BEGIN
     ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMZ 
                             "Offset Beam Elements in Element Z direction"
     ID_TOOLS_PLANET         "Insert Planet Sphere"
+    ID_POST_LISTRESPONSEDATAALLVARS 
+                            "List frequency response data for all variable"
 END
 
 #endif    // English (United States) resources

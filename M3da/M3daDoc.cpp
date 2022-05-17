@@ -341,6 +341,7 @@ ON_COMMAND(ID_ELEMENTMODIFIY_BEAMOFFSETINBEAMZ, &CM3daDoc::OnElementmodifiyBeamo
 ON_COMMAND(ID_TOOLS_PLANET, &CM3daDoc::OnToolsPlanet)
 ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOSHELLS, &CM3daDoc::OnFemtoolsSweepnodestoshells)
 ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOBEAMS, &CM3daDoc::OnFemtoolsSweepnodestobeams)
+ON_COMMAND(ID_POST_LISTRESPONSEDATAALLVARS, &CM3daDoc::OnPostListresponsedataallvars)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5773,6 +5774,21 @@ void CM3daDoc::OnFemtoolsSweepnodestobeams()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("ELSWEEPNDB");
 		sLastcmd = "ELSWEEPNDB";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnPostListresponsedataallvars()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("RESLSTRESPFULL");
+		sLastcmd = "RESLSTRESPFULL";
 	}
 	else
 	{

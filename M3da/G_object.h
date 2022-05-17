@@ -3730,7 +3730,8 @@ void SetDefScale(double dS);
 void SetDefScaleVec(double dS);
 void SetCurrentResSet(int iRS,int iRV,int iOPT);
 void WriteResHead(int iDspFlgs,float dW,float dH);
-void ResListRespData(int iLC, int iEnt);
+void ResListRespData(int iEnt);
+void ResListRespDataFull(int iEnt);
 C3dVector EigenVector3d(int iEID, C3dVector rX, C3dVector rY, C3dVector rZ, double lambda);
 C3dVector EigenVector2d(int iEID, C3dVector rX, C3dVector rY, double lambda);
 void CalcPrinStress(double XX,double YY,double ZZ,

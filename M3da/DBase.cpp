@@ -864,12 +864,25 @@ char buff[80];
 //  List repose for loadcase LC
 //  and for node or element iEnt
 //*************************************************************
-void DBase::ResListRespData(int iLC, int iEnt)
+void DBase::ResListRespData(int iEnt)
 {
 	if (pCurrentMesh != NULL)
-		pCurrentMesh->ResListRespData(iLC, iEnt);
+		pCurrentMesh->ResListRespData(iEnt);
 
 }
+
+//*************************************************************
+//  LIST RESPONSE DATA FOR FREQUENCY ANALYSIS
+//  List reponse for loadcase LC
+//  and for node or element iEnt
+//*************************************************************
+void DBase::ResListRespDataFull(int iEnt)
+{
+	if (pCurrentMesh != NULL)
+		pCurrentMesh->ResListRespDataFull(iEnt);
+
+}
+
 
 
 //********************************************

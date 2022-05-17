@@ -944,11 +944,11 @@ CString ResSet::ToStringDL(Res* pR)
 	if (pR != NULL)
 	{
 		outT = "";
-		sprintf_s(S1, "%i,", pR->ID);
+		sprintf_s(S1, "%i	", pR->ID);
 		outT += S1;
 		for (j = 0; j < iNoV; j++)
 		{
-			sprintf_s(S1, "%e,", *pR->GetAddress(j));
+			sprintf_s(S1, "%e	", *pR->GetAddress(j));
 			outT += S1;
 		}
 	}
@@ -961,11 +961,11 @@ CString ResSet::ToStringHead()
 	CString outT;
 	int i;
 	outT = "";
-	sprintf_s(S1, "%s,", "ID");
+	sprintf_s(S1, "%s	", "ID");
 	outT += S1;
 	for (i = 0; i < iNoV; i++)
 	{
-		sprintf_s(S1, "%s,", lab[i]);
+		sprintf_s(S1, "%s	", lab[i]);
 		outT += S1;
 	}
 	return (outT);
@@ -28980,7 +28980,7 @@ if ((iCurResSet>-1) && (CResSet!=NULL))
 //  LIST RESPONSE DATA FOR FREQUENCY ANALYSIS
 //  List respose for loadcase LC
 //  and for node or element iEnt
-void ME_Object::ResListRespData(int iLC, int iEnt)
+void ME_Object::ResListRespData(int iEnt)
 {
 	int i;
 	int j;
@@ -29005,7 +29005,7 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 				{
 					outtext1(pRS->sTitle);
 					outtext1(pRS->sSubTitle);
-					sprintf_s(buff, "%s	%i	%s	%i", "LC", pRS->LC,  "ID", iEnt);
+					sprintf_s(buff, "%s%i	%s%i", "LC", pRS->LC,  "ID", iEnt);
 					outtext1(buff);
 					//sDL = pRS->ToStringHead();
 					sprintf_s(buff, "%s	%s", pRS->lab[0], pRS->lab[iResVal]);
@@ -29030,6 +29030,57 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 	}
 }
 
+//*************************************************************
+//  LIST RESPONSE DATA FOR FREQUENCY ANALYSIS
+//  LC and Type to list are taken from the active LC
+//  For node or element iEnt
+void ME_Object::ResListRespDataFull(int iEnt)
+{
+	int i;
+	int j;
+	char buff[200];
+	ResSet* pRS;
+	Res* pR;
+	CString sDL;
+	BOOL bFirst = TRUE;
+	outtext1("RESPONSE LISTING:-");
+	int iTCode = -1;
+	int iLC2 = -1;
+	iTCode = ResultsSets[iCurResSet]->TCODE;
+	iLC2 = ResultsSets[iCurResSet]->LC;
+	for (i = 0; i < iNoRes; i++)
+	{
+		if ((ResultsSets[i]->LC == iLC2) && (iTCode == ResultsSets[i]->TCODE))
+		{
+			pRS = ResultsSets[i];
+			if (pRS->ACODE / 10 == 5) //Frequncy data
+			{
+				if (bFirst)
+				{
+					outtext1(pRS->sTitle);
+					outtext1(pRS->sSubTitle);
+					sprintf_s(buff, "%s	%i	%s	%i	", "LC", pRS->LC, "ID", iEnt);
+					outtext1(buff);
+					sDL = pRS->ToStringHead();
+					outtext1(sDL);
+					bFirst = FALSE;
+				}
+
+				pR = pRS->Head;
+				for (j = 0; j < pRS->iCnt; j++)
+				{
+					if (pR->ID == iEnt)
+					{
+						sDL = pRS->ToStringDL(pR);
+						outtext1(sDL);
+						break;
+					}
+					pR = pR->next;
+				}
+			}
+		}
+	}
+}
 void ME_Object::SetDefScale(double dS)
 {
   dScale=dS;
