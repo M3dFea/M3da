@@ -21068,9 +21068,10 @@ if ((pRes!=CResSet) || (iOpt!=iPostOpt))
     if ((pRes->TCODE==4) || 
 		(pRes->TCODE==5) || 
 		(pRes->TCODE==25) || 
-		(pRes->TCODE == 18) ||
-		(pRes->TCODE == 4004) ||  //GRMS FORCE?
+		(pRes->TCODE == 18) ||	
+		(pRes->TCODE == 1004) ||
 		(pRes->TCODE == 1005) || 
+		(pRes->TCODE == 4004) ||  //GRMS FORCE?
 		(pRes->TCODE == 4005))  //Not sure where this tcode is documented Grms Rand
     {
     for (i = 0; i < iElNo; i++)
@@ -21086,7 +21087,7 @@ if ((pRes!=CResSet) || (iOpt!=iPostOpt))
 
   if (iNdNo > 0) 
   {
-    if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 1011))
+    if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 1011) || (pRes->TCODE == 1039))
     {
       for (i = 0; i < iNdNo; i++)
       {
@@ -21123,7 +21124,7 @@ float fResVal;
 bFirst = TRUE;
   if (iNdNo > 0) 
   {
-    if ((pRes->TCODE==1)||(pRes->TCODE==7) || (pRes->TCODE == 1011))
+    if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 1011) || (pRes->TCODE == 1039))
     {
       for (i = 0; i < iNdNo; i++)
       {
@@ -21151,6 +21152,8 @@ bFirst = TRUE;
 		(pRes->TCODE==5) || 
 		(pRes->TCODE==25) || 
 		(pRes->TCODE == 18) || 
+		(pRes->TCODE == 1004) ||
+		(pRes->TCODE == 1005) ||
 		(pRes->TCODE == 4004) ||  //GRMS FORCE
 		(pRes->TCODE == 4005))    //GRMS FORCE
     {
