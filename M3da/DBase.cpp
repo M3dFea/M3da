@@ -11241,7 +11241,7 @@ while (!feof(pFile))
 		   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle, dFreq);
 		   if (iCnt > 0)
 		   {
-			   if (DataB[0] / 10 == 5)  // Frequency Only
+			   if ((DataB[0] / 10 == 1) || (DataB[0] / 10 == 5))   // Static & Frequency Only
 				   AddOQMRes(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
 		   }
 		   //WriteF

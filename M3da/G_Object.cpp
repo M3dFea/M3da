@@ -21087,7 +21087,7 @@ if ((pRes!=CResSet) || (iOpt!=iPostOpt))
 
   if (iNdNo > 0) 
   {
-    if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 1011) || (pRes->TCODE == 1039))
+    if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 39) || (pRes->TCODE == 1011) || (pRes->TCODE == 1039))
     {
       for (i = 0; i < iNdNo; i++)
       {
@@ -21124,7 +21124,7 @@ float fResVal;
 bFirst = TRUE;
   if (iNdNo > 0) 
   {
-    if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 1011) || (pRes->TCODE == 1039))
+    if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 39) || (pRes->TCODE == 1011) || (pRes->TCODE == 1039))
     {
       for (i = 0; i < iNdNo; i++)
       {
@@ -28691,61 +28691,87 @@ void ME_Object::AddOQMRes(int Vals[], int iCnt, CString sTitle, CString sSubTitl
 
 	if (iCnt > 10)
 	{
-		sprintf_s(s30, "%s %g %s", "MPCF", dF, "Hz");
-		ResultsSets[iNoRes]->sName = s30;
-		ResultsSets[iNoRes]->iNoV = 13;
-		if (ResultsSets[iNoRes]->FCODE == 3)
-		{	 //MAG / PHASE
-			ResultsSets[iNoRes]->lab[0] = "Freq";
-			ResultsSets[iNoRes]->lab[1] = "TX";
-			ResultsSets[iNoRes]->lab[2] = "TY";
-			ResultsSets[iNoRes]->lab[3] = "TZ";
-			ResultsSets[iNoRes]->lab[4] = "RX";
-			ResultsSets[iNoRes]->lab[5] = "RY";
-			ResultsSets[iNoRes]->lab[6] = "RZ";
-			ResultsSets[iNoRes]->lab[7] = "(Phi) X";
-			ResultsSets[iNoRes]->lab[8] = "(Phi) Y";
-			ResultsSets[iNoRes]->lab[9] = "(Phi) Z";
-			ResultsSets[iNoRes]->lab[10] = "(Phi) RX";
-			ResultsSets[iNoRes]->lab[11] = "(Phi) RY";
-			ResultsSets[iNoRes]->lab[12] = "(Phi) RZ";
-		}
-		else  //REAL - IMAGINARY
+		if (ResultsSets[iNoRes]->ACODE / 10 == 5)	  //Frequency
 		{
-			ResultsSets[iNoRes]->lab[0] = "Freq";
-			ResultsSets[iNoRes]->lab[1] = "TX";
-			ResultsSets[iNoRes]->lab[2] = "TY";
-			ResultsSets[iNoRes]->lab[3] = "TZ";
-			ResultsSets[iNoRes]->lab[4] = "RX";
-			ResultsSets[iNoRes]->lab[5] = "RY";
-			ResultsSets[iNoRes]->lab[6] = "RZ";
-			ResultsSets[iNoRes]->lab[7] = "(j) X";
-			ResultsSets[iNoRes]->lab[8] = "(j) Y";
-			ResultsSets[iNoRes]->lab[9] = "(j) Z";
-			ResultsSets[iNoRes]->lab[10] = "(j) RX";
-			ResultsSets[iNoRes]->lab[11] = "(j) RY";
-			ResultsSets[iNoRes]->lab[12] = "(j) RZ";
+			sprintf_s(s30, "%s %g %s", "MPCF", dF, "Hz");
+			ResultsSets[iNoRes]->sName = s30;
+			ResultsSets[iNoRes]->iNoV = 13;
+			if (ResultsSets[iNoRes]->FCODE == 3)
+			{	 //MAG / PHASE
+				ResultsSets[iNoRes]->lab[0] = "Freq";
+				ResultsSets[iNoRes]->lab[1] = "TX";
+				ResultsSets[iNoRes]->lab[2] = "TY";
+				ResultsSets[iNoRes]->lab[3] = "TZ";
+				ResultsSets[iNoRes]->lab[4] = "RX";
+				ResultsSets[iNoRes]->lab[5] = "RY";
+				ResultsSets[iNoRes]->lab[6] = "RZ";
+				ResultsSets[iNoRes]->lab[7] = "(Phi) X";
+				ResultsSets[iNoRes]->lab[8] = "(Phi) Y";
+				ResultsSets[iNoRes]->lab[9] = "(Phi) Z";
+				ResultsSets[iNoRes]->lab[10] = "(Phi) RX";
+				ResultsSets[iNoRes]->lab[11] = "(Phi) RY";
+				ResultsSets[iNoRes]->lab[12] = "(Phi) RZ";
+			}
+			else  //REAL - IMAGINARY
+			{
+				ResultsSets[iNoRes]->lab[0] = "Freq";
+				ResultsSets[iNoRes]->lab[1] = "TX";
+				ResultsSets[iNoRes]->lab[2] = "TY";
+				ResultsSets[iNoRes]->lab[3] = "TZ";
+				ResultsSets[iNoRes]->lab[4] = "RX";
+				ResultsSets[iNoRes]->lab[5] = "RY";
+				ResultsSets[iNoRes]->lab[6] = "RZ";
+				ResultsSets[iNoRes]->lab[7] = "(j) X";
+				ResultsSets[iNoRes]->lab[8] = "(j) Y";
+				ResultsSets[iNoRes]->lab[9] = "(j) Z";
+				ResultsSets[iNoRes]->lab[10] = "(j) RX";
+				ResultsSets[iNoRes]->lab[11] = "(j) RY";
+				ResultsSets[iNoRes]->lab[12] = "(j) RZ";
+			}
+			for (i = 10; i < iCnt; i += 14)
+			{
+				Res13* pRes = new Res13;
+				pRes->ID = Vals[i] / 10;
+				pRes->v[0] = dF;
+				pRes->v[1] = *(float*)&Vals[i + 2];
+				pRes->v[2] = *(float*)&Vals[i + 3];
+				pRes->v[3] = *(float*)&Vals[i + 4];
+				pRes->v[4] = *(float*)&Vals[i + 5];
+				pRes->v[5] = *(float*)&Vals[i + 6];
+				pRes->v[6] = *(float*)&Vals[i + 7];
+				pRes->v[7] = *(float*)&Vals[i + 8];
+				pRes->v[8] = *(float*)&Vals[i + 9];
+				pRes->v[9] = *(float*)&Vals[i + 10];
+				pRes->v[10] = *(float*)&Vals[i + 11];
+				pRes->v[11] = *(float*)&Vals[i + 12];
+				pRes->v[12] = *(float*)&Vals[i + 13];
+				ResultsSets[iNoRes]->Add(pRes);
+			}
 		}
-		for (i = 10; i < iCnt; i += 14)
+		else if (ResultsSets[iNoRes]->ACODE / 10 == 1)	  //Static
 		{
-			Res13* pRes = new Res13;
-			pRes->ID = Vals[i] / 10;
-			pRes->v[0] = dF;
-			pRes->v[1] = *(float*)&Vals[i + 2];
-			pRes->v[2] = *(float*)&Vals[i + 3];
-			pRes->v[3] = *(float*)&Vals[i + 4];
-			pRes->v[4] = *(float*)&Vals[i + 5];
-			pRes->v[5] = *(float*)&Vals[i + 6];
-			pRes->v[6] = *(float*)&Vals[i + 7];
-			pRes->v[7] = *(float*)&Vals[i + 8];
-			pRes->v[8] = *(float*)&Vals[i + 9];
-			pRes->v[9] = *(float*)&Vals[i + 10];
-			pRes->v[10] = *(float*)&Vals[i + 11];
-			pRes->v[11] = *(float*)&Vals[i + 12];
-			pRes->v[12] = *(float*)&Vals[i + 13];
-			ResultsSets[iNoRes]->Add(pRes);
+			sprintf_s(s30, "%s", "MPCF");
+			ResultsSets[iNoRes]->sName = s30;
+			ResultsSets[iNoRes]->iNoV = 6;
+			ResultsSets[iNoRes]->lab[0] = "TX";
+			ResultsSets[iNoRes]->lab[1] = "TY";
+			ResultsSets[iNoRes]->lab[2] = "TZ";
+			ResultsSets[iNoRes]->lab[3] = "RX";
+			ResultsSets[iNoRes]->lab[4] = "RY";
+			ResultsSets[iNoRes]->lab[5] = "RZ";
+			for (i = 10; i < iCnt; i += 8)
+			{
+				Res6* pRes = new Res6;
+				pRes->ID = Vals[i] / 10;
+				pRes->v[0] = *(float*)&Vals[i + 2];
+				pRes->v[1] = *(float*)&Vals[i + 3];
+				pRes->v[2] = *(float*)&Vals[i + 4];
+				pRes->v[3] = *(float*)&Vals[i + 5];
+				pRes->v[4] = *(float*)&Vals[i + 6];
+				pRes->v[5] = *(float*)&Vals[i + 7];
+				ResultsSets[iNoRes]->Add(pRes);
+			}
 		}
-
 	}
 	//DeleteNodeList();
 	iNoRes++;
