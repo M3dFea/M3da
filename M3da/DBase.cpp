@@ -16833,10 +16833,9 @@ void DBase::ViewLam(int iP)
 	{
 		if (P->iType == 2)
 		{
-			CPcompEditor* Dlg = new CPcompEditor();
-			Dlg->pEnt = P;
-			Dlg->DoModal();
-			delete (Dlg);
+			CPcompEditor Dlg;
+			Dlg.pEnt = P;
+			Dlg.DoModal();
 			InvalidateOGL();
 			ReGen();
 		}
