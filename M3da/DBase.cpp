@@ -880,6 +880,14 @@ void DBase::ResGraphRespData(int iEnt)
 	Dlg.DoModal();
 }
 
+void DBase::LabelRespItems()
+{
+	//if (pCurrentMesh != NULL)
+	//	pCurrentMesh->ResListRespData(iEnt);
+	outtext1("Label Reponse Items");
+
+}
+
 //*************************************************************
 //  LIST RESPONSE DATA FOR FREQUENCY ANALYSIS
 //  List reponse for loadcase LC

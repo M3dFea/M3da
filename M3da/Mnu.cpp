@@ -2444,6 +2444,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "RESLABRESP")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zRESLABRESP_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "BOFFY")
 	  {
 		  iResumePos = 0;
@@ -16709,6 +16719,13 @@ int zRESGRAPHRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 	}
 MenuEnd:
+	return RetVal;
+}
+
+int zRESLABRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	cDBase->LabelRespItems();
+	RetVal = 2;
 	return RetVal;
 }
 
