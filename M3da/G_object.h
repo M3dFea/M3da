@@ -1512,6 +1512,18 @@ public:
   afx_msg void OnBnClickedCancel();
 };
 
+class CGraphDialog : public CDialog
+{
+
+public:
+
+	enum { IDD = IDD_GRAPH };
+	CGraphDialog();
+
+	DECLARE_MESSAGE_MAP()
+	afx_msg void OnBnClickedOk();
+};
+
 class CGroupDialog : public CDialog
 {
 public:

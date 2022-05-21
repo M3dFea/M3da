@@ -100,6 +100,7 @@ void PrintTime(CString cS);
 virtual void OnFinalRelease();
 void DELAY(int iDelay); //iDelay in seconds
 void ResListRespData(int iEnt);
+void ResGraphRespData(int iEnt);
 void ResListRespDataFull(int iEnt);
 void ResDelay(int iDelay); //Animation frame Delay in mseconds
 void ResFrames(int iNoF); //Animation frame Delay in mseconds

@@ -50045,6 +50045,8 @@ void CGroupDialog::OnBnClickedGroupdels()
 	DeleteGP(iThisGp);
 }
 
+
+
 //Colour pick dialog
 CColourPickDialog::CColourPickDialog()
 	: CDialog(CColourPickDialog::IDD, NULL)
@@ -51863,4 +51865,23 @@ void CEntEditDialog::OnBnClickedCancel()
 {
 	// TODO: Add your control notification handler code here
 	CDialog::OnCancel();
+}
+
+//****************************************************************
+// RESPONSE GRAPH DIALOG
+ //****************************************************************
+BEGIN_MESSAGE_MAP(CGraphDialog, CDialog)
+	ON_BN_CLICKED(IDOK, &CGraphDialog::OnBnClickedOk)
+END_MESSAGE_MAP()
+
+CGraphDialog::CGraphDialog()
+	: CDialog(CGraphDialog::IDD, NULL)
+{
+
+}
+
+void CGraphDialog::OnBnClickedOk()
+{
+	// TODO: Add your control notification handler code here
+	CDialog::OnOK();
 }

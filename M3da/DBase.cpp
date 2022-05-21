@@ -871,6 +871,15 @@ void DBase::ResListRespData(int iEnt)
 
 }
 
+void DBase::ResGraphRespData(int iEnt)
+{
+	//if (pCurrentMesh != NULL)
+	//	pCurrentMesh->ResListRespData(iEnt);
+	outtext1("Graph");
+	CGraphDialog Dlg;
+	Dlg.DoModal();
+}
+
 //*************************************************************
 //  LIST RESPONSE DATA FOR FREQUENCY ANALYSIS
 //  List reponse for loadcase LC
