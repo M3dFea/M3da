@@ -21084,7 +21084,6 @@ if ((pRes!=CResSet) || (iOpt!=iPostOpt))
     }
 	}
   }
-
   if (iNdNo > 0) 
   {
     if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 39) || (pRes->TCODE == 1011) || (pRes->TCODE == 1039))
