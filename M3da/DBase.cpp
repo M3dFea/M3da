@@ -871,6 +871,7 @@ void DBase::ResListRespData(int iEnt)
 
 }
 
+//RESGRAPHRESP
 void DBase::ResGraphRespData(int iEnt)
 {
 	//if (pCurrentMesh != NULL)
@@ -880,11 +881,15 @@ void DBase::ResGraphRespData(int iEnt)
 	Dlg.DoModal();
 }
 
+//RESLABRESP
 void DBase::LabelRespItems()
 {
-	//if (pCurrentMesh != NULL)
-	//	pCurrentMesh->ResListRespData(iEnt);
-	outtext1("Label Reponse Items");
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ResLabRespItems();
+		InvalidateOGL();
+		ReDraw();
+	}
 
 }
 

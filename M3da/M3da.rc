@@ -498,9 +498,11 @@ BEGIN
         MENUITEM "Export Results to TEXT File", ID_POST_EXPORTRESULTSTOTEXTFILE
         MENUITEM "List Nodal Results",          ID_POST_LISTNODALRESULTS
         MENUITEM "List Element Result",         ID_POST_LISTELEMENTRESULT
+        MENUITEM "Label Response Entities",     ID_POST_LABELRESPONSEENTITIES
         MENUITEM "List Response Data",          ID_POST_LISTRESPONSEDATA
         MENUITEM "List Response Data All Vars", ID_POST_LISTRESPONSEDATAALLVARS
         MENUITEM "Delete All Results Sets",     ID_POST_DELETEALLRESULTSSETS
+        MENUITEM "Graph Response Data",         ID_POST_GRAPHRESPONSEDATA
     END
     POPUP "&Help"
     BEGIN
@@ -1237,6 +1239,13 @@ BEGIN
     ID_TOOLS_PLANET         "Insert Planet Sphere"
     ID_POST_LISTRESPONSEDATAALLVARS 
                             "List frequency response data for all variable"
+    ID_POST_LABELRESPONSEENTITIES 
+                            "Label Nodes  / Elements where response data is available."
+END
+
+STRINGTABLE
+BEGIN
+    ID_POST_GRAPHRESPONSEDATA "Graph response data."
 END
 
 #endif    // English (United States) resources

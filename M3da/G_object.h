@@ -1744,6 +1744,7 @@ int iType[MAX_LITEMS];
 int iNo;
 NEList();
 int Get(int iD);
+BOOL IsIn(int iD);
 void Add(int iP,int iT);
 };
 
@@ -3743,6 +3744,7 @@ void SetDefScaleVec(double dS);
 void SetCurrentResSet(int iRS,int iRV,int iOPT);
 void WriteResHead(int iDspFlgs,float dW,float dH);
 void ResListRespData(int iEnt);
+void ResLabRespItems();
 void ResListRespDataFull(int iEnt);
 C3dVector EigenVector3d(int iEID, C3dVector rX, C3dVector rY, C3dVector rZ, double lambda);
 C3dVector EigenVector2d(int iEID, C3dVector rX, C3dVector rY, double lambda);

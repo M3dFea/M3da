@@ -1283,6 +1283,21 @@ for (i=0;i<iNo;i++)
 return (iRet);
 }
 
+BOOL NEList::IsIn(int iD)
+{
+	BOOL bRC = FALSE;
+	int i;
+	for (i = 0; i < iNo; i++)
+	{
+		if (ids[i] == iD)
+		{
+			bRC = TRUE;
+			break;
+		}
+	}
+	return (bRC);
+}
+
 void NEList::Add(int iP,int iT)
 {
 if (iNo<MAX_LITEMS)
@@ -29056,6 +29071,117 @@ void ME_Object::ResListRespData(int iEnt)
 			}
 		}
 	}
+}
+
+
+//*************************************************************
+//  Label nodes and elements where response data can be plotted
+//*************************************************************
+void ME_Object::ResLabRespItems()
+{
+	int i;
+	int j;
+	char buff[200];
+	ResSet* pRS = NULL;
+	Res* pR = NULL;
+	int iTCode = -1;
+	int iLC = -1;
+	Pt_Object* oND = NULL;
+	E_Object* oEl = NULL;
+	NEList* LCGp = new NEList();
+	NEList* oIDS = new NEList();
+	LCGp->iNo = 0;
+	for (i = 0; i < iNoRes; i++)
+	{
+		iLC = ResultsSets[i]->LC;
+		iTCode = ResultsSets[i]->TCODE;
+		//TCODE 1039 Node MPC
+		if ((iTCode == 1039)	&& (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC,1);
+			sprintf_s(buff, "%s %i %s", "CHECKING LC", iLC ,"MPC FORCE FOR RESPONSE NODES");
+			outtext1(buff); 
+			pRS = ResultsSets[i];
+			pR = pRS->Head;
+			for (j = 0; j < pRS->iCnt; j++)
+			{
+				if (!oIDS->IsIn(pR->ID))
+					oIDS->Add(pR->ID, 1);
+				pR = pR->next;
+			}
+		}
+	}
+
+	LCGp->iNo = 0;
+	for (i = 0; i < iNoRes; i++)
+	{
+		iLC = ResultsSets[i]->LC;
+		iTCode = ResultsSets[i]->TCODE;
+		//TCODE 1039 Node MPC
+		if ((iTCode == 1011) && (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC, 1);
+			sprintf_s(buff, "%s %i %s", "CHECKING LC", iLC, "ACCEL FOR RESPONSE NODES");
+			outtext1(buff);
+			pRS = ResultsSets[i];
+			pR = pRS->Head;
+			for (j = 0; j < pRS->iCnt; j++)
+			{
+				if (!oIDS->IsIn(pR->ID))
+					oIDS->Add(pR->ID, 1);
+				pR = pR->next;
+			}
+		}
+
+	}
+	//Print node where response data has been found,
+	outtext1("Available Response Nodes:-");
+	for (i = 0; i < oIDS->iNo; i++)
+	{
+		sprintf_s(buff, "NODE	%i", oIDS->ids[i]);
+		outtext1(buff);
+		oND = this->GetNode(oIDS->ids[i]);
+		if (oND != NULL)
+			oND->bDrawLab = !oND->bDrawLab;
+	}
+
+
+	LCGp->iNo = 0;
+	oIDS->iNo = 0;
+	for (i = 0; i < iNoRes; i++)
+	{
+		iLC = ResultsSets[i]->LC;
+		iTCode = ResultsSets[i]->TCODE;
+		//TCODE 1039 Node MPC
+		if ((iTCode == 1004) && (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC, 1);
+			sprintf_s(buff, "%s %i %s", "CHECKING LC", iLC, "FORCES FOR RESPONSE ELEMENTS");
+			outtext1(buff);
+			pRS = ResultsSets[i];
+			pR = pRS->Head;
+			for (j = 0; j < pRS->iCnt; j++)
+			{
+				if (!oIDS->IsIn(pR->ID))
+					oIDS->Add(pR->ID, 1);
+				pR = pR->next;
+			}
+		}
+	}
+	outtext1("Available Response Elements:-");
+	for (i = 0; i < oIDS->iNo; i++)
+	{
+		sprintf_s(buff, "ELEMENT	%i", oIDS->ids[i]);
+		outtext1(buff);
+		oEl = this->GetElement(oIDS->ids[i]);
+		if (oEl != NULL)
+			oEl->bDrawLab =!oEl->bDrawLab;
+	}
+
+
+	delete (LCGp);
+	delete (oIDS);
+
 }
 
 //*************************************************************

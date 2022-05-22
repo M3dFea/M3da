@@ -342,6 +342,8 @@ ON_COMMAND(ID_TOOLS_PLANET, &CM3daDoc::OnToolsPlanet)
 ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOSHELLS, &CM3daDoc::OnFemtoolsSweepnodestoshells)
 ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOBEAMS, &CM3daDoc::OnFemtoolsSweepnodestobeams)
 ON_COMMAND(ID_POST_LISTRESPONSEDATAALLVARS, &CM3daDoc::OnPostListresponsedataallvars)
+ON_COMMAND(ID_POST_LABELRESPONSEENTITIES, &CM3daDoc::OnPostLabelresponseentities)
+ON_COMMAND(ID_POST_GRAPHRESPONSEDATA, &CM3daDoc::OnPostGraphresponsedata)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5789,6 +5791,36 @@ void CM3daDoc::OnPostListresponsedataallvars()
 	{
 		outtextMSG2("RESLSTRESPFULL");
 		sLastcmd = "RESLSTRESPFULL";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnPostLabelresponseentities()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("RESLABRESP");
+		sLastcmd = "RESLABRESP";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnPostGraphresponsedata()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("RESGRAPHRESP");
+		sLastcmd = "RESGRAPHRESP";
 	}
 	else
 	{
