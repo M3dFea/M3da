@@ -21327,6 +21327,58 @@ void ME_Object::GenResVectors(int iSet, int iVec, int iDf)
 			}
 			SetColBarVec(fMin, fMax);
 		}
+		else if ((pDef->iLoc == 1) && (pDef->iResType == 1))
+		{
+			for (i = 0; i < iElNo; i++)
+			{
+				iS = 1;
+				pR = pRes->Get(pElems[i]->iLabel, 0);
+				if (pR != NULL)
+				{
+					vC = pElems[i]->Get_Centroid();
+					iD = pElems[i]->iLabel;
+					vVec.x = 0; vVec.y = 0; vVec.z = 0;
+					iS = 1;
+					if (iDf == 3)
+					{
+						vVec.x = *pR->GetAddress(pDef->iComponents[0]);
+						vVec.y = *pR->GetAddress(pDef->iComponents[1]);
+						vVec.z = *pR->GetAddress(pDef->iComponents[2]);
+						iS = 1; //Sign is magnitude
+					}
+					else if (iDf == 0)
+					{
+						vVec.x = *pR->GetAddress(pDef->iComponents[0]);
+						if (vVec.x < 0)
+							iS = -1;
+					}
+					else if (iDf == 1)
+					{
+						vVec.y = *pR->GetAddress(pDef->iComponents[1]);
+						if (vVec.y < 0)
+							iS = -1;
+					}
+					else if (iDf == 2)
+					{
+						vVec.z = *pR->GetAddress(pDef->iComponents[2]);
+						if (vVec.z < 0)
+							iS = -1;
+					}
+
+					double dM;
+					dM = iS * vVec.Mag();
+					if (dM > fMax)
+						fMax = dM;
+					if (dM < fMin)
+						fMin = dM;
+					pDspVec = new ResultsVec(iD, vC, vVec, 4, iDf, iS, pDef->iResType);
+					pDspVec->pParent = this;
+					pResVectors->Add(pDspVec);
+				}
+
+			}
+			SetColBarVec(fMin, fMax);
+		}
 		else if ((pDef->iLoc == 1) && (pDef->iResType == 4)) //3d Tensor
 		{ //Its a 3d Tensor at element centroid
 			for (i = 0; i < iElNo; i++)
@@ -27188,6 +27240,18 @@ void ME_Object::AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTit
 			ResultsSets[iNoRes]->lab[10] = "(phi) MX";
 			ResultsSets[iNoRes]->lab[11] = "(phi) MY";
 			ResultsSets[iNoRes]->lab[12] = "(phi) MZ";
+			//**********Define the Vector********************
+			ResDef* pVT = new ResDef();
+			pVT->sResType = "FORCE TRANS MAG VEC";
+			pVT->iResType = 1;   //Vector Forec Magnitude Translation
+			pVT->iLoc = 1;       //Element
+			pVT->iComponents[0] = 1;
+			pVT->iComponents[1] = 2;
+			pVT->iComponents[2] = 3;
+			pVT->iComponents[3] = -1;
+			pVT->iCompNo = 4;
+			pVT->GenDefualtHeaders();
+			ResultsSets[iNoRes]->AddResDef(pVT);
 		}
 		else
 		{
@@ -28631,6 +28695,18 @@ void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTit
 			ResultsSets[iNoRes]->lab[10] = "(Phi) RX";
 			ResultsSets[iNoRes]->lab[11] = "(Phi) RY";
 			ResultsSets[iNoRes]->lab[12] = "(Phi) RZ";
+			//**********Define the Vector********************
+			ResDef* pVT = new ResDef();
+			pVT->sResType = "ACCEL TRANS MAG VEC";
+			pVT->iResType = 1;   //Vector Forec Magnitude Translation
+			pVT->iLoc = 0;       //Element
+			pVT->iComponents[0] = 1;
+			pVT->iComponents[1] = 2;
+			pVT->iComponents[2] = 3;
+			pVT->iComponents[3] = -1;
+			pVT->iCompNo = 4;
+			pVT->GenDefualtHeaders();
+			ResultsSets[iNoRes]->AddResDef(pVT);
 		}
 		else  //REAL - IMAGINARY
 		{
@@ -28725,6 +28801,18 @@ void ME_Object::AddOQMRes(int Vals[], int iCnt, CString sTitle, CString sSubTitl
 				ResultsSets[iNoRes]->lab[10] = "(Phi) RX";
 				ResultsSets[iNoRes]->lab[11] = "(Phi) RY";
 				ResultsSets[iNoRes]->lab[12] = "(Phi) RZ";
+				//**********Define the Vector********************
+				ResDef* pVT = new ResDef();
+				pVT->sResType = "MPC FORCE TRANS MAG VEC";
+				pVT->iResType = 1;   //Vector Forec Magnitude Translation
+				pVT->iLoc = 0;       //Node
+				pVT->iComponents[0] = 1;
+				pVT->iComponents[1] = 2;
+				pVT->iComponents[2] = 3;
+				pVT->iComponents[3] = -1;
+				pVT->iCompNo = 4;
+				pVT->GenDefualtHeaders();
+				ResultsSets[iNoRes]->AddResDef(pVT);
 			}
 			else  //REAL - IMAGINARY
 			{
@@ -29138,8 +29226,11 @@ void ME_Object::ResLabRespItems()
 	outtext1("Available Response Nodes:-");
 	for (i = 0; i < oIDS->iNo; i++)
 	{
-		sprintf_s(buff, "NODE	%i", oIDS->ids[i]);
-		outtext1(buff);
+		if (oIDS->iNo < 50)
+		{
+			sprintf_s(buff, "NODE	%i", oIDS->ids[i]);
+			outtext1(buff);
+		}
 		oND = this->GetNode(oIDS->ids[i]);
 		if (oND != NULL)
 			oND->bDrawLab = !oND->bDrawLab;
@@ -29171,8 +29262,11 @@ void ME_Object::ResLabRespItems()
 	outtext1("Available Response Elements:-");
 	for (i = 0; i < oIDS->iNo; i++)
 	{
-		sprintf_s(buff, "ELEMENT	%i", oIDS->ids[i]);
-		outtext1(buff);
+		if (oIDS->iNo < 50)
+		{
+			sprintf_s(buff, "ELEMENT	%i", oIDS->ids[i]);
+			outtext1(buff);
+		}
 		oEl = this->GetElement(oIDS->ids[i]);
 		if (oEl != NULL)
 			oEl->bDrawLab =!oEl->bDrawLab;
