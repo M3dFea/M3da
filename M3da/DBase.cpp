@@ -877,8 +877,11 @@ void DBase::ResGraphRespData(int iEnt)
 	//if (pCurrentMesh != NULL)
 	//	pCurrentMesh->ResListRespData(iEnt);
 	outtext1("Graph");
-	CGraphDialog Dlg;
-	Dlg.DoModal();
+	CGraphDialog* Dlg = new CGraphDialog();
+	Dlg->pME = pCurrentMesh;
+	Dlg->DoModal();
+	if (Dlg != NULL)
+		delete Dlg;
 }
 
 //RESLABRESP

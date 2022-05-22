@@ -52092,6 +52092,7 @@ void CEntEditDialog::OnBnClickedCancel()
  //****************************************************************
 BEGIN_MESSAGE_MAP(CGraphDialog, CDialog)
 	ON_BN_CLICKED(IDOK, &CGraphDialog::OnBnClickedOk)
+	ON_WM_PAINT()
 END_MESSAGE_MAP()
 
 CGraphDialog::CGraphDialog()
@@ -52100,8 +52101,134 @@ CGraphDialog::CGraphDialog()
 
 }
 
+CGraphDialog::~CGraphDialog()
+{
+	if (hrc != NULL)
+	{
+		wglMakeCurrent(NULL, NULL);
+		wglDeleteContext(hrc);
+	}
+
+	if (pDrg != NULL)
+		delete(pDrg);
+	wglMakeCurrent(hdcOld, hrcOld);
+}
+
+
+void CGraphDialog::InitOGL()
+{
+	static PIXELFORMATDESCRIPTOR pfd =
+	{
+	  sizeof(PIXELFORMATDESCRIPTOR),  // size of this pfd
+	  1,                              // version number
+	  PFD_DRAW_TO_WINDOW |            // support window
+	  PFD_SUPPORT_OPENGL |          // support OpenGL
+	  PFD_DOUBLEBUFFER,             // double buffered
+	  PFD_TYPE_RGBA,                  // RGBA type
+	  24,                             // 24-bit color depth
+	  0, 0, 0, 0, 0, 0,               // color bits ignored
+	  0,                              // no alpha buffer
+	  0,                              // shift bit ignored
+	  0,                              // no accumulation buffer
+	  0, 0, 0, 0,                     // accum bits ignored
+	  32,                             // 32-bit z-buffer
+	  0,                              // no stencil buffer
+	  0,                              // no auxiliary buffer
+	  PFD_MAIN_PLANE,                 // main layer
+	  0,                              // reserved
+	  0, 0, 0                         // layer masks ignored
+	};
+
+	// Get device context only once.
+	hdc = pDrg->GetDC()->m_hDC;
+	// Pixel format.
+	m_nPixelFormat = ChoosePixelFormat(hdc, &pfd);
+	SetPixelFormat(hdc, m_nPixelFormat, &pfd);
+
+	// Create the OpenGL Rendering Context.
+	hrc = wglCreateContext(hdc);
+	wglMakeCurrent(hdc, hrc);
+}
+
+void CGraphDialog::OglDraw()
+{
+
+	glClearColor(255.0f, 255.0f, 255.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearDepth(1.0f);
+	CRect cR;
+	pDrg->GetWindowRect(&cR);
+	int iW = cR.Width();
+	int iH = cR.Height();
+	//glViewport(0, 0, iW, iH);
+	//glMatrixMode(GL_PROJECTION);
+	
+	//glViewport(0, 0, mCView_Rect.right, mCView_Rect.bottom);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	//
+	glOrtho(0.0, 20.0, 0, 20.0, -1.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glPointSize(10.0f);
+	glColor3f((float)0.0, (float)0.0, (float)0.9);
+	glBegin(GL_POINTS);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.5, 0.0, 0.0);
+	glVertex3f(0.0, 0.5, 0.0);
+	glEnd();
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	char sLab[20];
+	int i;
+
+	sprintf_s(sLab, "%s", "Piggy");
+	OglString(1, 0.7, 0.0, 0.0, &sLab[0]);
+	glBegin(GL_LINES);
+	  glVertex3f(-1.0,-1.0, 0.0);
+	  glVertex3f(1.0, 1.0, 0.0);
+	glEnd();
+	glBegin(GL_LINES);
+	glVertex3f(-1.0, 1.0, 0.0);
+	glVertex3f(1.0, -1.0, 0.0);
+	glEnd();
+	glFinish();
+	SwapBuffers(wglGetCurrentDC());
+}
+
+
+BOOL CGraphDialog::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+	//SIZE DIALOG BOX TO FIT COLOURS
+	CRect oSize;
+	this->SetWindowText("Graph");
+	this->GetWindowRect(&oSize);
+	oSize.right = oSize.left + 1000;
+	oSize.bottom = oSize.top + 600;
+	this->MoveWindow(oSize, 0);
+
+	// TODO:  Add extra initialization here
+	pDrg = new CWnd;
+	pDrg->Create(_T("STATIC"), _T("Hello World"), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
+		CRect(0, 0, 800, 400), this, 1234);
+	InitOGL();
+	//Build();
+	return TRUE;  // return TRUE unless you set the focus to a control
+				  // EXCEPTION: OCX Property Pages should return FALSE
+}
+
+
 void CGraphDialog::OnBnClickedOk()
 {
 	// TODO: Add your control notification handler code here
 	CDialog::OnOK();
+}
+
+
+void CGraphDialog::OnPaint()
+{
+	//CPaintDC dc(this);     // device context for painting
+	OglDraw();			   // TODO: Add your message handler code here
+					       // Do not call CDialog::OnPaint() for painting messages
 }

@@ -1518,10 +1518,22 @@ class CGraphDialog : public CDialog
 public:
 
 	enum { IDD = IDD_GRAPH };
+	ME_Object* pME=NULL;
+	HDC hdc;
+	HGLRC hrc;
+	HDC hdcOld;
+	HGLRC hrcOld;
+	CWnd* pDrg = NULL;
+	C3dMatrix vMat;
+	int m_nPixelFormat = 0;
 	CGraphDialog();
-
+	~CGraphDialog();
+	void InitOGL();
+	void OglDraw();
+	virtual BOOL OnInitDialog();
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnBnClickedOk();
+	afx_msg void OnPaint();
 };
 
 class CGroupDialog : public CDialog
