@@ -39775,7 +39775,19 @@ void ResultsVec::Info()
 	outtext1(S1);
 }
 
+IMPLEMENT_DYNAMIC(Graph, CObject)
 
+Graph::Graph()
+{
+	fx.clear();
+	fy.clear();
+}
+
+Graph::~Graph()
+{
+	fx.clear();
+	fy.clear();
+}
 
 
 
@@ -52093,12 +52105,20 @@ void CEntEditDialog::OnBnClickedCancel()
 BEGIN_MESSAGE_MAP(CGraphDialog, CDialog)
 	ON_BN_CLICKED(IDOK, &CGraphDialog::OnBnClickedOk)
 	ON_WM_PAINT()
+	ON_LBN_SELCHANGE(IDC_RESPVEC, &CGraphDialog::OnLbnSelchangeRespvec)
+	ON_BN_CLICKED(IDC_PLOT, &CGraphDialog::OnBnClickedPlot)
 END_MESSAGE_MAP()
 
 CGraphDialog::CGraphDialog()
 	: CDialog(CGraphDialog::IDD, NULL)
 {
-
+	pME = NULL;
+	pG = NULL;
+	hdcOld = wglGetCurrentDC();
+	hrcOld = wglGetCurrentContext();
+	hrc = NULL;
+	hdc = NULL;
+	vMat.MakeUnit();
 }
 
 CGraphDialog::~CGraphDialog()
@@ -52112,6 +52132,9 @@ CGraphDialog::~CGraphDialog()
 	if (pDrg != NULL)
 		delete(pDrg);
 	wglMakeCurrent(hdcOld, hrcOld);
+
+	if (pG != NULL)
+		delete (pG);
 }
 
 
@@ -52158,8 +52181,8 @@ void CGraphDialog::OglDraw()
 	glClearDepth(1.0f);
 	CRect cR;
 	pDrg->GetWindowRect(&cR);
-	int iW = cR.Width();
-	int iH = cR.Height();
+	float fW = cR.Width();
+	float fH = cR.Height();
 	//glViewport(0, 0, iW, iH);
 	//glMatrixMode(GL_PROJECTION);
 	
@@ -52168,52 +52191,171 @@ void CGraphDialog::OglDraw()
 	glLoadIdentity();
 
 	//
-	glOrtho(0.0, 20.0, 0, 20.0, -1.0, 1.0);
+	glOrtho(0.0, fW, 0, fH, -1.0, 1.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glPointSize(10.0f);
 	glColor3f((float)0.0, (float)0.0, (float)0.9);
 	glBegin(GL_POINTS);
 	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(0.5, 0.0, 0.0);
-	glVertex3f(0.0, 0.5, 0.0);
+	glVertex3f(50.0, 0.0, 0.0);
+	glVertex3f(0.0, 50.0, 0.0);
 	glEnd();
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	char sLab[20];
 	int i;
 
 	sprintf_s(sLab, "%s", "Piggy");
-	OglString(1, 0.7, 0.0, 0.0, &sLab[0]);
+	OglString(1, 50.0, 50.0, 0.0, &sLab[0]);
 	glBegin(GL_LINES);
-	  glVertex3f(-1.0,-1.0, 0.0);
-	  glVertex3f(1.0, 1.0, 0.0);
+	  glVertex3f(0.0,0.0, 0.0);
+	  glVertex3f(fW, fH, 0.0);
 	glEnd();
-	glBegin(GL_LINES);
-	glVertex3f(-1.0, 1.0, 0.0);
-	glVertex3f(1.0, -1.0, 0.0);
-	glEnd();
+
 	glFinish();
 	SwapBuffers(wglGetCurrentDC());
 }
 
+
+void CGraphDialog::popResVec()
+{
+	int i;
+	int iLC;
+	int iTCode;
+	char buff[200];
+	NEList* LCGp = new NEList();
+	NEList* oIDS = new NEList();
+	CListBox* oLB;
+	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
+	LCGp->iNo = 0;
+	for (i = 0; i < pME->iNoRes; i++)
+	{
+		iLC = pME->ResultsSets[i]->LC;
+		iTCode = pME->ResultsSets[i]->TCODE;
+		//TCODE 1039 Node MPC
+		if ((iTCode == 1039) && (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC, 1);
+			sprintf_s(buff, "%i	%s %i %s", iTCode, "LC", iLC, "MPCF");
+			oLB->AddString(buff);
+			vTC.push_back(iTCode);
+			vLC.push_back(iLC);
+		}
+	}
+
+	delete(LCGp);
+	delete(oIDS);
+}
+
+void CGraphDialog::popEnt(int inTC, int inLC)
+{
+	int i;
+	int j;
+	int iLC;
+	int iTCode;
+	Res* pR = NULL;
+	char buff[200];
+	CListBox* oLB;
+	CListBox* oLBE;
+	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
+	oLB->ResetContent();
+	oLBE = (CListBox*)this->GetDlgItem(IDC_ENT);
+	oLBE->ResetContent();
+	for (i = 0; i < pME->iNoRes; i++)
+	{
+		iLC = pME->ResultsSets[i]->LC;
+		iTCode = pME->ResultsSets[i]->TCODE;
+		//TCODE 1039 Node MPC
+		if ((iTCode == inTC) && (iLC = inLC))
+		{
+			pR = pME->ResultsSets[i]->Head;
+			for (j = 0; j < pME->ResultsSets[i]->iCnt; j++)
+			{
+				sprintf_s(buff, "%i",pR->ID);
+				oLBE->AddString(buff);
+				vE.push_back(pR->ID);
+				pR = pR->next;
+			}
+			oLBE->RedrawWindow();
+			oLBE->SetCurSel(0);
+			for (j = 0; j < pME->ResultsSets[i]->iNoV; j++)
+			{
+				oLB->AddString(pME->ResultsSets[i]->lab[j]);
+			}
+			oLB->RedrawWindow();
+			oLB->SetCurSel(0);
+			break;
+		}
+	}
+}
 
 BOOL CGraphDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	//SIZE DIALOG BOX TO FIT COLOURS
 	CRect oSize;
+	CRect oSize2;
+	CRect oS;
+	CListBox* oLB;
+	vTC.clear();
+	vLC.clear();
 	this->SetWindowText("Graph");
 	this->GetWindowRect(&oSize);
-	oSize.right = oSize.left + 1000;
-	oSize.bottom = oSize.top + 600;
-	this->MoveWindow(oSize, 0);
 
+	oSize.right = oSize.left + 1200;
+	oSize.bottom = oSize.top + 700;
+	
+	this->MoveWindow(oSize, 0);
+	this->GetClientRect(oS);
 	// TODO:  Add extra initialization here
 	pDrg = new CWnd;
 	pDrg->Create(_T("STATIC"), _T("Hello World"), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
-		CRect(0, 0, 800, 400), this, 1234);
+		CRect(oS.left+10, oS.top+10, oS.right-10, oS.bottom-150), this, 1234);
+	//Size buttons and Listboxes
+	oSize2.top = oS.bottom - 140;;
+	oSize2.left = oSize.left+10;
+	oSize2.bottom = oS.bottom-10;
+	oSize2.right = oSize.left + 210;
+	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 140;;
+	oSize2.left = oSize.left + 220;
+	oSize2.bottom = oS.bottom - 10;
+	oSize2.right = oSize.left + 420;
+	oLB = (CListBox*)this->GetDlgItem(IDC_ENT);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 140;;
+	oSize2.left = oSize.left + 420;
+	oSize2.bottom = oS.bottom - 10;
+	oSize2.right = oSize.left + 630;
+	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 140;;
+	oSize2.left = oSize.left + 650;
+	oSize2.bottom = oS.bottom - 120;
+	oSize2.right = oSize.left + 750;
+	oLB = (CListBox*)this->GetDlgItem(IDOK);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 115;;
+	oSize2.left = oSize.left + 650;
+	oSize2.bottom = oS.bottom - 95;
+	oSize2.right = oSize.left + 750;
+	oLB = (CListBox*)this->GetDlgItem(IDCANCEL);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 90;;
+	oSize2.left = oSize.left + 650;
+	oSize2.bottom = oS.bottom - 70;
+	oSize2.right = oSize.left + 750;
+	oLB = (CListBox*)this->GetDlgItem(IDC_PLOT);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
 	InitOGL();
-	//Build();
+	popResVec();
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -52231,4 +52373,69 @@ void CGraphDialog::OnPaint()
 	//CPaintDC dc(this);     // device context for painting
 	OglDraw();			   // TODO: Add your message handler code here
 					       // Do not call CDialog::OnPaint() for painting messages
+}
+
+
+void CGraphDialog::OnLbnSelchangeRespvec()
+{
+	// TODO: Add your control notification handler code here
+	int iI;
+	int iTCode;
+	int iLC;
+
+	CListBox* oLB;
+	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
+	iI = oLB->GetCurSel();
+	iTCode= vTC.at(iI);
+	iLC = vLC.at(iI);;
+	popEnt(iTCode, iLC);
+}
+
+
+void CGraphDialog::OnBnClickedPlot()
+{
+	// TODO: Add your control notification handler code here
+	int iTC;
+	int iE;
+	int iLC;
+	int iI;
+	int iV;
+
+
+	CListBox* oLB;
+	BOOL bIsGood = TRUE;
+	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
+	iI = oLB->GetCurSel();
+	if (iI >= 0)
+	{
+		iTC = vTC.at(iI);
+		iLC = vLC.at(iI);
+	}
+	else
+		bIsGood = FALSE;
+	oLB = (CListBox*)this->GetDlgItem(IDC_ENT);
+	iI = oLB->GetCurSel();
+	if (iI >= 0)
+		iE = vE.at(iI);
+	else
+		bIsGood = FALSE;
+	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
+	iI = oLB->GetCurSel();
+	if (iI >= 0)
+		iV = iI;
+	else
+		bIsGood = FALSE;
+   	//if bIsGood we have TCODE,LC,ENT and Var to plot
+	if (bIsGood)
+		GenGraph(iTC,iLC,iE,iV);
+}
+
+void CGraphDialog::GenGraph(int iTC, int iLC, int iEnt, int iVar)
+{
+	//Delete any previous graph data
+	if (pG != NULL)
+	{
+		delete (pG); pG = NULL;
+	}
+
 }

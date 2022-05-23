@@ -124,6 +124,10 @@
 #define IDC_PID                         1048
 #define IDC_ENTID                       1049
 #define IDC_ENTLIST                     1050
+#define IDC_RESPVEC                     1055
+#define IDC_ENT                         1056
+#define IDC_VAR                         1057
+#define IDC_PLOT                        1058
 #define IDS_CREATE2                     2000
 #define ID_EDIT_ASSS                    32771
 #define ID_EDIT_DES                     32772
@@ -546,7 +550,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        363
 #define _APS_NEXT_COMMAND_VALUE         33361
-#define _APS_NEXT_CONTROL_VALUE         1055
+#define _APS_NEXT_CONTROL_VALUE         1059
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif

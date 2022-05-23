@@ -7,6 +7,9 @@
 #include "3dSupport.h"
 #include "afxwin.h"
 #include "afxcmn.h"
+#include <vector>
+using namespace std;
+
 #define DBL_MAX 1.7976931348623158e+308 /* max value */
 //Arrow head definition
 const double AHead [7][3] =
@@ -189,6 +192,7 @@ const float cols[167][3] ={{0.0f,0.0f,0.0f},
 
 const int MAX_RESSETS=50000;
 class Part;
+class Graph;
 class ME_Object;
 class G_Object;
 class G_ObjectD;
@@ -1516,7 +1520,10 @@ class CGraphDialog : public CDialog
 {
 
 public:
-
+	Graph* pG;
+	vector <int> vTC;
+	vector <int> vLC;
+	vector <int> vE;
 	enum { IDD = IDD_GRAPH };
 	ME_Object* pME=NULL;
 	HDC hdc;
@@ -1530,10 +1537,16 @@ public:
 	~CGraphDialog();
 	void InitOGL();
 	void OglDraw();
+	void popResVec(); //populate available response data list box
+	void popEnt(int iTC,int iLC); //populate available response nore / element
 	virtual BOOL OnInitDialog();
+	void GenGraph(int iTC, int iLC, int iEnt, int iVar);
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnPaint();
+	afx_msg void OnLbnSelchangeList3();
+	afx_msg void OnLbnSelchangeRespvec();
+	afx_msg void OnBnClickedPlot();
 };
 
 class CGroupDialog : public CDialog
@@ -4375,7 +4388,9 @@ class ResultsVec : public G_Object
 {
 	DECLARE_DYNAMIC(ResultsVec)
 public:
+
 	int iType; //
+	vector<int> vector_name;
 	C3dVector DSP_Point;
 	C3dVector Point;
 	C3dVector Vector;
@@ -4392,7 +4407,18 @@ public:
 	//virtual void HighLight(CDC* pDC);
 };
 
+// Graph Object
+// first class to use vector objevt
+class Graph : public CObject
+{
+	DECLARE_DYNAMIC(Graph)
+public:
 
+	vector<float> fx;
+	vector<float> fy;
+	Graph();
+	~Graph();
+};
 
 
 //************************************************************************

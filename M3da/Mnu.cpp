@@ -16697,19 +16697,7 @@ int zRESGRAPHRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			outtext2("/NODE/ELEM ID FOR RESPONSE DATA");
-			SetFocus();
-			iResumePos = 1;
-			iCancelPos = 100;
-			pNext = new zKEY_Mnu();
-			pNext->Init(cDBase, -1);
-			DoNext(&CInMsg, Pt);
-		}
-		if (iStat == 1)
-		{
-			C3dVector ptVec;
-			ptVec = cDBase->DB_PopBuff();
-			cDBase->ResGraphRespData((int)ptVec.x);
+			cDBase->ResGraphRespData(0);
 			RetVal = 1;
 		}
 		//Escape clause

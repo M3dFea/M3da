@@ -882,6 +882,8 @@ void DBase::ResGraphRespData(int iEnt)
 	Dlg->DoModal();
 	if (Dlg != NULL)
 		delete Dlg;
+	InvalidateOGL();
+	ReGen();
 }
 
 //RESLABRESP
