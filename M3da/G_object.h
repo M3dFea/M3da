@@ -4414,10 +4414,15 @@ class Graph : public CObject
 	DECLARE_DYNAMIC(Graph)
 public:
 
-	vector<float> fx;
-	vector<float> fy;
+	float fx[5000];
+	float fy[5000];
+	int iNo=0;
 	Graph();
 	~Graph();
+	float GetMaxfx();
+	float GetMinfx();
+	float GetMaxfy();
+	float GetMinfy();
 };
 
 

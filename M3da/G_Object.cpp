@@ -39779,17 +39779,66 @@ IMPLEMENT_DYNAMIC(Graph, CObject)
 
 Graph::Graph()
 {
-	fx.clear();
-	fy.clear();
+	iNo = 0;
 }
 
 Graph::~Graph()
 {
-	fx.clear();
-	fy.clear();
+	iNo = 0;
 }
 
+float Graph::GetMaxfx()
+{
+	int i;
+	float frc;
+	frc = fx[0];
 
+	for (i = 0; i < iNo; i++)
+	{
+		if (fx[i] > frc)
+			frc = fx[i];
+	}
+	return (frc);
+}
+
+float Graph::GetMinfx()
+{
+	int i;
+	float frc;
+	frc = fx[0];
+	for (i = 0; i < iNo; i++)
+	{
+		if (fx[i] < frc)
+			frc = fx[i];
+	}
+	return (frc);
+}
+
+float Graph::GetMaxfy()
+{
+	int i;
+	float frc;
+	frc = fy[0];
+	for (i = 0; i < iNo; i++)
+	{
+		if (fy[i] > frc)
+			frc = fy[i];
+	}
+	return (frc);
+}
+
+float Graph::GetMinfy()
+{
+	int i;
+	float frc;
+	frc = fy[0];
+	for (i = 0; i < iNo; i++)
+	{
+		if (fy[i] < frc)
+			frc = fy[i];
+	}
+	return (frc);
+}
 
 
 IMPLEMENT_DYNAMIC( CoordSys, CObject )
@@ -52175,7 +52224,7 @@ void CGraphDialog::InitOGL()
 
 void CGraphDialog::OglDraw()
 {
-
+	int i;
 	glClearColor(255.0f, 255.0f, 255.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearDepth(1.0f);
@@ -52183,34 +52232,44 @@ void CGraphDialog::OglDraw()
 	pDrg->GetWindowRect(&cR);
 	float fW = cR.Width();
 	float fH = cR.Height();
-	//glViewport(0, 0, iW, iH);
-	//glMatrixMode(GL_PROJECTION);
-	
-	//glViewport(0, 0, mCView_Rect.right, mCView_Rect.bottom);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-
-	//
 	glOrtho(0.0, fW, 0, fH, -1.0, 1.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glPointSize(10.0f);
 	glColor3f((float)0.0, (float)0.0, (float)0.9);
-	glBegin(GL_POINTS);
-	glVertex3f(0.0, 0.0, 0.0);
-	glVertex3f(50.0, 0.0, 0.0);
-	glVertex3f(0.0, 50.0, 0.0);
-	glEnd();
+
+	if (pG!=NULL)
+	{
+		float minX;
+		float maxX;
+		float X;
+		float minY;
+		float maxY;
+		float Y;
+		minX = pG->GetMinfx();
+		maxX = pG->GetMaxfx();
+		minY = pG->GetMinfy();
+		maxY = pG->GetMaxfy();
+		glBegin(GL_LINE_STRIP);
+		for (i = 0; i < pG->iNo; i++)
+		{
+			X = 50+(fW-100) * (pG->fx[i] - minX) / (maxX - minX);
+			Y = 50+(fH-100) * (pG->fy[i] - minY) / (maxY - minY);
+			glVertex3f(X, Y, 0.0);
+		}
+		glEnd();
+	}
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	char sLab[20];
-	int i;
 
-	sprintf_s(sLab, "%s", "Piggy");
-	OglString(1, 50.0, 50.0, 0.0, &sLab[0]);
-	glBegin(GL_LINES);
-	  glVertex3f(0.0,0.0, 0.0);
-	  glVertex3f(fW, fH, 0.0);
-	glEnd();
+	//sprintf_s(sLab, "%s", "Piggy");
+	//OglString(1, 50.0, 50.0, 0.0, &sLab[0]);
+	//glBegin(GL_LINES);
+	//  glVertex3f(0.0,0.0, 0.0);
+	//  glVertex3f(fW, fH, 0.0);
+	//glEnd();
 
 	glFinish();
 	SwapBuffers(wglGetCurrentDC());
@@ -52242,6 +52301,37 @@ void CGraphDialog::popResVec()
 			vLC.push_back(iLC);
 		}
 	}
+	LCGp->iNo = 0;
+	for (i = 0; i < pME->iNoRes; i++)
+	{
+		iLC = pME->ResultsSets[i]->LC;
+		iTCode = pME->ResultsSets[i]->TCODE;
+		//TCODE 1011 Accel
+		if ((iTCode == 1011) && (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC, 1);
+			sprintf_s(buff, "%i	%s %i %s", iTCode, "LC", iLC, "ACCEL");
+			oLB->AddString(buff);
+			vTC.push_back(iTCode);
+			vLC.push_back(iLC);
+		}
+	}
+
+	LCGp->iNo = 0;
+	for (i = 0; i < pME->iNoRes; i++)
+	{
+		iLC = pME->ResultsSets[i]->LC;
+		iTCode = pME->ResultsSets[i]->TCODE;
+		//TCODE 1004 El Force CBUSH
+		if ((iTCode == 1004) && (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC, 1);
+			sprintf_s(buff, "%i	%s %i %s", iTCode, "LC", iLC, "ELFORCE");
+			oLB->AddString(buff);
+			vTC.push_back(iTCode);
+			vLC.push_back(iLC);
+		}
+	}
 
 	delete(LCGp);
 	delete(oIDS);
@@ -52257,6 +52347,7 @@ void CGraphDialog::popEnt(int inTC, int inLC)
 	char buff[200];
 	CListBox* oLB;
 	CListBox* oLBE;
+	vE.clear();
 	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
 	oLB->ResetContent();
 	oLBE = (CListBox*)this->GetDlgItem(IDC_ENT);
@@ -52432,10 +52523,47 @@ void CGraphDialog::OnBnClickedPlot()
 
 void CGraphDialog::GenGraph(int iTC, int iLC, int iEnt, int iVar)
 {
+	char buff[200];
+	int i;
+	int j;
+	ResSet* pRS;
+	Res* pR;
+	BOOL bFirst = TRUE;
 	//Delete any previous graph data
 	if (pG != NULL)
 	{
 		delete (pG); pG = NULL;
 	}
-
+	pG = new Graph();
+	for (i = 0; i < pME->iNoRes; i++)
+	{
+		if ((pME->ResultsSets[i]->LC == iLC) && (iTC == pME->ResultsSets[i]->TCODE))
+		{
+			pRS = pME->ResultsSets[i];
+			if (pRS->ACODE / 10 == 5) //Frequncy data
+			{
+				if (bFirst)
+				{
+					//outtext1(pRS->sTitle);
+					//outtext1(pRS->sSubTitle);
+					bFirst = FALSE;
+				}
+				pR = pRS->Head;
+				for (j = 0; j < pRS->iCnt; j++)
+				{
+					if (pR->ID == iEnt)
+					{
+						//sDL = pRS->ToStringDL(pR);
+						pG->fx[pG->iNo]=*pR->GetAddress(0);
+						pG->fy[pG->iNo]=*pR->GetAddress(iVar);
+						pG->iNo++;
+						//sprintf_s(buff, "%g	%g", *pR->GetAddress(0), *pR->GetAddress(iVar));
+						//outtext1(buff);
+						break;
+					}
+					pR = pR->next;
+				}
+			}
+		}
+	}
 }
