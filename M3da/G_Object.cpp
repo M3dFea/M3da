@@ -52158,6 +52158,8 @@ BEGIN_MESSAGE_MAP(CGraphDialog, CDialog)
 	ON_WM_PAINT()
 	ON_LBN_SELCHANGE(IDC_RESPVEC, &CGraphDialog::OnLbnSelchangeRespvec)
 	ON_BN_CLICKED(IDC_PLOT, &CGraphDialog::OnBnClickedPlot)
+//	ON_WM_MBUTTONDOWN()
+ON_WM_LBUTTONUP()
 END_MESSAGE_MAP()
 
 CGraphDialog::CGraphDialog()
@@ -52298,6 +52300,14 @@ void CGraphDialog::OglDraw()
 
 	glFinish();
 	SwapBuffers(wglGetCurrentDC());
+
+//static char s[16];
+//sprintf(s, "%s", "Piggy");
+
+//aDC.SetPixel(point, RGB(255, 0, 0));
+//HDC hdc;
+//hdc = pDrg->GetDC()->m_hDC;
+//TextOut(hdc, 100, 100, s, strlen(s));
 }
 
 
@@ -52591,4 +52601,26 @@ void CGraphDialog::GenGraph(int iTC, int iLC, int iEnt, int iVar)
 			}
 		}
 	}
+}
+
+//void CGraphDialog::OnMButtonDown(UINT nFlags, CPoint point)
+//{
+//	// TODO: Add your message handler code here and/or call default
+//
+//	CDialog::OnMButtonDown(nFlags, point);
+//
+//}
+
+
+void CGraphDialog::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	//static char s[16];
+	//sprintf(s, "%d", 1.0);
+
+	//aDC.SetPixel(point, RGB(255, 0, 0));
+	//HDC hdc;
+	//hdc = pDrg->GetDC()->m_hDC;
+	//TextOut(hdc, point.x, point.y, s, strlen(s));
+	CDialog::OnLButtonUp(nFlags, point);
 }

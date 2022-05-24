@@ -1547,6 +1547,8 @@ public:
 	afx_msg void OnLbnSelchangeList3();
 	afx_msg void OnLbnSelchangeRespvec();
 	afx_msg void OnBnClickedPlot();
+//	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 };
 
 class CGroupDialog : public CDialog
