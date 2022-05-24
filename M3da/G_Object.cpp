@@ -52167,96 +52167,36 @@ CGraphDialog::CGraphDialog()
 {
 	pME = NULL;
 	pG = NULL;
-	hdcOld = wglGetCurrentDC();
-	hrcOld = wglGetCurrentContext();
-	hrc = NULL;
-	hdc = NULL;
 	vMat.MakeUnit();
 }
 
 CGraphDialog::~CGraphDialog()
 {
-	if (hrc != NULL)
-	{
-		wglMakeCurrent(NULL, NULL);
-		wglDeleteContext(hrc);
-	}
-
-	if (pDrg != NULL)
-		delete(pDrg);
-	wglMakeCurrent(hdcOld, hrcOld);
-
 	if (pG != NULL)
 		delete (pG);
 }
 
 
-void CGraphDialog::InitOGL()
-{
-	static PIXELFORMATDESCRIPTOR pfd =
-	{
-	  sizeof(PIXELFORMATDESCRIPTOR),  // size of this pfd
-	  1,                              // version number
-	  PFD_DRAW_TO_WINDOW |            // support window
-	  PFD_SUPPORT_OPENGL |          // support OpenGL
-	  PFD_DOUBLEBUFFER,             // double buffered
-	  PFD_TYPE_RGBA,                  // RGBA type
-	  24,                             // 24-bit color depth
-	  0, 0, 0, 0, 0, 0,               // color bits ignored
-	  0,                              // no alpha buffer
-	  0,                              // shift bit ignored
-	  0,                              // no accumulation buffer
-	  0, 0, 0, 0,                     // accum bits ignored
-	  32,                             // 32-bit z-buffer
-	  0,                              // no stencil buffer
-	  0,                              // no auxiliary buffer
-	  PFD_MAIN_PLANE,                 // main layer
-	  0,                              // reserved
-	  0, 0, 0                         // layer masks ignored
-	};
 
-	// Get device context only once.
-	hdc = pDrg->GetDC()->m_hDC;
-	// Pixel format.
-	m_nPixelFormat = ChoosePixelFormat(hdc, &pfd);
-	SetPixelFormat(hdc, m_nPixelFormat, &pfd);
-
-	// Create the OpenGL Rendering Context.
-	hrc = wglCreateContext(hdc);
-	wglMakeCurrent(hdc, hrc);
-}
-
-void CGraphDialog::OglDraw()
+void CGraphDialog::GDIDraw()
 {
 	int i;
 	char sLab[20];
-	glClearColor(255.0f, 255.0f, 255.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearDepth(1.0f);
+	BOOL bFirst = TRUE;
+	HDC hDC;
+	CDC* pDC = pDrg->GetDC();
+	hDC = pDC->m_hDC;
+	float X;
+	float Y;
 	CRect cR;
-	pDrg->GetWindowRect(&cR);
-	float fW = cR.Width();
-	float fH = cR.Height();
-	float fxoff = 80;
-	float fyoff = 50;
-	float fxspan = fW - fxoff - 50;
-	float fyspan = fH - fyoff - 50;
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0.0, fW, 0, fH, -1.0, 1.0);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glPointSize(10.0f);
-	glColor3f((float)0.0, (float)0.0, (float)0.9);
+	fxoff = 80;
+	fyoff = 50;
+	fxspan = fW - fxoff - 50;
+	fyspan = fH - fyoff - 50;
 
 	if (pG!=NULL)
 	{
-		float minX;
-		float maxX;
-		float X;
-		float minY;
-		float maxY;
-		float Y;
+
 		minX = pG->GetMinfx();
 		maxX = pG->GetMaxfx();
 		minY = pG->GetMinfy();
@@ -52265,49 +52205,36 @@ void CGraphDialog::OglDraw()
 		//	minY = 0.0;
 		X = fxoff + (fxspan) * (0.0 - minX) / (maxX - minX);
 		Y = fyoff + (fyspan) * (0.0 - minY) / (maxY - minY);
-		glLineWidth(5);
-		glBegin(GL_LINES);
-		  glVertex3f(fxoff, Y, 0.0);
-		  glVertex3f(fxoff + fxspan, Y, 0.0);
-		  glVertex3f(X, fyoff, 0.0);
-		  glVertex3f(X, fyoff+ fyspan, 0.0);
-		glEnd();
+		//TextOut(hdc, point.x, point.y, s, strlen(s));
+		//glBegin(GL_LINES);
+		pDC->MoveTo(fxoff, fH-Y);
+		pDC->LineTo(fxoff + fxspan, fH - Y);
+		pDC->MoveTo(X, fH - fyoff);
+		pDC->LineTo(X, fH - (fyoff+ fyspan));
 
-
-		glLineWidth(2);
-		glBegin(GL_LINE_STRIP);
 		for (i = 0; i < pG->fx.size(); i++)
 		{
 			X = fxoff +(fxspan) * (pG->fx[i] - minX) / (maxX - minX);
 			Y = fyoff +(fyspan) * (pG->fy[i] - minY) / (maxY - minY);
-			glVertex3f(X, Y, 0.0);
+			if (bFirst)
+			{
+				pDC->MoveTo(X, fH - Y);
+				bFirst = FALSE;
+			}
+			else
+			{
+				pDC->LineTo(X, fH - Y);
+			}
 		}
-		glEnd();
+
 		sprintf_s(sLab, "%g", maxX);
-		OglString(1, fxoff + (fxspan), 25.0, 0.0, &sLab[0]);
+		// //TextOut(hdc, point.x, point.y, s, strlen(s));
+		TextOut(hDC, fxoff + (fxspan), fH - 25.0, sLab, strlen(sLab));
 		sprintf_s(sLab, "%g", maxY);
-		OglString(1, 0.0, fyoff + (fyspan), 0.0, &sLab[0]);
+		TextOut(hDC, 0.0, fH - (fyoff + (fyspan)), sLab, strlen(sLab));
+		this->ReleaseDC(pDC);
 	}
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-
-	//sprintf_s(sLab, "%s", "Piggy");
-	//OglString(1, 50.0, 50.0, 0.0, &sLab[0]);
-	//glBegin(GL_LINES);
-	//  glVertex3f(0.0,0.0, 0.0);
-	//  glVertex3f(fW, fH, 0.0);
-	//glEnd();
-
-	glFinish();
-	SwapBuffers(wglGetCurrentDC());
-
-//static char s[16];
-//sprintf(s, "%s", "Piggy");
-
-//aDC.SetPixel(point, RGB(255, 0, 0));
-//HDC hdc;
-//hdc = pDrg->GetDC()->m_hDC;
-//TextOut(hdc, 100, 100, s, strlen(s));
 }
 
 
@@ -52419,6 +52346,7 @@ BOOL CGraphDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	//SIZE DIALOG BOX TO FIT COLOURS
+	CRect cR;
 	CRect oSize;
 	CRect oSize2;
 	CRect oS;
@@ -52436,7 +52364,10 @@ BOOL CGraphDialog::OnInitDialog()
 	// TODO:  Add extra initialization here
 	pDrg = new CWnd;
 	pDrg->Create(_T("STATIC"), _T("Hello World"), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
-		CRect(oS.left+10, oS.top+10, oS.right-10, oS.bottom-150), this, 1234);
+		CRect(oS.left, oS.top, oS.right, oS.bottom-150), this, 1234);
+	pDrg->GetWindowRect(&cR);
+	fW = cR.Width();
+	fH = cR.Height();
 	//Size buttons and Listboxes
 	oSize2.top = oS.bottom - 140;;
 	oSize2.left = oSize.left+10;
@@ -52480,7 +52411,6 @@ BOOL CGraphDialog::OnInitDialog()
 	oLB = (CListBox*)this->GetDlgItem(IDC_PLOT);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
-	InitOGL();
 	popResVec();
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // EXCEPTION: OCX Property Pages should return FALSE
@@ -52496,8 +52426,8 @@ void CGraphDialog::OnBnClickedOk()
 
 void CGraphDialog::OnPaint()
 {
-	//CPaintDC dc(this);     // device context for painting
-	OglDraw();			   // TODO: Add your message handler code here
+	CPaintDC dc(this);     // device context for painting
+	GDIDraw();			   // TODO: Add your message handler code here
 					       // Do not call CDialog::OnPaint() for painting messages
 }
 
@@ -52601,6 +52531,7 @@ void CGraphDialog::GenGraph(int iTC, int iLC, int iEnt, int iVar)
 			}
 		}
 	}
+	GDIDraw();
 }
 
 //void CGraphDialog::OnMButtonDown(UINT nFlags, CPoint point)
@@ -52615,12 +52546,40 @@ void CGraphDialog::GenGraph(int iTC, int iLC, int iEnt, int iVar)
 void CGraphDialog::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	// TODO: Add your message handler code here and/or call default
-	//static char s[16];
-	//sprintf(s, "%d", 1.0);
+	// find closest point to clicked location
+	int i;
+	float fdist;
+	float fdistMin;
+	int ind = -1;
+	float X;
+	float Y;
+    char s[20];
+	point.x -= 5;
+	if (pG != NULL)
+	{
+		CDC* pDC = this->GetDC();
+		X = fxoff + (fxspan) * (pG->fx[0] - minX) / (maxX - minX);
+		fdistMin = abs(X - point.x);
+		ind = 0;
+		for (i = 0; i < pG->fx.size(); i++)
+		{
+			X = fxoff + (fxspan) * (pG->fx[i] - minX) / (maxX - minX);
+			fdist = abs(X - point.x);
+			if (fdist < fdistMin)
+			{
+				fdistMin = fdist;
+				ind = i;
+			}
+		}
+		X = fxoff + (fxspan) * (pG->fx[ind] - minX) / (maxX - minX);
+		Y = fyoff + (fyspan) * (pG->fy[ind] - minY) / (maxY - minY);
+		sprintf(s, "%gg", pG->fy[ind]);
+		TextOut(pDC->m_hDC, X, fH - Y, s, strlen(s));
+		sprintf(s, "%gHz", pG->fx[ind]);
+		TextOut(pDC->m_hDC, X, fH - (Y+15), s, strlen(s));
+		this->ReleaseDC(pDC);
+	}
 
-	//aDC.SetPixel(point, RGB(255, 0, 0));
-	//HDC hdc;
-	//hdc = pDrg->GetDC()->m_hDC;
-	//TextOut(hdc, point.x, point.y, s, strlen(s));
+
 	CDialog::OnLButtonUp(nFlags, point);
 }

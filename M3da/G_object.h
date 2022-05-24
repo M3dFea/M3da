@@ -1521,22 +1521,28 @@ class CGraphDialog : public CDialog
 
 public:
 	Graph* pG;
+	float fW = 500;
+	float fH = 500;
+	float fxoff = 80;
+	float fyoff = 50;
+	float fxspan = fW - fxoff - 50;
+	float fyspan = fH - fyoff - 50;
+	float minX=0;
+	float maxX=0;
+	float minY=0;
+	float maxY=0;
 	vector <int> vTC;
 	vector <int> vLC;
 	vector <int> vE;
 	enum { IDD = IDD_GRAPH };
 	ME_Object* pME=NULL;
-	HDC hdc;
-	HGLRC hrc;
-	HDC hdcOld;
-	HGLRC hrcOld;
 	CWnd* pDrg = NULL;
 	C3dMatrix vMat;
 	int m_nPixelFormat = 0;
 	CGraphDialog();
 	~CGraphDialog();
 	void InitOGL();
-	void OglDraw();
+	void GDIDraw();
 	void popResVec(); //populate available response data list box
 	void popEnt(int iTC,int iLC); //populate available response nore / element
 	virtual BOOL OnInitDialog();
