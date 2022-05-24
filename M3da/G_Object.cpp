@@ -39779,21 +39779,23 @@ IMPLEMENT_DYNAMIC(Graph, CObject)
 
 Graph::Graph()
 {
-	iNo = 0;
+	fx.clear();
+	fy.clear();
 }
 
 Graph::~Graph()
 {
-	iNo = 0;
+	fx.clear();
+	fy.clear();
 }
 
 float Graph::GetMaxfx()
 {
 	int i;
 	float frc;
-	frc = fx[0];
+	frc = 0.0;
 
-	for (i = 0; i < iNo; i++)
+	for (i = 0; i < fx.size(); i++)
 	{
 		if (fx[i] > frc)
 			frc = fx[i];
@@ -39805,8 +39807,8 @@ float Graph::GetMinfx()
 {
 	int i;
 	float frc;
-	frc = fx[0];
-	for (i = 0; i < iNo; i++)
+	frc = 0.0;
+	for (i = 0; i < fx.size(); i++)
 	{
 		if (fx[i] < frc)
 			frc = fx[i];
@@ -39818,8 +39820,8 @@ float Graph::GetMaxfy()
 {
 	int i;
 	float frc;
-	frc = fy[0];
-	for (i = 0; i < iNo; i++)
+	frc = 0.0;
+	for (i = 0; i < fy.size(); i++)
 	{
 		if (fy[i] > frc)
 			frc = fy[i];
@@ -39831,8 +39833,8 @@ float Graph::GetMinfy()
 {
 	int i;
 	float frc;
-	frc = fy[0];
-	for (i = 0; i < iNo; i++)
+	frc = 0.0;
+	for (i = 0; i < fy.size(); i++)
 	{
 		if (fy[i] < frc)
 			frc = fy[i];
@@ -52225,6 +52227,7 @@ void CGraphDialog::InitOGL()
 void CGraphDialog::OglDraw()
 {
 	int i;
+	char sLab[20];
 	glClearColor(255.0f, 255.0f, 255.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearDepth(1.0f);
@@ -52232,6 +52235,10 @@ void CGraphDialog::OglDraw()
 	pDrg->GetWindowRect(&cR);
 	float fW = cR.Width();
 	float fH = cR.Height();
+	float fxoff = 80;
+	float fyoff = 50;
+	float fxspan = fW - fxoff - 50;
+	float fyspan = fH - fyoff - 50;
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0.0, fW, 0, fH, -1.0, 1.0);
@@ -52252,17 +52259,35 @@ void CGraphDialog::OglDraw()
 		maxX = pG->GetMaxfx();
 		minY = pG->GetMinfy();
 		maxY = pG->GetMaxfy();
+		//if (minY == maxY)
+		//	minY = 0.0;
+		X = fxoff + (fxspan) * (0.0 - minX) / (maxX - minX);
+		Y = fyoff + (fyspan) * (0.0 - minY) / (maxY - minY);
+		glLineWidth(5);
+		glBegin(GL_LINES);
+		  glVertex3f(fxoff, Y, 0.0);
+		  glVertex3f(fxoff + fxspan, Y, 0.0);
+		  glVertex3f(X, fyoff, 0.0);
+		  glVertex3f(X, fyoff+ fyspan, 0.0);
+		glEnd();
+
+
+		glLineWidth(2);
 		glBegin(GL_LINE_STRIP);
-		for (i = 0; i < pG->iNo; i++)
+		for (i = 0; i < pG->fx.size(); i++)
 		{
-			X = 50+(fW-100) * (pG->fx[i] - minX) / (maxX - minX);
-			Y = 50+(fH-100) * (pG->fy[i] - minY) / (maxY - minY);
+			X = fxoff +(fxspan) * (pG->fx[i] - minX) / (maxX - minX);
+			Y = fyoff +(fyspan) * (pG->fy[i] - minY) / (maxY - minY);
 			glVertex3f(X, Y, 0.0);
 		}
 		glEnd();
+		sprintf_s(sLab, "%g", maxX);
+		OglString(1, fxoff + (fxspan), 25.0, 0.0, &sLab[0]);
+		sprintf_s(sLab, "%g", maxY);
+		OglString(1, 0.0, fyoff + (fyspan), 0.0, &sLab[0]);
 	}
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	char sLab[20];
+
 
 	//sprintf_s(sLab, "%s", "Piggy");
 	//OglString(1, 50.0, 50.0, 0.0, &sLab[0]);
@@ -52554,9 +52579,9 @@ void CGraphDialog::GenGraph(int iTC, int iLC, int iEnt, int iVar)
 					if (pR->ID == iEnt)
 					{
 						//sDL = pRS->ToStringDL(pR);
-						pG->fx[pG->iNo]=*pR->GetAddress(0);
-						pG->fy[pG->iNo]=*pR->GetAddress(iVar);
-						pG->iNo++;
+						pG->fx.push_back(*pR->GetAddress(0));
+						pG->fy.push_back(*pR->GetAddress(iVar));
+
 						//sprintf_s(buff, "%g	%g", *pR->GetAddress(0), *pR->GetAddress(iVar));
 						//outtext1(buff);
 						break;
