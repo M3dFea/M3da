@@ -39842,6 +39842,13 @@ float Graph::GetMinfy()
 	return (frc);
 }
 
+void Graph::genMaxMin()
+{
+	GmaxX = GetMaxfx();
+	GminX = GetMinfx();
+	GmaxY = GetMaxfy();
+	GminY = GetMinfy();
+}
 
 IMPLEMENT_DYNAMIC( CoordSys, CObject )
 void CoordSys::Create(C3dVector Orig,C3dMatrix RMat,int inRID,int inTp, int iLab, int iC,G_Object* Parrent)
@@ -52160,6 +52167,7 @@ BEGIN_MESSAGE_MAP(CGraphDialog, CDialog)
 	ON_BN_CLICKED(IDC_PLOT, &CGraphDialog::OnBnClickedPlot)
 //	ON_WM_MBUTTONDOWN()
 ON_WM_LBUTTONUP()
+ON_BN_CLICKED(IDCANCEL, &CGraphDialog::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 CGraphDialog::CGraphDialog()
@@ -52176,14 +52184,43 @@ CGraphDialog::~CGraphDialog()
 		delete (pG);
 }
 
+//Calculate nice axis divisions
+float CGraphDialog::AxisTickMarks(float fMaxV, float ftargetSteps)
+{
+	int magMsd;
+	float tempStep;
+	float mag;
+	float magPow;
 
+	// calculate an initial guess at step size
+	tempStep = fMaxV / ftargetSteps;
+	// get the magnitude of the step size
+	mag = floor(log10(tempStep));
+	magPow = (float) pow(10, mag);
+	// calculate most significant digit of the new step size
+	magMsd = (int)(tempStep / magPow + 0.5);
+
+	// promote the MSD to either 1, 2, or 5
+	if (magMsd > 5)
+		magMsd = 10;
+	else if (magMsd > 2)
+		magMsd = 5;
+	else if (magMsd > 1)
+		magMsd = 2;
+
+	return (magMsd * magPow);
+}
 
 void CGraphDialog::GDIDraw()
 {
 	int i;
+	int iNoTicks=5;
+	float fDivX;
+	float fDivY;
 	char sLab[20];
 	BOOL bFirst = TRUE;
 	HDC hDC;
+	
 	CDC* pDC = pDrg->GetDC();
 	hDC = pDC->m_hDC;
 	float X;
@@ -52197,21 +52234,36 @@ void CGraphDialog::GDIDraw()
 	if (pG!=NULL)
 	{
 
-		minX = pG->GetMinfx();
-		maxX = pG->GetMaxfx();
-		minY = pG->GetMinfy();
-		maxY = pG->GetMaxfy();
-		//if (minY == maxY)
-		//	minY = 0.0;
-		X = fxoff + (fxspan) * (0.0 - minX) / (maxX - minX);
-		Y = fyoff + (fyspan) * (0.0 - minY) / (maxY - minY);
-		//TextOut(hdc, point.x, point.y, s, strlen(s));
-		//glBegin(GL_LINES);
-		pDC->MoveTo(fxoff, fH-Y);
-		pDC->LineTo(fxoff + fxspan, fH - Y);
-		pDC->MoveTo(X, fH - fyoff);
-		pDC->LineTo(X, fH - (fyoff+ fyspan));
 
+		if (pG->GminX < minX)
+			minX = pG->GminX;
+		if (pG->GmaxX > maxX)
+			maxX = pG->GmaxX;
+		if (pG->GminY < minY)
+			maxY = pG->GmaxY;
+		if (pG->GmaxY > maxY)
+			maxY = pG->GmaxY;
+		fDivY = AxisTickMarks(maxY, iNoTicks);
+		fDivX = AxisTickMarks(maxX, iNoTicks);
+		if (fDivY * iNoTicks > maxY)
+			maxY = fDivY * iNoTicks;
+		if (fDivX * iNoTicks > maxX)
+			maxX = fDivX * iNoTicks;
+		for (i = 0; i <= iNoTicks; i++)
+		{
+			X = fxoff + (fxspan) * (i* fDivX - minX) / (maxX - minX);
+			Y = fyoff + (fyspan) * (i* fDivY - minY) / (maxY - minY);
+			//TextOut(hdc, point.x, point.y, s, strlen(s));
+			//glBegin(GL_LINES);
+			pDC->MoveTo(fxoff - 5, fH - Y);
+			pDC->LineTo(fxoff + fxspan, fH - Y);
+			pDC->MoveTo(X, fH - (fyoff - 5));
+			pDC->LineTo(X, fH - (fyoff + fyspan));
+			sprintf_s(sLab, "%g", i * fDivX);
+			TextOut(hDC, X, fH - (fyoff-5), sLab, strlen(sLab));
+			sprintf_s(sLab, "%g", i * fDivY);
+			TextOut(hDC, fxoff-40, fH - Y, sLab, strlen(sLab));
+		}
 		for (i = 0; i < pG->fx.size(); i++)
 		{
 			X = fxoff +(fxspan) * (pG->fx[i] - minX) / (maxX - minX);
@@ -52226,12 +52278,13 @@ void CGraphDialog::GDIDraw()
 				pDC->LineTo(X, fH - Y);
 			}
 		}
-
-		sprintf_s(sLab, "%g", maxX);
-		// //TextOut(hdc, point.x, point.y, s, strlen(s));
-		TextOut(hDC, fxoff + (fxspan), fH - 25.0, sLab, strlen(sLab));
-		sprintf_s(sLab, "%g", maxY);
-		TextOut(hDC, 0.0, fH - (fyoff + (fyspan)), sLab, strlen(sLab));
+		CEdit* oEdit = (CEdit*)this->GetDlgItem(IDC_XTITLE);
+		CString sS;
+		oEdit->GetWindowTextA(sS);
+		TextOut(hDC, fW/2, fH - 40, sS, strlen(sS));
+		oEdit = (CEdit*)this->GetDlgItem(IDC_TITLE);
+		oEdit->GetWindowTextA(sS);
+		TextOut(hDC, fxoff, 20, sS, strlen(sS));
 		this->ReleaseDC(pDC);
 	}
 
@@ -52363,7 +52416,7 @@ BOOL CGraphDialog::OnInitDialog()
 	this->GetClientRect(oS);
 	// TODO:  Add extra initialization here
 	pDrg = new CWnd;
-	pDrg->Create(_T("STATIC"), _T("Hello World"), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
+	pDrg->Create(_T("STATIC"), _T(""), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
 		CRect(oS.left, oS.top, oS.right, oS.bottom-150), this, 1234);
 	pDrg->GetWindowRect(&cR);
 	fW = cR.Width();
@@ -52411,6 +52464,38 @@ BOOL CGraphDialog::OnInitDialog()
 	oLB = (CListBox*)this->GetDlgItem(IDC_PLOT);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 140;
+	oSize2.left = oSize.left + 800;
+	oSize2.bottom = oS.bottom - 120;
+	oSize2.right = oSize.left + 1150;
+	CEdit* oEdit  = (CEdit*)this->GetDlgItem(IDC_TITLE);
+	if (oEdit != NULL)
+	{
+		oEdit->MoveWindow(oSize2, 0);
+		oEdit->SetWindowTextA("Graph Title");
+	}
+	oSize2.top = oS.bottom - 115;
+	oSize2.left = oSize.left + 800;
+	oSize2.bottom = oS.bottom - 95;
+	oSize2.right = oSize.left + 1150;
+	oEdit = (CEdit*)this->GetDlgItem(IDC_XTITLE);
+	if (oEdit != NULL)
+	{
+		oEdit->MoveWindow(oSize2, 0);
+		oEdit->SetWindowTextA("Freq (Hz)");
+	}
+	oSize2.top = oS.bottom - 90;
+	oSize2.left = oSize.left + 800;
+	oSize2.bottom = oS.bottom - 70;
+	oSize2.right = oSize.left + 1150;
+	oEdit = (CEdit*)this->GetDlgItem(IDC_YTITLE);
+	if (oEdit != NULL)
+	{
+		oEdit->MoveWindow(oSize2, 0);
+		oEdit->SetWindowTextA("Y Axis Title");
+	}
+
+
 	popResVec();
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // EXCEPTION: OCX Property Pages should return FALSE
@@ -52456,12 +52541,16 @@ void CGraphDialog::OnBnClickedPlot()
 	int iLC;
 	int iI;
 	int iV;
+	CString sRT;
+	CString sID;
+	CString sVar;
 
 
 	CListBox* oLB;
 	BOOL bIsGood = TRUE;
 	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
 	iI = oLB->GetCurSel();
+	oLB->GetText(iI, sRT);
 	if (iI >= 0)
 	{
 		iTC = vTC.at(iI);
@@ -52471,22 +52560,24 @@ void CGraphDialog::OnBnClickedPlot()
 		bIsGood = FALSE;
 	oLB = (CListBox*)this->GetDlgItem(IDC_ENT);
 	iI = oLB->GetCurSel();
+	oLB->GetText(iI, sID);
 	if (iI >= 0)
 		iE = vE.at(iI);
 	else
 		bIsGood = FALSE;
 	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
 	iI = oLB->GetCurSel();
+	oLB->GetText(iI, sVar);
 	if (iI >= 0)
 		iV = iI;
 	else
 		bIsGood = FALSE;
    	//if bIsGood we have TCODE,LC,ENT and Var to plot
 	if (bIsGood)
-		GenGraph(iTC,iLC,iE,iV);
+		GenGraph(sRT, sID,sVar,iTC,iLC,iE,iV);
 }
 
-void CGraphDialog::GenGraph(int iTC, int iLC, int iEnt, int iVar)
+void CGraphDialog::GenGraph(CString sRT,CString sID,CString sVar,int iTC, int iLC, int iEnt, int iVar)
 {
 	char buff[200];
 	int i;
@@ -52494,12 +52585,16 @@ void CGraphDialog::GenGraph(int iTC, int iLC, int iEnt, int iVar)
 	ResSet* pRS;
 	Res* pR;
 	BOOL bFirst = TRUE;
+
 	//Delete any previous graph data
 	if (pG != NULL)
 	{
 		delete (pG); pG = NULL;
 	}
 	pG = new Graph();
+	pG->sResType = sRT;
+	pG->sEntID = sID;
+	pG->sVar = sVar;
 	for (i = 0; i < pME->iNoRes; i++)
 	{
 		if ((pME->ResultsSets[i]->LC == iLC) && (iTC == pME->ResultsSets[i]->TCODE))
@@ -52509,8 +52604,7 @@ void CGraphDialog::GenGraph(int iTC, int iLC, int iEnt, int iVar)
 			{
 				if (bFirst)
 				{
-					//outtext1(pRS->sTitle);
-					//outtext1(pRS->sSubTitle);
+					pG->sTitle = pRS->sTitle;
 					bFirst = FALSE;
 				}
 				pR = pRS->Head;
@@ -52531,6 +52625,7 @@ void CGraphDialog::GenGraph(int iTC, int iLC, int iEnt, int iVar)
 			}
 		}
 	}
+	pG->genMaxMin();
 	GDIDraw();
 }
 
@@ -52573,13 +52668,21 @@ void CGraphDialog::OnLButtonUp(UINT nFlags, CPoint point)
 		}
 		X = fxoff + (fxspan) * (pG->fx[ind] - minX) / (maxX - minX);
 		Y = fyoff + (fyspan) * (pG->fy[ind] - minY) / (maxY - minY);
-		sprintf(s, "%gg", pG->fy[ind]);
+		sprintf(s, "%g", pG->fy[ind]);
 		TextOut(pDC->m_hDC, X, fH - Y, s, strlen(s));
-		sprintf(s, "%gHz", pG->fx[ind]);
+		sprintf(s, "%g", pG->fx[ind]);
 		TextOut(pDC->m_hDC, X, fH - (Y+15), s, strlen(s));
 		this->ReleaseDC(pDC);
 	}
 
 
 	CDialog::OnLButtonUp(nFlags, point);
+}
+
+
+void CGraphDialog::OnBnClickedCancel()
+{
+	// TODO: Add your control notification handler code here
+	
+	CDialog::OnCancel();
 }

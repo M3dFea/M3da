@@ -1543,10 +1543,11 @@ public:
 	~CGraphDialog();
 	void InitOGL();
 	void GDIDraw();
+	float AxisTickMarks(float fMaxV, float ftargetSteps);
 	void popResVec(); //populate available response data list box
 	void popEnt(int iTC,int iLC); //populate available response nore / element
 	virtual BOOL OnInitDialog();
-	void GenGraph(int iTC, int iLC, int iEnt, int iVar);
+	void GenGraph(CString sRT, CString sID, CString sVar, int iTC, int iLC, int iEnt, int iVar);
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnBnClickedOk();
 	afx_msg void OnPaint();
@@ -1555,6 +1556,7 @@ public:
 	afx_msg void OnBnClickedPlot();
 //	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnBnClickedCancel();
 };
 
 class CGroupDialog : public CDialog
@@ -4421,7 +4423,14 @@ class Graph : public CObject
 {
 	DECLARE_DYNAMIC(Graph)
 public:
-
+	CString	sTitle;
+	CString sResType;
+	CString sEntID;
+	CString	sVar;
+	float GminX;
+	float GmaxX;
+	float GminY;
+	float GmaxY;
 	vector <float> fx;
 	vector <float> fy;
 	Graph();
@@ -4430,6 +4439,7 @@ public:
 	float GetMinfx();
 	float GetMaxfy();
 	float GetMinfy();
+	void genMaxMin();
 };
 
 
