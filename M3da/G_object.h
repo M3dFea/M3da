@@ -1516,11 +1516,16 @@ public:
   afx_msg void OnBnClickedCancel();
 };
 
+const int MAX_GRAPHS = 100;
 class CGraphDialog : public CDialog
 {
 
 public:
-	Graph* pG;
+	CPen* Pen;
+	CPen* oldPen;
+	Graph* pGs[MAX_GRAPHS];
+	int iNo = 0;
+	int iActPlot = 0;
 	float fW = 500;
 	float fH = 500;
 	float fxoff = 80;
@@ -1535,12 +1540,19 @@ public:
 	vector <int> vLC;
 	vector <int> vE;
 	enum { IDD = IDD_GRAPH };
+
 	ME_Object* pME=NULL;
 	CWnd* pDrg = NULL;
 	C3dMatrix vMat;
 	int m_nPixelFormat = 0;
 	CGraphDialog();
 	~CGraphDialog();
+	int GetColourID();
+	void SetPen(CDC* pDC,int iC,int iS);
+	void RestorePen(CDC* pDC);
+	void SetTextCol(HDC hdc, int iC);
+	void ResetMaxMin();
+	void DeleteAll();
 	void InitOGL();
 	void GDIDraw();
 	float AxisTickMarks(float fMaxV, float ftargetSteps);
@@ -1557,6 +1569,11 @@ public:
 //	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnBnClickedCancel();
+	afx_msg void OnBnClickedClear();
+	afx_msg void OnLbnSelchangePlots();
+	afx_msg void OnBnClickedColour();
+	afx_msg void OnBnClickedList();
+	afx_msg void OnBnClickedRedraw();
 };
 
 class CGroupDialog : public CDialog
@@ -4423,7 +4440,9 @@ class Graph : public CObject
 {
 	DECLARE_DYNAMIC(Graph)
 public:
+	int iCol=0;
 	CString	sTitle;
+	CString	sSubTitle;
 	CString sResType;
 	CString sEntID;
 	CString	sVar;
@@ -4440,6 +4459,7 @@ public:
 	float GetMaxfy();
 	float GetMinfy();
 	void genMaxMin();
+	void List();
 };
 
 

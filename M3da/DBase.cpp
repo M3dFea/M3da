@@ -876,7 +876,6 @@ void DBase::ResGraphRespData(int iEnt)
 {
 	//if (pCurrentMesh != NULL)
 	//	pCurrentMesh->ResListRespData(iEnt);
-	outtext1("Graph");
 	CGraphDialog* Dlg = new CGraphDialog();
 	Dlg->pME = pCurrentMesh;
 	Dlg->DoModal();

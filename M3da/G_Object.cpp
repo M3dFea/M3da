@@ -39850,6 +39850,22 @@ void Graph::genMaxMin()
 	GminY = GetMinfy();
 }
 
+void Graph::List()
+{
+	int i;
+	char buff[200];
+	outtext1(sTitle);
+	outtext1(sSubTitle);
+	sprintf_s(buff, "%s_%s_%s", sResType, sEntID, sVar);
+	outtext1(buff);
+	for (i = 0; i < fx.size(); i++)
+	{
+		sprintf_s(buff, "%g	%g", fx[i],fy[i]);
+		outtext1(buff);
+	}
+
+}
+
 IMPLEMENT_DYNAMIC( CoordSys, CObject )
 void CoordSys::Create(C3dVector Orig,C3dMatrix RMat,int inRID,int inTp, int iLab, int iC,G_Object* Parrent)
 {
@@ -52168,20 +52184,104 @@ BEGIN_MESSAGE_MAP(CGraphDialog, CDialog)
 //	ON_WM_MBUTTONDOWN()
 ON_WM_LBUTTONUP()
 ON_BN_CLICKED(IDCANCEL, &CGraphDialog::OnBnClickedCancel)
+ON_BN_CLICKED(IDC_CLEAR, &CGraphDialog::OnBnClickedClear)
+ON_LBN_SELCHANGE(IDC_PLOTS, &CGraphDialog::OnLbnSelchangePlots)
+ON_BN_CLICKED(IDC_COLOUR, &CGraphDialog::OnBnClickedColour)
+ON_BN_CLICKED(IDC_LIST, &CGraphDialog::OnBnClickedList)
+ON_BN_CLICKED(IDC_REDRAW, &CGraphDialog::OnBnClickedRedraw)
 END_MESSAGE_MAP()
 
 CGraphDialog::CGraphDialog()
 	: CDialog(CGraphDialog::IDD, NULL)
 {
+	iNo = 0;
 	pME = NULL;
-	pG = NULL;
 	vMat.MakeUnit();
+	int i;
+	for (i = 0; i < MAX_GRAPHS; i++)
+		pGs[i] = NULL;
+
 }
 
 CGraphDialog::~CGraphDialog()
 {
-	if (pG != NULL)
-		delete (pG);
+	int i;
+	for (i=0;i<iNo;i++)
+	if (pGs[i] != NULL)
+		delete (pGs[i]);
+}
+
+int CGraphDialog::GetColourID()
+{
+	int irc;
+	CColourPickDialog Dlg;
+	int i;
+	for (i = 0; i < 167; i++)
+	{
+		float R = cols[i][0];
+		float G = cols[i][1];
+		float B = cols[i][2];
+		int iR = R * 255;
+		int iG = G * 255;
+		int iB = B * 255;
+		Dlg.AddCol(iR, iG, iB);
+	}
+	Dlg.DoModal();
+	irc = Dlg.iSel;
+	return(irc);
+}
+
+void CGraphDialog::SetPen(CDC* pDC,int iC,int iS)
+{
+	float R = cols[iC][0];
+	float G = cols[iC][1];
+	float B = cols[iC][2];
+	int iR = R * 255;
+	int iG = G * 255;
+	int iB = B * 255;
+	pDC->SelectStockObject(NULL_BRUSH);
+	Pen = new CPen(PS_SOLID, iS, RGB(iR, iG, iB));
+	oldPen = pDC->SelectObject(Pen);
+}
+
+void CGraphDialog::SetTextCol(HDC hdc, int iC)
+{
+	float R = cols[iC][0];
+	float G = cols[iC][1];
+	float B = cols[iC][2];
+	int iR = R * 255;
+	int iG = G * 255;
+	int iB = B * 255;
+	SetTextColor(hdc, RGB(iR, iG, iB));
+}
+
+void CGraphDialog::RestorePen(CDC* pDC)
+{  
+	pDC->SelectObject(oldPen);
+	int t = Pen->DeleteObject();
+}
+
+void CGraphDialog::ResetMaxMin()
+{
+	minX = 0;
+	maxX = 0;
+	minY = 0;
+	maxY = 0;
+}
+
+void CGraphDialog::DeleteAll()
+{
+	int i;
+	ResetMaxMin();
+	for (i = 0; i < iNo; i++)
+	{
+		if (pGs[i] != NULL)
+		{
+			delete(pGs[i]);
+			pGs[i] = NULL;
+		}
+	}
+	iNo = 0;
 }
 
 //Calculate nice axis divisions
@@ -52213,14 +52313,18 @@ float CGraphDialog::AxisTickMarks(float fMaxV, float ftargetSteps)
 
 void CGraphDialog::GDIDraw()
 {
+	HFONT hFont, hTmp;
 	int i;
+	int j;
 	int iNoTicks=5;
-	float fDivX;
-	float fDivY;
+	int iLegOffX = 800;
+	int iLegOffY = 250;
+	float fDivX=0;
+	float fDivY=0;
 	char sLab[20];
 	BOOL bFirst = TRUE;
 	HDC hDC;
-	
+	char buff[200];
 	CDC* pDC = pDrg->GetDC();
 	hDC = pDC->m_hDC;
 	float X;
@@ -52230,64 +52334,91 @@ void CGraphDialog::GDIDraw()
 	fyoff = 50;
 	fxspan = fW - fxoff - 50;
 	fyspan = fH - fyoff - 50;
-
-	if (pG!=NULL)
+	Graph* pG = pGs[0];
+	//Calculate maximum axis value of all charts
+	for (j = 0; j < iNo; j++)
 	{
-
-
-		if (pG->GminX < minX)
-			minX = pG->GminX;
-		if (pG->GmaxX > maxX)
-			maxX = pG->GmaxX;
-		if (pG->GminY < minY)
-			maxY = pG->GmaxY;
-		if (pG->GmaxY > maxY)
-			maxY = pG->GmaxY;
-		fDivY = AxisTickMarks(maxY, iNoTicks);
-		fDivX = AxisTickMarks(maxX, iNoTicks);
-		if (fDivY * iNoTicks > maxY)
-			maxY = fDivY * iNoTicks;
-		if (fDivX * iNoTicks > maxX)
-			maxX = fDivX * iNoTicks;
-		for (i = 0; i <= iNoTicks; i++)
+		pG = pGs[j];
+		if (pG != NULL)
 		{
-			X = fxoff + (fxspan) * (i* fDivX - minX) / (maxX - minX);
-			Y = fyoff + (fyspan) * (i* fDivY - minY) / (maxY - minY);
-			//TextOut(hdc, point.x, point.y, s, strlen(s));
-			//glBegin(GL_LINES);
-			pDC->MoveTo(fxoff - 5, fH - Y);
-			pDC->LineTo(fxoff + fxspan, fH - Y);
-			pDC->MoveTo(X, fH - (fyoff - 5));
-			pDC->LineTo(X, fH - (fyoff + fyspan));
-			sprintf_s(sLab, "%g", i * fDivX);
-			TextOut(hDC, X, fH - (fyoff-5), sLab, strlen(sLab));
-			sprintf_s(sLab, "%g", i * fDivY);
-			TextOut(hDC, fxoff-40, fH - Y, sLab, strlen(sLab));
+			
+			if (pG->GminX < minX)
+				minX = pG->GminX;
+			if (pG->GmaxX > maxX)
+				maxX = pG->GmaxX;
+			if (pG->GminY < minY)
+				maxY = pG->GmaxY;
+			if (pG->GmaxY > maxY)
+				maxY = pG->GmaxY;
+			fDivY = AxisTickMarks(maxY, iNoTicks);
+			fDivX = AxisTickMarks(maxX, iNoTicks);
+			if (fDivY * iNoTicks > maxY)
+				maxY = fDivY * iNoTicks;
+			if (fDivX * iNoTicks > maxX)
+				maxX = fDivX * iNoTicks;
 		}
-		for (i = 0; i < pG->fx.size(); i++)
+	}
+	//Axis and titles
+	for (i = 0; i <= iNoTicks; i++)
+	{
+		X = fxoff + (fxspan) * (i* fDivX - minX) / (maxX - minX);
+		Y = fyoff + (fyspan) * (i* fDivY - minY) / (maxY - minY);
+		pDC->MoveTo(fxoff - 5, fH - Y);
+		pDC->LineTo(fxoff + fxspan, fH - Y);
+		pDC->MoveTo(X, fH - (fyoff - 5));
+		pDC->LineTo(X, fH - (fyoff + fyspan));
+		sprintf_s(sLab, "%g", i * fDivX);
+		TextOut(hDC, X, fH - (fyoff-5), sLab, strlen(sLab));
+		sprintf_s(sLab, "%g", i * fDivY);
+		TextOut(hDC, fxoff-40, fH - Y, sLab, strlen(sLab));
+	}
+	CString sS;
+	CEdit* oEdit = (CEdit*)this->GetDlgItem(IDC_XTITLE);
+	oEdit->GetWindowTextA(sS);
+	TextOut(hDC, fW / 2, fH - 40, sS, strlen(sS));
+	oEdit = (CEdit*)this->GetDlgItem(IDC_YTITLE);
+	oEdit->GetWindowTextA(sS);
+	TextOut(hDC, 5, fH / 2, sS, strlen(sS));
+	oEdit = (CEdit*)this->GetDlgItem(IDC_TITLE);
+	oEdit->GetWindowTextA(sS);
+	hFont = CreateFont(30, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 2, 0, "SYSTEM_FIXED_FONT");
+	hTmp = (HFONT)SelectObject(hDC, hFont);
+	  TextOut(hDC, fxoff, 10, sS, strlen(sS));
+	DeleteObject(SelectObject(hDC, hTmp));
+	//Draw All Charts
+	for (j = 0; j < iNo; j++)
+	{
+		bFirst = TRUE;
+		pG = pGs[j];
+		if (pG != NULL)
 		{
-			X = fxoff +(fxspan) * (pG->fx[i] - minX) / (maxX - minX);
-			Y = fyoff +(fyspan) * (pG->fy[i] - minY) / (maxY - minY);
-			if (bFirst)
-			{
-				pDC->MoveTo(X, fH - Y);
-				bFirst = FALSE;
-			}
+			if (j==iActPlot)
+			  SetPen(pDC, pG->iCol, 4);
 			else
+			  SetPen(pDC,pG->iCol,2);
+			//Lengend
+			SetTextCol(hDC, pG->iCol);
+			sprintf_s(buff, "%s %s %s", pG->sResType, pG->sEntID, pG->sVar);
+			TextOut(hDC, iLegOffX, fH - (iLegOffY+j*20), buff, strlen(buff));
+			for (i = 0; i < pG->fx.size(); i++)
 			{
-				pDC->LineTo(X, fH - Y);
+				X = fxoff + (fxspan) * (pG->fx[i] - minX) / (maxX - minX);
+				Y = fyoff + (fyspan) * (pG->fy[i] - minY) / (maxY - minY);
+				if (bFirst)
+				{
+					pDC->MoveTo(X, fH - Y);
+					bFirst = FALSE;
+				}
+				else
+				{
+					pDC->LineTo(X, fH - Y);
+				}
 			}
+			RestorePen(pDC);
 		}
-		CEdit* oEdit = (CEdit*)this->GetDlgItem(IDC_XTITLE);
-		CString sS;
-		oEdit->GetWindowTextA(sS);
-		TextOut(hDC, fW/2, fH - 40, sS, strlen(sS));
-		oEdit = (CEdit*)this->GetDlgItem(IDC_TITLE);
-		oEdit->GetWindowTextA(sS);
-		TextOut(hDC, fxoff, 20, sS, strlen(sS));
-		this->ReleaseDC(pDC);
 	}
 
+	this->ReleaseDC(pDC);
 }
 
 
@@ -52310,7 +52441,7 @@ void CGraphDialog::popResVec()
 		if ((iTCode == 1039) && (!LCGp->IsIn(iLC)))
 		{
 			LCGp->Add(iLC, 1);
-			sprintf_s(buff, "%i	%s %i %s", iTCode, "LC", iLC, "MPCF");
+			sprintf_s(buff, "%i_%s_%i_%s", iTCode, "LC", iLC, "MPCF");
 			oLB->AddString(buff);
 			vTC.push_back(iTCode);
 			vLC.push_back(iLC);
@@ -52432,36 +52563,65 @@ BOOL CGraphDialog::OnInitDialog()
 	oSize2.top = oS.bottom - 140;;
 	oSize2.left = oSize.left + 220;
 	oSize2.bottom = oS.bottom - 10;
-	oSize2.right = oSize.left + 420;
+	oSize2.right = oSize.left + 320;
 	oLB = (CListBox*)this->GetDlgItem(IDC_ENT);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
 	oSize2.top = oS.bottom - 140;;
-	oSize2.left = oSize.left + 420;
+	oSize2.left = oSize.left + 330;
 	oSize2.bottom = oS.bottom - 10;
-	oSize2.right = oSize.left + 630;
+	oSize2.right = oSize.left + 430;
 	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
 	oSize2.top = oS.bottom - 140;;
-	oSize2.left = oSize.left + 650;
-	oSize2.bottom = oS.bottom - 120;
-	oSize2.right = oSize.left + 750;
-	oLB = (CListBox*)this->GetDlgItem(IDOK);
+	oSize2.left = oSize.left + 440;
+	oSize2.bottom = oS.bottom - 10;
+	oSize2.right = oSize.left + 640;
+	oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
-	oSize2.top = oS.bottom - 115;;
+	oSize2.top = oS.bottom - 140;;
 	oSize2.left = oSize.left + 650;
-	oSize2.bottom = oS.bottom - 95;
-	oSize2.right = oSize.left + 750;
-	oLB = (CListBox*)this->GetDlgItem(IDCANCEL);
-	if (oLB != NULL)
-		oLB->MoveWindow(oSize2, 0);
-	oSize2.top = oS.bottom - 90;;
-	oSize2.left = oSize.left + 650;
-	oSize2.bottom = oS.bottom - 70;
+	oSize2.bottom = oS.bottom - 125;
 	oSize2.right = oSize.left + 750;
 	oLB = (CListBox*)this->GetDlgItem(IDC_PLOT);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 120;;
+	oSize2.left = oSize.left + 650;
+	oSize2.bottom = oS.bottom - 105;
+	oSize2.right = oSize.left + 750;
+	oLB = (CListBox*)this->GetDlgItem(IDC_REDRAW);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 100;;
+	oSize2.left = oSize.left + 650;
+	oSize2.bottom = oS.bottom - 85;
+	oSize2.right = oSize.left + 750;
+	oLB = (CListBox*)this->GetDlgItem(IDC_COLOUR);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+
+	oSize2.top = oS.bottom - 80;;
+	oSize2.left = oSize.left + 650;
+	oSize2.bottom = oS.bottom - 65;
+	oSize2.right = oSize.left + 750;
+	oLB = (CListBox*)this->GetDlgItem(IDC_LIST);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 60;;
+	oSize2.left = oSize.left + 650;
+	oSize2.bottom = oS.bottom - 45;
+	oSize2.right = oSize.left + 750;
+	oLB = (CListBox*)this->GetDlgItem(IDC_CLEAR);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 40;;
+	oSize2.left = oSize.left + 650;
+	oSize2.bottom = oS.bottom - 25;
+	oSize2.right = oSize.left + 750;
+	oLB = (CListBox*)this->GetDlgItem(IDCANCEL);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
 	oSize2.top = oS.bottom - 140;
@@ -52587,46 +52747,57 @@ void CGraphDialog::GenGraph(CString sRT,CString sID,CString sVar,int iTC, int iL
 	BOOL bFirst = TRUE;
 
 	//Delete any previous graph data
-	if (pG != NULL)
-	{
-		delete (pG); pG = NULL;
-	}
+	Graph* pG;
 	pG = new Graph();
-	pG->sResType = sRT;
-	pG->sEntID = sID;
-	pG->sVar = sVar;
-	for (i = 0; i < pME->iNoRes; i++)
+	if (iNo < MAX_GRAPHS)
 	{
-		if ((pME->ResultsSets[i]->LC == iLC) && (iTC == pME->ResultsSets[i]->TCODE))
+		pGs[iNo] = pG;
+		iNo++;
+		pG->sResType = sRT;
+		pG->sEntID = sID;
+		pG->sVar = sVar;
+		CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+		sprintf_s(buff, "%s_%s_%s", sRT, sID, sVar);
+		oLB->AddString(buff);
+		for (i = 0; i < pME->iNoRes; i++)
 		{
-			pRS = pME->ResultsSets[i];
-			if (pRS->ACODE / 10 == 5) //Frequncy data
+			if ((pME->ResultsSets[i]->LC == iLC) && (iTC == pME->ResultsSets[i]->TCODE))
 			{
-				if (bFirst)
+				pRS = pME->ResultsSets[i];
+				if (pRS->ACODE / 10 == 5) //Frequncy data
 				{
-					pG->sTitle = pRS->sTitle;
-					bFirst = FALSE;
-				}
-				pR = pRS->Head;
-				for (j = 0; j < pRS->iCnt; j++)
-				{
-					if (pR->ID == iEnt)
+					if (bFirst)
 					{
-						//sDL = pRS->ToStringDL(pR);
-						pG->fx.push_back(*pR->GetAddress(0));
-						pG->fy.push_back(*pR->GetAddress(iVar));
-
-						//sprintf_s(buff, "%g	%g", *pR->GetAddress(0), *pR->GetAddress(iVar));
-						//outtext1(buff);
-						break;
+						pG->sTitle = pRS->sTitle;
+						pG->sSubTitle = pRS->sSubTitle;;
+						bFirst = FALSE;
 					}
-					pR = pR->next;
+					pR = pRS->Head;
+					for (j = 0; j < pRS->iCnt; j++)
+					{
+						if (pR->ID == iEnt)
+						{
+							//sDL = pRS->ToStringDL(pR);
+							pG->fx.push_back(*pR->GetAddress(0));
+							pG->fy.push_back(*pR->GetAddress(iVar));
+
+							//sprintf_s(buff, "%g	%g", *pR->GetAddress(0), *pR->GetAddress(iVar));
+							//outtext1(buff);
+							break;
+						}
+						pR = pR->next;
+					}
 				}
 			}
 		}
+		pG->genMaxMin();
+		//GDIDraw();
+		CRect rc;
+		pDrg->GetClientRect(&rc);
+		pDrg->InvalidateRect(rc, 1);	
+		UpdateWindow();
+		GDIDraw();
 	}
-	pG->genMaxMin();
-	GDIDraw();
 }
 
 //void CGraphDialog::OnMButtonDown(UINT nFlags, CPoint point)
@@ -52650,6 +52821,7 @@ void CGraphDialog::OnLButtonUp(UINT nFlags, CPoint point)
 	float Y;
     char s[20];
 	point.x -= 5;
+	Graph* pG = pGs[iActPlot];
 	if (pG != NULL)
 	{
 		CDC* pDC = this->GetDC();
@@ -52685,4 +52857,78 @@ void CGraphDialog::OnBnClickedCancel()
 	// TODO: Add your control notification handler code here
 	
 	CDialog::OnCancel();
+}
+
+
+void CGraphDialog::OnBnClickedClear()
+{
+	// TODO: Add your control notification handler code here
+	CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+	oLB->ResetContent();
+	CRect rc;
+	pDrg->GetClientRect(&rc);
+	pDrg->InvalidateRect(rc, 1);
+	UpdateWindow();
+	DeleteAll();
+}
+
+
+void CGraphDialog::OnLbnSelchangePlots()
+{
+	// TODO: Add your control notification handler code here
+	CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+	iActPlot = oLB->GetCurSel();
+	CRect rc;
+	pDrg->GetClientRect(&rc);
+	pDrg->InvalidateRect(rc, 1);
+	UpdateWindow();
+	GDIDraw();
+}
+
+
+void CGraphDialog::OnBnClickedColour()
+{
+	// TODO: Add your control notification handler code here
+	int iC = GetColourID();
+	CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+
+		//SetTextColor((HDC)wParam, RGB(255, 255, 255));
+	int iActPlot = oLB->GetCurSel();
+	if (iActPlot > -1)
+	{
+		if (pGs[iActPlot] != NULL)
+			pGs[iActPlot]->iCol = iC;
+	}
+	CRect rc;
+   pDrg->GetClientRect(&rc);
+   pDrg->InvalidateRect(rc, 1);
+   UpdateWindow();
+   GDIDraw();
+}
+
+
+void CGraphDialog::OnBnClickedList()
+{
+	// TODO: Add your control notification handler code here
+
+	CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+	int iActPlot = oLB->GetCurSel();
+	if (iActPlot > -1)
+	{
+		if (pGs[iActPlot] != NULL)
+			pGs[iActPlot]->List();
+	}
+}
+
+
+void CGraphDialog::OnBnClickedRedraw()
+{
+	// TODO: Add your control notification handler code here
+
+	CRect rc;
+	pDrg->GetClientRect(&rc);
+	pDrg->InvalidateRect(rc, 1);
+	UpdateWindow();
+	GDIDraw();
+
 }

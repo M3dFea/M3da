@@ -130,6 +130,12 @@
 #define IDC_PLOT                        1058
 #define IDC_XTITLE                      1059
 #define IDC_YTITLE                      1060
+#define IDC_CLEAR                       1061
+#define IDC_PLOTS                       1062
+#define IDC_COLOUR                      1063
+#define IDC_LIST                        1064
+#define IDC_BUTTON4                     1065
+#define IDC_REDRAW                      1065
 #define IDS_CREATE2                     2000
 #define ID_EDIT_ASSS                    32771
 #define ID_EDIT_DES                     32772
@@ -552,7 +558,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        363
 #define _APS_NEXT_COMMAND_VALUE         33361
-#define _APS_NEXT_CONTROL_VALUE         1061
+#define _APS_NEXT_CONTROL_VALUE         1066
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
 #endif
