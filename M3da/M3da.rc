@@ -265,6 +265,8 @@ BEGIN
             MENUITEM "Free TRI Mesh",               ID_MESH_FREETRIMESH
             MENUITEM "Mapped QUAD Mesh",            ID_MESH_MAPPEDSURFACEMESH
             MENUITEM "Sweep Elements",              ID_MESH_SWEEPELEMENTS
+            MENUITEM "Sweep Nodes to Beams",        ID_FEMTOOLS_SWEEPNODESTOBEAMS33361
+            MENUITEM "Sweep Nodes to Shells",       ID_FEMTOOLS_SWEEPNODESTOSHELLS33362
             MENUITEM "Build Assembly Mesh",         ID_MESH_BUILDASSEMBLYMESH
             MENUITEM "Quads Between Nodes",         ID_MESHQND
             MENUITEM "Shell Coat Solid Elements",   ID_MESH_SHELLCOATSOLIDELEMENTS
@@ -1246,6 +1248,8 @@ END
 STRINGTABLE
 BEGIN
     ID_POST_GRAPHRESPONSEDATA "Graph response data."
+    ID_FEMTOOLS_SWEEPNODESTOBEAMS33361 "Sweep nodes into beam elements."
+    ID_FEMTOOLS_SWEEPNODESTOSHELLS33362 "Sweep nodes into shell elements."
 END
 
 #endif    // English (United States) resources

@@ -492,6 +492,9 @@ public:
   afx_msg void OnPostListresponsedataallvars();
   afx_msg void OnPostLabelresponseentities();
   afx_msg void OnPostGraphresponsedata();
+
+  afx_msg void OnFemtoolsSweepnodestobeams33361();
+  afx_msg void OnFemtoolsSweepnodestoshells33362();
 };
 
 

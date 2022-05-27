@@ -344,6 +344,10 @@ ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOBEAMS, &CM3daDoc::OnFemtoolsSweepnodestobeams
 ON_COMMAND(ID_POST_LISTRESPONSEDATAALLVARS, &CM3daDoc::OnPostListresponsedataallvars)
 ON_COMMAND(ID_POST_LABELRESPONSEENTITIES, &CM3daDoc::OnPostLabelresponseentities)
 ON_COMMAND(ID_POST_GRAPHRESPONSEDATA, &CM3daDoc::OnPostGraphresponsedata)
+//ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOBEAMS33361, &CM3daDoc::OnFemtoolsSweepnodestobeams33361)
+//ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOSHELLS33362, &CM3daDoc::OnFemtoolsSweepnodestoshells33362)
+ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOBEAMS33361, &CM3daDoc::OnFemtoolsSweepnodestobeams33361)
+ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOSHELLS33362, &CM3daDoc::OnFemtoolsSweepnodestoshells33362)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5821,6 +5825,41 @@ void CM3daDoc::OnPostGraphresponsedata()
 	{
 		outtextMSG2("RESGRAPHRESP");
 		sLastcmd = "RESGRAPHRESP";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+
+
+
+void CM3daDoc::OnFemtoolsSweepnodestobeams33361()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("ELSWEEPNDB");
+		sLastcmd = "ELSWEEPNDB";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnFemtoolsSweepnodestoshells33362()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("ELSWEEPNDS");
+		sLastcmd = "ELSWEEPNDS";
 	}
 	else
 	{
