@@ -1555,7 +1555,7 @@ public:
 	void DeleteAll();
 	void InitOGL();
 	void GDIDraw();
-	float AxisTickMarks(float fMaxV, float ftargetSteps);
+	float AxisTickMarks(float fMaxV, int &itargetSteps);
 	void popResVec(); //populate available response data list box
 	void popEnt(int iTC,int iLC); //populate available response nore / element
 	virtual BOOL OnInitDialog();
@@ -1574,6 +1574,7 @@ public:
 	afx_msg void OnBnClickedColour();
 	afx_msg void OnBnClickedList();
 	afx_msg void OnBnClickedRedraw();
+	afx_msg void OnBnClickedLog();
 };
 
 class CGroupDialog : public CDialog

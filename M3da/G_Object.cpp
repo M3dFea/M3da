@@ -52189,6 +52189,7 @@ ON_LBN_SELCHANGE(IDC_PLOTS, &CGraphDialog::OnLbnSelchangePlots)
 ON_BN_CLICKED(IDC_COLOUR, &CGraphDialog::OnBnClickedColour)
 ON_BN_CLICKED(IDC_LIST, &CGraphDialog::OnBnClickedList)
 ON_BN_CLICKED(IDC_REDRAW, &CGraphDialog::OnBnClickedRedraw)
+ON_BN_CLICKED(IDC_LOG, &CGraphDialog::OnBnClickedLog)
 END_MESSAGE_MAP()
 
 CGraphDialog::CGraphDialog()
@@ -52285,15 +52286,15 @@ void CGraphDialog::DeleteAll()
 }
 
 //Calculate nice axis divisions
-float CGraphDialog::AxisTickMarks(float fMaxV, float ftargetSteps)
+float CGraphDialog::AxisTickMarks(float fMaxV, int &itargetSteps)
 {
 	int magMsd;
 	float tempStep;
 	float mag;
 	float magPow;
-
+	int i;
 	// calculate an initial guess at step size
-	tempStep = fMaxV / ftargetSteps;
+	tempStep = fMaxV / itargetSteps;
 	// get the magnitude of the step size
 	mag = floor(log10(tempStep));
 	magPow = (float) pow(10, mag);
@@ -52307,16 +52308,31 @@ float CGraphDialog::AxisTickMarks(float fMaxV, float ftargetSteps)
 		magMsd = 5;
 	else if (magMsd > 1)
 		magMsd = 2;
-
+	for (i = 0; i < 5; i++)
+	{
+		if (magMsd * magPow * itargetSteps < fMaxV)
+			itargetSteps++;
+		else
+			break;
+	}
 	return (magMsd * magPow);
 }
 
 void CGraphDialog::GDIDraw()
 {
+	BOOL bLOG = TRUE;
+	CButton* oRB = (CButton*)this->GetDlgItem(IDC_LOG);
+
+	if (oRB->GetCheck() == BST_CHECKED)
+		bLOG = TRUE;
+	else
+		bLOG = FALSE;
 	HFONT hFont, hTmp;
 	int i;
-	int j;
-	int iNoTicks=5;
+	int j; 
+	int k;
+	int iNoTicksX=5;
+	int iNoTicksY=5;
 	int iLegOffX = 800;
 	int iLegOffY = 250;
 	float fDivX=0;
@@ -52335,13 +52351,17 @@ void CGraphDialog::GDIDraw()
 	fxspan = fW - fxoff - 50;
 	fyspan = fH - fyoff - 50;
 	Graph* pG = pGs[0];
+	float MaxRealY = 0;
 	//Calculate maximum axis value of all charts
+	minX = 0;
+	maxX = 0;
+	minY = 0;
+	maxY = 0;
 	for (j = 0; j < iNo; j++)
 	{
 		pG = pGs[j];
 		if (pG != NULL)
 		{
-			
 			if (pG->GminX < minX)
 				minX = pG->GminX;
 			if (pG->GmaxX > maxX)
@@ -52350,28 +52370,72 @@ void CGraphDialog::GDIDraw()
 				maxY = pG->GmaxY;
 			if (pG->GmaxY > maxY)
 				maxY = pG->GmaxY;
-			fDivY = AxisTickMarks(maxY, iNoTicks);
-			fDivX = AxisTickMarks(maxX, iNoTicks);
-			if (fDivY * iNoTicks > maxY)
-				maxY = fDivY * iNoTicks;
-			if (fDivX * iNoTicks > maxX)
-				maxX = fDivX * iNoTicks;
+
 		}
 	}
-	//Axis and titles
-	for (i = 0; i <= iNoTicks; i++)
+	fDivY = AxisTickMarks(maxY, iNoTicksY);
+	if (bLOG)
 	{
+		iNoTicksX = log10(maxX);
+		iNoTicksX = floor(iNoTicksX)+1;
+		fDivX = 1;
+	}
+	else
+	{
+		fDivX = AxisTickMarks(maxX, iNoTicksX);
+	}
+	if (fDivY * iNoTicksY > maxY)
+		maxY = fDivY * iNoTicksY;
+	if (bLOG)
+	{
+		maxX = iNoTicksX;
+	}
+	else
+	{
+		if (fDivX * iNoTicksX > maxX)
+			maxX = fDivX * iNoTicksX;
+	}
+	//Axis and titles
+	SetPen(pDC, 133, 2);
+	for (i = 0; i <= iNoTicksX; i++)
+	{
+		
 		X = fxoff + (fxspan) * (i* fDivX - minX) / (maxX - minX);
-		Y = fyoff + (fyspan) * (i* fDivY - minY) / (maxY - minY);
-		pDC->MoveTo(fxoff - 5, fH - Y);
-		pDC->LineTo(fxoff + fxspan, fH - Y);
 		pDC->MoveTo(X, fH - (fyoff - 5));
 		pDC->LineTo(X, fH - (fyoff + fyspan));
-		sprintf_s(sLab, "%g", i * fDivX);
+		if (bLOG)
+		  sprintf_s(sLab, "%g", pow(10,i * fDivX));
+		else
+		  sprintf_s(sLab, "%g", i * fDivX);
 		TextOut(hDC, X, fH - (fyoff-5), sLab, strlen(sLab));
-		sprintf_s(sLab, "%g", i * fDivY);
-		TextOut(hDC, fxoff-40, fH - Y, sLab, strlen(sLab));
 	}
+	for (i = 0; i <= iNoTicksY; i++)
+	{
+		Y = fyoff + (fyspan) * (i * fDivY - minY) / (maxY - minY);
+		pDC->MoveTo(fxoff - 5, fH - Y);
+		pDC->LineTo(fxoff + fxspan, fH - Y);
+		sprintf_s(sLab, "%g", i * fDivY);
+		TextOut(hDC, fxoff - 40, fH - Y, sLab, strlen(sLab));
+	}
+	RestorePen(pDC);
+	SetPen(pDC, 133, 1);
+	float fxLg = 0;
+	float fBase = 0;
+	if (bLOG)	//Minor log grid lines
+	{
+		for (i = 0; i <= iNoTicksX; i++)
+		{
+			fBase = pow(10, i);
+			for (k = 1; k < 10; k++)
+			{
+				fxLg = fBase * k;
+				X = fxoff + (fxspan)*log10(fxLg) / (maxX - minX);
+				pDC->MoveTo(X, fH - (fyoff - 5));
+				pDC->LineTo(X, fH - (fyoff + fyspan));
+			}
+		}
+	}
+	RestorePen(pDC);
 	CString sS;
 	CEdit* oEdit = (CEdit*)this->GetDlgItem(IDC_XTITLE);
 	oEdit->GetWindowTextA(sS);
@@ -52402,7 +52466,10 @@ void CGraphDialog::GDIDraw()
 			TextOut(hDC, iLegOffX, fH - (iLegOffY+j*20), buff, strlen(buff));
 			for (i = 0; i < pG->fx.size(); i++)
 			{
-				X = fxoff + (fxspan) * (pG->fx[i] - minX) / (maxX - minX);
+				if (bLOG)
+					X = fxoff + (fxspan)*log10(pG->fx[i] - minX) / (maxX - minX);
+				else
+					X = fxoff + (fxspan) * (pG->fx[i] - minX) / (maxX - minX);
 				Y = fyoff + (fyspan) * (pG->fy[i] - minY) / (maxY - minY);
 				if (bFirst)
 				{
@@ -52653,6 +52720,15 @@ BOOL CGraphDialog::OnInitDialog()
 	{
 		oEdit->MoveWindow(oSize2, 0);
 		oEdit->SetWindowTextA("Y Axis Title");
+	}
+	oSize2.top = oS.bottom - 65;
+	oSize2.left = oSize.left + 800;
+	oSize2.bottom = oS.bottom - 45;
+	oSize2.right = oSize.left + 1150;
+	CButton*  oRB = (CButton*)this->GetDlgItem(IDC_LOG);
+	if (oRB != NULL)
+	{
+		oRB->MoveWindow(oSize2, 0);
 	}
 
 
@@ -52931,4 +53007,15 @@ void CGraphDialog::OnBnClickedRedraw()
 	UpdateWindow();
 	GDIDraw();
 
+}
+
+
+void CGraphDialog::OnBnClickedLog()
+{
+	// TODO: Add your control notification handler code here
+	CRect rc;
+	pDrg->GetClientRect(&rc);
+	pDrg->InvalidateRect(rc, 1);
+	UpdateWindow();
+	GDIDraw();
 }
