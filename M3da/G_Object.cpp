@@ -52457,7 +52457,7 @@ void CGraphDialog::GDIDraw()
 		if (pG != NULL)
 		{
 			if (j==iActPlot)
-			  SetPen(pDC, pG->iCol, 4);
+			  SetPen(pDC, pG->iCol, 3);
 			else
 			  SetPen(pDC,pG->iCol,2);
 			//Lengend
