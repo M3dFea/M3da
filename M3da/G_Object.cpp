@@ -52896,6 +52896,12 @@ void CGraphDialog::OnLButtonUp(UINT nFlags, CPoint point)
 	float X;
 	float Y;
     char s[20];
+	BOOL bLOG;
+	CButton* oRB = (CButton*)this->GetDlgItem(IDC_LOG);
+	if (oRB->GetCheck() == BST_CHECKED)
+		bLOG = TRUE;
+	else
+		bLOG = FALSE;
 	point.x -= 5;
 	Graph* pG = pGs[iActPlot];
 	if (pG != NULL)
@@ -52906,7 +52912,10 @@ void CGraphDialog::OnLButtonUp(UINT nFlags, CPoint point)
 		ind = 0;
 		for (i = 0; i < pG->fx.size(); i++)
 		{
-			X = fxoff + (fxspan) * (pG->fx[i] - minX) / (maxX - minX);
+			if (bLOG)
+				X = fxoff + (fxspan)*log10(pG->fx[i] - minX) / (maxX - minX);
+			else
+				X = fxoff + (fxspan) * (pG->fx[i] - minX) / (maxX - minX);
 			fdist = abs(X - point.x);
 			if (fdist < fdistMin)
 			{
@@ -52914,7 +52923,10 @@ void CGraphDialog::OnLButtonUp(UINT nFlags, CPoint point)
 				ind = i;
 			}
 		}
-		X = fxoff + (fxspan) * (pG->fx[ind] - minX) / (maxX - minX);
+		if (bLOG)
+		  X = fxoff + (fxspan)*log10(pG->fx[ind] - minX) / (maxX - minX);
+		else
+		  X = fxoff + (fxspan) * (pG->fx[ind] - minX) / (maxX - minX);
 		Y = fyoff + (fyspan) * (pG->fy[ind] - minY) / (maxY - minY);
 		sprintf(s, "%g", pG->fy[ind]);
 		TextOut(pDC->m_hDC, X, fH - Y, s, strlen(s));
