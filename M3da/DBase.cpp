@@ -7693,6 +7693,11 @@ for (j=0;j<iNoOff;j++)
              pO->iLabel=iSFLabCnt;
 			 iSFLabCnt++;
 		  }
+		  else if (pO->iObjType == 12)
+		  {  //Coordinate System
+			  pO->iLabel = pCurrentMesh->iCYSLab;
+			  pCurrentMesh->iCYSLab++;
+		  }
           pO->pParent=NULL;
 		  MoveObj(pO,vA);
 	      AddObj(pO);

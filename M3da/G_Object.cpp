@@ -51210,7 +51210,7 @@ BOOL CEntEditDialog::OnInitDialog()
   if (pO != NULL)
   {
 	  CEdit* pI = (CEdit*)GetDlgItem(IDC_ENTID);
-	  pI->EnableWindow(FALSE);
+	  pI->EnableWindow(TRUE);
 	  Populate1();
   }
   return TRUE;  // return TRUE unless you set the focus to a control
@@ -51571,13 +51571,22 @@ void CEntEditDialog::OnBnClickedOk()
   CEdit* pI = (CEdit*) GetDlgItem(IDC_ENTID);
   if ((pEnt!=NULL) || (pO!=NULL))
   {
-	  if (pEnt != NULL)
-	  {
-		  pT->GetWindowTextA(pEnt->sTitle);
-		  pI->GetWindowTextA(sID);
-		  pEnt->iID = atoi(sID);
-		  //Need to check we can no id conflics
-	  }
+
+	 if (pEnt != NULL)
+	 {
+		 pT->GetWindowTextA(pEnt->sTitle);
+		 pI->GetWindowTextA(sID);
+		 pEnt->iID = atoi(sID); //Need to check we can no id conflics
+	 }
+	 else if (pO != NULL)
+	 {
+		 if (pO->iObjType == 12) //Coordsys
+		 {
+			 pI->GetWindowTextA(sID);
+			 pO->iLabel = atoi(sID);
+		 }
+	 }
+
     for (i=0;i<iNo;i++)
     {
       sVVals[i] = m_List.GetItemText(i,1);
