@@ -9585,6 +9585,8 @@ int E_Object310::GetfaceList(cFace* Faces[6])
 	return (4);
 }
 
+
+
 void E_Object310::ExportNAS(FILE* pFile)
 {
 
@@ -17990,6 +17992,36 @@ for (i=0;i<iNoNodes;i++)
   iC++;
 }
 fprintf(pFile,"\n","");
+}
+
+CString E_ObjectR::ToString()
+{
+	char S[200] = "";
+	CString src = "";
+	
+	int i;
+	int iFN;
+	CString sDof;
+	sDof = GetDOFString(iDOF);
+	sprintf_s(S, "%8s%8i%8i%8s", "RBE2    ", iLabel, pVertex[0]->iLabel, sDof);
+	iFN = 5;
+	src += S;
+	for (i = 1; i < iNoNodes; i++)
+	{
+		sprintf_s(S, "%8i", pVertex[i]->iLabel);
+		src += S;
+		iFN++;
+		if (iFN > 9)
+		{
+			iFN = 2;
+			sprintf_s(S, "\n%8s", "        ");
+			src += S;
+		}
+		
+	}
+	sprintf_s(S, "%8s\n", e8(dALPHA));
+	src += S;
+	return (src);
 }
 
 void E_ObjectR::ExportNAS(FILE* pFile)

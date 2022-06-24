@@ -11479,9 +11479,9 @@ void DBase::S_ImportGroups(FILE* pFile)
 		}
 		else if (sdl.Find("ELEM")==0)
 		{
-		  s8=sdl.Mid(8,8);
+		  s8=sdl.Mid(10,10);
 		  iID=atoi(s8);
-		  s8=sdl.Mid(16,8);
+		  s8=sdl.Mid(20,10);
 		  iCol=atoi(s8);
 		  pO=pCurrentMesh->GetObj(3,iID);
 		  if (pO!=NULL)
@@ -11494,9 +11494,9 @@ void DBase::S_ImportGroups(FILE* pFile)
 		}
 		else if (sdl.Find("NODE")==0)
 		{
-		  s8=sdl.Mid(8,8);
+		  s8=sdl.Mid(10,10);
 		  iID=atoi(s8);
-		  s8=sdl.Mid(16,8);
+		  s8=sdl.Mid(20,10);
 		  iCol=atoi(s8);
 		  pO=pCurrentMesh->GetObj(1,iID);
 		  if (pO!=NULL)
@@ -14581,14 +14581,14 @@ iNlabs[0] = atoi(oC.GetField(2));
 iNlabs[1] = atoi(oC.GetField(3));
 iNlabs[2] = atoi(oC.GetField(4));
 sT=oC.GetField(5);
-if (sT.Find("."))
+if (sT.Find('.')>-1)
 {
    dAng=atofNAS(sT);
    MCID=-1;
 }
 else
 {
-   dAng=DBL_MAX;
+   dAng=0;
    MCID=atoi(sT);;
 }
 double dZ;
@@ -14625,14 +14625,14 @@ fgets(s1,200,pFile);
 iNlabs[2] = atoi(L1->Mid(8,16));
 iNlabs[3] = atoi(L1->Mid(24,16));
 sT=L1->Mid(40,16);
-if (sT.Find("."))
+if (sT.Find('.') > -1)
 {
    dAng=atofNAS(sT);
    MCID=-1;
 }
 else
 {
-   dAng=DBL_MAX;
+   dAng=0;
    MCID=atoi(sT);;
 }
 
@@ -17647,12 +17647,14 @@ void DBase::ShellMoCSys(int iSys)
             {
               E_Object3* pE3 = (E_Object3*) pE;
               pE3->iMCys = iSys;
+			  pE3->MAng = 0.0;
               iCnt++;
             }
             else if (pE->iType == 94)
             {
               E_Object4* pE4 = (E_Object4*)pE;
               pE4->iMCys = iSys;
+			  pE4->MAng = 0.0;
               iCnt++;
             }
           }

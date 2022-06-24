@@ -3326,6 +3326,7 @@ public:
 	virtual C3dMatrix GetElSys();
 	virtual void ExportUNV(FILE* pFile);
 	virtual void ExportNAS(FILE* pFile);
+
 	virtual BOOL NodeInEl(Pt_Object* pN);
 	virtual void RepNodeInEl(Pt_Object* pThis, Pt_Object* pWith);
 	virtual Mat getCoords3d();
@@ -3374,6 +3375,7 @@ public:
    virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
    virtual C3dVector Get_Centroid();
    virtual void ExportUNV(FILE* pFile);
+   virtual CString ToString();
    virtual void ExportNAS(FILE* pFile);
    virtual BOOL NodeInEl(Pt_Object* pN);
    virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
