@@ -14544,15 +14544,15 @@ iNlabs[1] = atoi(oC.GetField(3));
 iNlabs[2] = atoi(oC.GetField(4));
 iNlabs[3] = atoi(oC.GetField(5));
 sT=oC.GetField(6);
-if (sT.Find("."))
+if ((sT.Find('.') > -1) || (sT.Find("        ") > -1) || (sT=="\n"))
 {
-   dAng=atofNAS(sT);
-   MCID=-1;
+	dAng = atofNAS(sT);
+	MCID = -1;
 }
 else
 {
-   dAng=0;
-   MCID=atoi(sT);;
+	dAng = 0;
+	MCID = atoi(sT);;
 }
 double dZ;
 dZ = ae(oC.GetField(7));
@@ -14581,7 +14581,7 @@ iNlabs[0] = atoi(oC.GetField(2));
 iNlabs[1] = atoi(oC.GetField(3));
 iNlabs[2] = atoi(oC.GetField(4));
 sT=oC.GetField(5);
-if ((sT.Find('.') > -1) || (sT.Find("        ") > -1))
+if ((sT.Find('.') > -1) || (sT.Find("        ") > -1) || (sT == "\n"))
 {
    dAng=atofNAS(sT);
    MCID=-1;
@@ -14625,7 +14625,7 @@ fgets(s1,200,pFile);
 iNlabs[2] = atoi(L1->Mid(8,16));
 iNlabs[3] = atoi(L1->Mid(24,16));
 sT=L1->Mid(40,16);
-if ((sT.Find('.') > -1) || (sT.Find("        ") > -1))
+if ((sT.Find('.') > -1) || (sT.Find("        ") > -1) || (sT == "\n"))
 {
    dAng=atofNAS(sT);
    MCID=-1;

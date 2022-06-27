@@ -14023,19 +14023,42 @@ Selectable=1;
   }
   if ((iDspFlgs & DSP_MATL)==0)
   {
-    C3dMatrix mS = GetElSys();
-	C3dMatrix mR;
-
-    C3dVector vD = GetFirstEdge();
-	C3dVector vC = Get_Centroid();
-	vD.Normalize();
-	mR.Rotate(0,0,MAng);
-	vD=mS*vD;
-	vD=mR*vD;
-	mS.Transpose();
-	vD=mS*vD;
-	vD*=0.5*dS1;
-    vD+=vC;
+	  C3dMatrix mS = GetElSys();
+	  C3dMatrix mR;
+	  C3dVector vD;
+	  C3dVector vC;
+	  vC = Get_Centroid();
+	  vD = GetFirstEdge();
+	  if (this->iMCys == -1)
+	  {
+		  vD.Normalize();
+		  mR.Rotate(0, 0, MAng);
+		  vD = mS * vD;
+		  vD = mR * vD;
+		  mS.Transpose();
+		  vD = mS * vD;
+		  vD *= 0.5 * dS1;
+		  vD += vC;
+	  }
+	  else
+	  {
+		  if (this->pParent != NULL)
+		  {
+			  ME_Object* ME = (ME_Object*)pParent;
+			  CoordSys* pS = ME->GetSys(this->iMCys);
+			  if (pS != NULL)
+			  {
+				  vD = pS->mOrientMat.GetColVec(1);
+				  vD = mS * vD;
+				  vD.z = 0;
+				  mS.Transpose();
+				  vD = mS * vD;
+				  vD.Normalize();
+				  vD *= 0.5 * dS1;
+				  vD += vC;
+			  }
+		  }
+	  }
     glBegin(GL_LINES);
       glVertex3f((float) vC.x,(float) vC.y,(float) vC.z);
       glVertex3f((float) vD.x,(float) vD.y,(float) vD.z);
@@ -17057,19 +17080,44 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
 
   if ((iDspFlgs & DSP_MATL)==0)
   {
-    C3dMatrix mS = GetElSys();
+	C3dMatrix mS = GetElSys();
 	C3dMatrix mR;
+	C3dVector vD;
+	C3dVector vC;
+	vC = Get_Centroid();
+    //vD = GetFirstEdge();
+	if (this->iMCys == -1)
+	{
+		vD = mS.GetColVec(1);
+		vD.Normalize();
+		mR.Rotate(0, 0, MAng);
+		vD = mS * vD;
+		vD = mR * vD;
+		mS.Transpose();
+		vD = mS * vD;
+		vD *= 0.5 * dS1;
+		vD += vC;
+	}
+	else
+	{
+		if (this->pParent != NULL)
+		{
+			ME_Object* ME = (ME_Object*)pParent;
+			CoordSys* pS = ME->GetSys(this->iMCys);
+			if (pS != NULL)
+			{
+				vD = pS->mOrientMat.GetColVec(1);
+				vD = mS * vD;
+				vD.z = 0;
+				mS.Transpose();
+				vD = mS * vD;
+				vD.Normalize();
+				vD *= 0.5 * dS1;
+				vD += vC;
+			}
+		}
+	}
 
-    C3dVector vD = GetFirstEdge();
-	C3dVector vC = Get_Centroid();
-	vD.Normalize();
-	mR.Rotate(0,0,MAng);
-	vD=mS*vD;
-	vD=mR*vD;
-	mS.Transpose();
-	vD=mS*vD;
-	vD*=0.5*dS1;
-    vD+=vC;
     glBegin(GL_LINES);
       glVertex3f((float) vC.x,(float) vC.y,(float) vC.z);
       glVertex3f((float) vD.x,(float) vD.y,(float) vD.z);
