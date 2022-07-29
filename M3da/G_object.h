@@ -1732,7 +1732,7 @@ double Z;
 G_Object* pObj;
 };
 
-const int MAX_GP_ITEMS = 500000;
+const int MAX_GP_ITEMS = 1000000;
 
 class ObjList
 {
