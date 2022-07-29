@@ -348,6 +348,7 @@ ON_COMMAND(ID_POST_GRAPHRESPONSEDATA, &CM3daDoc::OnPostGraphresponsedata)
 //ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOSHELLS33362, &CM3daDoc::OnFemtoolsSweepnodestoshells33362)
 ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOBEAMS33361, &CM3daDoc::OnFemtoolsSweepnodestobeams33361)
 ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOSHELLS33362, &CM3daDoc::OnFemtoolsSweepnodestoshells33362)
+ON_COMMAND(ID_VIEW_HIGHLIGHTLIMIT, &CM3daDoc::OnViewHighlightlimit)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5860,6 +5861,21 @@ void CM3daDoc::OnFemtoolsSweepnodestoshells33362()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("ELSWEEPNDS");
 		sLastcmd = "ELSWEEPNDS";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnViewHighlightlimit()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("HLIMIT");
+		sLastcmd = "HLIMIT";
 	}
 	else
 	{

@@ -282,6 +282,7 @@ DBase::DBase()
 	EnableAutomation();
     pWorldBMP=NULL;
 	bLineDrag = FALSE;
+	iHLimit = -1;
 }
 
 DBase::~DBase()
@@ -414,6 +415,7 @@ LoadSymbolsInterbal();  //Load the Acad char set
 pWorldBMP = NULL;
 ResFrameDelay = 200;
 NoResFrame = 5;
+iHLimit =-1;
 }
 
 //********************************************************
@@ -856,6 +858,23 @@ char buff[80];
 	   outtext1(buff);
 	   Sleep(iDelayMilli);          //sleep for iDelay
 	   outtext1("Resume.");
+	}
+}
+
+void DBase::HLimit(int iHlim)
+{
+	char buff[80];
+	if (iHlim > 0)
+	{
+		iHLimit = iHlim;
+		sprintf_s(buff, "%s %i", "Highlight Limit = ", iHLimit);
+		outtext1(buff);
+	}
+	else
+	{
+		iHLimit = -1;
+		sprintf_s(buff, "%s", "Highlight Limit = ALL");
+		outtext1(buff);
 	}
 }
 
@@ -9390,9 +9409,13 @@ if ((iDrawmode == 4) || (iDrawmode == 5))
 	{
 		SetPen(pDC, 7);
 	}
+	int iHC = 0;
 	if (S_Count > 0)
 	{
-		for (iDB_I = 0; iDB_I < S_Count; iDB_I++)
+		iHC = S_Count;
+		if ((iHLimit>-1) && (iHLimit < iHC))
+			iHC = iHLimit;
+		for (iDB_I = 0; iDB_I < iHC; iDB_I++)
 		{
 			if (S_Buff[iDB_I]->Drawn == 0)
 			{
@@ -9403,14 +9426,20 @@ if ((iDrawmode == 4) || (iDrawmode == 5))
 	}
 	if (OTemp->iNo > 0)
 	{
-		for (iDB_I = 0; iDB_I < OTemp->iNo; iDB_I++)
+		iHC = OTemp->iNo;
+		if ((iHLimit > -1) && (iHLimit < iHC))
+			iHC = iHLimit;
+		for (iDB_I = 0; iDB_I < iHC; iDB_I++)
 		{
 			OTemp->Objs[iDB_I]->HighLight(pDC);
 		}
 	}
 	if (OTemp2->iNo > 0)
 	{
-		for (iDB_I = 0; iDB_I < OTemp2->iNo; iDB_I++)
+		iHC = OTemp2->iNo;
+		if ((iHLimit > -1) && (iHLimit < iHC))
+			iHC = iHLimit;
+		for (iDB_I = 0; iDB_I < iHC; iDB_I++)
 		{
 			OTemp2->Objs[iDB_I]->HighLight(pDC);
 		}

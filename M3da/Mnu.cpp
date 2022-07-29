@@ -2584,6 +2584,16 @@ if (iStat == 0)
 	  pNext->Init(cDBase, -1);
 	  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "HLIMIT")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zHLIMIT_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "NULL")
 	  {
 		outtext2("/COMMAND:");
@@ -16574,6 +16584,44 @@ MenuEnd:
 return RetVal;
 }
 
+int zHLIMIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("/ENTER HIGHLIGHT LIMIT (-1 for ALL)");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->HLimit((int)ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zECHO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {

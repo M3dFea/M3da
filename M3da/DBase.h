@@ -31,6 +31,7 @@ int NoResFrame; // No of frames for animation
 //WORLD BITMAP TEST
 BMP* pWorldBMP;
 //****************************28/09/2016 SYMBOLS TABLE****************************
+int iHLimit = -1;
 int iPtLabCnt;
 int iTxtLabCnt;
 int iCVLabCnt;
@@ -99,6 +100,7 @@ void SetActSol(int iD);
 void PrintTime(CString cS);
 virtual void OnFinalRelease();
 void DELAY(int iDelay); //iDelay in seconds
+void HLimit(int iHlim); //Highlight limit
 void ResListRespData(int iEnt);
 void ResGraphRespData(int iEnt);
 void LabelRespItems();

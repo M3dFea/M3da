@@ -1616,6 +1616,13 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zHLIMIT_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+
 class zECHO_Mnu : public zMnu
 {
 public:

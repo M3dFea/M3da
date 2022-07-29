@@ -135,6 +135,7 @@ BEGIN
             MENUITEM "<placeholder>",               ID_VIEW_TOOLBAR
         END
         MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        MENUITEM "HighLight Limit",             ID_VIEW_HIGHLIGHTLIMIT
         POPUP "VIEW"
         BEGIN
             MENUITEM "Locate Eye",                  ID_VIEW_LOCATEEYE
@@ -1250,6 +1251,7 @@ BEGIN
     ID_POST_GRAPHRESPONSEDATA "Graph response data."
     ID_FEMTOOLS_SWEEPNODESTOBEAMS33361 "Sweep nodes into beam elements."
     ID_FEMTOOLS_SWEEPNODESTOSHELLS33362 "Sweep nodes into shell elements."
+    ID_VIEW_HIGHLIGHTLIMIT  "Set the limit on the no of objects to highlight"
 END
 
 #endif    // English (United States) resources
@@ -1667,7 +1669,7 @@ END
 IDD_GRAPH DIALOGEX 0, 0, 309, 173
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Dialog"
-FONT 10, "Microsoft Sans Serif", 400, 0, 0x0
+FONT 8, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,99,53,50,14,NOT WS_VISIBLE | WS_DISABLED
     PUSHBUTTON      "Cancel",IDCANCEL,111,80,50,14
