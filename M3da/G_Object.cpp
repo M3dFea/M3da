@@ -14021,49 +14021,49 @@ Selectable=1;
     glRasterPos3f ((float) vZ.x,(float) vZ.y,(float) vZ.z);
     glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPZ);
   }
-  //if ((iDspFlgs & DSP_MATL)==0)
-  //{
-	 // C3dMatrix mS = GetElSys();
-	 // C3dMatrix mR;
-	 // C3dVector vD;
-	 // C3dVector vC;
-	 // vC = Get_Centroid();
-	 // vD = GetFirstEdge();
-	 // if (this->iMCys == -1)
-	 // {
-		//  vD.Normalize();
-		//  mR.Rotate(0, 0, MAng);
-		//  vD = mS * vD;
-		//  vD = mR * vD;
-		//  mS.Transpose();
-		//  vD = mS * vD;
-		//  vD *= 0.5 * dS1;
-		//  vD += vC;
-	 // }
-	 // else
-	 // {
-		//  if (this->pParent != NULL)
-		//  {
-		//	  ME_Object* ME = (ME_Object*)pParent;
-		//	  CoordSys* pS = ME->GetSys(this->iMCys);
-		//	  if (pS != NULL)
-		//	  {
-		//		  vD = pS->mOrientMat.GetColVec(1);
-		//		  vD = mS * vD;
-		//		  vD.z = 0;
-		//		  mS.Transpose();
-		//		  vD = mS * vD;
-		//		  vD.Normalize();
-		//		  vD *= 0.5 * dS1;
-		//		  vD += vC;
-		//	  }
-		//  }
-	 // }
-  //  glBegin(GL_LINES);
-  //    glVertex3f((float) vC.x,(float) vC.y,(float) vC.z);
-  //    glVertex3f((float) vD.x,(float) vD.y,(float) vD.z);
-  //  glEnd();
-  //}
+  if ((iDspFlgs & DSP_MATL)==0)
+  {
+	  C3dMatrix mS = GetElSys();
+	  C3dMatrix mR;
+	  C3dVector vD;
+	  C3dVector vC;
+	  vC = Get_Centroid();
+	  vD = GetFirstEdge();
+	  if (this->iMCys == -1)
+	  {
+		  vD.Set(1, 0, 0);
+		  mR.Rotate(0, 0, MAng);
+		  vD = mR * vD;
+		  mS.Transpose();
+		  vD = mS * vD;
+		  vD *= 0.5 * dS1;
+		  vD += vC;
+	  }
+	  else
+	  {
+		  C3dVector vSys;
+		  if (this->pParent != NULL)
+		  {
+			  ME_Object* ME = (ME_Object*)pParent;
+			  CoordSys* pS = ME->GetSys(this->iMCys);
+			  if (pS != NULL)
+			  {
+				  vSys = pS->mOrientMat.GetColVec(1);
+				  vD = mS * vSys;
+				  vD.z = 0;
+				  mS.Transpose();
+				  vD = mS * vD;
+				  vD.Normalize();
+				  vD *= 0.5 * dS1;
+				  vD += vC;
+			  }
+		  }
+	  }
+    glBegin(GL_LINES);
+      glVertex3f((float) vC.x,(float) vC.y,(float) vC.z);
+      glVertex3f((float) vD.x,(float) vD.y,(float) vD.z);
+    glEnd();
+  }
 }
 else
 {
