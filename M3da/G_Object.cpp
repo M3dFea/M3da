@@ -14031,11 +14031,12 @@ Selectable=1;
 	  vD = GetFirstEdge();
 	  if (this->iMCys == -1)
 	  {
-		  vD.Set(1, 0, 0);
+		  vD = mS * vD;
 		  mR.Rotate(0, 0, MAng);
 		  vD = mR * vD;
 		  mS.Transpose();
 		  vD = mS * vD;
+		  vD.Normalize();
 		  vD *= 0.5 * dS1;
 		  vD += vC;
 	  }
@@ -17085,23 +17086,30 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
 	C3dVector vD;
 	C3dVector vC;
 	vC = Get_Centroid();
-    //vD = GetFirstEdge();
+    vD = GetFirstEdge();
 	if (this->iMCys == -1)
 	{
-		vD.Set(1, 0, 0);
+		//Note material angle is relative to first edge
+		//not element X as I coded below
+		//vD.Set(1, 0, 0);
+		//mR.Rotate(0, 0, MAng);
+        //vD = mR * vD;
+		//mS.Transpose();
+        //vD = mS * vD;
+		//vD *= 0.5 * dS1;
+		//vD += vC;
+		vD = mS * vD;
 		mR.Rotate(0, 0, MAng);
         vD = mR * vD;
 		mS.Transpose();
-        vD = mS * vD;
+		vD = mS * vD;
+		vD.Normalize();
 		vD *= 0.5 * dS1;
 		vD += vC;
 	}
 	else
 	{
 		C3dVector vSys;
-		double x;
-		double y;
-		double z;
 		if (this->pParent != NULL)
 		{
 			ME_Object* ME = (ME_Object*)pParent;
