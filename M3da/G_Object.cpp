@@ -5224,15 +5224,23 @@ return (6);
 void E_Object38::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 
@@ -6356,15 +6364,23 @@ pVertex[5] = pT[4];
 void E_Object36::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 BOOL E_Object36::NodeInEl(Pt_Object* pN)
@@ -7707,16 +7723,23 @@ return (brc);
 
 void E_Object34::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 {
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 G_Object* E_Object34::Copy(G_Object* Parrent)
@@ -8900,14 +8923,22 @@ void E_Object310::RepNodeInEl(Pt_Object* pThis, Pt_Object* pWith)
 {
 
 	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
 	for (i = 0; i < iNoNodes; i++)
 	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
 		if (pVertex[i] == pThis)
 		{
-			pVertex[i] = pWith;
-			break;
+			iInd = i;
 		}
 	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 G_Object* E_Object310::Copy(G_Object* Parrent)
@@ -11411,15 +11442,23 @@ return (brc);
 void E_Object2::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 void E_Object2::Serialize(CArchive& ar,int iV,ME_Object* MESH)
@@ -12016,15 +12055,23 @@ void E_Object2R::SetDOFStringB(CString sDOF)
 void E_Object2R::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 BOOL E_Object2R::NodeInEl(Pt_Object* pN)
@@ -13652,15 +13699,23 @@ pVertex[2] = pT[1];
 void E_Object3::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 
 }
 
@@ -15969,15 +16024,23 @@ return (brc);
 void E_CellS::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 
 }
 
@@ -16707,15 +16770,23 @@ pVertex[3] = pT[1];
 void E_Object4::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 BOOL E_Object4::NodeInEl(Pt_Object* pN)
@@ -17895,15 +17966,23 @@ iDOF=DOF_ALL;
 void E_ObjectR::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 
 }
 
@@ -18494,15 +18573,23 @@ return (brc);
 void E_ObjectR2::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 void E_ObjectR2::ExportUNV(FILE* pFile)
