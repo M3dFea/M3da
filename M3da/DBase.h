@@ -712,6 +712,7 @@ void CreateMat8(CString sInTit,
                 double dk);
 void ModifyPrMat(int iPID,int iMID1,int iMID2);
 void CNodesMerge(double dTol);
+void GetClosestNodes(ObjList* pSource, C3dVector pTrg, ObjList* pRes, double dTol);
 void CNodesMerge2(ObjList* Nodes,double dTol,BOOL UpLab,BOOL bDel);
 void DoDeformedDisp();
 void SolveIncompFluids();

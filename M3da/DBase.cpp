@@ -18192,6 +18192,20 @@ void DBase::ChkTetCollapse(ObjList* Elems, double dT, BOOL bList)
   outtext1(sNum);
 }
 
+void DBase::GetClosestNodes(ObjList* pSource,C3dVector pTrg, ObjList* pRes, double dTol)
+{
+	int i;
+	double dDist;
+	C3dVector pN;
+	pRes->Clear();
+	for (i = 0; i < pSource->iNo; i++)
+	{
+		pN = pSource->Objs[i]->Get_Centroid();
+		dDist = pN.Dist(pTrg);
+		if (dDist < dTol)
+			pRes->Add(pSource->Objs[i]);
+	}
+}
 
 void DBase::CNodesMerge2(ObjList* Nodes,double dTol,BOOL UpLab,BOOL bDel)
 {
@@ -18224,7 +18238,7 @@ if (ChkNodes->iNo>0)
   do
   {
     Pt_Object* pN = (Pt_Object*) ChkNodes->Objs[0];
-    pCurrentMesh->GetClosestNodes(pN->GetCoords(),CNodes,dTol);
+    GetClosestNodes(ChkNodes,pN->GetCoords(),CNodes,dTol);
     ChkNodes->RemoveGP(CNodes);
     if (CNodes->iNo>1)
     {
