@@ -3202,10 +3202,10 @@ if (ind==NULL)
   if (Head==NULL)
   {
     inLink->before=NULL;
-	  inLink->next=NULL;
+	inLink->next=NULL;
     Head=inLink;
     pCur=inLink;
-	  iNo++;
+	iNo++;
   }
   else
   {
@@ -3222,7 +3222,35 @@ else
 }
 }
 
+void cLinkList::AddIncOnly(cLink* inLink)
+{
 
+	cLink* ind;
+	ind = IsIn(inLink);
+	if (ind == NULL)
+	{
+		if (Head == NULL)
+		{
+			inLink->before = NULL;
+			inLink->next = NULL;
+			Head = inLink;
+			pCur = inLink;
+			iNo++;
+		}
+		else
+		{
+			inLink->before = pCur;
+			pCur->next = inLink;
+			pCur = (cLink*)inLink;
+			pCur->next = NULL;
+			iNo++;
+		}
+	}
+	else
+	{
+		ind->iColour++;;
+	}
+}
 
 void cLinkList::Remove(cLink* inLink)
 {
@@ -3260,7 +3288,25 @@ if (inLink!=NULL)
 }
 }
 
-
+void cLinkList::Purge()
+{
+	cLink* pNext;
+	cLink* pDel;
+	pNext = Head;
+	while (pNext != NULL)
+	{
+		if (pNext->iColour > 0)
+		{
+			pDel = pNext;
+			pNext = (cLink*)pNext->next;
+			Remove(pDel);
+		}
+		else
+		{
+			pNext = (cLink*)pNext->next;
+		}
+	}
+}
 
 
 void cLinkList::OglDrawW(int iDspFlgs,double dS1,double dS2)

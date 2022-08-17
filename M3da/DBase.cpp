@@ -2437,8 +2437,11 @@ for (i=0;i<Els->iNo;i++)
 }
 if (pCurrentMesh->LkList!=NULL)
 {
+	Dsp_Rem(pCurrentMesh->LkList);
+	RemTempGraphics(pCurrentMesh->LkList);
    delete(pCurrentMesh->LkList);
    pCurrentMesh->LkList=NULL;
+
 }
 if (pCurrentMesh->LkList==NULL)
   pCurrentMesh->LkList=new cLinkList();
@@ -2451,9 +2454,11 @@ for(i=0;i<Els2->iNo;i++)
   iN = pE->GetLinkList(Lk);
   for (j=0;j<iN;j++)
   {
-    pCurrentMesh->LkList->Add(Lk[j]);
+	Lk[j]->iColour = 0;
+    pCurrentMesh->LkList->AddIncOnly(Lk[j]);
   }
 }
+pCurrentMesh->LkList->Purge();
 delete(Els2);
 Dsp_Add(pCurrentMesh->LkList);
 InvalidateOGL();
