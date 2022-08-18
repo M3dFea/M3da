@@ -2761,7 +2761,7 @@ int cLink::isSameWithDir(cLink* inLink)
 void cLink::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
 glLineWidth(5.0);
-glColor3fv(cols[124]);
+glColor3fv(cols[iColour]);
 glBegin(GL_LINES);
 glVertex3f((float) pVertex[0]->Pt_Point->x,(float) pVertex[0]->Pt_Point->y,(float) pVertex[0]->Pt_Point->z);
 glVertex3f((float) pVertex[1]->Pt_Point->x,(float) pVertex[1]->Pt_Point->y,(float) pVertex[1]->Pt_Point->z);
@@ -3295,7 +3295,7 @@ void cLinkList::Purge()
 	pNext = Head;
 	while (pNext != NULL)
 	{
-		if (pNext->iColour > 0)
+		if (pNext->iColour == 1)
 		{
 			pDel = pNext;
 			pNext = (cLink*)pNext->next;
@@ -3303,6 +3303,10 @@ void cLinkList::Purge()
 		}
 		else
 		{
+			if (pNext->iColour > 1)
+				pNext->iColour = 151;
+			else
+				pNext->iColour = 120;
 			pNext = (cLink*)pNext->next;
 		}
 	}
