@@ -3786,10 +3786,12 @@ void AddOQMRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString 
 void AddOEFRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);  
 void AddOES1Res(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
+void AddOES1ResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
 void AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
+void AddOSTRResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
 void AddOESNRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
-void AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
+void AddOSTRResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
 void AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
 void AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
 void ListResSets();

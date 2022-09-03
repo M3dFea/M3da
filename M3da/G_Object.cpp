@@ -3304,7 +3304,7 @@ void cLinkList::Purge()
 		else
 		{
 			if (pNext->iColour > 1)
-				pNext->iColour = 151;
+				pNext->iColour = 50;
 			else
 				pNext->iColour = 120;
 			pNext = (cLink*)pNext->next;
@@ -27393,7 +27393,7 @@ iNoRes++;
 void ME_Object::AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dF)
 {
 	int i;
-	char s30[30];
+	char s80[80];
 	ResultsSets[iNoRes] = new ResSet();
 	ResultsSets[iNoRes]->sFile = inName;
 	ResultsSets[iNoRes]->sTitle = sTitle;
@@ -27449,24 +27449,24 @@ void ME_Object::AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTit
 
 	if ((iCnt > 5) && (ResultsSets[iNoRes]->TYPE == 102))
 	{
-		sprintf_s(s30, "%s %g %s", sEL, dF, "Hz");
-		ResultsSets[iNoRes]->sName = s30;
+		sprintf_s(s80, "%s %g %s", sEL, dF, "Hz");
+		ResultsSets[iNoRes]->sName = s80;
 		ResultsSets[iNoRes]->iNoV = 13;
 		if (ResultsSets[iNoRes]->FCODE == 3)
 		{	 //MAG / PHASE
 			ResultsSets[iNoRes]->lab[0] = "Freq";
-			ResultsSets[iNoRes]->lab[1] = "(mag) FX";
-			ResultsSets[iNoRes]->lab[2] = "(mag) FY";
-			ResultsSets[iNoRes]->lab[3] = "(mag) FZ";
-			ResultsSets[iNoRes]->lab[4] = "(mag) MX";
-			ResultsSets[iNoRes]->lab[5] = "(mag) MY";
-			ResultsSets[iNoRes]->lab[6] = "(mag) MZ";
-			ResultsSets[iNoRes]->lab[7] = "(phi) FX";
-			ResultsSets[iNoRes]->lab[8] = "(phi) FY";
-			ResultsSets[iNoRes]->lab[9] = "(phi) FZ";
-			ResultsSets[iNoRes]->lab[10] = "(phi) MX";
-			ResultsSets[iNoRes]->lab[11] = "(phi) MY";
-			ResultsSets[iNoRes]->lab[12] = "(phi) MZ";
+			ResultsSets[iNoRes]->lab[1] = "(Mag) FX";
+			ResultsSets[iNoRes]->lab[2] = "(Mag) FY";
+			ResultsSets[iNoRes]->lab[3] = "(Mag) FZ";
+			ResultsSets[iNoRes]->lab[4] = "(Mag) MX";
+			ResultsSets[iNoRes]->lab[5] = "(Mag) MY";
+			ResultsSets[iNoRes]->lab[6] = "(Mag) MZ";
+			ResultsSets[iNoRes]->lab[7] = "(Phi) FX";
+			ResultsSets[iNoRes]->lab[8] = "(Phi) FY";
+			ResultsSets[iNoRes]->lab[9] = "(Phi) FZ";
+			ResultsSets[iNoRes]->lab[10] = "(Phi) MX";
+			ResultsSets[iNoRes]->lab[11] = "(Phi) MY";
+			ResultsSets[iNoRes]->lab[12] = "(Phi) MZ";
 			//**********Define the Vector********************
 			ResDef* pVT = new ResDef();
 			pVT->sResType = "FORCE TRANS MAG VEC";
@@ -27483,18 +27483,18 @@ void ME_Object::AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTit
 		else
 		{
 			ResultsSets[iNoRes]->lab[0] = "Freq";
-			ResultsSets[iNoRes]->lab[1] = "(real) FX";
-			ResultsSets[iNoRes]->lab[2] = "(real) FY";
-			ResultsSets[iNoRes]->lab[3] = "(real) FZ";
-			ResultsSets[iNoRes]->lab[4] = "(real) MX";
-			ResultsSets[iNoRes]->lab[5] = "(real) MY";
-			ResultsSets[iNoRes]->lab[6] = "(real) MZ";
-			ResultsSets[iNoRes]->lab[7] = "(imag) FX";
-			ResultsSets[iNoRes]->lab[8] = "(imag) FY";
-			ResultsSets[iNoRes]->lab[9] = "(imag) FZ";
-			ResultsSets[iNoRes]->lab[10] = "(imag) MX";
-			ResultsSets[iNoRes]->lab[11] = "(imag) MY";
-			ResultsSets[iNoRes]->lab[12] = "(imag) MZ";
+			ResultsSets[iNoRes]->lab[1] = "(Re) FX";
+			ResultsSets[iNoRes]->lab[2] = "(Re) FY";
+			ResultsSets[iNoRes]->lab[3] = "(Re) FZ";
+			ResultsSets[iNoRes]->lab[4] = "(Re) MX";
+			ResultsSets[iNoRes]->lab[5] = "(Re) MY";
+			ResultsSets[iNoRes]->lab[6] = "(Re) MZ";
+			ResultsSets[iNoRes]->lab[7] = "(Im) FX";
+			ResultsSets[iNoRes]->lab[8] = "(Im) FY";
+			ResultsSets[iNoRes]->lab[9] = "(Im) FZ";
+			ResultsSets[iNoRes]->lab[10] = "(Im) MX";
+			ResultsSets[iNoRes]->lab[11] = "(Im) MY";
+			ResultsSets[iNoRes]->lab[12] = "(Im) MZ";
 		}
 
 		for (i = 10; i < iCnt; i += iWID)
@@ -27514,6 +27514,73 @@ void ME_Object::AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTit
 			pRes->v[10] = *(float*)&Vals[i + 10];
 			pRes->v[11] = *(float*)&Vals[i + 11];
 			pRes->v[12] = *(float*)&Vals[i + 12];
+			ResultsSets[iNoRes]->Add(pRes);
+		}
+	}
+	else if ((iCnt > 5) && ((ResultsSets[iNoRes]->TYPE == 33) || (ResultsSets[iNoRes]->TYPE == 74)))
+	{	//QUAD4 FEQUENCY RESULTS
+		sprintf_s(s80, "%s %g %s", sEL, dF, "Hz");
+		ResultsSets[iNoRes]->sName = s80;
+		ResultsSets[iNoRes]->iNoV = iWID-1;
+		if (ResultsSets[iNoRes]->FCODE == 3)
+		{	 //MAG / PHASE
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "(Mag) Membrane in x";
+			ResultsSets[iNoRes]->lab[2] = "(Mag) Membrane in y";
+			ResultsSets[iNoRes]->lab[3] = "(Mag) Membrane in xy";
+			ResultsSets[iNoRes]->lab[4] = "(Mag) Bending in x";
+			ResultsSets[iNoRes]->lab[5] = "(Mag) Bending in y";
+			ResultsSets[iNoRes]->lab[6] = "(Mag) Bending in xy";
+			ResultsSets[iNoRes]->lab[7] = "(Mag) Transverse Shear in x";
+			ResultsSets[iNoRes]->lab[8] = "(Mag) Transverse Shear in y";
+			ResultsSets[iNoRes]->lab[9] = "(Phi)  Membrane in x";
+			ResultsSets[iNoRes]->lab[10] = "(Phi) Membrane in y";
+			ResultsSets[iNoRes]->lab[11] = "(Phi) Membrane in xy";
+			ResultsSets[iNoRes]->lab[12] = "(Phi) Bending in x";
+			ResultsSets[iNoRes]->lab[13] = "(Phi) Bending in y";
+			ResultsSets[iNoRes]->lab[14] = "(Phi) Transverse Shear in x";
+			ResultsSets[iNoRes]->lab[15] = "(Phi) Transverse Shear in y";
+		}
+		else
+		{
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "(Re) Membrane in x";
+			ResultsSets[iNoRes]->lab[2] = "(Re) Membrane in y";
+			ResultsSets[iNoRes]->lab[3] = "(Re) Membrane in xy";
+			ResultsSets[iNoRes]->lab[4] = "(Re) Bending in x";
+			ResultsSets[iNoRes]->lab[5] = "(Re) Bending in y";
+			ResultsSets[iNoRes]->lab[6] = "(Re) Bending in xy";
+			ResultsSets[iNoRes]->lab[7] = "(Re) Transverse Shear in x";
+			ResultsSets[iNoRes]->lab[8] = "(Re) Transverse Shear in y";
+			ResultsSets[iNoRes]->lab[9] = "(Im)  Membrane in x";
+			ResultsSets[iNoRes]->lab[10] = "(Im) Membrane in y";
+			ResultsSets[iNoRes]->lab[11] = "(Im) Membrane in xy";
+			ResultsSets[iNoRes]->lab[12] = "(Im) Bending in x";
+			ResultsSets[iNoRes]->lab[13] = "(Im) Bending in y";
+			ResultsSets[iNoRes]->lab[14] = "(Im) Transverse Shear in x";
+			ResultsSets[iNoRes]->lab[15] = "(Im) Transverse Shear in y";
+		}
+
+		for (i = 10; i < iCnt; i += iWID)
+		{
+			Res15* pRes = new Res15;
+			pRes->ID = Vals[i] / 10;
+			pRes->v[0] = dF;
+			pRes->v[1] = *(float*)&Vals[i + 1];
+			pRes->v[2] = *(float*)&Vals[i + 2];
+			pRes->v[3] = *(float*)&Vals[i + 3];
+			pRes->v[4] = *(float*)&Vals[i + 4];
+			pRes->v[5] = *(float*)&Vals[i + 5];
+			pRes->v[6] = *(float*)&Vals[i + 6];
+			pRes->v[7] = *(float*)&Vals[i + 7];
+			pRes->v[8] = *(float*)&Vals[i + 8];
+			pRes->v[9] = *(float*)&Vals[i + 9];
+			pRes->v[10] = *(float*)&Vals[i + 10];
+			pRes->v[11] = *(float*)&Vals[i + 11];
+			pRes->v[12] = *(float*)&Vals[i + 12];
+			pRes->v[13] = *(float*)&Vals[i + 13];
+			pRes->v[14] = *(float*)&Vals[i + 14];
+			pRes->v[15] = *(float*)&Vals[i + 15];
 			ResultsSets[iNoRes]->Add(pRes);
 		}
 	}
@@ -27970,6 +28037,203 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==39))    //CTETRA LIN STRESS
 iNoRes++;
 }
 
+void ME_Object::AddOES1ResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	char s80[80];
+	int i;
+	int iWID = -1;
+	int iFC = -1;
+	ResultsSets[iNoRes] = new ResSet();
+	ResultsSets[iNoRes]->sFile = inName;
+	ResultsSets[iNoRes]->sTitle = sTitle;
+	ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+	ResultsSets[iNoRes]->ACODE = Vals[0];
+	ResultsSets[iNoRes]->TCODE = Vals[1];
+	ResultsSets[iNoRes]->TYPE = Vals[2];
+	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	iWID = ResultsSets[iNoRes]->WID;
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	iFC = ResultsSets[iNoRes]->FCODE;
+	ResultsSets[iNoRes]->SCODE = Vals[8];
+	CString sEL;
+	BOOL isGood = FALSE;
+	//Just reading shell element for now CQUAD and CTRIA
+	if (Vals[2] == 33)
+	{
+		isGood = TRUE;
+		sEL = "STRESS CENTRE CQUAD4";
+	}
+	else if (Vals[2] == 74)
+	{
+		isGood = TRUE;
+		sEL = "STRESS CENTRE CTRIA3";
+	}
+	else
+	{
+		isGood = FALSE;
+	}
+	if ((iCnt > 10) && (isGood))
+	{
+		sprintf_s(s80, "%s %g %s", sEL, dF, "Hz");
+		ResultsSets[iNoRes]->sName = s80;
+		ResultsSets[iNoRes]->iNoV = iWID-1;
+		if (iFC == 2)	//Real and Imaginary
+		{
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "(Re) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[2] = "(Im) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[3] = "(Re) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[4] = "(Im) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[5] = "(Re) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[6] = "(Im) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[7] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[8] = "(Re) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[9] = "(Im) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[10] = "(Re) Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[11] = "(Im)Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[12] = "(Re) Shear in xy at Z2";
+			ResultsSets[iNoRes]->lab[13] = "(Im)Shear in xy at Z2";
+		}
+		else if (iFC == 3)   //Magnitude and Phase
+		{
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "(Mag) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[2] = "(Phi) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[3] = "(Mag) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[4] = "(Phi) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[5] = "(Re) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[6] = "(Phi) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[7] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[8] = "(Mag) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[9] = "(Phi) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[10] = "(Mag) Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[11] = "(Phi)Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[12] = "(Mag) Shear in xy at Z2";
+			ResultsSets[iNoRes]->lab[13] = "(Phi)Shear in xy at Z2";
+		}
+		for (i = 10; i < iCnt; i += iWID)
+		{
+			Res13* pRes = new Res13;
+			pRes->ID = Vals[i] / 10;
+			pRes->v[0] = *(float*)&Vals[i + 1];
+			pRes->v[1] = *(float*)&Vals[i + 2];
+			pRes->v[2] = *(float*)&Vals[i + 3];
+			pRes->v[3] = *(float*)&Vals[i + 4];
+			pRes->v[4] = *(float*)&Vals[i + 5];
+			pRes->v[5] = *(float*)&Vals[i + 6];
+			pRes->v[6] = *(float*)&Vals[i + 7];
+			pRes->v[7] = *(float*)&Vals[i + 8];
+			pRes->v[8] = *(float*)&Vals[i + 9];
+			pRes->v[9] = *(float*)&Vals[i + 10];
+			pRes->v[10] = *(float*)&Vals[i + 11];
+			pRes->v[11] = *(float*)&Vals[i + 12];
+			pRes->v[12] = *(float*)&Vals[i + 13];
+			pRes->v[13] = *(float*)&Vals[i + 14];
+			ResultsSets[iNoRes]->Add(pRes);
+		}
+	}
+	iNoRes++;
+}
+
+void ME_Object::AddOSTRResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	char s80[80];
+	int i;
+	int iWID = -1;
+	int iFC = -1;
+	ResultsSets[iNoRes] = new ResSet();
+	ResultsSets[iNoRes]->sFile = inName;
+	ResultsSets[iNoRes]->sTitle = sTitle;
+	ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+	ResultsSets[iNoRes]->ACODE = Vals[0];
+	ResultsSets[iNoRes]->TCODE = Vals[1];
+	ResultsSets[iNoRes]->TYPE = Vals[2];
+	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	iWID = ResultsSets[iNoRes]->WID;
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	iFC = ResultsSets[iNoRes]->FCODE;
+	ResultsSets[iNoRes]->SCODE = Vals[8];
+	CString sEL;
+	BOOL isGood = FALSE;
+	//Just reading shell element for now CQUAD and CTRIA
+	if (Vals[2] == 33)
+	{
+		isGood = TRUE;
+		sEL = "STRAIN CENTRE CQUAD4";
+	}
+	else if (Vals[2] == 74)
+	{
+		isGood = TRUE;
+		sEL = "STRAIN CENTRE CTRIA3";
+	}
+	else
+	{
+		isGood = FALSE;
+	}
+	if ((iCnt > 10) && (isGood))
+	{
+		sprintf_s(s80, "%s %g %s", sEL, dF, "Hz");
+		ResultsSets[iNoRes]->sName = s80;
+		ResultsSets[iNoRes]->iNoV = iWID - 1;
+		if (iFC == 2)	//Real and Imaginary
+		{
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "(Re) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[2] = "(Im) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[3] = "(Re) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[4] = "(Im) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[5] = "(Re) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[6] = "(Im) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[7] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[8] = "(Re) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[9] = "(Im) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[10] = "(Re) Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[11] = "(Im)Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[12] = "(Re) Shear in xy at Z2";
+			ResultsSets[iNoRes]->lab[13] = "(Im)Shear in xy at Z2";
+		}
+		else if (iFC == 3)   //Magnitude and Phase
+		{
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "(Mag) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[2] = "(Phi) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[3] = "(Mag) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[4] = "(Phi) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[5] = "(Re) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[6] = "(Phi) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[7] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[8] = "(Mag) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[9] = "(Phi) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[10] = "(Mag) Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[11] = "(Phi)Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[12] = "(Mag) Shear in xy at Z2";
+			ResultsSets[iNoRes]->lab[13] = "(Phi)Shear in xy at Z2";
+		}
+		for (i = 10; i < iCnt; i += iWID)
+		{
+			Res13* pRes = new Res13;
+			pRes->ID = Vals[i] / 10;
+			pRes->v[0] = *(float*)&Vals[i + 1];
+			pRes->v[1] = *(float*)&Vals[i + 2];
+			pRes->v[2] = *(float*)&Vals[i + 3];
+			pRes->v[3] = *(float*)&Vals[i + 4];
+			pRes->v[4] = *(float*)&Vals[i + 5];
+			pRes->v[5] = *(float*)&Vals[i + 6];
+			pRes->v[6] = *(float*)&Vals[i + 7];
+			pRes->v[7] = *(float*)&Vals[i + 8];
+			pRes->v[8] = *(float*)&Vals[i + 9];
+			pRes->v[9] = *(float*)&Vals[i + 10];
+			pRes->v[10] = *(float*)&Vals[i + 11];
+			pRes->v[11] = *(float*)&Vals[i + 12];
+			pRes->v[12] = *(float*)&Vals[i + 13];
+			pRes->v[13] = *(float*)&Vals[i + 14];
+			ResultsSets[iNoRes]->Add(pRes);
+		}
+	}
+	iNoRes++;
+}
 
 void ME_Object::AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName)
 {
@@ -28665,7 +28929,7 @@ void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
 	}
 }
 
-void ME_Object::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq)
+void ME_Object::AddOSTRResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq)
 {
 	int i;
 	double ds11;
@@ -52632,7 +52896,7 @@ void CGraphDialog::GDIDraw()
 			maxX = fDivX * iNoTicksX;
 	}
 	//Axis and titles
-	SetPen(pDC, 133, 2);
+	SetPen(pDC, 133, 3);
 	for (i = 0; i <= iNoTicksX; i++)
 	{
 		
@@ -52693,9 +52957,9 @@ void CGraphDialog::GDIDraw()
 		if (pG != NULL)
 		{
 			if (j==iActPlot)
-			  SetPen(pDC, pG->iCol, 3);
+			  SetPen(pDC, pG->iCol,9);
 			else
-			  SetPen(pDC,pG->iCol,2);
+			  SetPen(pDC,pG->iCol,3);
 			//Lengend
 			SetTextCol(hDC, pG->iCol);
 			sprintf_s(buff, "%s %s %s", pG->sResType, pG->sEntID, pG->sVar);
@@ -52843,124 +53107,124 @@ BOOL CGraphDialog::OnInitDialog()
 	this->SetWindowText("Graph");
 	this->GetWindowRect(&oSize);
 
-	oSize.right = oSize.left + 1200;
-	oSize.bottom = oSize.top + 700;
+	oSize.right = oSize.left + 1500;
+	oSize.bottom = oSize.top + 900;
 	
 	this->MoveWindow(oSize, 0);
 	this->GetClientRect(oS);
 	// TODO:  Add extra initialization here
 	pDrg = new CWnd;
 	pDrg->Create(_T("STATIC"), _T(""), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
-		CRect(oS.left, oS.top, oS.right, oS.bottom-150), this, 1234);
+		CRect(oS.left, oS.top, oS.right, oS.bottom-200), this, 1234);
 	pDrg->GetWindowRect(&cR);
 	fW = cR.Width();
 	fH = cR.Height();
 	//Size buttons and Listboxes
-	oSize2.top = oS.bottom - 140;;
-	oSize2.left = oSize.left+10;
+	oSize2.top = oS.bottom - 190;;
+	oSize2.left = oS.left+10;
 	oSize2.bottom = oS.bottom-10;
-	oSize2.right = oSize.left + 210;
+	oSize2.right = oS.left + 260;
 	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
-	oSize2.top = oS.bottom - 140;;
-	oSize2.left = oSize.left + 220;
+	oSize2.top = oS.bottom - 190;;
+	oSize2.left = oS.left + 270;
 	oSize2.bottom = oS.bottom - 10;
-	oSize2.right = oSize.left + 320;
+	oSize2.right = oS.left + 420;
 	oLB = (CListBox*)this->GetDlgItem(IDC_ENT);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
-	oSize2.top = oS.bottom - 140;;
-	oSize2.left = oSize.left + 330;
+	oSize2.top = oS.bottom - 190;;
+	oSize2.left = oS.left + 430;
 	oSize2.bottom = oS.bottom - 10;
-	oSize2.right = oSize.left + 430;
+	oSize2.right = oS.left + 580;
 	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
-	oSize2.top = oS.bottom - 140;;
-	oSize2.left = oSize.left + 440;
+	oSize2.top = oS.bottom - 190;;
+	oSize2.left = oS.left + 590;
 	oSize2.bottom = oS.bottom - 10;
-	oSize2.right = oSize.left + 640;
+	oSize2.right = oS.left + 940;
 	oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
-	oSize2.top = oS.bottom - 140;;
-	oSize2.left = oSize.left + 650;
-	oSize2.bottom = oS.bottom - 125;
-	oSize2.right = oSize.left + 750;
+	oSize2.top = oS.bottom - 190;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 160;
+	oSize2.right = oS.left + 1050;
 	oLB = (CListBox*)this->GetDlgItem(IDC_PLOT);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
-	oSize2.top = oS.bottom - 120;;
-	oSize2.left = oSize.left + 650;
-	oSize2.bottom = oS.bottom - 105;
-	oSize2.right = oSize.left + 750;
+	oSize2.top = oS.bottom - 160;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 130;
+	oSize2.right = oS.left + 1050;
 	oLB = (CListBox*)this->GetDlgItem(IDC_REDRAW);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
-	oSize2.top = oS.bottom - 100;;
-	oSize2.left = oSize.left + 650;
-	oSize2.bottom = oS.bottom - 85;
-	oSize2.right = oSize.left + 750;
+	oSize2.top = oS.bottom - 130;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 100;
+	oSize2.right = oS.left + 1050;
 	oLB = (CListBox*)this->GetDlgItem(IDC_COLOUR);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
 
-	oSize2.top = oS.bottom - 80;;
-	oSize2.left = oSize.left + 650;
-	oSize2.bottom = oS.bottom - 65;
-	oSize2.right = oSize.left + 750;
+	oSize2.top = oS.bottom - 100;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 70;
+	oSize2.right = oS.left + 1050;
 	oLB = (CListBox*)this->GetDlgItem(IDC_LIST);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
-	oSize2.top = oS.bottom - 60;;
-	oSize2.left = oSize.left + 650;
-	oSize2.bottom = oS.bottom - 45;
-	oSize2.right = oSize.left + 750;
+	oSize2.top = oS.bottom -70;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 40;
+	oSize2.right = oS.left + 1050;
 	oLB = (CListBox*)this->GetDlgItem(IDC_CLEAR);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
 	oSize2.top = oS.bottom - 40;;
-	oSize2.left = oSize.left + 650;
-	oSize2.bottom = oS.bottom - 25;
-	oSize2.right = oSize.left + 750;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 10;
+	oSize2.right = oS.left + 1050;
 	oLB = (CListBox*)this->GetDlgItem(IDCANCEL);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
-	oSize2.top = oS.bottom - 140;
-	oSize2.left = oSize.left + 800;
-	oSize2.bottom = oS.bottom - 120;
-	oSize2.right = oSize.left + 1150;
+	oSize2.top = oS.bottom - 190;
+	oSize2.left = oS.left + 1100;
+	oSize2.bottom = oS.bottom - 190+30;
+	oSize2.right = oS.left + 1490;
 	CEdit* oEdit  = (CEdit*)this->GetDlgItem(IDC_TITLE);
 	if (oEdit != NULL)
 	{
 		oEdit->MoveWindow(oSize2, 0);
 		oEdit->SetWindowTextA("Graph Title");
 	}
-	oSize2.top = oS.bottom - 115;
-	oSize2.left = oSize.left + 800;
-	oSize2.bottom = oS.bottom - 95;
-	oSize2.right = oSize.left + 1150;
+	oSize2.top = oS.bottom - 190+40;
+	oSize2.left = oS.left + 1100;
+	oSize2.bottom = oS.bottom - 190+70;
+	oSize2.right = oS.left + 1490;
 	oEdit = (CEdit*)this->GetDlgItem(IDC_XTITLE);
 	if (oEdit != NULL)
 	{
 		oEdit->MoveWindow(oSize2, 0);
 		oEdit->SetWindowTextA("Freq (Hz)");
 	}
-	oSize2.top = oS.bottom - 90;
-	oSize2.left = oSize.left + 800;
-	oSize2.bottom = oS.bottom - 70;
-	oSize2.right = oSize.left + 1150;
+	oSize2.top = oS.bottom - 190+80;
+	oSize2.left = oS.left + 1100;
+	oSize2.bottom = oS.bottom -190+110;
+	oSize2.right = oS.left + 1490;
 	oEdit = (CEdit*)this->GetDlgItem(IDC_YTITLE);
 	if (oEdit != NULL)
 	{
 		oEdit->MoveWindow(oSize2, 0);
 		oEdit->SetWindowTextA("Y Axis Title");
 	}
-	oSize2.top = oS.bottom - 65;
-	oSize2.left = oSize.left + 800;
-	oSize2.bottom = oS.bottom - 45;
-	oSize2.right = oSize.left + 1150;
+	oSize2.top = oS.bottom - 190 + 120;
+	oSize2.left = oS.left + 1100;
+	oSize2.bottom = oS.bottom - 190 + 150;
+	oSize2.right = oS.left + 1490;
 	CButton*  oRB = (CButton*)this->GetDlgItem(IDC_LOG);
 	if (oRB != NULL)
 	{

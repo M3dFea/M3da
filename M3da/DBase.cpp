@@ -11155,6 +11155,14 @@ if (pCurrentMesh!=NULL)
 }
 }
 
+void DBase::AddOES1ResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOES1ResF(Vals, iCnt, sTitle, sSubTitle, inName,dF);
+	}
+}
+
 void DBase::AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName)
 {
 if (pCurrentMesh!=NULL)
@@ -11162,6 +11170,15 @@ if (pCurrentMesh!=NULL)
   pCurrentMesh->AddOSTRRes(Vals,iCnt,sTitle,sSubTitle,inName);
 }
 }
+
+void DBase::AddOSTRResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOSTRResF(Vals, iCnt, sTitle, sSubTitle, inName,dF);
+	}
+}
+
 
 void DBase::AddOESNRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName)
 {
@@ -11179,11 +11196,11 @@ void DBase::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, 
 	}
 }
 
-void DBase::AddOSTRFRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dFreq)
+void DBase::AddOSTRResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dFreq)
 {
 	if (pCurrentMesh != NULL)
 	{
-		pCurrentMesh->AddOSTRFRes(Vals, iCnt, sTitle, sSubTitle, inName, dFreq);
+		pCurrentMesh->AddOSTRResR(Vals, iCnt, sTitle, sSubTitle, inName, dFreq);
 	}
 }
 
@@ -11211,19 +11228,16 @@ int TCODE = 0;
 int FCODE = 0;
 int SCODE = 0;
 int iCnt;
-
+int iTC = -1;
 int* DataB = (int*) malloc(10000000 * sizeof(int) ); 
-
 CString sTitle;
 CString sSubTitle;
 double dFreq=0;
 char sDataS[5] = "";
 int iKey;
 int iRecord=0;
-
 char sT[8];
 int iWord;
-
 int i;
 fread (&iKey,4,1,pFile);
 while (!feof(pFile))
@@ -11268,12 +11282,23 @@ while (!feof(pFile))
       {
             iCnt = 0;
             Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
+			ACODE = DataB[0];
+			TCODE = DataB[1];
+			FCODE = DataB[7];	  //newly added so result can be
+			SCODE = DataB[8];	  //interprested m
+			iTC = TCODE / 1000;
 			if (iCnt > 0)
 			{
 				if (DataB[0] / 10 == 1)	//Linear
-					AddOEFRes(DataB, iCnt, sTitle, sSubTitle, inName);
-				else if (DataB[0] / 10 == 5)	//Linear
-					AddOEFResF(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+				{
+					if ((iTC == 0) || (iTC == 2))  //Real sort1 and sort2
+						AddOEFRes(DataB, iCnt, sTitle, sSubTitle, inName);
+				}
+				else if (DataB[0] / 10 == 5)	//Freq
+				{
+					if ((iTC == 1) || (iTC == 3))  //Complex sort1 and sort2
+						AddOEFResF(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+				}
 			}
             //WriteF
       }
@@ -11343,22 +11368,22 @@ while (!feof(pFile))
 			TCODE = DataB[1];
 			FCODE = DataB[7];	  //newly added so result can be
 			SCODE = DataB[8];	  //interprested m
+			iTC = TCODE / 1000;
 			if (iCnt > 0)
 			{
-				if (ACODE == 13)  //STATICS
-				  AddOSTRRes(DataB, iCnt, sTitle, sSubTitle, inName);
-				if (ACODE == 15)  //STATIC GRMS (FREQUENCY)
-				  AddOSTRFRes(DataB, iCnt, sTitle, sSubTitle, inName,0.0);
-				if (ACODE /10 == 5)  //FREQUENCY
-					if (TCODE / 1000 == 4)  //Sort 1 real  random
-					{
-					    AddOSTRFRes(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
-					}
-					else if (TCODE / 1000 == 1)  //Sort 1 complex
-					{ 
-						//Need to add complex freq results
-						//AddOSTRFCPXRes(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
-					}
+				if (ACODE / 10 == 1)  //STATICS	or RANDOM
+				{
+					if ((iTC == 0) || (iTC == 2))	//statics real sort 1 & 2
+						AddOSTRRes(DataB, iCnt, sTitle, sSubTitle, inName);
+					else if ((iTC=4) || (iTC=5))	//Random  real sort 1 & 2
+						AddOSTRResR(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+
+				}
+				if (ACODE / 10 == 5)  //Freq
+				{
+					if ((iTC == 1) || (iTC == 3))  //Complex sort1 and sort2
+						AddOSTRResF(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+				}
 			}
             //WriteF
       }
@@ -11373,12 +11398,25 @@ while (!feof(pFile))
       {
             iCnt = 0;
             Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
+			ACODE = DataB[0];
+			TCODE = DataB[1];
+			FCODE = DataB[7];	  //newly added so result can be
+			SCODE = DataB[8];	  //interprested m
+			iTC = TCODE / 1000;
 			if (iCnt > 0)
 			{
-				if (DataB[0] / 10 == 1)  //Statics only
-					AddOES1Res(DataB, iCnt, sTitle, sSubTitle, inName);
+				if (ACODE / 10 == 1)  //Statics only
+				{
+					if ((iTC==0) || (iTC == 2))  //Real sort1 and sort2
+					  AddOES1Res(DataB, iCnt, sTitle, sSubTitle, inName);
+				}
+				else if (ACODE / 10 == 5)  //Frequency
+				{
+					if ((iTC == 1) || (iTC == 3))  //Complex sort1 and sort2
+					  AddOES1ResF(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+				}
 			}
-            //WriteF
+				//WriteF
       }
    }
    else if ((sDataS[0] == 'O') &&
@@ -11394,7 +11432,7 @@ while (!feof(pFile))
 			if (iCnt > 0)
 			{
 				//Non Linear Stress
-					AddOESNRes(DataB, iCnt, sTitle, sSubTitle, inName);
+				AddOESNRes(DataB, iCnt, sTitle, sSubTitle, inName);
 			}
             //WriteF
       }
