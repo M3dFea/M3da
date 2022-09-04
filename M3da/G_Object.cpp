@@ -27203,7 +27203,7 @@ else
 void ME_Object::AddOEFRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName)
 {
 int i;
-
+int iTC;
 ResultsSets[iNoRes]=new ResSet();
 ResultsSets[iNoRes]->sFile=inName;
 ResultsSets[iNoRes]->sTitle=sTitle;
@@ -27215,43 +27215,65 @@ ResultsSets[iNoRes]->LC = Vals[3];
 ResultsSets[iNoRes]->WID = Vals[6];
 ResultsSets[iNoRes]->FCODE = Vals[7];
 ResultsSets[iNoRes]->SCODE = Vals[8];
+iTC = ResultsSets[iNoRes]->TCODE / 1000;
 CString sEL;
 BOOL isGood=FALSE;
 
-if (Vals[2]==33)
+if (Vals[2] == 33)
 {
-  isGood=TRUE;
-  sEL="FORCE CQUAD4";
+	isGood = TRUE;
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FORCE CQUAD4";
+	else
+		sEL = "FORCE CQUAD4";
 }
-else if (Vals[2]==74)
+else if (Vals[2] == 74)
 {
-  isGood=TRUE;
-  sEL="FORCE CTRIA3";
+	isGood = TRUE;
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FORCE CTRIA3";
+	else
+		sEL = "FORCE CTRIA3";
 }
 else if (Vals[2]==2)
 {
   sEL="FORCE CBEAM (not read)";
   ResultsSets[iNoRes]->sName=sEL;
 }
-else if (Vals[2]==102)
+else if (Vals[2] == 102)
 {
-  sEL="FORCE CBUSH";
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FORCE CBUSH";
+	else
+		sEL = "FORCE CBUSH";
 }
-else if (Vals[2]==34)
+else if (Vals[2] == 34)
 {
-  sEL="FORCE CBAR";
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FORCE CBAR";
+	else
+		sEL = "FORCE CBAR";
 }
-else if (Vals[2]==95)
+else if (Vals[2] == 95)
 {
-  sEL="FAILURE INDICES CQUAD4";
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FAILURE INDICES CQUAD4";
+	else
+		sEL = "FAILURE INDICES CQUAD4";
 }
-else if (Vals[2]==97)
+else if (Vals[2] == 97)
 {
-  sEL="FAILURE INDICES CTRIA3";
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FAILURE INDICES CTRIA3";
+	else
+		sEL = "FAILURE INDICES CTRIA3";
 }
-else if (Vals[2]==1)
+else if (Vals[2] == 1)
 {
-  sEL="FORCE CROD";
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FORCE CROD";
+	else
+		sEL = "FORCE CROD";
 }
 
 if ((iCnt>10) && (isGood))
@@ -28848,7 +28870,7 @@ void ME_Object::AddOESNRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
   }
 }
 
-void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+void ME_Object::AddOESResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
 {
 	int i;
 	double ds11;
@@ -28874,7 +28896,12 @@ void ME_Object::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
 		if (Vals[2] == 33)
 		{
 			isGood = TRUE;
-			sEL = "STRESS GRMS CENTRE CQUAD4";
+			sEL = "RMS STRESS CENTRE CQUAD4";
+		}
+		else if (Vals[2] == 74)
+		{
+			isGood = TRUE;
+			sEL = "RMS STRESS CENTRE CTRIA3";
 		}
 
 		if ((iCnt > 10) && (isGood))
@@ -28956,15 +28983,12 @@ void ME_Object::AddOSTRResR(int Vals[], int iCnt, CString sTitle, CString sSubTi
 		if (Vals[2] == 33)
 		{
 			isGood = TRUE;
-			if (Vals[0] / 10 == 5)  //It's a frequency results
-			{
-				sprintf_s(s30,"%g %s",dFreq, "Hz CRMS STRAIN CQUAD4");
-				sEL = s30;
-			}
-			else
-			{
-				sEL = "STRAIN GRMS CQUAD4";
-	        }
+			sEL = "RMS STRAIN CENTRE CQUAD4";
+		}
+		else if (Vals[2] == 74)
+		{
+			isGood = TRUE;
+			sEL = "RMS STRAIN CENTRE CTRIA3";
 		}
 
 		if ((iCnt > 10) && (isGood))
@@ -29053,6 +29077,8 @@ void ME_Object::AddOSTRResR(int Vals[], int iCnt, CString sTitle, CString sSubTi
 		iNoRes++;
 	}
 }
+
+
 
 void ME_Object::AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq)
 {

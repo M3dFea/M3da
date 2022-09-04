@@ -11188,11 +11188,11 @@ if (pCurrentMesh!=NULL)
 }
 }
 
-void DBase::AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+void DBase::AddOESResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
 {
 	if (pCurrentMesh != NULL)
 	{
-		pCurrentMesh->AddOESRRes(Vals, iCnt, sTitle, sSubTitle, inName);
+		pCurrentMesh->AddOESResR(Vals, iCnt, sTitle, sSubTitle, inName);
 	}
 }
 
@@ -11203,6 +11203,8 @@ void DBase::AddOSTRResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle,
 		pCurrentMesh->AddOSTRResR(Vals, iCnt, sTitle, sSubTitle, inName, dFreq);
 	}
 }
+
+
 
 void DBase::AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq)
 {
@@ -11293,6 +11295,8 @@ while (!feof(pFile))
 				{
 					if ((iTC == 0) || (iTC == 2))  //Real sort1 and sort2
 						AddOEFRes(DataB, iCnt, sTitle, sSubTitle, inName);
+					else if ((iTC == 4) || (iTC == 5)) //Real Random
+						AddOEFRes(DataB, iCnt, sTitle, sSubTitle, inName);
 				}
 				else if (DataB[0] / 10 == 5)	//Freq
 				{
@@ -11304,9 +11308,9 @@ while (!feof(pFile))
       }
    }
    else if ((sDataS[0] == 'O') &&
-	   (sDataS[1] == 'A') &&
-	   (sDataS[2] == 'G') &&
-	   (iRecord == -3))
+	        (sDataS[1] == 'A') &&
+	        (sDataS[2] == 'G') &&
+	        (iRecord == -3))
    {
 	   while (iKey != 0)
 	   {
@@ -11391,7 +11395,6 @@ while (!feof(pFile))
    else if ((sDataS[0] == 'O') &&
             (sDataS[1] == 'E') &&
             (sDataS[2] == 'S') &&
-			(sDataS[3] == '1') &&
             (iRecord == -3)) 
    {
       while (iKey != 0)
@@ -11407,8 +11410,14 @@ while (!feof(pFile))
 			{
 				if (ACODE / 10 == 1)  //Statics only
 				{
-					if ((iTC==0) || (iTC == 2))  //Real sort1 and sort2
-					  AddOES1Res(DataB, iCnt, sTitle, sSubTitle, inName);
+					if ((iTC == 0) || (iTC == 2))  //Real sort1 and sort2
+						AddOES1Res(DataB, iCnt, sTitle, sSubTitle, inName);
+					else if ((iTC == 4) || (iTC == 5))
+						AddOESResR(DataB, iCnt, sTitle, sSubTitle, inName);
+				}
+				else if (ACODE / 10 == 10) //NON LINEAR STATICS
+				{
+					AddOESNRes(DataB, iCnt, sTitle, sSubTitle, inName);
 				}
 				else if (ACODE / 10 == 5)  //Frequency
 				{
@@ -11416,44 +11425,7 @@ while (!feof(pFile))
 					  AddOES1ResF(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
 				}
 			}
-				//WriteF
       }
-   }
-   else if ((sDataS[0] == 'O') &&
-            (sDataS[1] == 'E') &&
-            (sDataS[2] == 'S') &&
-			(sDataS[3] == 'N') &&
-            (iRecord == -3)) 
-   {
-      while (iKey != 0)
-      {
-            iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
-			if (iCnt > 0)
-			{
-				//Non Linear Stress
-				AddOESNRes(DataB, iCnt, sTitle, sSubTitle, inName);
-			}
-            //WriteF
-      }
-   }
-   else if ((sDataS[0] == 'O') && 
-            (sDataS[1] == 'E') &&
-            (sDataS[2] == 'S') &&
-            (sDataS[3] == 'R') &&
-            (iRecord == -3))
-   {
-   //TRYING TO FIND RANDOM GRMS RESULTS
-   while (iKey != 0)
-   {
-	   iCnt = 0;
-	   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle, dFreq);
-	   if (iCnt > 0)
-	   {
-		   AddOESRRes(DataB, iCnt, sTitle, sSubTitle, inName);
-	   }
-	   //WriteF
-   }
    }
    else if ((sDataS[0] == 'O') &&  //Strain element desity added 21/02/2019
             (sDataS[1] == 'N') &&  //Does not work yet
@@ -11470,24 +11442,7 @@ while (!feof(pFile))
        //WriteF
      }
    }
-      else if ((sDataS[0] == 'O') &&
-            (sDataS[1] == 'E') &&
-            (sDataS[2] == 'S') &&
-			(sDataS[3] == '1') &&
-            (iRecord == -3)) 
-   {
-      while (iKey != 0)
-      {
-            iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
-			if (iCnt > 0)
-			{
-				if (DataB[0] / 10 == 1)  //Statics only
-					AddOES1Res(DataB, iCnt, sTitle, sSubTitle, inName);
-			}
-            //WriteF
-      }
-   }
+
    fread (&sT,8,1,pFile);
    //iWord = *(int*) &sWord;
    //fWord = *(float*) &sWord; 

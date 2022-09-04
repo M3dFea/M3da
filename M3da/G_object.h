@@ -3790,7 +3790,7 @@ void AddOES1ResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CStrin
 void AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
 void AddOSTRResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
 void AddOESNRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
-void AddOESRRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
+void AddOESResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
 void AddOSTRResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
 void AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
 void AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
