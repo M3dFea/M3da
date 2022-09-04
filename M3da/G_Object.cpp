@@ -53153,6 +53153,7 @@ BOOL CGraphDialog::OnInitDialog()
 	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
+	oLB->SetHorizontalExtent(300);
 	oSize2.top = oS.bottom - 190;;
 	oSize2.left = oS.left + 270;
 	oSize2.bottom = oS.bottom - 10;
@@ -53160,6 +53161,7 @@ BOOL CGraphDialog::OnInitDialog()
 	oLB = (CListBox*)this->GetDlgItem(IDC_ENT);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
+	oLB->SetHorizontalExtent(300);
 	oSize2.top = oS.bottom - 190;;
 	oSize2.left = oS.left + 430;
 	oSize2.bottom = oS.bottom - 10;
@@ -53167,6 +53169,7 @@ BOOL CGraphDialog::OnInitDialog()
 	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
+	oLB->SetHorizontalExtent(300);
 	oSize2.top = oS.bottom - 190;;
 	oSize2.left = oS.left + 590;
 	oSize2.bottom = oS.bottom - 10;
@@ -53174,6 +53177,7 @@ BOOL CGraphDialog::OnInitDialog()
 	oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
 	if (oLB != NULL)
 		oLB->MoveWindow(oSize2, 0);
+	oLB->SetHorizontalExtent(500);
 	oSize2.top = oS.bottom - 190;;
 	oSize2.left = oS.left + 950;
 	oSize2.bottom = oS.bottom - 160;
