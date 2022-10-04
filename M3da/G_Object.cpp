@@ -28933,7 +28933,7 @@ void ME_Object::AddOESResR(int Vals[], int iCnt, CString sTitle, CString sSubTit
 				//For proper RMS VM see Pitoiset e.a. [1]
 				//dvm = pow((ds11 * ds11 - ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
 				//Note the + where - would be but this is Thales method for
-				//GRMS VM note all values are +ve
+				//RMS VM note all values are +ve
 				dvm = pow((ds11 * ds11 + ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
 				pRes->v[4] = dvm;
 				pRes->v[5] = *(float*)&Vals[i + 5];

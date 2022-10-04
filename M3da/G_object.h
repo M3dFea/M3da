@@ -3424,8 +3424,8 @@ public:
 };
 
 const int MAX_MATS=1000000;
-const int MAX_ENTS=1000000;
-const int MAX_FESIZE=1000000;
+const int MAX_ENTS=5000000;
+const int MAX_FESIZE=5000000;
 
 
 class Table : public CObject
