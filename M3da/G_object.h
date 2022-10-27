@@ -1959,7 +1959,6 @@ public:
    virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
    C3dVector GetCoords(); 
    virtual void SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran);
-   virtual void HighLight(CDC* pDC);
    //virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);
    virtual void SetTo(C3dVector cInVect);
    virtual void Transform(C3dMatrix TMAt);
@@ -1969,6 +1968,10 @@ public:
    virtual void Serialize(CArchive& ar,int iV);
    virtual C3dVector Get_Centroid();
    virtual void S_Box(CPoint P1,CPoint P2,ObjList* pSel);
+   virtual CString GetName();
+   virtual int GetVarHeaders(CString sVar[]);
+   virtual int GetVarValues(CString sVar[]);
+   virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 class CvPt_ObjectW : public CvPt_Object

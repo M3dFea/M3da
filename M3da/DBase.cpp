@@ -2439,9 +2439,8 @@ if (pCurrentMesh->LkList!=NULL)
 {
 	Dsp_Rem(pCurrentMesh->LkList);
 	RemTempGraphics(pCurrentMesh->LkList);
-   delete(pCurrentMesh->LkList);
-   pCurrentMesh->LkList=NULL;
-
+    delete(pCurrentMesh->LkList);
+    pCurrentMesh->LkList=NULL;
 }
 if (pCurrentMesh->LkList==NULL)
   pCurrentMesh->LkList=new cLinkList();

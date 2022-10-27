@@ -3338,6 +3338,8 @@ OglDrawW(iDspFlgs,dS1,dS2);
 Link::Link()
 {
 pNext=NULL;
+p1 = NULL;
+p2 = NULL;
 }
 
 Link::Link(double x1, double y1, double z1,
@@ -43375,11 +43377,7 @@ Pt_Point->x *=d;
 }
 
 
-void CvPt_Object::HighLight(CDC* pDC)
-{
-pDC->Ellipse((int) DSP_Point->x+5,(int) DSP_Point->y+5,(int) DSP_Point->x-5,(int) DSP_Point->y-5);
 
-}
 
 
 
@@ -43403,6 +43401,60 @@ Pt_Point->x = cInVect.x;
 Pt_Point->y = cInVect.y;
 Pt_Point->z = cInVect.z;
 }
+
+CString CvPt_Object::GetName()
+{
+	return ("Point");
+}
+
+int CvPt_Object::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = "X";
+	iNo++;
+	sVar[iNo] = "Y";
+	iNo++;
+	sVar[iNo] = "Z";
+	iNo++;
+	sVar[iNo] = "Z";
+	iNo++;
+	sVar[iNo] = "Wt";
+	iNo++;
+	return(iNo);
+}
+
+
+int CvPt_Object::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%g", Pt_Point->x);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", Pt_Point->y);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", Pt_Point->z);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", w);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void CvPt_Object::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+
+	Pt_Point->x = atof(sVar[0]);
+	Pt_Point->y = atof(sVar[1]);
+	Pt_Point->z = atof(sVar[2]);
+	w = atof(sVar[3]);
+}
+
+
+
+
 
 
 IMPLEMENT_DYNAMIC( CvPt_ObjectW , CObject )
@@ -43449,6 +43501,8 @@ if (pS!=NULL)
 }
 return (R);
 }
+
+
 
 IMPLEMENT_DYNAMIC(NCurve, CObject)
 
