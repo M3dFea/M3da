@@ -2484,6 +2484,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "SELRBENODE")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zSELRBENODE_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "PRBL")
 	  {
 		  iResumePos = 0;
@@ -8660,6 +8670,60 @@ if (iStat == 100)
 }
 MenuEnd:
 return RetVal;
+}
+
+int zSELRBENODE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("/PICK ELEMENTS");
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			cDBase->S_Count = 0;
+			cDBase->FILTER.SetAll();
+			cDBase->SelRBENode(cDBase->OTemp);
+			cDBase->OTemp->Clear();
+			//cDBase->S_Res();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
 }
 
 int zELREV_Mnu::DoMenu(CString CInMsg,CPoint Pt)

@@ -43416,10 +43416,9 @@ int CvPt_Object::GetVarHeaders(CString sVar[])
 	iNo++;
 	sVar[iNo] = "Z";
 	iNo++;
-	sVar[iNo] = "Z";
-	iNo++;
 	sVar[iNo] = "Wt";
 	iNo++;
+
 	return(iNo);
 }
 

@@ -696,6 +696,12 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zSELRBENODE_Mnu : public zMnu
+{
+public:
+virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zNDMOOSYS_Mnu: public zMnu
 {
 public:
@@ -1152,6 +1158,7 @@ class zGPBYTYPE_Mnu: public zMnu
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
+
 
 class zSELBYPID_Mnu: public zMnu
 {

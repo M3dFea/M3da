@@ -269,6 +269,7 @@ void ElemntMoPID(int iPID);
 void ElementReverse();
 void TetCircumSphere();
 void ShellMoCSys(int iSys);
+void SelRBENode(ObjList* Items);
 void SpringMoCSys(int iSys);
 void NodeMoOSys(int iSys);
 void NodeMoLab(int iN);

@@ -17599,6 +17599,36 @@ if (bReGen==TRUE)
 }
 }
 
+void DBase::SelRBENode(ObjList* Items)
+{
+	int iNoC=0;
+	char s1[200];
+	CString OutT;
+	BOOL bReGen = FALSE;
+	BOOL bC = FALSE;
+	int i = 0;
+	for (i = 0; i < Items->iNo; i++)
+	{
+		if (Items->Objs[i]->iObjType == 3)
+		{
+			E_Object* pE = (E_Object*)Items->Objs[i];
+			if (pE->iType == 122)
+			{
+				E_ObjectR* pR = (E_ObjectR*)pE;
+				if (pR->pVertex[0] != NULL)
+				{
+					S_BuffAdd(pR->pVertex[0]);
+					iNoC++;
+				}
+			}
+		}
+	}
+	sprintf_s(s1, "%s%i", "Number of RBE Nodes Found : ", iNoC);
+	outtext1(_T(s1));
+	Items->Clear();
+	ReDraw();
+}
+
 void DBase::SpringMoCSys(int iSys)
 {
 int iCO;

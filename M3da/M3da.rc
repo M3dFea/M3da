@@ -299,6 +299,7 @@ BEGIN
         MENUITEM "Elements by Type",            ID_SELECTION_ELEMENTSBYTYPE
         MENUITEM "Elements by Material",        ID_SELECTION_ELEMENTSBYMATERIAL
         MENUITEM "Nodes by Colour",             ID_SELECTION_NODESBYCOLOUR
+        MENUITEM "RBE Centre Nodes",            ID_SELECTION_RBECENTRENODES
         MENUITEM "Select All",                  ID_SELECTION_SELECTALL
         MENUITEM "Invert Selection",            ID_SELECTION_INVERTSELECTION
         MENUITEM "Related To",                  ID_SELECTION_RELATEDTO
@@ -1252,6 +1253,7 @@ BEGIN
     ID_FEMTOOLS_SWEEPNODESTOBEAMS33361 "Sweep nodes into beam elements."
     ID_FEMTOOLS_SWEEPNODESTOSHELLS33362 "Sweep nodes into shell elements."
     ID_VIEW_HIGHLIGHTLIMIT  "Set the limit on the no of objects to highlight"
+    ID_SELECTION_RBECENTRENODES "Select RBE Centre Nodes"
 END
 
 #endif    // English (United States) resources

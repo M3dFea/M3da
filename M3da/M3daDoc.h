@@ -496,6 +496,7 @@ public:
   afx_msg void OnFemtoolsSweepnodestobeams33361();
   afx_msg void OnFemtoolsSweepnodestoshells33362();
   afx_msg void OnViewHighlightlimit();
+  afx_msg void OnSelectionRbecentrenodes();
 };
 
 
