@@ -7305,7 +7305,11 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("/PICK OBJECT TO PROJECT TO");
+	cDBase->FILTER.Clear();
+  cDBase->FILTER.SetFilter(7);
+  cDBase->FILTER.SetFilter(13);
+  cDBase->FILTER.SetFilter(15);
+  outtext2("/PICK OBJECT TO PROJECT TO");
   iStat=1;
 }
 if (iStat == 1)
