@@ -436,6 +436,7 @@ BEGIN
             MENUITEM "Shell Normal Consistancy",    ID_CHECKS_SHELLNORMALCONSISTANCY
             MENUITEM "2d Section Properties A Ixx Iyy etc", ID_CHECKS_2DSECTIONPROPERTIESAIXXIYYETC
             MENUITEM "Tet Circumsphere",            ID_CHECKS_TETCIRCUMSPHERE
+            MENUITEM "Count F.E. Items",            ID_CHECKS_COUNTF
         END
         MENUITEM "Delete",                      ID_TOOLS_DELETE
         MENUITEM "Insert Planet Earth",         ID_TOOLS_PLANET
@@ -1254,6 +1255,7 @@ BEGIN
     ID_FEMTOOLS_SWEEPNODESTOSHELLS33362 "Sweep nodes into shell elements."
     ID_VIEW_HIGHLIGHTLIMIT  "Set the limit on the no of objects to highlight"
     ID_SELECTION_RBECENTRENODES "Select RBE Centre Nodes"
+    ID_CHECKS_COUNTF        "Count No Off Selected Nodes and Elements etc"
 END
 
 #endif    // English (United States) resources

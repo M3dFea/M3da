@@ -684,6 +684,12 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zCHKCOUNT_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zLABENT_Mnu: public zMnu
 {
 public:

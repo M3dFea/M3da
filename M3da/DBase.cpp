@@ -7571,7 +7571,9 @@ void DBase::SetDOFStringB(ObjList* Items, CString sDOF)
 
 void DBase::ShellOffsets(ObjList* Items,double dOff)
 {
-int iCO;
+int iCO=0;
+int iNoC=0;
+char s1[200];
 
 CString OutT;
 BOOL bReGen=FALSE;
@@ -7585,15 +7587,19 @@ for (iCO=0;iCO<Items->iNo;iCO++)
       E_Object3* pB=(E_Object3*) pE;
       pB->dZOFFS=dOff;
       bReGen=TRUE;
+	  iNoC++;
     }
     else if (pE->iType==94) 
     {
       E_Object4* pB=(E_Object4*) pE;
       pB->dZOFFS=dOff;
       bReGen=TRUE;
+	  iNoC++;
     }
   }
 }
+sprintf_s(s1, "%s%i", "Number of Elements Modified : ", iNoC);
+outtext1(_T(s1));
 if (bReGen==TRUE)
 {
   InvalidateOGL();
@@ -17495,6 +17501,36 @@ ReDraw();
 }
 }
 
+void DBase::CountItems()
+{
+	char S1[200];
+	int iNode = 0;
+	int iEl = 0;
+	int iCYS = 0;
+	int iCO;
+	for (iCO = 0; iCO < S_Count; iCO++)
+	{
+		if (S_Buff[iCO]->iObjType == 1)
+			iNode++;
+		else if (S_Buff[iCO]->iObjType == 3)
+			iEl++;
+		else if (S_Buff[iCO]->iObjType == 12)
+			iCYS++;
+
+	}
+		//InvalidateOGL();
+	outtext1("Count of Selected F.E. Items:-");
+	sprintf_s(S1, "%s%i", "Number of Nodes : ", iNode);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Number of Elements : ", iEl);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Number of Coord-Systems : ", iCYS);
+	outtext1(S1);
+	ReDraw();
+
+}
+
+
 
 void DBase::LabEnt()
 {
@@ -17743,15 +17779,20 @@ void DBase::ShellMoCSys(int iSys)
 
 void DBase::NodeMoOSys(int iSys)
 {
-int iCO;
+int iCO=0;
+int iNoC=0;
+char s1[200];
 for (iCO=0;iCO<S_Count;iCO++)
 {
   if (S_Buff[iCO]->iObjType == 1)
   {
     Pt_Object* pN = (Pt_Object*) S_Buff[iCO];  
     pN->OutSys=iSys;
+	iNoC++;
   }
 }
+sprintf_s(s1, "%s%i", "Number of Nodes Modified : ", iNoC);
+outtext1(_T(s1));
 }
 
 void DBase::ElementMoLab(int iN)
@@ -17893,15 +17934,20 @@ ReDraw();
 
 void DBase::NodeMoRSys(int iSys)
 {
-int iCO;
+int iCO=0;
+int iNoC=0;
+char s1[200];
 for (iCO=0;iCO<S_Count;iCO++)
 {
   if (S_Buff[iCO]->iObjType == 1)
   {
     Pt_Object* pN = (Pt_Object*) S_Buff[iCO];  
     pN->DefSys=iSys;
+	iNoC++;
   }
 }
+sprintf_s(s1, "%s%i", "Number of Nodes Modified : ", iNoC);
+outtext1(_T(s1));
 }
 void DBase::Dsp_RemGP(G_Object* gIn)
 {

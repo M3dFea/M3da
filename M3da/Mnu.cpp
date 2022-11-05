@@ -2444,6 +2444,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "CHKCOUNT")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zCHKCOUNT_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "RESLABRESP")
 	  {
 		  iResumePos = 0;
@@ -8571,6 +8581,52 @@ if (iStat == 100)
 }
 MenuEnd:
 return RetVal;
+}
+
+int zCHKCOUNT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("/PICK ITEMS TO COUNT");
+			iStat = 1;
+
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->CountItems();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
 }
 
 int zLABENT_Mnu::DoMenu(CString CInMsg,CPoint Pt)

@@ -264,6 +264,7 @@ void WPMode();
 void CreateWP(double dWPSize);
 ME_Object* CreateMesh(CString inName);
 void Colour(int iCol);
+void CountItems();
 void LabEnt();
 void ElemntMoPID(int iPID);
 void ElementReverse();
