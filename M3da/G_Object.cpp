@@ -3686,6 +3686,39 @@ void Curve::HighLight(CDC* pDC)
   ContrPolyW::Draw(pDC,4,0,1);
 }
 
+CString Curve::GetName()
+{
+	return ("Curve");
+}
+
+int Curve::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+
+	sVar[iNo] = "KNOT Vector";
+	iNo++;
+	return(iNo);
+}
+
+
+int Curve::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", 1);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void Curve::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+
+	//DefSys = atoi(sVar[0]);
+
+}
+
+
 IMPLEMENT_DYNAMIC( ContrPolyW, CObject )
 
 
@@ -44689,6 +44722,61 @@ void NCurve::EndPtChk01(NSurf* pSurf,
 	}
 }
 
+CString NCurve::GetName()
+{
+	return ("NCurve");
+}
+
+int NCurve::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+
+	sVar[iNo] = "KNOT Vector";
+	iNo++;
+	return(iNo);
+}
+
+
+int NCurve::GetVarValues(CString sVar[])
+{
+	int i;
+	int iNo = 0;
+	char S1[80] = "";
+	CString sKnots = "";
+	for (i = 0; i < iNoCPts+p; i++)
+	{
+		sprintf_s(S1, "%g,", knots[i]);
+		sKnots += S1;
+	}
+	sprintf_s(S1, "%g", knots[iNoCPts + p]);
+	sKnots += S1;
+	//CString str = str(3.1);
+	sVar[iNo] = sKnots;
+	iNo++;
+	return (iNo);
+}
+
+void NCurve::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int i=0;
+	int index = 0;
+	CString line = _T(sVar[0]);
+	CString field;
+	CArray<CString, CString> v;
+
+	while (AfxExtractSubString(field, line, index, _T(',')))
+	{
+		v.Add(field);
+		++index;
+	}
+	if (index == iNoCPts + p + 1)
+	{
+		for (i = 0; i < iNoCPts + p + 1;i++)
+		{
+			knots[i] = atof(v[i]);
+		}
+	}
+}
 
 NCurveOnSurf* NCurve::GetSurfaceCV(NSurf* pSurf)
 {

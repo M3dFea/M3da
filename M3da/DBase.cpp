@@ -13593,11 +13593,20 @@ void DBase::KnotInsertion(NCurve* pC,C3dVector vPt)
     dU = pC->MinWPt(vPt);
     if ((dU > 0) && (dU < 1))
     {
-      r = pC->knotInsertion(dU, 2, cPts, knots);
+      r = pC->knotInsertion(dU, pC->p+1, cPts, knots);
       pNewC = new NCurve();
       pNewC->GenerateExp(p, cPts, knots);
       pNewC->Move(pM);
+	  pNewC->iLabel = pC->iLabel;
       AddObj(pNewC);
+	  //Remove original
+	  if (pC->pParent == NULL)
+	  {
+		  RemObj(pC);
+		  Dsp_Rem(pC);
+		  Dsp_RemGP(pC);
+	  }
+	  InvalidateOGL();
       ReDraw();
     }
     else

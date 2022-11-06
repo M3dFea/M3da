@@ -1817,7 +1817,7 @@ void Sort();
 class IgesP
 {
 public:
-CString P[1000000];
+CString P[10000000];
 int iNo;
 IgesP();
 void Add(CString inSt);
@@ -2048,6 +2048,7 @@ public:
    virtual C3dVector GetPt(double dU);
    virtual C3dVector GetDir(double dU);
    virtual C3dVector Get_Centroid();
+
 };
 
 class Curve : public ContrPolyW
@@ -2058,6 +2059,10 @@ virtual void Draw(CDC* pDC,int iDrawmode);
 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 virtual void HighLight(CDC* pDC);
+virtual CString GetName();
+virtual int GetVarHeaders(CString sVar[]);
+virtual int GetVarValues(CString sVar[]);
+virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 //26/09/2016
@@ -2245,6 +2250,10 @@ public:
    virtual double getLen();
    virtual double CorrectW(double w);
    virtual void NullPointRef();
+   virtual CString GetName();
+   virtual int GetVarHeaders(CString sVar[]);
+   virtual int GetVarValues(CString sVar[]);
+   virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 class NCurveOnSurf : public NCurve
