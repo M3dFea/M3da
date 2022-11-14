@@ -13664,9 +13664,26 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 			pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
 			pNewC->iLabel = pC->iLabel;
 			AddObj(pNewC);
-
 			cPtsSeg.DeleteAll();
 			knotsSeg.DeleteAll();
+			//Second segment curve
+			int iSS;
+			cPtsSeg.Size(cPts.n-(k + 1));
+			knotsSeg.Size(cPtsSeg.n+r);
+			for (i = (k + 1); i < cPts.n; i++)
+				cPtsSeg[i- (k + 1)] = cPts[i];
+			for (i = r; i < cPts.n + r ; i++)
+			{
+				dTmp = (knots[i]- knots[r])/(knots[cPts.n + r-1]- knots[r]);
+				knotsSeg[i-r] = dTmp;
+			}
+			pNewC = new NCurve();
+			pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
+			pNewC->iLabel = pC->iLabel;
+			AddObj(pNewC);
+			cPtsSeg.DeleteAll();
+			knotsSeg.DeleteAll();
+
 			//Remove original
 			if (pC->pParent == NULL)
 			{
