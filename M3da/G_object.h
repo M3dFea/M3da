@@ -2227,7 +2227,7 @@ public:
    //Get all control points
    virtual void GetcPts(Vec <C3dVector> & Cpts);
    virtual void GetKnotVec(Vec<double>& U);
-   virtual int knotInsertion(double u, int r, Vec <C4dVector> & ncP,Vec <double> & ncU);
+   virtual int knotInsertion(double u, int r,  int &kk, Vec <C4dVector> & ncP,Vec <double> & ncU);
    virtual void refineKnotVector(Vec<double>& XVec,Vec <C4dVector> & P,Vec <double> & U);
    virtual double chordLengthParam(const Vec<C3dVector> & Q, Vec<double> &ub);
    virtual void knotAveraging(const Vec<double>& uk, int deg, Vec<double>& U);

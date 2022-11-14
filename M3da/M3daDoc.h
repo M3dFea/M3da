@@ -498,6 +498,7 @@ public:
   afx_msg void OnViewHighlightlimit();
   afx_msg void OnSelectionRbecentrenodes();
   afx_msg void OnChecksCountf();
+  afx_msg void OnCurvemodifySplitatpoint();
 };
 
 

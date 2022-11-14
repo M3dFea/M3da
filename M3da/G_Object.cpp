@@ -43803,7 +43803,7 @@ for (i=0;i<iNoK;i++)
 }
 }
 
-int NCurve::knotInsertion(double u, int r, Vec <C4dVector> & ncP,Vec <double> & ncU)
+int NCurve::knotInsertion(double u, int r,  int& kk, Vec <C4dVector> & ncP,Vec <double> & ncU)
 {
   // Compute k and s      u = [ u_k , u_k+1)  with u_k having multiplicity s
   int k=0,s=0 ;
@@ -43890,7 +43890,7 @@ int NCurve::knotInsertion(double u, int r, Vec <C4dVector> & ncP,Vec <double> & 
   P.DeleteAll();
   U.DeleteAll();
   R.DeleteAll();
-
+  kk = k;
   return r; 
 }
 

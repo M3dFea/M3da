@@ -13583,6 +13583,7 @@ void DBase::KnotInsertion(NCurve* pC,C3dVector vPt)
   pM.Set(0.0, 1.0, 0.0);
   double p;  //order
   int r;
+  int k = 0;
   double dU;
   NCurve* pNewC=NULL;
 
@@ -13593,7 +13594,7 @@ void DBase::KnotInsertion(NCurve* pC,C3dVector vPt)
     dU = pC->MinWPt(vPt);
     if ((dU > 0) && (dU < 1))
     {
-      r = pC->knotInsertion(dU, pC->p+1, cPts, knots);
+      r = pC->knotInsertion(dU, pC->p+1,k, cPts, knots);
       pNewC = new NCurve();
       pNewC->GenerateExp(p, cPts, knots);
       pNewC->Move(pM);
@@ -13618,6 +13619,57 @@ void DBase::KnotInsertion(NCurve* pC,C3dVector vPt)
   {
     outtext1("ERROR: No Curve Selected.");
   }
+}
+
+void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
+{
+	Vec<C4dVector> cPts;
+	Vec<double> knots;
+	Vec<C4dVector> cPtsSeg;
+	Vec<double> knotsSeg;
+	C3dVector pM;
+	pM.Set(0.0, 1.0, 0.0);
+	double p;  //order
+	int r;
+	int k = 0;
+	double dU;
+	NCurve* pNewC = NULL;
+
+	if (pC != NULL)
+	{
+		outtext1("Curve found for knot insertion.");
+		p = pC->p;
+		dU = pC->MinWPt(vPt);
+		if ((dU > 0) && (dU < 1))
+		{
+			r = pC->knotInsertion(dU, pC->p + 1,k, cPts, knots);
+			pNewC = new NCurve();
+			pNewC->GenerateExp(p, cPts, knots);
+			pNewC->Move(pM);
+			pNewC->iLabel = pC->iLabel;
+			AddObj(pNewC);
+			//Remove original
+			if (pC->pParent == NULL)
+			{
+				RemObj(pC);
+				Dsp_Rem(pC);
+				Dsp_RemGP(pC);
+			}
+			InvalidateOGL();
+			ReDraw();
+
+			cPts.DeleteAll();
+			knots.DeleteAll();
+		}
+		else
+		{
+			outtext1("ERROR: No Projection onto Curve.");
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Curve Selected.");
+	}
 }
 
 C3dVector DBase::Intersect(BOOL &bErr)

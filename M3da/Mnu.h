@@ -225,6 +225,14 @@ public:
   virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zCVSPLIT_Mnu : public zMnu
+{
+	NCurve* pC = NULL;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+
 class zKNOTMOD_Mnu : public zMnu
 {
   CString sKnot;

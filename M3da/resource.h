@@ -556,13 +556,14 @@
 #define ID_VIEW_HIGHLIGHTLIMIT          33363
 #define ID_SELECTION_RBECENTRENODES     33364
 #define ID_CHECKS_COUNTF                33365
+#define ID_CURVEMODIFY_SPLITATPOINT     33366
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        363
-#define _APS_NEXT_COMMAND_VALUE         33366
+#define _APS_NEXT_COMMAND_VALUE         33367
 #define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

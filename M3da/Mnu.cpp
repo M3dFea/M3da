@@ -2444,6 +2444,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "CVSPLIT")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zCVSPLIT_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "CHKCOUNT")
 	  {
 		  iResumePos = 0;
@@ -7417,6 +7427,66 @@ int zKNOTINS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
   }
 MenuEnd:
   return RetVal;
+}
+
+int zCVSPLIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("/PICK CURVE TO SPLIT");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				iStat = 2;
+				pC = NULL;
+				if (cDBase->S_Buff[cDBase->S_Count - 1] != NULL)
+					if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7)
+						pC = (NCurve*)cDBase->S_Buff[cDBase->S_Count - 1];
+			}
+		}
+		if (iStat == 2)
+		{
+			cDBase->FILTER.SetAll();
+			outtext2("/ENTER PT TO PROJECT");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			C3dVector p2;
+			p2 = cDBase->DB_PopBuff();
+			cDBase->CurveSplit(pC, p2);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
 }
 
 

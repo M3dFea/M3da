@@ -361,6 +361,7 @@ BEGIN
             MENUITEM "Dash",                        ID_CURVEMODIFY_DASH
             MENUITEM "Centre",                      ID_CURVEMODIFY_CENTRE
             MENUITEM "Insert Knot",                 ID_CURVEMODIFY_INSERTKNOT
+            MENUITEM "Split at Point",              ID_CURVEMODIFY_SPLITATPOINT
         END
         POPUP "Part Modify"
         BEGIN
@@ -1256,6 +1257,7 @@ BEGIN
     ID_VIEW_HIGHLIGHTLIMIT  "Set the limit on the no of objects to highlight"
     ID_SELECTION_RBECENTRENODES "Select RBE Centre Nodes"
     ID_CHECKS_COUNTF        "Count No Off Selected Nodes and Elements etc"
+    ID_CURVEMODIFY_SPLITATPOINT "Split a Curve at a Point"
 END
 
 #endif    // English (United States) resources

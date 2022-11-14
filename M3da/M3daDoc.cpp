@@ -351,6 +351,7 @@ ON_COMMAND(ID_FEMTOOLS_SWEEPNODESTOSHELLS33362, &CM3daDoc::OnFemtoolsSweepnodest
 ON_COMMAND(ID_VIEW_HIGHLIGHTLIMIT, &CM3daDoc::OnViewHighlightlimit)
 ON_COMMAND(ID_SELECTION_RBECENTRENODES, &CM3daDoc::OnSelectionRbecentrenodes)
 ON_COMMAND(ID_CHECKS_COUNTF, &CM3daDoc::OnChecksCountf)
+ON_COMMAND(ID_CURVEMODIFY_SPLITATPOINT, &CM3daDoc::OnCurvemodifySplitatpoint)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5908,6 +5909,21 @@ void CM3daDoc::OnChecksCountf()
 	{
 		outtextMSG2("CHKCOUNT");
 		sLastcmd = "CHKCOUNT";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnCurvemodifySplitatpoint()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("CVSPLIT");
+		sLastcmd = "CVSPLIT";
 	}
 	else
 	{
