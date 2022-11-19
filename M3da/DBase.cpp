@@ -13672,14 +13672,15 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 			knotsSeg.Size(cPtsSeg.n+r);
 			for (i = (k + 1); i < cPts.n; i++)
 				cPtsSeg[i- (k + 1)] = cPts[i];
-			for (i = r; i < cPts.n + r ; i++)
-			{
-				dTmp = (knots[i]- knots[r])/(knots[cPts.n + r-1]- knots[r]);
-				knotsSeg[i-r] = dTmp;
+			for (i = k+1; i < cPts.n + r ; i++)
+			{	
+				dTmp = (knots[i]- knots[k+1])/(knots[cPts.n + r-1]- knots[k+1]);
+				knotsSeg[i-(k+1)] = dTmp;
 			}
 			pNewC = new NCurve();
 			pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
-			pNewC->iLabel = pC->iLabel;
+			pNewC->iLabel = iCVLabCnt;
+			iCVLabCnt++;
 			AddObj(pNewC);
 			cPtsSeg.DeleteAll();
 			knotsSeg.DeleteAll();
