@@ -4482,18 +4482,7 @@ public:
 };
 
 
-//************************************************************************
-//   D E L A U N A Y  TRIANGULATION
-//************************************************************************
-class Facest3
-{
-public:
-C3dVector* pV[3];
-C3dVector vC;
-double CirR;
 
-Facest3(C3dVector* v1,C3dVector* v2,C3dVector* v3);
-};
 
 //Class for storing nastran fields
 const int MAX_FIELDS=5000;
@@ -4511,58 +4500,4 @@ BOOL AddLn(CString sStr);
 void Read(FILE* pFile,CString& sLine,CString& sLineN);
 };
 
-const int MAX_TRI=1000;
 
-class Trianguation
-{
-public:
-Facest3* Tri[MAX_TRI];
-int iNo;
-Trianguation();
-void AddTriangle(C3dVector* v1,C3dVector* v2,C3dVector* v3);
-};
-
-class Delaunay2d
-{
-Trianguation Tris;
-C3dVector Nodes[MAX_TRI];
-int iNo;
-Delaunay2d();
-void AddPt(double x,double y,double z);
-};
-
-
-//***************************************************
-// 2d Material Point Method State Variable
-// 06/03/2019
-//***************************************************
-class MPMVar2d
-{
-public:
-  MPMVar2d();
-  ~MPMVar2d();
-  int Pid;           //Particle ID
-  Pt_Object* pNode;
-  int Eid;           //Base element ID
-  int BCellid;       //Back groud grid ID (Euler Cell ID)
-  double dMp;        //Particle Mass
-  double dVol;       //Particle Volume
-  double dVol0;       //Particle Volume
-  Mat dvFp;          //Deformation gradient  
-  Mat ds;            //Stress
-  Mat deps;          //Strain
-  Mat dVp;           //Velocity
-  Mat dXp;           //Position
-};
-
-class Ndata
-{
-public:
-  Ndata();
-  ~Ndata();
-  double nMass;
-  void Reset();
-  Mat nMomentum;
-  Mat nIForce;
-  Mat nEforce;
-};

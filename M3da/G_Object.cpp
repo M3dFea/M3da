@@ -50888,63 +50888,8 @@ do
 while (bExit==FALSE);
 }
 
-//******************************************************************
-// DELAUNAY MESH GENERATION 
-//****************************************************************** 
-
-Facest3::Facest3(C3dVector* v1,C3dVector* v2,C3dVector* v3)
-{
-pV[0]=v1;
-pV[1]=v2;
-pV[2]=v3;
- double x1=pV[0]->x;
- double y1=pV[0]->y;
- double x2=pV[1]->x;
- double y2=pV[1]->y;
- double x3=pV[2]->x;
- double y3=pV[2]->y;
- double a=(y2-y3)*(x2-x1)-(y2-y1)*(x2-x3);
- double a1=(x1+x2)*(x2-x1)+(y2-y1)*(y1+y2);
- double a2=(x2+x3)*(x2-x3)+(y2-y3)*(y2+y3);
- vC.x=(a1*(y2-y3)-a2*(y2-y1))/a/2;
- vC.y=(a2*(x2-x1)-a1*(x2-x3))/a/2;
- vC.z=0;
- CirR=vC.Dist(*pV[0]);
-
-}
-
-Trianguation::Trianguation()
-{
-  iNo=0;
-}
-
-void Trianguation::AddTriangle(C3dVector* v1,C3dVector* v2,C3dVector* v3)
-{
-Tri[iNo]=new Facest3(v1,v2,v3);
-}
 
 
-
-Delaunay2d::Delaunay2d()
-{
-  iNo=0;
-  AddPt(0,0,0);
-  AddPt(0,1,0);
-  AddPt(1,1,0);
-  AddPt(1,0,0);
-  //Initial triangluation covering whole
-  //parametric domain.
-  Tris.AddTriangle(&Nodes[0],&Nodes[1],&Nodes[2]);
-  Tris.AddTriangle(&Nodes[2],&Nodes[3],&Nodes[0]);
-}
-
-void Delaunay2d::AddPt(double x,double y,double z)
-{
-  Nodes[iNo].x=x;
-  Nodes[iNo].y=y;
-  Nodes[iNo].z=z;
-  iNo++;
-}
 
 
 
@@ -52673,76 +52618,7 @@ void CPcompEditor::OnPaint()
   OglDraw();
 }
 
-//***************************************************
-// 2d Material Point Method State Variable
-// 06/03/2019
-//***************************************************
-MPMVar2d::MPMVar2d()
-{
-  Pid=-1;            //Particle ID
-  pNode = NULL;
-  BCellid=-1;        //Euler Cell ID
-  dMp = 1.0;         //Particle Mass
-  dVol = 1.0;        //Particle Volume
-  dvFp.Create(2, 2);
-  *dvFp.mn(1, 1) = 1.0;  //Deformation gradient
-  *dvFp.mn(1, 2) = 0.0;
-  *dvFp.mn(2, 1) = 0.0;
-  *dvFp.mn(2, 2) = 1.0;
-  ds.Create(3, 1);
-  *ds.mn(1, 1) = 0.0;   //Stress
-  *ds.mn(2, 1) = 0.0;   //Stress
-  *ds.mn(3, 1) = 0.0;   //Stress
-  deps.Create(3, 1);
-  *deps.mn(1, 1) = 0.0;   //Strain
-  *deps.mn(2, 1) = 0.0;   //Strain
-  *deps.mn(3, 1) = 0.0;   //Strain
-  dVp.Create(2, 1);
-  *dVp.mn(1, 1) = 0.0;   //Velocity
-  *dVp.mn(2, 1) = 0.0;   //Velocity
-}
 
-MPMVar2d::~MPMVar2d()
-{
-  dvFp.clear();       //Deformation gradient  
-  ds.clear();         //Stress
-  deps.clear();;       //Strain
-  dVp.clear();;        //Velocity
-  dXp.clear();;        //Position
-}
-
-
-
-//***************************************************
-// 2d Material Point Euler Nodal Data
-// 06/03/2019
-//***************************************************
-Ndata::Ndata()
-{
-  nMass=0;
-  nMomentum.Create(2, 1);
-  nMomentum.MakeZero();
-  nIForce.Create(2, 1);
-  nIForce.MakeZero();
-  nEforce.Create(2, 1);
-  nEforce.MakeZero();
-}
-
-void Ndata::Reset()
-{
-  nMass = 0;
-  nMomentum.MakeZero();
-  nIForce.MakeZero();
-  nEforce.MakeZero();
-}
-
-
-Ndata::~Ndata()
-{
-  nMomentum.clear();
-  nIForce.clear();
-  nEforce.clear();
-}
 
 
 
