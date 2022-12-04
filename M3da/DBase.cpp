@@ -3155,7 +3155,7 @@ else
     vRes.z=p0.z+dpp*vT.z;
     iRC=0;
   }
-  if ((dpp>0) && (dpp<1.1))
+  if ((dpp>0) && (dpp<1.0))	  //was dpp<1.1
   {
     iRC=1;
   }
@@ -5536,7 +5536,7 @@ void DBase::IntersectEls(ObjList* Els1)
 	C3dVector vInt;
 	double dS= 0;		//Parametric ordinates of intersection a seg with triange;
 	double dT = 0;		//Parametric ordinates of intersection a seg with triange
-	double dTol = 0.01;
+	double dTol = 0.0001;
 	int iNoInts = 0;
 	E_Object* pE = NULL;
 	E_Object3* pEInt = NULL;

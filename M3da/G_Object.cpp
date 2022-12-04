@@ -43337,7 +43337,7 @@ if ((iDspFlgs & DSP_POINTS) > 0)
 {
   Selectable=1;
   glColor3fv(cols[GetCol()]);
-  glPointSize(6.0f);
+  glPointSize(8.0f);
   glBegin(GL_POINTS);
   glVertex3f((float) Pt_Point->x,(float) Pt_Point->y,(float) Pt_Point->z);
   glEnd();
