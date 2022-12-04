@@ -5522,6 +5522,81 @@ else if ((Nodes->iNo > 0) && (Nodes2->iNo==1))
 ReDraw();
 }
 
+//Intersect one set of TRI element with another set
+void DBase::IntersectEls(ObjList* Els1)
+{
+	int i;
+	int j;
+	int iCol = -1;
+	BOOL bI;
+	CvPt_Object* pThePt = NULL;
+	C3dVector p0;
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector vInt;
+	double dS= 0;		//Parametric ordinates of intersection a seg with triange;
+	double dT = 0;		//Parametric ordinates of intersection a seg with triange
+	double dTol = 0.01;
+	int iNoInts = 0;
+	E_Object* pE = NULL;
+	E_Object3* pEInt = NULL;
+	E_Object3* pETarget = NULL;
+	for (i = 0; i < Els1->iNo; i++)
+	{
+		if ((Els1->Objs[i]->iObjType == 3) && (Els1->Objs[i]->iType == 91))
+		{
+			//Element to intersect
+			pEInt = (E_Object3*)Els1->Objs[i];
+			p0 = pEInt->pVertex[0]->Get_Centroid();
+			p1 = pEInt->pVertex[1]->Get_Centroid();
+			p2 = pEInt->pVertex[2]->Get_Centroid();
+			//Target elements
+			for (j = 0; j < Els1->iNo; j++)
+			{
+					if ((pEInt!= Els1->Objs[j]) && (Els1->Objs[j]->iObjType == 3) && (Els1->Objs[j]->iType == 91))
+					{
+						pETarget = (E_Object3*)Els1->Objs[j];
+						bI = LineIntTRI(p0, p1, pETarget, vInt, dS, dT, dTol);
+						if (bI)
+						{
+							pThePt = new CvPt_Object;
+							pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+							iPtLabCnt++;
+							AddObj(pThePt);
+							iNoInts++;
+						}
+						bI = LineIntTRI(p1, p2, pETarget, vInt, dS, dT, dTol);
+						if (bI)
+						{
+							pThePt = new CvPt_Object;
+							pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+							iPtLabCnt++;
+							AddObj(pThePt);
+							iNoInts++;
+						}
+						bI = LineIntTRI(p2, p0, pETarget, vInt, dS, dT, dTol);
+						if (bI)
+						{
+							pThePt = new CvPt_Object;
+							pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+							iPtLabCnt++;
+							AddObj(pThePt);
+							iNoInts++;
+						}
+
+					}
+			}
+		}
+
+	}
+	char s1[200];
+	sprintf_s(s1, "No of Intersection Points Generated: %i", iNoInts);
+	outtext1(s1);
+	ReDraw();
+
+}
+
+
 void DBase::ElsBetNodes(ObjList* Nodes,ObjList* Nodes2,int iNoOfTimes)
 {
 int i;

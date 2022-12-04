@@ -499,6 +499,7 @@ public:
   afx_msg void OnSelectionRbecentrenodes();
   afx_msg void OnChecksCountf();
   afx_msg void OnCurvemodifySplitatpoint();
+  afx_msg void OnElementmodifiyIntersecttrielements();
 };
 
 

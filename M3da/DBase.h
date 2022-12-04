@@ -322,6 +322,7 @@ void ModNodeZ(ObjList* Nodes, double dX);
 void CpNodes(ObjList* Nodes,C3dVector vTrVect,int iNoOfTimes);
 void BetNodes(ObjList* Nodes,ObjList* Nodes2,int iNoOfTimes);
 void ElsBetNodes(ObjList* Nodes,ObjList* Nodes2,int iNoOfTimes);
+void IntersectEls(ObjList* Els1);
 void ListAllProps();
 void ListAllMats();
 E_Object*  AddEl(int iPos,BOOL AddDsp);

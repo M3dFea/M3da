@@ -352,6 +352,7 @@ ON_COMMAND(ID_VIEW_HIGHLIGHTLIMIT, &CM3daDoc::OnViewHighlightlimit)
 ON_COMMAND(ID_SELECTION_RBECENTRENODES, &CM3daDoc::OnSelectionRbecentrenodes)
 ON_COMMAND(ID_CHECKS_COUNTF, &CM3daDoc::OnChecksCountf)
 ON_COMMAND(ID_CURVEMODIFY_SPLITATPOINT, &CM3daDoc::OnCurvemodifySplitatpoint)
+ON_COMMAND(ID_ELEMENTMODIFIY_INTERSECTTRIELEMENTS, &CM3daDoc::OnElementmodifiyIntersecttrielements)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5922,8 +5923,25 @@ void CM3daDoc::OnCurvemodifySplitatpoint()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("CVSPLIT");
 		sLastcmd = "CVSPLIT";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnElementmodifiyIntersecttrielements()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("MESHINT");
+		sLastcmd = "MESHINT";
 	}
 	else
 	{

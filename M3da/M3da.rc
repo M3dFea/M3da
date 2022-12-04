@@ -392,6 +392,7 @@ BEGIN
             MENUITEM "Beam End B Release",          ID_ELEMENTMODIFIY_BEAMENDBRELEASE
             MENUITEM "Shell Offset",                ID_ELEMENTMODIFIY_SHELLOFFSET
             MENUITEM "Reverse",                     ID_ELEMENTMODIFIY_REVERSE
+            MENUITEM "Intersect TRI Elements",      ID_ELEMENTMODIFIY_INTERSECTTRIELEMENTS
         END
         POPUP "Property / Material Modify"
         BEGIN
@@ -1258,6 +1259,8 @@ BEGIN
     ID_SELECTION_RBECENTRENODES "Select RBE Centre Nodes"
     ID_CHECKS_COUNTF        "Count No Off Selected Nodes and Elements etc"
     ID_CURVEMODIFY_SPLITATPOINT "Split a Curve at a Point"
+    ID_ELEMENTMODIFIY_INTERSECTTRIELEMENTS 
+                            "Experimental, Intersect TRI elements."
 END
 
 #endif    // English (United States) resources
