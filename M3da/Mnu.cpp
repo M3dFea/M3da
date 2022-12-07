@@ -15152,7 +15152,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER GROWTH RATE 0.5 to 1.0 (Def:0.5)");
+  outtext2("/ENTER GROWTH RATE 0.5 to 1.0 (Def:0.55)");
   SetFocus();
   iStat = 3;
   goto MenuEnd;
@@ -15162,7 +15162,7 @@ if (iStat == 3)
   dT = atof(CInMsg);
   if (dT <= 0)
   {
-    dT = 0.5;
+    dT = 0.55;
     iStat = 4;
   }
   else

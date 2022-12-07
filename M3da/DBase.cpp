@@ -2644,6 +2644,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 	Pt_Object* nNode;
 	Pt_Object* nNodeTry;
 	C3dVector vC;
+	C3dVector vCF;
 	C3dVector vN;
 	C3dVector vB;
 	C3dVector vT;
@@ -2689,9 +2690,10 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		dC = pE->GetCharSize();
 		dC *= 0.5;
 		dC = dC + dG * (dTgt - dC);
+
 		vN *= dC;
 		vC += vN;  //Or Ideal Node Position
-
+		
 		// get other candate nodes from boundary with a certain distance from ideal position
 		// in order of distance.
 	    //GetCandiates(fNodes, vC, 2*dC, pCandidateNodes);
@@ -2827,7 +2829,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 			InvalidateOGL();
 			ReDraw();
 		}
-	} while ((iTT < 20000) && (bExit == FALSE)); //(fEls->iNo>0);
+	} while ((iTT < 10000) && (bExit == FALSE)); //(fEls->iNo>0);
 
 	InvalidateOGL();
 	ReDraw();
@@ -5987,7 +5989,7 @@ if (pCurrentPart != NULL)
 			pRet = pCurrentPart->GetObj(iType, i);
 			if (pRet != NULL)
 			{
-				if (iNo < 1000000)
+				if (iNo < MAX_SIZE)
 				{
 					S_Buff[S_Count] = pRet;
 					S_Count++;
@@ -6005,7 +6007,7 @@ if ((iType==1) || (iType==3) || (iType==12))
     pRet = pMsh->GetObj(iType,i);
 	if (pRet!=NULL)
 	{
-	  if (iNo<1000000)
+	  if (iNo< MAX_SIZE)
 	  {
         S_Buff[S_Count]=pRet;
         S_Count++;
@@ -6020,7 +6022,7 @@ else
     pRet = GetObj(iType,i);
 	if (pRet!=NULL)
 	{
-		if (iNo<1000000)
+		if (iNo< MAX_SIZE)
 		{
 			S_Buff[S_Count]=pRet;
 			S_Count++;

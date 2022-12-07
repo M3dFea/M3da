@@ -11,7 +11,7 @@ const int VERSION_NO=-61;
 const int MAX_GPS = 1000;
 const int MAX_TEMPGRP = 10000;
 const int MAX_SYMBOLS = 10000;
-
+const int MAX_SIZE = 10000000;
 
 
 class DBase : public CCmdTarget
@@ -130,7 +130,7 @@ BOOL bDispAll;
 
 PropTable* PropsT;
 MatTable* MatT;
-G_Object* DB_Obj[1000000];       //all 
+G_Object* DB_Obj[MAX_SIZE];       //all 
 G_Object* TmpOGL[MAX_TEMPGRP];
 int TmpOGLCnt;
 int DB_ObjectCount;
@@ -139,14 +139,14 @@ void SetFilter();
 int GetGroupID();
 int GetColourID();
 int GetItemType();
-G_Object* S_Buff[1000000];        //selector array
+G_Object* S_Buff[MAX_SIZE];        //selector array
 int S_BuffAdd(G_Object* cAddObj); //0 removed 1 added
 void S_BuffAdd2(CDC* pDC,G_Object* cAddObj);
 void S_BuffAdd3(G_Object* cAddObj);
 BOOL S_IsIn(G_Object* cAddObj);
 void S_Save(ObjList* oList);
 void S_Res();
-G_Object* Dsp_List[1000000];     //display list
+G_Object* Dsp_List[MAX_SIZE];     //display list
 int DB_DrawState;               //draw method
 int iDspLstCount;
 int iFastView;
