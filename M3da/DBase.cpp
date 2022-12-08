@@ -14731,6 +14731,36 @@ pE->PIDunv=-1;
 return (pE);
 }
 
+E_Object* NASReadCONM1(NasCard& oC,
+                       ME_Object* pM,
+                       NEList* newPids,
+                       int iType)
+{
+	outtext1("WARNING: CONM1 is not supported.");
+	int iNlabs[200];
+	int iID;
+	E_Object1* pE;
+	iID = atoi(oC.GetField(0));
+	iNlabs[0] = atoi(oC.GetField(1));
+	pE = (E_Object1*)(pM->AddEl2(iNlabs, iID, 159, 161, -1, 1, 1, 0, 0, 0, -1, 0));
+	pE->iCID = atoi(oC.GetField(2));
+	pE->dM = (ae(oC.GetField(3)));
+	//pE->dX1 = (ae(oC.GetField(4)));
+	//pE->dX2 = (ae(oC.GetField(5)));
+	//pE->dX3 = (ae(oC.GetField(6)));
+	//if (oC.iNo > 8)
+	//{
+	//	pE->dI11 = (ae(oC.GetField(8)));
+	//	pE->dI21 = (ae(oC.GetField(9)));
+	//	pE->dI22 = (ae(oC.GetField(10)));
+	//	pE->dI31 = (ae(oC.GetField(11)));
+	//	pE->dI32 = (ae(oC.GetField(12)));
+	//	pE->dI33 = (ae(oC.GetField(13)));
+	//}
+	pE->PIDunv = -1;
+	return (pE);
+}
+
 E_Object* NASReadCQUAD4(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
@@ -15855,6 +15885,8 @@ else if ((s8 == "CHEXA   ") || (s8 == "CHEXA*  "))
   brc = TRUE;
 else if ((s8 == "CONM2   ") || (s8 == "CONM2*  ")) 
   brc = TRUE;
+else if ((s8 == "CONM1   ") || (s8 == "CONM1*  "))
+brc = TRUE;
 else if ((s8 == "CPENTA  ") || (s8 == "CPENTA* ")) 
   brc = TRUE;
 else if ((s8 == "RBE2    ") || (s8 == "RBE2*   ")) 
@@ -16065,6 +16097,8 @@ if (pFile!=NULL)
           El = NASReadCQUAD4(oCard,pME,PIDs,2);
 	  else if ((sKwrd.Find("CONM2") == 0))
           El = NASReadCONM2(oCard,pME,PIDs,2);
+	  else if ((sKwrd.Find("CONM1") == 0))
+		  El = NASReadCONM1(oCard, pME, PIDs, 2);
 	  else if ((sKwrd.Find("CHEXA") == 0))
           El = NASReadCHEXA(oCard,pME,PIDs,2);
 	  else if ((sKwrd.Find("CPENTA") == 0))
@@ -16313,7 +16347,11 @@ do
     {
      // El = NASReadCONM2(RetMesh,pFile,&sKeyWrd,&sKeyWrdNext,2);
     }
-	  if ((sKeyWrd.Find("CHEXA") == 0) && (sKeyWrd.Find(",") == -1))
+	if ((sKeyWrd.Find("CONM1") == 0) && (sKeyWrd.Find(",") == -1))
+	{
+		// El = NASReadCONM2(RetMesh,pFile,&sKeyWrd,&sKeyWrdNext,2);
+	}
+	if ((sKeyWrd.Find("CHEXA") == 0) && (sKeyWrd.Find(",") == -1))
     {
     //  El = NASReadCHEXA(RetMesh,newPids,pFile,&sKeyWrd,&sKeyWrdNext,2);
     }
