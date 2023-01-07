@@ -439,13 +439,13 @@ void cLinkedList::RemNoDelete(G_Object* inItem)
 		}
 		else if (inItem->before == NULL)
 		{
-			Head = (cEdge*)inItem->next;
+			Head = (eEdge*)inItem->next;
 			Head->before = NULL;
 			iCnt--;
 		}
 		else if (inItem->next == NULL)
 		{
-			pCur = (cEdge*)inItem->before;
+			pCur = (eEdge*)inItem->before;
 			pCur->next = NULL;
 			iCnt--;
 		}
@@ -473,14 +473,14 @@ if ((inItem!=NULL) && (inItem->pParent==this))
   }
   else if (inItem->before==NULL)
   {
-	Head=(cEdge*) inItem->next;
+	Head=(eEdge*) inItem->next;
     Head->before=NULL;
 	delete(inItem);
     iCnt--;
   }
   else if (inItem->next==NULL)
   {
-	pCur=(cEdge*) inItem->before;
+	pCur=(eEdge*) inItem->before;
     pCur->next=NULL;
 	delete(inItem);
     iCnt--;
@@ -511,14 +511,14 @@ void cLinkedList::Remove2(G_Object* inItem)
 		}
 		else if (inItem->before == NULL)
 		{
-			Head = (cEdge*)inItem->next;
+			Head = (eEdge*)inItem->next;
 			Head->before = NULL;
 			delete(inItem);
 			iCnt--;
 		}
 		else if (inItem->next == NULL)
 		{
-			pCur = (cEdge*)inItem->before;
+			pCur = (eEdge*)inItem->before;
 			pCur->next = NULL;
 			delete(inItem);
 			iCnt--;
@@ -2563,7 +2563,7 @@ void Node::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 	Pt_Point->z = atof(sVar[4]);;;
 }
 
-cFace::cFace()
+eFace::eFace()
 {
 iColour=1;
 NoVert=0;
@@ -2575,7 +2575,7 @@ pParent=NULL;
 next=NULL;
 }
 
-cFace::~cFace()
+eFace::~eFace()
 {
 
 NoVert=0;
@@ -2587,7 +2587,7 @@ pParent=NULL;
 next=NULL;
 }
 
-BOOL cFace::isSame(cFace* inFace)
+BOOL eFace::isSame(eFace* inFace)
 {
 BOOL brc=FALSE;
 int i,j,iC;
@@ -2612,7 +2612,7 @@ if (NoVert==inFace->NoVert)
 return (brc);
 }
 
-void cFace::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void eFace::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
 C3dVector v1;
 C3dVector v2;
@@ -2646,7 +2646,7 @@ else if (NoVert==4)
 glLineWidth(2.0);
 }
 
-void cFace::OglDraw(int iDspFlgs,double dS1,double dS2)
+void eFace::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
 C3dVector v1;
 C3dVector v2;
@@ -2698,7 +2698,7 @@ else if (NoVert==4)
 }
 
 
-cEdge::cEdge()
+eEdge::eEdge()
 {
 iColour=-1;
 pVertex[0]=NULL;
@@ -2708,7 +2708,7 @@ before=NULL;
 pParent=NULL;
 }
 
-cEdge::~cEdge()
+eEdge::~eEdge()
 {
 iColour=-1;
 pVertex[0]=NULL;
@@ -2718,7 +2718,7 @@ before=NULL;
 pParent=NULL;
 }
 
-BOOL cEdge::isSame(cEdge* inLink)
+BOOL eEdge::isSame(eEdge* inLink)
 {
 BOOL brc=FALSE;
 if (inLink != NULL)
@@ -2742,7 +2742,7 @@ return (brc);
 //1 the same
 //2 the same bit wrond direction
 
-int cEdge::isSameWithDir(cEdge* inLink)
+int eEdge::isSameWithDir(eEdge* inLink)
 {
   int irc = 0;
   if ((pVertex[0] == inLink->pVertex[0]) &&
@@ -2758,7 +2758,7 @@ int cEdge::isSameWithDir(cEdge* inLink)
   return (irc);
 }
 
-void cEdge::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void eEdge::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
 glLineWidth(5.0);
 glColor3fv(cols[iColour]);
@@ -2769,7 +2769,7 @@ glEnd();
 glLineWidth(2.0);
 }
 
-void cEdge::OglDraw(int iDspFlgs,double dS1,double dS2)
+void eEdge::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
   OglDrawW(iDspFlgs,dS1,dS2);
 }
@@ -3023,21 +3023,21 @@ void c2dFront::OglDraw(int iDspFlgs, double dS1, double dS2)
 
 
 
-cFaceList::cFaceList()
+eFaceList::eFaceList()
 {
 Head=NULL;
 pCur=NULL;
 iNo=0;
 }
 
-cFaceList::~cFaceList()
+eFaceList::~eFaceList()
 {
-cFace* pNext;
-cFace* p;
+eFace* pNext;
+eFace* p;
 p=Head;
 while (p!=NULL)
 { 
-  pNext=(cFace*) p->next;
+  pNext=(eFace*) p->next;
   delete (p);
   p=pNext;
 }
@@ -3045,10 +3045,10 @@ Head=NULL;
 pCur=NULL;
 }
 
-cFace* cFaceList::IsIn(cFace* inFace)
+eFace* eFaceList::IsIn(eFace* inFace)
 {
-cFace* pRet=NULL;
-cFace* pNext;
+eFace* pRet=NULL;
+eFace* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
@@ -3057,15 +3057,15 @@ while (pNext!=NULL)
     pRet=pNext;
 	break;
   }
-  pNext=(cFace*) pNext->next;
+  pNext=(eFace*) pNext->next;
 }
 return (pRet);
 }
 
-void cFaceList::Add(cFace* inFace)
+void eFaceList::Add(eFace* inFace)
 {
 
-cFace* ind;
+eFace* ind;
 ind=IsIn(inFace);
 if (ind==NULL)
 {
@@ -3081,7 +3081,7 @@ if (ind==NULL)
   {
     inFace->before=pCur;
     pCur->next=inFace;
-    pCur=(cFace*) inFace;
+    pCur=(eFace*) inFace;
     pCur->next=NULL;
     iNo++;
   }
@@ -3092,7 +3092,7 @@ else
 }
 }
 
-void cFaceList::Remove(cFace* inFace)
+void eFaceList::Remove(eFace* inFace)
 {
 
 if (inFace!=NULL)
@@ -3107,14 +3107,14 @@ if (inFace!=NULL)
   }
   else if (inFace->before==NULL)
   {
-	Head=(cFace*) inFace->next;
+	Head=(eFace*) inFace->next;
     Head->before=NULL;
 	delete(inFace);
     iNo--;
   }
   else if (inFace->next==NULL)
   {
-	pCur=(cFace*) inFace->before;
+	pCur=(eFace*) inFace->before;
     pCur->next=NULL;
 	delete(inFace);
     iNo--;
@@ -3122,43 +3122,43 @@ if (inFace!=NULL)
 }
 }
 
-void cFaceList::OglDraw(int iDspFlgs,double dS1,double dS2)
+void eFaceList::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
-cFace* pNext;
+eFace* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
   pNext->OglDraw(iDspFlgs,dS1,dS2);
-  pNext=(cFace*) pNext->next;
+  pNext=(eFace*) pNext->next;
 }
 }
 
-void cFaceList::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void eFaceList::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
-cFace* pNext;
+eFace* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
   pNext->OglDrawW(iDspFlgs,dS1,dS2);
-  pNext=(cFace*) pNext->next;
+  pNext=(eFace*) pNext->next;
 }
 }
 
-cEdgeList::cEdgeList()
+eEdgeList::eEdgeList()
 {
 Head=NULL;
 pCur=NULL;
 iNo=0;
 }
 
-cEdgeList::~cEdgeList()
+eEdgeList::~eEdgeList()
 {
-cEdge* pNext;
-cEdge* p;
+eEdge* pNext;
+eEdge* p;
 p=Head;
 while (p!=NULL)
 { 
-  pNext=(cEdge*) p->next;
+  pNext=(eEdge*) p->next;
   delete (p);
   p=pNext;
 }
@@ -3166,10 +3166,10 @@ Head=NULL;
 pCur=NULL;
 }
 
-cEdge* cEdgeList::IsIn(cEdge* inLink)
+eEdge* eEdgeList::IsIn(eEdge* inLink)
 {
-cEdge* pRet=NULL;
-cEdge* pNext;
+eEdge* pRet=NULL;
+eEdge* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
@@ -3178,12 +3178,12 @@ while (pNext!=NULL)
     pRet=pNext;
 	break;
   }
-  pNext=(cEdge*) pNext->next;
+  pNext=(eEdge*) pNext->next;
 }
 return (pRet);
 }
 
-void cEdgeList::AddGp(int iN, cEdge* inLink[])
+void eEdgeList::AddGp(int iN, eEdge* inLink[])
 {
   int i;
   for (i=0;i<iN;i++)
@@ -3192,10 +3192,10 @@ void cEdgeList::AddGp(int iN, cEdge* inLink[])
   }
 }
 
-void cEdgeList::Add(cEdge* inLink)
+void eEdgeList::Add(eEdge* inLink)
 {
 
-cEdge* ind;
+eEdge* ind;
 ind=IsIn(inLink);
 if (ind==NULL)
 {
@@ -3211,7 +3211,7 @@ if (ind==NULL)
   {
     inLink->before=pCur;
     pCur->next=inLink;
-    pCur=(cEdge*) inLink;
+    pCur=(eEdge*) inLink;
     pCur->next=NULL;
     iNo++;
   }
@@ -3222,10 +3222,10 @@ else
 }
 }
 
-void cEdgeList::AddIncOnly(cEdge* inLink)
+void eEdgeList::AddIncOnly(eEdge* inLink)
 {
 
-	cEdge* ind;
+	eEdge* ind;
 	ind = IsIn(inLink);
 	if (ind == NULL)
 	{
@@ -3241,7 +3241,7 @@ void cEdgeList::AddIncOnly(cEdge* inLink)
 		{
 			inLink->before = pCur;
 			pCur->next = inLink;
-			pCur = (cEdge*)inLink;
+			pCur = (eEdge*)inLink;
 			pCur->next = NULL;
 			iNo++;
 		}
@@ -3252,7 +3252,7 @@ void cEdgeList::AddIncOnly(cEdge* inLink)
 	}
 }
 
-void cEdgeList::Remove(cEdge* inLink)
+void eEdgeList::Remove(eEdge* inLink)
 {
 if (inLink!=NULL)
 {
@@ -3273,14 +3273,14 @@ if (inLink!=NULL)
   }
   else if (inLink->before==NULL)
   {
-	  Head=(cEdge*) inLink->next;
+	  Head=(eEdge*) inLink->next;
     Head->before=NULL;
 	  delete(inLink);
     iNo--;
   }
   else if (inLink->next==NULL)
   {
-	  pCur=(cEdge*) inLink->before;
+	  pCur=(eEdge*) inLink->before;
     pCur->next=NULL;
 	  delete(inLink);
     iNo--;
@@ -3288,17 +3288,17 @@ if (inLink!=NULL)
 }
 }
 
-void cEdgeList::Purge()
+void eEdgeList::Purge()
 {
-	cEdge* pNext;
-	cEdge* pDel;
+	eEdge* pNext;
+	eEdge* pDel;
 	pNext = Head;
 	while (pNext != NULL)
 	{
 		if (pNext->iColour == 1)
 		{
 			pDel = pNext;
-			pNext = (cEdge*)pNext->next;
+			pNext = (eEdge*)pNext->next;
 			Remove(pDel);
 		}
 		else
@@ -3307,24 +3307,24 @@ void cEdgeList::Purge()
 				pNext->iColour = 50;
 			else
 				pNext->iColour = 120;
-			pNext = (cEdge*)pNext->next;
+			pNext = (eEdge*)pNext->next;
 		}
 	}
 }
 
 
-void cEdgeList::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void eEdgeList::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
-cEdge* pNext;
+eEdge* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
   pNext->OglDrawW(iDspFlgs,dS1,dS2);
-  pNext=(cEdge*) pNext->next;
+  pNext=(eEdge*) pNext->next;
 }
 }
 
-void cEdgeList::OglDraw(int iDspFlgs,double dS1,double dS2)
+void eEdgeList::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
 OglDrawW(iDspFlgs,dS1,dS2);
 }
@@ -5177,66 +5177,66 @@ G_Object* E_Object38::GetNode(int i)
 return (pVertex[i]);
 }
 
-int E_Object38::GetLinkList(cEdge* Links[12])
+int E_Object38::GetLinkList(eEdge* Links[12])
 {
-Links[0]=new cEdge;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cEdge;
+Links[1]=new eEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cEdge;
+Links[2]=new eEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[3];
 Links[2]->iColour=iColour;
-Links[3]=new cEdge;
+Links[3]=new eEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[3];
 Links[3]->pVertex[1]=pVertex[0];
 Links[3]->iColour=iColour;
 
-Links[4]=new cEdge;
+Links[4]=new eEdge;
 Links[4]->pParent=this;
 Links[4]->pVertex[0]=pVertex[4];
 Links[4]->pVertex[1]=pVertex[5];
 Links[4]->iColour=iColour;
-Links[5]=new cEdge;
+Links[5]=new eEdge;
 Links[5]->pParent=this;
 Links[5]->pVertex[0]=pVertex[5];
 Links[5]->pVertex[1]=pVertex[6];
 Links[5]->iColour=iColour;
-Links[6]=new cEdge;
+Links[6]=new eEdge;
 Links[6]->pParent=this;
 Links[6]->pVertex[0]=pVertex[6];
 Links[6]->pVertex[1]=pVertex[7];
 Links[6]->iColour=iColour;
-Links[7]=new cEdge;
+Links[7]=new eEdge;
 Links[7]->pParent=this;
 Links[7]->pVertex[0]=pVertex[7];
 Links[7]->pVertex[1]=pVertex[4];
 Links[7]->iColour=iColour;
 
-Links[8]=new cEdge;
+Links[8]=new eEdge;
 Links[8]->pParent=this;
 Links[8]->pVertex[0]=pVertex[0];
 Links[8]->pVertex[1]=pVertex[4];
 Links[8]->iColour=iColour;
-Links[9]=new cEdge;
+Links[9]=new eEdge;
 Links[9]->pParent=this;
 Links[9]->pVertex[0]=pVertex[1];
 Links[9]->pVertex[1]=pVertex[5];
 Links[9]->iColour=iColour;
-Links[10]=new cEdge;
+Links[10]=new eEdge;
 Links[10]->pParent=this;
 Links[10]->pVertex[0]=pVertex[2];
 Links[10]->pVertex[1]=pVertex[6];
 Links[10]->iColour=iColour;
-Links[11]=new cEdge;
+Links[11]=new eEdge;
 Links[11]->pParent=this;
 Links[11]->pVertex[0]=pVertex[3];
 Links[11]->pVertex[1]=pVertex[7];
@@ -5245,11 +5245,11 @@ Links[11]->iColour=iColour;
 return (12);
 }
 
-int E_Object38::GetfaceList(cFace* Faces[6])
+int E_Object38::GetfaceList(eFace* Faces[6])
 {
 int ic;
 ic=GetCol();
-Faces[0]=new cFace();
+Faces[0]=new eFace();
 Faces[0]->pParent=this;
 Faces[0]->pVertex[0]=pVertex[0];
 Faces[0]->pVertex[1]=pVertex[3];
@@ -5258,7 +5258,7 @@ Faces[0]->pVertex[3]=pVertex[1];
 Faces[0]->NoVert=4;
 Faces[0]->iColour=ic;
 
-Faces[1]=new cFace();
+Faces[1]=new eFace();
 Faces[1]->pParent=this;
 Faces[1]->pVertex[0]=pVertex[4];
 Faces[1]->pVertex[1]=pVertex[5];
@@ -5267,7 +5267,7 @@ Faces[1]->pVertex[3]=pVertex[7];
 Faces[1]->NoVert=4;
 Faces[1]->iColour=ic;
 
-Faces[2]=new cFace();
+Faces[2]=new eFace();
 Faces[2]->pParent=this;
 Faces[2]->pVertex[0]=pVertex[0];
 Faces[2]->pVertex[1]=pVertex[1];
@@ -5276,7 +5276,7 @@ Faces[2]->pVertex[3]=pVertex[4];
 Faces[2]->NoVert=4;
 Faces[2]->iColour=ic;
 
-Faces[3]=new cFace();
+Faces[3]=new eFace();
 Faces[3]->pParent=this;
 Faces[3]->pVertex[0]=pVertex[1];
 Faces[3]->pVertex[1]=pVertex[2];
@@ -5285,7 +5285,7 @@ Faces[3]->pVertex[3]=pVertex[5];
 Faces[3]->NoVert=4;
 Faces[3]->iColour=ic;
 
-Faces[4]=new cFace();
+Faces[4]=new eFace();
 Faces[4]->pParent=this;
 Faces[4]->pVertex[0]=pVertex[2];
 Faces[4]->pVertex[1]=pVertex[3];
@@ -5294,7 +5294,7 @@ Faces[4]->pVertex[3]=pVertex[6];
 Faces[4]->NoVert=4;
 Faces[4]->iColour=ic;
 
-Faces[5]=new cFace();
+Faces[5]=new eFace();
 Faces[5]->pParent=this;
 Faces[5]->pVertex[0]=pVertex[0];
 Faces[5]->pVertex[1]=pVertex[4];
@@ -7136,62 +7136,62 @@ return (pVertex[i]);
 }
 
 
-int E_Object36::GetLinkList(cEdge* Links[200])
+int E_Object36::GetLinkList(eEdge* Links[200])
 {
-Links[0]=new cEdge;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cEdge;
+Links[1]=new eEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cEdge;
+Links[2]=new eEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[0];
 Links[2]->iColour=iColour;
-Links[3]=new cEdge;
+Links[3]=new eEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[3];
 Links[3]->pVertex[1]=pVertex[4];
 Links[3]->iColour=iColour;
 
-Links[4]=new cEdge;
+Links[4]=new eEdge;
 Links[4]->pParent=this;
 Links[4]->pVertex[0]=pVertex[4];
 Links[4]->pVertex[1]=pVertex[5];
 Links[4]->iColour=iColour;
-Links[5]=new cEdge;
+Links[5]=new eEdge;
 Links[5]->pParent=this;
 Links[5]->pVertex[0]=pVertex[5];
 Links[5]->pVertex[1]=pVertex[3];
 Links[5]->iColour=iColour;
-Links[6]=new cEdge;
+Links[6]=new eEdge;
 Links[6]->pParent=this;
 Links[6]->pVertex[0]=pVertex[0];
 Links[6]->pVertex[1]=pVertex[3];
 Links[6]->iColour=iColour;
-Links[7]=new cEdge;
+Links[7]=new eEdge;
 Links[7]->pParent=this;
 Links[7]->pVertex[0]=pVertex[1];
 Links[7]->pVertex[1]=pVertex[4];
 Links[7]->iColour=iColour;
 
-Links[8]=new cEdge;
+Links[8]=new eEdge;
 Links[8]->pParent=this;
 Links[8]->pVertex[0]=pVertex[2];
 Links[8]->pVertex[1]=pVertex[5];
 Links[8]->iColour=iColour;
 return (9);
 }
-int E_Object36::GetfaceList(cFace* Faces[6])
+int E_Object36::GetfaceList(eFace* Faces[6])
 {
 int ic;
 ic=GetCol();
-Faces[0]=new cFace();
+Faces[0]=new eFace();
 Faces[0]->pParent=this;
 Faces[0]->pVertex[0]=pVertex[0];
 Faces[0]->pVertex[1]=pVertex[1];
@@ -7199,7 +7199,7 @@ Faces[0]->pVertex[2]=pVertex[2];
 Faces[0]->NoVert=3;
 Faces[0]->iColour=ic;
 
-Faces[1]=new cFace();
+Faces[1]=new eFace();
 Faces[1]->pParent=this;
 Faces[1]->pVertex[0]=pVertex[3];
 Faces[1]->pVertex[1]=pVertex[4];
@@ -7207,7 +7207,7 @@ Faces[1]->pVertex[2]=pVertex[5];
 Faces[1]->NoVert=3;
 Faces[1]->iColour=ic;
 
-Faces[2]=new cFace();
+Faces[2]=new eFace();
 Faces[2]->pParent=this;
 Faces[2]->pVertex[0]=pVertex[1];
 Faces[2]->pVertex[1]=pVertex[2];
@@ -7216,7 +7216,7 @@ Faces[2]->pVertex[3]=pVertex[4];
 Faces[2]->NoVert=4;
 Faces[2]->iColour=ic;
 
-Faces[3]=new cFace();
+Faces[3]=new eFace();
 Faces[3]->pParent=this;
 Faces[3]->pVertex[0]=pVertex[0];
 Faces[3]->pVertex[1]=pVertex[3];
@@ -7225,7 +7225,7 @@ Faces[3]->pVertex[3]=pVertex[2];
 Faces[3]->NoVert=4;
 Faces[3]->iColour=ic;
 
-Faces[4]=new cFace();
+Faces[4]=new eFace();
 Faces[4]->pParent=this;
 Faces[4]->pVertex[0]=pVertex[0];
 Faces[4]->pVertex[1]=pVertex[1];
@@ -7933,34 +7933,34 @@ void E_Object34::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 	}
 }
 
-int E_Object34::GetLinkList(cEdge* Links[200])
+int E_Object34::GetLinkList(eEdge* Links[200])
 {
-Links[0]=new cEdge;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cEdge;
+Links[1]=new eEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cEdge;
+Links[2]=new eEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[0];
 Links[2]->iColour=iColour;
-Links[3]=new cEdge;
+Links[3]=new eEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[0];
 Links[3]->pVertex[1]=pVertex[3];
 Links[3]->iColour=iColour;
-Links[4]=new cEdge;
+Links[4]=new eEdge;
 Links[4]->pParent=this;
 Links[4]->pVertex[0]=pVertex[1];
 Links[4]->pVertex[1]=pVertex[3];
 Links[4]->iColour=iColour;
-Links[5]=new cEdge;
+Links[5]=new eEdge;
 Links[5]->pParent=this;
 Links[5]->pVertex[0]=pVertex[2];
 Links[5]->pVertex[1]=pVertex[3];
@@ -8344,11 +8344,11 @@ C3dVector E_Object34::GetNodalCoords(int i)
 	return (v);
 }
 
-int E_Object34::GetfaceList(cFace* Faces[6])
+int E_Object34::GetfaceList(eFace* Faces[6])
 {
 int ic;
 ic=GetCol();
-Faces[0]=new cFace();
+Faces[0]=new eFace();
 Faces[0]->pParent=this;
 Faces[0]->pVertex[0]=pVertex[0];
 Faces[0]->pVertex[1]=pVertex[2];
@@ -8356,7 +8356,7 @@ Faces[0]->pVertex[2]=pVertex[1];
 Faces[0]->NoVert=3;
 Faces[0]->iColour=iColour;
 
-Faces[1]=new cFace();
+Faces[1]=new eFace();
 Faces[1]->pParent=this;
 Faces[1]->pVertex[0]=pVertex[0];
 Faces[1]->pVertex[1]=pVertex[1];
@@ -8364,7 +8364,7 @@ Faces[1]->pVertex[2]=pVertex[3];
 Faces[1]->NoVert=3;
 Faces[1]->iColour=iColour;
 
-Faces[2]=new cFace;
+Faces[2]=new eFace;
 Faces[2]->pParent=this;
 Faces[2]->pVertex[0]=pVertex[1];
 Faces[2]->pVertex[1]=pVertex[2];
@@ -8372,7 +8372,7 @@ Faces[2]->pVertex[2]=pVertex[3];
 Faces[2]->NoVert=3;
 Faces[2]->iColour=iColour;
 
-Faces[3]=new cFace;
+Faces[3]=new eFace;
 Faces[3]->pParent=this;
 Faces[3]->pVertex[0]=pVertex[0];
 Faces[3]->pVertex[1]=pVertex[3];
@@ -9176,34 +9176,34 @@ void E_Object310::Serialize(CArchive& ar, int iV, ME_Object* MESH)
 	}
 }
 
-int E_Object310::GetLinkList(cEdge* Links[200])
+int E_Object310::GetLinkList(eEdge* Links[200])
 {
-	Links[0] = new cEdge;
+	Links[0] = new eEdge;
 	Links[0]->pParent = this;
 	Links[0]->pVertex[0] = pVertex[0];
 	Links[0]->pVertex[1] = pVertex[1];
 	Links[0]->iColour = iColour;
-	Links[1] = new cEdge;
+	Links[1] = new eEdge;
 	Links[1]->pParent = this;
 	Links[1]->pVertex[0] = pVertex[1];
 	Links[1]->pVertex[1] = pVertex[2];
 	Links[1]->iColour = iColour;
-	Links[2] = new cEdge;
+	Links[2] = new eEdge;
 	Links[2]->pParent = this;
 	Links[2]->pVertex[0] = pVertex[2];
 	Links[2]->pVertex[1] = pVertex[0];
 	Links[2]->iColour = iColour;
-	Links[3] = new cEdge;
+	Links[3] = new eEdge;
 	Links[3]->pParent = this;
 	Links[3]->pVertex[0] = pVertex[0];
 	Links[3]->pVertex[1] = pVertex[3];
 	Links[3]->iColour = iColour;
-	Links[4] = new cEdge;
+	Links[4] = new eEdge;
 	Links[4]->pParent = this;
 	Links[4]->pVertex[0] = pVertex[1];
 	Links[4]->pVertex[1] = pVertex[3];
 	Links[4]->iColour = iColour;
-	Links[5] = new cEdge;
+	Links[5] = new eEdge;
 	Links[5]->pParent = this;
 	Links[5]->pVertex[0] = pVertex[2];
 	Links[5]->pVertex[1] = pVertex[3];
@@ -9663,11 +9663,11 @@ C3dVector E_Object310::GetNodalCoords(int i)
 	return (v);
 }
 
-int E_Object310::GetfaceList(cFace* Faces[6])
+int E_Object310::GetfaceList(eFace* Faces[6])
 {
 	int ic;
 	ic = GetCol();
-	Faces[0] = new cFace();
+	Faces[0] = new eFace();
 	Faces[0]->pParent = this;
 	Faces[0]->pVertex[0] = pVertex[0];
 	Faces[0]->pVertex[1] = pVertex[2];
@@ -9675,7 +9675,7 @@ int E_Object310::GetfaceList(cFace* Faces[6])
 	Faces[0]->NoVert = 3;
 	Faces[0]->iColour = iColour;
 
-	Faces[1] = new cFace();
+	Faces[1] = new eFace();
 	Faces[1]->pParent = this;
 	Faces[1]->pVertex[0] = pVertex[0];
 	Faces[1]->pVertex[1] = pVertex[1];
@@ -9683,7 +9683,7 @@ int E_Object310::GetfaceList(cFace* Faces[6])
 	Faces[1]->NoVert = 3;
 	Faces[1]->iColour = iColour;
 
-	Faces[2] = new cFace;
+	Faces[2] = new eFace;
 	Faces[2]->pParent = this;
 	Faces[2]->pVertex[0] = pVertex[1];
 	Faces[2]->pVertex[1] = pVertex[2];
@@ -9691,7 +9691,7 @@ int E_Object310::GetfaceList(cFace* Faces[6])
 	Faces[2]->NoVert = 3;
 	Faces[2]->iColour = iColour;
 
-	Faces[3] = new cFace;
+	Faces[3] = new eFace;
 	Faces[3]->pParent = this;
 	Faces[3]->pVertex[0] = pVertex[0];
 	Faces[3]->pVertex[1] = pVertex[3];
@@ -10180,12 +10180,12 @@ Mat M(0,0);
 return(M);
 }
 
-int E_Object::GetfaceList(cFace* Faces[6])
+int E_Object::GetfaceList(eFace* Faces[6])
 {
 return (0);
 }
 
-int E_Object::GetLinkList(cEdge* Links[200])
+int E_Object::GetLinkList(eEdge* Links[200])
 {
 return (0);
 }
@@ -11680,9 +11680,9 @@ pDC->MoveTo((int) pVertex[0]->DSP_Point->x,(int) pVertex[0]->DSP_Point->y);
 pDC->LineTo((int) pVertex[1]->DSP_Point->x,(int) pVertex[1]->DSP_Point->y);
 }
 
-int E_Object2::GetLinkList(cEdge* Links[200])
+int E_Object2::GetLinkList(eEdge* Links[200])
 {
-Links[0]=new cEdge;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->iColour=iColour;
 Links[0]->pVertex[0]=pVertex[0];
@@ -12359,9 +12359,9 @@ void E_Object2R::Info()
 
 
 
-int E_Object2R::GetLinkList(cEdge* Links[200])
+int E_Object2R::GetLinkList(eEdge* Links[200])
 {
-Links[0]=new cEdge;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->iColour=iColour;
 Links[0]->pVertex[0]=pVertex[0];
@@ -13990,19 +13990,19 @@ pDC->LineTo((int) pVertex[2]->DSP_Point->x,(int) pVertex[2]->DSP_Point->y);
 pDC->LineTo((int) pVertex[0]->DSP_Point->x,(int) pVertex[0]->DSP_Point->y);
 }
 
-int E_Object3::GetLinkList(cEdge* Links[200])
+int E_Object3::GetLinkList(eEdge* Links[200])
 {
-Links[0]=new cEdge;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cEdge;
+Links[1]=new eEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cEdge;
+Links[2]=new eEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[0];
@@ -14380,9 +14380,9 @@ else
 }
 }
 
-int E_Object3::GetfaceList(cFace* Faces[6])
+int E_Object3::GetfaceList(eFace* Faces[6])
 {
-Faces[0]=new cFace();
+Faces[0]=new eFace();
 Faces[0]->pParent=this;
 Faces[0]->pVertex[0]=pVertex[0];
 Faces[0]->pVertex[1]=pVertex[1];
@@ -17049,26 +17049,26 @@ G_Object* E_Object4::GetNode(int i)
 return (pVertex[i]);
 }
 
-int E_Object4::GetLinkList(cEdge* Links[200])
+int E_Object4::GetLinkList(eEdge* Links[200])
 {
 int ic;
 ic=GetCol();
-Links[0]=new cEdge;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cEdge;
+Links[1]=new eEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cEdge;
+Links[2]=new eEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[3];
 Links[2]->iColour=iColour;
-Links[3]=new cEdge;
+Links[3]=new eEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[3];
 Links[3]->pVertex[1]=pVertex[0];
@@ -17482,11 +17482,11 @@ else
 }
 }
 
-int E_Object4::GetfaceList(cFace* Faces[6])
+int E_Object4::GetfaceList(eFace* Faces[6])
 {
 int ic;
 ic=GetCol();
-Faces[0]=new cFace();
+Faces[0]=new eFace();
 Faces[0]->pParent=this;
 Faces[0]->pVertex[0]=pVertex[0];
 Faces[0]->pVertex[1]=pVertex[1];
@@ -18416,12 +18416,12 @@ else
 }
 }
 
-int E_ObjectR::GetLinkList(cEdge* Links[200])
+int E_ObjectR::GetLinkList(eEdge* Links[200])
 {
 int i;
 for (i=0;i<iNoNodes-1;i++)
 {
-  Links[i]=new cEdge;
+  Links[i]=new eEdge;
   Links[i]->pParent=this;
   Links[i]->pVertex[0]=pVertex[0];
   Links[i]->pVertex[1]=pVertex[i+1];
@@ -20726,10 +20726,10 @@ for (i=0;i<iCYS;i++)
 return (rME);
 }
 
-BOOL ME_Object::isFaceDeletable(cFace* inFace)
+BOOL ME_Object::isFaceDeletable(eFace* inFace)
 {
 BOOL bRet=TRUE;
-cFace* Fc[8];
+eFace* Fc[8];
 int iN;
 int i,j;
 int iC;
@@ -20757,10 +20757,10 @@ if (iC>1)
 return(bRet);
 }
 
-BOOL ME_Object::isLinkDeletable(cEdge* inLink)
+BOOL ME_Object::isLinkDeletable(eEdge* inLink)
 {
 BOOL bRet=TRUE;
-cEdge* Lk[12];
+eEdge* Lk[12];
 int iN;
 int i,j;
 int iC;
@@ -20791,8 +20791,8 @@ return(bRet);
 
 void ME_Object::BuildLinkList()
 {
-cFace* Fc[8];
-cEdge* Lk[200];
+eFace* Fc[8];
+eEdge* Lk[200];
 int iN;
 int i,j;
 for(i=0;i<iElNo;i++)
@@ -24319,7 +24319,7 @@ for (i = 0; i < iNoLCs; i++)
         brc = TRUE;
         break;
       }
-      pC = (cEdge*)pC->next;
+      pC = (eEdge*)pC->next;
     }
   }
 }
@@ -24336,7 +24336,7 @@ for (i = 0; i < iNoBCs; i++)
         brc = TRUE;
         break;
       }
-      pC = (cEdge*)pC->next;
+      pC = (eEdge*)pC->next;
     }
   }
 }
@@ -24366,7 +24366,7 @@ BOOL ME_Object::ElemInBCSet(E_Object* pE)
           brc = TRUE;
           break;
         }
-        pC = (cEdge*)pC->next;
+        pC = (eEdge*)pC->next;
       }
     }
   }
@@ -24383,7 +24383,7 @@ BOOL ME_Object::ElemInBCSet(E_Object* pE)
           brc = TRUE;
           break;
         }
-        pC = (cEdge*)pC->next;
+        pC = (eEdge*)pC->next;
       }
     }
   }

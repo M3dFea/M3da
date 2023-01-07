@@ -2029,7 +2029,7 @@ int i;
 E_Object* pRet;
 FreeFaceDsp(Els);
 Node* pENodes[100];
-cFace* pNext;
+eFace* pNext;
 pNext=pCurrentMesh->FcList->Head;
 while (pNext!=NULL)
 {
@@ -2047,7 +2047,7 @@ while (pNext!=NULL)
   }
   pRet->Reverse();
   pCurrentMesh->iElementLab++;
-  pNext=(cFace*) pNext->next;
+  pNext=(eFace*) pNext->next;
 }
 
 InvalidateOGL();
@@ -2181,13 +2181,13 @@ for (i=0;i<Els->iNo;i++)
 }
 int iN;
 int iDir;
-cEdge* pLk;
+eEdge* pLk;
 if (Els2->iNo>0)
 {
   E_Object* pE = (E_Object*) Els2->Objs[0];
   Els2->Remove(pE);
-  cEdgeList* LkList = new cEdgeList();
-  cEdge* Lk[200];
+  eEdgeList* LkList = new eEdgeList();
+  eEdge* Lk[200];
   iN = pE->GetLinkList(Lk);
   LkList->AddGp(iN,Lk);
   int ii;
@@ -2422,7 +2422,7 @@ void DBase::SectionProps(ObjList* Els)
 void DBase::FreeEdgeDsp(ObjList* Els)
 {
 int i;
-cEdgeList* LkList=NULL;
+eEdgeList* LkList=NULL;
 ObjList* Els2  = new ObjList();
 for (i=0;i<Els->iNo;i++)
 { 
@@ -2462,13 +2462,13 @@ delete(Els2);
 }
 
 //Find element free edges
-cEdgeList* DBase::FindEdges(ObjList* Els)
+eEdgeList* DBase::FindEdges(ObjList* Els)
 {
-	cEdge* Lk[200];
+	eEdge* Lk[200];
 	int iN;
 	int i;
 	int j;
-	cEdgeList* LkList = new cEdgeList();
+	eEdgeList* LkList = new eEdgeList();
 	for (i = 0; i < Els->iNo; i++)
 	{
 		E_Object* pE = (E_Object*)Els->Objs[i];
@@ -2504,8 +2504,8 @@ if (pCurrentMesh->FcList!=NULL)
    pCurrentMesh->FcList=NULL;
 }
 if (pCurrentMesh->FcList==NULL)
-  pCurrentMesh->FcList=new cFaceList();
-cFace* Fc[8];
+  pCurrentMesh->FcList=new eFaceList();
+eFace* Fc[8];
 int iN;
 int j;
 for(i=0;i<Els2->iNo;i++)
@@ -20372,7 +20372,7 @@ BOOL DBase::UpdateFront(NSurf* pSf, int &iNodeLab, int &iSegLab, BOOL isNewNd, c
 //but for now just createing nodes and element
 //for debugging mesh generator
 CONST int MAX_PTS_2D = 50000;
-cFaceList* DBase::GenTesselation(ObjList* pN, ObjList* pE)
+eFaceList* DBase::GenTesselation(ObjList* pN, ObjList* pE)
 {
 	Node* PtRealXYX[MAX_PTS_2D];
 	int i;
@@ -20561,7 +20561,7 @@ BOOL DBase::isNodeInCircle2d(ObjList* pN, int iExclude, double dRad, C2dVector C
 void DBase::QMorph(ObjList* Els)
 {
 	int i;
-	cEdgeList* LkList = NULL;
+	eEdgeList* LkList = NULL;
 	ObjList* Els2 = new ObjList();
 	for (i = 0; i < Els->iNo; i++)
 	{
@@ -20766,7 +20766,7 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 	double RR;
 	double RRF;
 	BOOL bIs;
-	cFaceList* pTesselation;
+	eFaceList* pTesselation;
 	ObjList* Pts = new ObjList();
 	cLinkedList* Segs = new cLinkedList();  //The FRONT
 	ObjList* pCandidateSegs = new ObjList();

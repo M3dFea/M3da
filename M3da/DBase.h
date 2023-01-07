@@ -350,7 +350,7 @@ ObjList* is2D(ObjList* Els, double &dxMin, double &dyMin, double &dxMax, double 
 void SectionProps(ObjList* Els);
 void FreeFaceDsp(ObjList* Els);
 void FreeEdgeDsp(ObjList* Els);
-cEdgeList* FindEdges(ObjList* Els);
+eEdgeList* FindEdges(ObjList* Els);
 //**************** Advancing Front 2D Surface Mesher ****************
 double DistPtSeg(cSeg* pSeg, C2dVector pt);
 double DistPtSeg2d(cSeg* pSeg, C2dVector pt, double dSX, double dSY);
@@ -370,7 +370,7 @@ void GetCandiatesNodes2d(cSeg* pNot, ObjList* pFrom, C2dVector vC, double dCD, O
 void CreateBSegs(ObjList* pP, cLinkedList* pS, double dS, NSurf* pSf);
 void GenPts(NSurf* pS, ObjList* Pts);
 BOOL UpdateFront(NSurf* pSf, int &iNodeLab, int &iSegLab, BOOL isNewNd,cSeg* pBaseSeg, ObjList* Pts, cLinkedList* Segs, c2dParPt* pbFNd, C2dVector pTmp,ObjList* pEls);
-cFaceList* GenTesselation(ObjList* pN, ObjList* pE);
+eFaceList* GenTesselation(ObjList* pN, ObjList* pE);
 void Smooth(ObjList* pN, ObjList* pE);
 BOOL NodeInTri(C2dVector t1, C2dVector t2, C2dVector t3, C2dVector pt);
 BOOL isSegIn(ObjList* pSegs, c2dParPt* pS1, c2dParPt* pS2);
