@@ -1825,7 +1825,7 @@ public:
 class zRESDISPOFF_Mnu : public zMnu
 {
 public:
-	Pt_Object* pN;
+	Node* pN;
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 

@@ -16160,7 +16160,7 @@ if (iStat == 1)
     {
       if (cDBase->S_Buff[cDBase->S_Count-1]->iObjType==1)
       {
-         Pt_Object* pE=(Pt_Object*) cDBase->S_Buff[cDBase->S_Count-1];
+         Node* pE=(Node*) cDBase->S_Buff[cDBase->S_Count-1];
          cDBase->SelNodesbyCOL(pE->iColour);
          cDBase->FILTER.SetAll();
       }
@@ -16213,7 +16213,7 @@ int zRESDISPOFF_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 				{
 					if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 1)
 					{
-						pN = (Pt_Object*) cDBase->S_Buff[cDBase->S_Count - 1];
+						pN = (Node*) cDBase->S_Buff[cDBase->S_Count - 1];
 						cDBase->SetResDispOff(pN);
 						cDBase->FILTER.SetAll();
 					}
@@ -16321,7 +16321,7 @@ if (iStat == 1)
     {
       if (cDBase->S_Buff[cDBase->S_Count-1]->iObjType==0)
       {
-         Pt_Object* pE=(Pt_Object*) cDBase->S_Buff[cDBase->S_Count-1];
+         Node* pE=(Node*) cDBase->S_Buff[cDBase->S_Count-1];
          cDBase->SelPtsbyCOL(pE->iColour);
          cDBase->FILTER.SetAll();
       }
@@ -16376,7 +16376,7 @@ if (iStat == 1)
     {
       if (cDBase->S_Buff[cDBase->S_Count-1]->iObjType==7)
       {
-         Pt_Object* pE=(Pt_Object*) cDBase->S_Buff[cDBase->S_Count-1];
+         Node* pE=(Node*) cDBase->S_Buff[cDBase->S_Count-1];
          cDBase->SelCursbyCOL(pE->iColour);
          cDBase->FILTER.SetAll();
       }

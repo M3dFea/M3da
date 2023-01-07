@@ -1184,7 +1184,7 @@ void DBase::Serialize(CArchive& ar)
 				DB_Obj[i]->Serialize(ar,iVER);
 				break;
 			case 1:
-				DB_Obj[i] = new Pt_Object;
+				DB_Obj[i] = new Node;
 				DB_Obj[i]->Serialize(ar,iVER);
 				break;
 			case 2 :
@@ -1756,7 +1756,7 @@ void DBase::AddNode(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int 
 {
 
 //C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
-Pt_Object* cAddedNode;
+Node* cAddedNode;
 if (iLab == -1)
 {
   iLab=pCurrentMesh->iNodeLab;
@@ -1768,7 +1768,7 @@ Dsp_Add(cAddedNode);
 ReDraw();
 }
 
-C3dMatrix DBase::GetNodalSys(Pt_Object* pN)
+C3dMatrix DBase::GetNodalSys(Node* pN)
 {
 C3dMatrix mRC;
 
@@ -1791,10 +1791,10 @@ if (pCurrentMesh->iCurLC!=-1)
   { 
    if (Nodes->Objs[i]->iObjType==1)
    {
-     Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
+     Node* pN = (Node*) Nodes->Objs[i];
      ME_Object* ME= (ME_Object*) pN->pParent;
      G_Object* cAddedT;
-     cAddedT = ME->AddFluxQ((Pt_Object*) pN, T,-1);
+     cAddedT = ME->AddFluxQ((Node*) pN, T,-1);
      if (cAddedT!=NULL)
      {
         Dsp_Add(cAddedT);
@@ -1820,11 +1820,11 @@ if (pCurrentMesh->iCurBC!=-1)
   { 
    if (Nodes->Objs[i]->iObjType==1)
    {
-     Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
+     Node* pN = (Node*) Nodes->Objs[i];
      ME_Object* ME= (ME_Object*) pN->pParent;
      G_Object* cAddedT;
 	 iSet = ME->GetTSETID(ME->iCurTSet);
-     cAddedT = ME->AddTemperatureBC((Pt_Object*) pN, T,-iSet);
+     cAddedT = ME->AddTemperatureBC((Node*) pN, T,-iSet);
      if (cAddedT!=NULL)
      {
         Dsp_Add(cAddedT);
@@ -1944,7 +1944,7 @@ for (i=0;i<Nodes->iNo;i++)
 { 
  if (Nodes->Objs[i]->iObjType==1)
  {
-   Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
+   Node* pN = (Node*) Nodes->Objs[i];
    if (pN->pParent!=NULL)
    {
     if (pN->pParent->iObjType==4)
@@ -1956,7 +1956,7 @@ for (i=0;i<Nodes->iNo;i++)
 	    ME_Object* ME= (ME_Object*) pN->pParent;
         G_Object* cAddedF;
 		iSet = ME->GetLCID(ME->iCurLC);
-        cAddedF = ME->AddForce((Pt_Object*) pN, TMat*F, iSet);
+        cAddedF = ME->AddForce((Node*) pN, TMat*F, iSet);
 		if (cAddedF!=NULL)
 		{
           Dsp_Add(cAddedF);
@@ -1987,7 +1987,7 @@ for (i=0;i<Nodes->iNo;i++)
 { 
  if (Nodes->Objs[i]->iObjType==1)
  {
-   Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
+   Node* pN = (Node*) Nodes->Objs[i];
 
    if (pN->pParent!=NULL)
    {
@@ -2000,7 +2000,7 @@ for (i=0;i<Nodes->iNo;i++)
         ME_Object* ME= (ME_Object*) pN->pParent;
         G_Object* cAddedF;
 		iSet = ME->GetLCID(ME->iCurLC);
-        cAddedF = ME->AddMoment((Pt_Object*) pN, TMat*F,iSet);
+        cAddedF = ME->AddMoment((Node*) pN, TMat*F,iSet);
 		if (cAddedF!=NULL)
 		{
           Dsp_Add(cAddedF);
@@ -2028,7 +2028,7 @@ void DBase::ShellSolids(ObjList* Els,int iCol)
 int i;
 E_Object* pRet;
 FreeFaceDsp(Els);
-Pt_Object* pENodes[100];
+Node* pENodes[100];
 cFace* pNext;
 pNext=pCurrentMesh->FcList->Head;
 while (pNext!=NULL)
@@ -2061,7 +2061,7 @@ ReDraw();
 void DBase::QuadToTri(ObjList* Els)
 {
 E_Object* pRet;
-Pt_Object* pENodes[100];
+Node* pENodes[100];
 int i;
 ObjList* Els2  = new ObjList();
 for (i=0;i<Els->iNo;i++)
@@ -2142,7 +2142,7 @@ InvalidateOGL();
 ReDraw();
 }
 
-E_Object* DBase::GetElRelEdge(ObjList* pFrom, Pt_Object* N1, Pt_Object* N2)
+E_Object* DBase::GetElRelEdge(ObjList* pFrom, Node* N1, Node* N2)
 {
   E_Object* pE = NULL;
   E_Object* pRet = NULL;
@@ -2248,7 +2248,7 @@ ObjList* DBase::is2D(ObjList* Els, double &dxMin, double &dyMin, double &dxMax, 
 	int i;
 	int j;
 	E_Object* pE;
-	Pt_Object* pN;
+	Node* pN;
 	ObjList* Els2 = new ObjList();
 	for (i = 0; i < Els->iNo; i++)
 	{
@@ -2271,7 +2271,7 @@ ObjList* DBase::is2D(ObjList* Els, double &dxMin, double &dyMin, double &dxMax, 
 		pE = (E_Object*) Els2->Objs[i];
 		for (j = 0; j < pE->iNoNodes; j++)
 		{
-			pN = (Pt_Object*) pE->GetNode(j);
+			pN = (Node*) pE->GetNode(j);
 			if ((pN->Pt_Point->z > -dNd2dTol) && (pN->Pt_Point->z < dNd2dTol))
 			{
 				if (pN->Pt_Point->x > dxMax)
@@ -2659,8 +2659,8 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 	double dTgt = GetTargetElSize(fEls);
 	double dMaxAng;
 	int iNoElsGen = 0;
-	Pt_Object* nNode;
-	Pt_Object* nNodeTry;
+	Node* nNode;
+	Node* nNodeTry;
 	C3dVector vC;
 	C3dVector vCF;
 	C3dVector vN;
@@ -2753,7 +2753,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 			for (itry = 0; itry < pCandidateNodes->iNo; itry++)
 			{
 			    vT = pCandidateNodes->Objs[itry]->Get_Centroid();
-				nNodeTry = (Pt_Object*)pCandidateNodes->Objs[itry];
+				nNodeTry = (Node*)pCandidateNodes->Objs[itry];
 				CreateTET(eTET, pE, nNodeTry);
 				double dH = eTET->GetTETHeight(vB);
 				double aaaa = MinInternalAngTET(eTET);
@@ -3281,13 +3281,13 @@ E_Object3* DBase::DoesFaceOverLap(E_Object3* pF1, ObjList* pCandidateFaces, doub
 	E_Object3* pFB = new E_Object3();   //Base face
 	E_Object3* pFT = new E_Object3();   //test face
 	pFB->pParent = NULL;
-	pFB->pVertex[0] = (Pt_Object *)pF1->pVertex[0]->Copy(NULL);
-	pFB->pVertex[1] = (Pt_Object *)pF1->pVertex[1]->Copy(NULL);
-	pFB->pVertex[2] = (Pt_Object *)pF1->pVertex[2]->Copy(NULL);
+	pFB->pVertex[0] = (Node *)pF1->pVertex[0]->Copy(NULL);
+	pFB->pVertex[1] = (Node *)pF1->pVertex[1]->Copy(NULL);
+	pFB->pVertex[2] = (Node *)pF1->pVertex[2]->Copy(NULL);
 	pFT->pParent = NULL;
-	pFT->pVertex[0] = (Pt_Object *)pF1->pVertex[0]->Copy(NULL);
-	pFT->pVertex[1] = (Pt_Object *)pF1->pVertex[1]->Copy(NULL);
-	pFT->pVertex[2] = (Pt_Object *)pF1->pVertex[2]->Copy(NULL);
+	pFT->pVertex[0] = (Node *)pF1->pVertex[0]->Copy(NULL);
+	pFT->pVertex[1] = (Node *)pF1->pVertex[1]->Copy(NULL);
+	pFT->pVertex[2] = (Node *)pF1->pVertex[2]->Copy(NULL);
 	mTram = pFB->GetElSys();
 	pFB->TransformAVF(mTram);
 	vTran = pFB->pVertex[0]->Get_Centroid();
@@ -3866,7 +3866,7 @@ BOOL DBase::CommitTET(cLinkedList* fEls,ObjList* pCandidateFaces,E_Object34* eTE
   BOOL bRet=FALSE;
   E_Object34* pRet;
   E_Object3* pFF;
-  Pt_Object* pENodes[100];
+  Node* pENodes[100];
   pENodes[0]=eTET->pVertex[0];
   pENodes[1]=eTET->pVertex[1];
   pENodes[2]=eTET->pVertex[2];
@@ -3907,7 +3907,7 @@ BOOL DBase::CommitTET(cLinkedList* fEls,ObjList* pCandidateFaces,E_Object34* eTE
   return(bRet);
 }
 
-E_Object3* DBase::GetFace(ObjList* pAdjFaces,Pt_Object* N1,Pt_Object* N2,Pt_Object* N3)
+E_Object3* DBase::GetFace(ObjList* pAdjFaces,Node* N1,Node* N2,Node* N3)
 {
 int i;
 E_Object3* pRet=NULL;
@@ -3943,11 +3943,11 @@ pCurrentMesh->DeleteEl(pFF);
 }
 
 
-E_Object3* DBase::CreateFace(Pt_Object* N1,Pt_Object* N2,Pt_Object* N3)
+E_Object3* DBase::CreateFace(Node* N1,Node* N2,Node* N3)
 {
 
   E_Object3* pRet=NULL;
-  Pt_Object* pENodes[100];
+  Node* pENodes[100];
   pENodes[0]=N1;
   pENodes[1]=N2;
   pENodes[2]=N3;
@@ -4076,7 +4076,7 @@ return (drc);
 
 
 
-void DBase::CreateTET(E_Object34* eRet,E_Object3* pE,Pt_Object* nNode)
+void DBase::CreateTET(E_Object34* eRet,E_Object3* pE,Node* nNode)
 {
 
 
@@ -4086,14 +4086,14 @@ void DBase::CreateTET(E_Object34* eRet,E_Object3* pE,Pt_Object* nNode)
   eRet->pVertex[3]=nNode;
 }
 
-Pt_Object* DBase::GetBestNode(ObjList* pFrom, E_Object3* pFace)
+Node* DBase::GetBestNode(ObjList* pFrom, E_Object3* pFace)
 {
 ObjList* pCand = new ObjList();
-Pt_Object* pN;
+Node* pN;
 E_Object3* pF;
 
 int i;
-Pt_Object* pRet=NULL;
+Node* pRet=NULL;
 pCand->Clear();
 if (pFace->iLabel==48)
   i=0;
@@ -4110,8 +4110,8 @@ for (i=0;i<pFrom->iNo;i++)
 //for each existing face edge form the face to the
 //other posisble nodes and check they are distinct from
 //the current one and not co-planar
- Pt_Object* n1;
- Pt_Object* n2;
+ Node* n1;
+ Node* n2;
  int j;
  C3dVector vFN;
  C3dVector vFC;
@@ -4120,7 +4120,7 @@ for (i=0;i<pFrom->iNo;i++)
  double dA;
  dA=pFace->GetCharSize();
  dA*=0.1;
-pRet=(Pt_Object*) pCand->Objs[0];
+pRet=(Node*) pCand->Objs[0];
 if (pCand->iNo>0)
 {  
  for (i=0;i<pFrom->iNo;i++)
@@ -4140,15 +4140,15 @@ if (pCand->iNo>0)
 	{
       if (pCand->Objs[j]!=pN)
 	  {
-         pTE.pVertex[0]=(Pt_Object*) n1;
-		 pTE.pVertex[1]=(Pt_Object*) n2;
-		 pTE.pVertex[2]=(Pt_Object*) pCand->Objs[j];
+         pTE.pVertex[0]=(Node*) n1;
+		 pTE.pVertex[1]=(Node*) n2;
+		 pTE.pVertex[2]=(Node*) pCand->Objs[j];
          vC=pTE.Get_Centroid();
          vC-=vFC;
 		 double dd=vC.Dot(vFN);
 		 if (vC.Dot(vFN)>dA)
 		 {
-           pRet=(Pt_Object*) pCand->Objs[j];
+           pRet=(Node*) pCand->Objs[j];
 		   break;
 		 }
 	  }
@@ -4165,9 +4165,9 @@ return(pRet);
 }
 
 //Get node in pFrom thats not in pFace
-Pt_Object* DBase::GetOtherNode(E_Object3* pFrom, E_Object3* pFace)
+Node* DBase::GetOtherNode(E_Object3* pFrom, E_Object3* pFace)
 {
-Pt_Object* pRet=NULL;
+Node* pRet=NULL;
 if (pFace->NodeInEl(pFrom->pVertex[0])==FALSE)
 {pRet=pFrom->pVertex[0];}
 else if (pFace->NodeInEl(pFrom->pVertex[1])==FALSE)
@@ -4182,7 +4182,7 @@ return(pRet);
 
 //Find the other face conected to N1 & N2 nut not N3
 //Note if the face is the existing face NULL will be returned
-E_Object3* DBase::GetAdjFace(ObjList* pFrom,Pt_Object* N1,Pt_Object* N2,Pt_Object* N3,E_Object3* pExclude)
+E_Object3* DBase::GetAdjFace(ObjList* pFrom,Node* N1,Node* N2,Node* N3,E_Object3* pExclude)
 {
   E_Object3* pFace=NULL;
   E_Object3* pE=NULL;
@@ -4501,7 +4501,7 @@ void DBase::RESLISTND(ObjList* Nds)
 			{
 				if (Nds->Objs[i]->iObjType == 1)
 				{
-					Pt_Object* pN = (Pt_Object*) Nds->Objs[i];
+					Node* pN = (Node*) Nds->Objs[i];
 					if (pN->pResV != NULL)
 					{
 						fRes = (*pN->pResV->GetAddress(pCurrentMesh->iCVar));
@@ -4546,7 +4546,7 @@ for (i=0;i<Nodes->iNo;i++)
 {     
  if (Nodes->Objs[i]->iObjType==1)
  {
-   Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
+   Node* pN = (Node*) Nodes->Objs[i];
    if (pN->pParent!=NULL)
    {
       if (pN->pParent->iObjType==4)
@@ -4554,7 +4554,7 @@ for (i=0;i<Nodes->iNo;i++)
 		ME_Object* ME= (ME_Object*) pN->pParent;
         G_Object* cAddedR;
 		iSet = ME->GetBCID(ME->iCurBC);
-        cAddedR = ME->AddRestraint((Pt_Object*) pN, xon,yon,zon,rxon,ryon,rzon, iSet);
+        cAddedR = ME->AddRestraint((Node*) pN, xon,yon,zon,rxon,ryon,rzon, iSet);
 		if (cAddedR!=NULL)
           Dsp_Add(cAddedR);
 	  }
@@ -4657,7 +4657,7 @@ void DBase::CoincidentElements (ObjList* Chkls)
 void DBase::FindNode(C3dVector vP)
 {
 	char s1[80];
-	Pt_Object* cNode;
+	Node* cNode;
 	double dMinDist = 1e36;
 	sprintf_s(s1, "Closest Node To: %g,%g,%g",vP.x,vP.y,vP.z);
 	outtext1(s1);
@@ -4826,11 +4826,11 @@ void DBase::ModNodeX(ObjList* Nodes, double dX)
   C3dVector vTrans;
   C3dVector vCart;
   WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
-  Pt_Object* pT;
+  Node* pT;
   C3dVector vNewNode;
   for (i = 0; i<Nodes->iNo; i++)
   {
-    pT = (Pt_Object*)Nodes->Objs[i];
+    pT = (Node*)Nodes->Objs[i];
     vNewNode.x = pT->Pt_Point->x;
     vNewNode.y = pT->Pt_Point->y;
     vNewNode.z = pT->Pt_Point->z;
@@ -4850,11 +4850,11 @@ void DBase::ModNodeY(ObjList* Nodes, double dY)
   C3dVector vTrans;
   C3dVector vCart;
   WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
-  Pt_Object* pT;
+  Node* pT;
   C3dVector vNewNode;
   for (i = 0; i<Nodes->iNo; i++)
   {
-    pT = (Pt_Object*)Nodes->Objs[i];
+    pT = (Node*)Nodes->Objs[i];
     vNewNode.x = pT->Pt_Point->x;
     vNewNode.y = pT->Pt_Point->y;
     vNewNode.z = pT->Pt_Point->z;
@@ -4873,11 +4873,11 @@ void DBase::ModNodeZ(ObjList* Nodes, double dZ)
   C3dVector vTrans;
   C3dVector vCart;
   WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
-  Pt_Object* pT;
+  Node* pT;
   C3dVector vNewNode;
   for (i = 0; i<Nodes->iNo; i++)
   {
-    pT = (Pt_Object*)Nodes->Objs[i];
+    pT = (Node*)Nodes->Objs[i];
     vNewNode.x = pT->Pt_Point->x;
     vNewNode.y = pT->Pt_Point->y;
     vNewNode.z = pT->Pt_Point->z;
@@ -4901,15 +4901,15 @@ int j;
 C3dVector vTrans;
 C3dVector vCart;
 WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
-Pt_Object* cAddedNode;
-Pt_Object* pT;
+Node* cAddedNode;
+Node* pT;
 C3dVector vNewNode;
 
    for (i=0;i<Nodes->iNo;i++)
    {     
 	   for (j=1;j<=iNoOfTimes;j++)
 	   {   
-		 pT = (Pt_Object*) Nodes->Objs[i];
+		 pT = (Node*) Nodes->Objs[i];
 	   vNewNode.x = pT->Pt_Point->x;
      vNewNode.y = pT->Pt_Point->y;
      vNewNode.z = pT->Pt_Point->z;
@@ -5071,9 +5071,9 @@ NEList* newNds = new NEList();
 G_Object* pO;
 G_Object* pOC;
 C3dVector vA;
-Pt_Object* pInVertex[200];
-Pt_Object* Nd;
-Pt_Object* NdNew;
+Node* pInVertex[200];
+Node* Nd;
+Node* NdNew;
 E_Object* El;
 E_Object* ENew;
 
@@ -5134,15 +5134,15 @@ if (Objs->iNo>0)
       El= (E_Object*) Objs->Objs[i];
       for (k=0;k<El->iNoNodes;k++)
       {
-        Nd=(Pt_Object*) El->GetNode(k);
+        Nd=(Node*) El->GetNode(k);
         iNewNd=newNds->Get(Nd->iLabel);
         if (iNewNd!=-1)
         {
-          pInVertex[k]=(Pt_Object*) pCurrentMesh->GetNode(iNewNd);
+          pInVertex[k]=(Node*) pCurrentMesh->GetNode(iNewNd);
         }
         else
         {
-          pInVertex[k]=(Pt_Object*) El->GetNode(k)->Copy(pCurrentMesh);
+          pInVertex[k]=(Node*) El->GetNode(k)->Copy(pCurrentMesh);
           pInVertex[k]->iLabel=pCurrentMesh->iNodeLab;
           newNds->Add(Nd->iLabel,pCurrentMesh->iNodeLab);
           pCurrentMesh->iNodeLab++;
@@ -5169,8 +5169,8 @@ for (i=0;i<Objs->iNo;i++)
   {
     if (Objs->Objs[i]->iObjType==1)
     {
-      Nd= (Pt_Object*) Objs->Objs[i];
-      NdNew=(Pt_Object*) Nd->Copy(pCurrentMesh);
+      Nd= (Node*) Objs->Objs[i];
+      NdNew=(Node*) Nd->Copy(pCurrentMesh);
       NdNew->iLabel=pCurrentMesh->iNodeLab;
       newNds->Add(Nd->iLabel,pCurrentMesh->iNodeLab);
       pCurrentMesh->iNodeLab++;
@@ -5433,8 +5433,8 @@ int j;
 C3dVector vTrans;
 C3dVector vCart;
 WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
-Pt_Object* cAddedNode;
-Pt_Object* pT;
+Node* cAddedNode;
+Node* pT;
 C3dVector vNewNode;
 C3dVector vN1;
 C3dVector vN2;
@@ -5446,11 +5446,11 @@ if (Nodes->iNo == Nodes2->iNo)
 {
    for (i=0;i<Nodes->iNo;i++)
    { 
-	  pT = (Pt_Object*) Nodes->Objs[i];
+	  pT = (Node*) Nodes->Objs[i];
 	  vN1.x = pT->Pt_Point->x;
       vN1.y = pT->Pt_Point->y;
       vN1.z = pT->Pt_Point->z;
-	  pT = (Pt_Object*) Nodes2->Objs[i];
+	  pT = (Node*) Nodes2->Objs[i];
 	  vN2.x = pT->Pt_Point->x;
       vN2.y = pT->Pt_Point->y;
       vN2.z = pT->Pt_Point->z;
@@ -5478,11 +5478,11 @@ else if ((Nodes->iNo == 1) && (Nodes2->iNo>0))
 {
    for (i=0;i<Nodes2->iNo;i++)
    { 
-	  pT = (Pt_Object*) Nodes->Objs[0];
+	  pT = (Node*) Nodes->Objs[0];
 	  vN1.x = pT->Pt_Point->x;
       vN1.y = pT->Pt_Point->y;
       vN1.z = pT->Pt_Point->z;
-	  pT = (Pt_Object*) Nodes2->Objs[i];
+	  pT = (Node*) Nodes2->Objs[i];
 	  vN2.x = pT->Pt_Point->x;
       vN2.y = pT->Pt_Point->y;
       vN2.z = pT->Pt_Point->z;
@@ -5510,11 +5510,11 @@ else if ((Nodes->iNo > 0) && (Nodes2->iNo==1))
 {
    for (i=0;i<Nodes->iNo;i++)
    { 
-	  pT = (Pt_Object*) Nodes->Objs[i];
+	  pT = (Node*) Nodes->Objs[i];
 	  vN1.x = pT->Pt_Point->x;
       vN1.y = pT->Pt_Point->y;
       vN1.z = pT->Pt_Point->z;
-	  pT = (Pt_Object*) Nodes2->Objs[0];
+	  pT = (Node*) Nodes2->Objs[0];
 	  vN2.x = pT->Pt_Point->x;
       vN2.y = pT->Pt_Point->y;
       vN2.z = pT->Pt_Point->z;
@@ -5626,14 +5626,14 @@ int j;
 C3dVector vTrans;
 C3dVector vCart;
 WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
-Pt_Object* cAddedNode;
-Pt_Object* pT;
+Node* cAddedNode;
+Node* pT;
 C3dVector vNewNode;
 C3dVector vN1;
 C3dVector vN2;
 C3dVector vDiff;
 double ds;
-Matrix<Pt_Object*> Nds(Nodes->iNo,iNoOfTimes+2) ;
+Matrix<Node*> Nds(Nodes->iNo,iNoOfTimes+2) ;
 
 if ((Nodes->iNo>0) && (Nodes2->iNo>0) && (iNoOfTimes>=0))
 {
@@ -5641,16 +5641,16 @@ if ((Nodes->iNo>0) && (Nodes2->iNo>0) && (iNoOfTimes>=0))
   {
 	 for (i=0;i<Nodes->iNo;i++)
      { 
-	   Nds(i,0)=(Pt_Object*) Nodes->Objs[i];
-       Nds(i,iNoOfTimes+1)=(Pt_Object*) Nodes2->Objs[i];
+	   Nds(i,0)=(Node*) Nodes->Objs[i];
+       Nds(i,iNoOfTimes+1)=(Node*) Nodes2->Objs[i];
 	 }
      for (i=0;i<Nodes->iNo;i++)
      { 
-	   pT = (Pt_Object*) Nodes->Objs[i];
+	   pT = (Node*) Nodes->Objs[i];
 	   vN1.x = pT->Pt_Point->x;
        vN1.y = pT->Pt_Point->y;
        vN1.z = pT->Pt_Point->z;
-	   pT = (Pt_Object*) Nodes2->Objs[i];
+	   pT = (Node*) Nodes2->Objs[i];
 	   vN2.x = pT->Pt_Point->x;
        vN2.y = pT->Pt_Point->y;
        vN2.z = pT->Pt_Point->z;
@@ -5674,7 +5674,7 @@ if ((Nodes->iNo>0) && (Nodes2->iNo>0) && (iNoOfTimes>=0))
 		  Dsp_Add(cAddedNode);
 	  }
     }
-	Pt_Object* iNlabs[200]; 
+	Node* iNlabs[200]; 
     E_Object* pEl;
     for (i=0;i<Nodes->iNo-1;i++)
     {
@@ -7712,9 +7712,9 @@ int iNewNd=-1;
 NEList* newNds = new NEList();
 G_Object* pO;
 C3dVector vA;
-Pt_Object* pInVertex[200];
-Pt_Object* Nd;
-Pt_Object* NdNew;
+Node* pInVertex[200];
+Node* Nd;
+Node* NdNew;
 E_Object* El;
 E_Object* ENew;
 
@@ -7735,15 +7735,15 @@ for (j=0;j<iNoOff;j++)
       El= (E_Object*) Items->Objs[i];
       for (k=0;k<El->iNoNodes;k++)
       {
-        Nd=(Pt_Object*) El->GetNode(k);
+        Nd=(Node*) El->GetNode(k);
         iNewNd=newNds->Get(Nd->iLabel);
         if (iNewNd!=-1)
         {
-          pInVertex[k]=(Pt_Object*) pCurrentMesh->GetNode(iNewNd);
+          pInVertex[k]=(Node*) pCurrentMesh->GetNode(iNewNd);
         }
         else
         {
-          pInVertex[k]=(Pt_Object*) El->GetNode(k)->Copy(pCurrentMesh);
+          pInVertex[k]=(Node*) El->GetNode(k)->Copy(pCurrentMesh);
           pInVertex[k]->iLabel=pCurrentMesh->iNodeLab;
           newNds->Add(Nd->iLabel,pCurrentMesh->iNodeLab);
           pCurrentMesh->iNodeLab++;
@@ -7770,11 +7770,11 @@ for (j=0;j<iNoOff;j++)
     {
       if (Items->Objs[i]->iObjType==1)
       {
-        Nd= (Pt_Object*) Items->Objs[i];
+        Nd= (Node*) Items->Objs[i];
         vA = tVec;
 	      for (j=0;j<iNoOff;j++)
         {
-          	NdNew=(Pt_Object*) Nd->Copy(pCurrentMesh);
+          	NdNew=(Node*) Nd->Copy(pCurrentMesh);
             NdNew->iLabel=pCurrentMesh->iNodeLab;
             newNds->Add(Nd->iLabel,pCurrentMesh->iNodeLab);
             pCurrentMesh->iNodeLab++;
@@ -7846,9 +7846,9 @@ int iNewNd;
 G_Object* pO;
 double dA;
 NEList* newNds = new NEList();
-Pt_Object* pInVertex[200];
-Pt_Object* Nd;
-Pt_Object* NdNew;
+Node* pInVertex[200];
+Node* Nd;
+Node* NdNew;
 E_Object* El;
 E_Object* ENew;
 
@@ -7870,15 +7870,15 @@ for (j=0;j<iNoOff;j++)
       El= (E_Object*) Items->Objs[i];
       for (k=0;k<El->iNoNodes;k++)
       {
-        Nd=(Pt_Object*) El->GetNode(k);
+        Nd=(Node*) El->GetNode(k);
         iNewNd=newNds->Get(Nd->iLabel);
         if (iNewNd!=-1)
         {
-          pInVertex[k]=(Pt_Object*) pCurrentMesh->GetNode(iNewNd);
+          pInVertex[k]=(Node*) pCurrentMesh->GetNode(iNewNd);
         }
         else
         {
-          pInVertex[k]=(Pt_Object*) El->GetNode(k)->Copy(pCurrentMesh);
+          pInVertex[k]=(Node*) El->GetNode(k)->Copy(pCurrentMesh);
           pInVertex[k]->iLabel=pCurrentMesh->iNodeLab;
           newNds->Add(Nd->iLabel,pCurrentMesh->iNodeLab);
           pCurrentMesh->iNodeLab++;
@@ -7904,11 +7904,11 @@ for (j=0;j<iNoOff;j++)
     {
       if (Items->Objs[i]->iObjType==1)
       {
-        Nd= (Pt_Object*) Items->Objs[i];
+        Nd= (Node*) Items->Objs[i];
         dA = dAng;
 	      for (j=0;j<iNoOff;j++)
         {
-          	NdNew=(Pt_Object*) Nd->Copy(pCurrentMesh);
+          	NdNew=(Node*) Nd->Copy(pCurrentMesh);
             NdNew->iLabel=pCurrentMesh->iNodeLab;
             pCurrentMesh->iNodeLab++;
             pCurrentMesh->pNodes[pCurrentMesh->iNdNo]=NdNew;
@@ -7970,9 +7970,9 @@ if (iNoOff > 0)
 	tVec.y /= dd;
 	tVec.z /= dd;
 }
-Pt_Object* iNlabs[200]; 
+Node* iNlabs[200]; 
 C3dVector vA;
-Pt_Object* NdNew = NULL;
+Node* NdNew = NULL;
 E_Object* El = NULL;
 E_Object* ENew = NULL;
 ObjList* ELF=new ObjList;
@@ -8013,7 +8013,7 @@ for (i=0;i<iNoOff+1;i++)
     vA.Set(0,0,0);
     for (j=0;j<NDF->iNo;j++)
     {
-      NdNew=(Pt_Object*) NDF->Objs[j]->Copy(pCurrentMesh);
+      NdNew=(Node*) NDF->Objs[j]->Copy(pCurrentMesh);
       NdNew->iLabel=pCurrentMesh->iNodeLab;
       pCurrentMesh->iNodeLab++;
       pCurrentMesh->pNodes[pCurrentMesh->iNdNo]=NdNew;
@@ -8028,7 +8028,7 @@ for (i=0;i<iNoOff+1;i++)
     vA = tVec;
     for (j=0;j<NDF->iNo;j++)
     {
-      NdNew=(Pt_Object*) NDF1->Objs[j]->Copy(pCurrentMesh);
+      NdNew=(Node*) NDF1->Objs[j]->Copy(pCurrentMesh);
       NdNew->iLabel=pCurrentMesh->iNodeLab;
       pCurrentMesh->iNodeLab++;
       pCurrentMesh->pNodes[pCurrentMesh->iNdNo]=NdNew;
@@ -8041,34 +8041,34 @@ for (i=0;i<iNoOff+1;i++)
       El = (E_Object*) ELF->Objs[k];
       if (El->iType==94)
 	  {
-        iNlabs[0]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
-	    iNlabs[1]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
-	    iNlabs[2]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(2))];
-	    iNlabs[3]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(3))];
-        iNlabs[4]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
-	    iNlabs[5]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
-	    iNlabs[6]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(2))];
-	    iNlabs[7]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(3))];
+        iNlabs[0]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
+	    iNlabs[1]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
+	    iNlabs[2]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(2))];
+	    iNlabs[3]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(3))];
+        iNlabs[4]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
+	    iNlabs[5]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
+	    iNlabs[6]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(2))];
+	    iNlabs[7]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(3))];
 		ENew=pCurrentMesh->AddEl(iNlabs,pCurrentMesh->iElementLab,9,115,-1,1,8,0,0,0,0,0,0);
 		pCurrentMesh->iElementLab++;
 	  }
 	  else if (El->iType==91)
 	  {
-        iNlabs[0]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
-	    iNlabs[1]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
-	    iNlabs[2]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(2))];
-        iNlabs[3]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
-	    iNlabs[4]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
-	    iNlabs[5]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(2))];
+        iNlabs[0]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
+	    iNlabs[1]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
+	    iNlabs[2]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(2))];
+        iNlabs[3]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
+	    iNlabs[4]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
+	    iNlabs[5]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(2))];
 		ENew=pCurrentMesh->AddEl(iNlabs,pCurrentMesh->iElementLab,9,112,-1,1,6,0,0,0,0,0,0);
 		pCurrentMesh->iElementLab++;
 	  }
 	  else if (El->iType == 21)
 	  {
-		  iNlabs[0] = (Pt_Object*)NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
-		  iNlabs[1] = (Pt_Object*)NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
-		  iNlabs[2] = (Pt_Object*)NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
-		  iNlabs[3] = (Pt_Object*)NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
+		  iNlabs[0] = (Node*)NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
+		  iNlabs[1] = (Node*)NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
+		  iNlabs[2] = (Node*)NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
+		  iNlabs[3] = (Node*)NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
 		  ENew = pCurrentMesh->AddEl(iNlabs, pCurrentMesh->iElementLab, 74, 94, -1, 1, 4, 0, 0, 0, 0, -1, 0);
 		  pCurrentMesh->iElementLab++;
 	  }
@@ -8105,9 +8105,9 @@ void DBase::NDSweepToShell(ObjList* Items, C3dVector tVec, int iNoOff)
 		tVec.y /= dd;
 		tVec.z /= dd;
 	}
-	Pt_Object* iNlabs[200];
+	Node* iNlabs[200];
 	C3dVector vA;
-	Pt_Object* NdNew = NULL;
+	Node* NdNew = NULL;
 	E_Object* El = NULL;
 	E_Object* ENew = NULL;
 	ObjList* ELF = new ObjList;
@@ -8154,7 +8154,7 @@ void DBase::NDSweepToShell(ObjList* Items, C3dVector tVec, int iNoOff)
 				vA = tVec;
 				for (j = 0; j < NDF->iNo; j++)
 				{
-					NdNew = (Pt_Object*)NDF1->Objs[j]->Copy(pCurrentMesh);
+					NdNew = (Node*)NDF1->Objs[j]->Copy(pCurrentMesh);
 					NdNew->iLabel = pCurrentMesh->iNodeLab;
 					pCurrentMesh->iNodeLab++;
 					pCurrentMesh->pNodes[pCurrentMesh->iNdNo] = NdNew;
@@ -8164,10 +8164,10 @@ void DBase::NDSweepToShell(ObjList* Items, C3dVector tVec, int iNoOff)
 				}
 				for (k = 0; k < NDF1->iNo-1; k++)
 				{
-						iNlabs[0] = (Pt_Object*) NDF1->Objs[k];
-						iNlabs[1] = (Pt_Object*) NDF2->Objs[k];
-						iNlabs[2] = (Pt_Object*) NDF2->Objs[k+1]; 
-						iNlabs[3] = (Pt_Object*) NDF1->Objs[k+1];
+						iNlabs[0] = (Node*) NDF1->Objs[k];
+						iNlabs[1] = (Node*) NDF2->Objs[k];
+						iNlabs[2] = (Node*) NDF2->Objs[k+1]; 
+						iNlabs[3] = (Node*) NDF1->Objs[k+1];
 						ENew = pCurrentMesh->AddEl(iNlabs, pCurrentMesh->iElementLab, 74, 94, -1, 1, 4, 0, 0, 0, 0, -1, 0);
 						pCurrentMesh->iElementLab++;
 				}
@@ -8202,9 +8202,9 @@ void DBase::NDSweepToBeam(ObjList* Items, C3dVector tVec, int iNoOff)
 		tVec.y /= dd;
 		tVec.z /= dd;
 	}
-	Pt_Object* iNlabs[200];
+	Node* iNlabs[200];
 	C3dVector vA;
-	Pt_Object* NdNew = NULL;
+	Node* NdNew = NULL;
 	E_Object* El = NULL;
 	E_Object* ENew = NULL;
 	ObjList* ELF = new ObjList;
@@ -8251,7 +8251,7 @@ void DBase::NDSweepToBeam(ObjList* Items, C3dVector tVec, int iNoOff)
 				vA = tVec;
 				for (j = 0; j < NDF->iNo; j++)
 				{
-					NdNew = (Pt_Object*)NDF1->Objs[j]->Copy(pCurrentMesh);
+					NdNew = (Node*)NDF1->Objs[j]->Copy(pCurrentMesh);
 					NdNew->iLabel = pCurrentMesh->iNodeLab;
 					pCurrentMesh->iNodeLab++;
 					pCurrentMesh->pNodes[pCurrentMesh->iNdNo] = NdNew;
@@ -8261,8 +8261,8 @@ void DBase::NDSweepToBeam(ObjList* Items, C3dVector tVec, int iNoOff)
 				}
 				for (k = 0; k < NDF1->iNo; k++)
 				{
-					iNlabs[0] = (Pt_Object*)NDF1->Objs[k];
-					iNlabs[1] = (Pt_Object*)NDF2->Objs[k];
+					iNlabs[0] = (Node*)NDF1->Objs[k];
+					iNlabs[1] = (Node*)NDF2->Objs[k];
 					ENew = pCurrentMesh->AddEl(iNlabs, pCurrentMesh->iElementLab, 75, 21, -1, 1, 4, 0, 0, 0, 0, -1, 0);
 					pCurrentMesh->iElementLab++;
 				}
@@ -8284,7 +8284,7 @@ void DBase::NDSweepToBeam(ObjList* Items, C3dVector tVec, int iNoOff)
 // Pre: Node
 // Post: Nodal averaged normal calculated
 //*********************************************************************************
-C3dVector DBase::GetNodalNormal(Pt_Object* pN, ObjList* ELS)
+C3dVector DBase::GetNodalNormal(Node* pN, ObjList* ELS)
 {
 	int i;
 	double dC=0;
@@ -8359,8 +8359,8 @@ void DBase::GenFronts(cLinkedList* NDF,int iDir)
 	int i;
 	double t = 0.2;
 	c2dFront* pF = (c2dFront*) NDF->Head;
-	Pt_Object* pBN; 
-	Pt_Object* pNN;
+	Node* pBN; 
+	Node* pNN;
 	C3dVector vBN;
 	C3dVector vUp;
 	C3dVector vNewNd;
@@ -8384,7 +8384,7 @@ void DBase::GenFronts(cLinkedList* NDF,int iDir)
 		{
 			dCorr = 1 / sin(0.017453*(pF->dA / 2));
 			iNoLay = pC->iNoLays;
-			pBN = (Pt_Object*)pF->fNodes->Head;
+			pBN = (Node*)pF->fNodes->Head;
 			pBN->iColour = 10; //Using colour to identify g ply id as dont want to add to m3d
 			vBN = pBN->Get_Centroid();
 			vUp = pF->vN;
@@ -8415,18 +8415,18 @@ BOOL  DBase::MoveFront(c2dFront* pMF)
 	c2dFront* pAfter;
 	pBefore = (c2dFront*) pMF->before;
 	pAfter = (c2dFront*) pMF->next;
-	Pt_Object* pNB;
-	Pt_Object* pNM;
-	Pt_Object* pNA;
+	Node* pNB;
+	Node* pNM;
+	Node* pNA;
 	C3dVector vMid;
 	C3dVector vT;
 	if ((pBefore != NULL) && (pAfter != NULL))
 	{
 		if ((pBefore->fNodes->iCnt == pMF->fNodes->iCnt) && (pAfter->fNodes->iCnt == pMF->fNodes->iCnt))
 		{
-			pNB = (Pt_Object*) pBefore->fNodes->Head;
-			pNM = (Pt_Object*) pMF->fNodes->Head;
-			pNA = (Pt_Object*) pAfter->fNodes->Head;
+			pNB = (Node*) pBefore->fNodes->Head;
+			pNM = (Node*) pMF->fNodes->Head;
+			pNA = (Node*) pAfter->fNodes->Head;
 			while (pNM != NULL)
 			{
 				vMid = pNB->Get_Centroid();
@@ -8434,9 +8434,9 @@ BOOL  DBase::MoveFront(c2dFront* pMF)
 				vMid += vT;
 				vMid *= 0.5;
 				pNM->Pt_Point->Set(vMid.x, vMid.y, vMid.z);
-				pNB = (Pt_Object*) pNB->next;
-				pNM = (Pt_Object*) pNM->next;
-				pNA = (Pt_Object*) pNA->next;
+				pNB = (Node*) pNB->next;
+				pNM = (Node*) pNM->next;
+				pNA = (Node*) pNA->next;
 			}
 		}
 
@@ -8493,24 +8493,24 @@ void DBase::ChkIntersects(cLinkedList* NDF)
 //*********************************************************************************
 void DBase::GenElements(cLinkedList* NDF)
 {
-	Pt_Object *pENodes[100];
+	Node *pENodes[100];
 	c2dFront* pF1 = (c2dFront*) NDF->Head;
 	c2dFront* pF2;
-	Pt_Object* p1;
-	Pt_Object* p2;
-	Pt_Object* p3;
-	Pt_Object* p4;
-	Pt_Object* p43;
+	Node* p1;
+	Node* p2;
+	Node* p3;
+	Node* p4;
+	Node* p43;
 	E_Object* pEL;
 	while (pF1->next != NULL)
 	{
 		pF2 = (c2dFront*) pF1->next;
 		if (pF1->fNodes->Head != NULL)
 		{
-			p1 = (Pt_Object*) pF1->fNodes->Head;
+			p1 = (Node*) pF1->fNodes->Head;
 			while (p1->next != NULL)
 			{
-				p2 = (Pt_Object*) p1->next;
+				p2 = (Node*) p1->next;
 				p3 = pF2->GetNodeByGID(p2->iColour);
 				p4 = pF2->GetNodeByGID(p1->iColour);
 				p43 = pF2->isSegBet(p1->iColour, p2->iColour);	//Check for ply addition
@@ -8551,14 +8551,14 @@ void DBase::GenElements(cLinkedList* NDF)
 //*********************************************************************************
 void DBase::GenBEamElements(cLinkedList* NDF,int iCOl)
 {
-	Pt_Object *pENodes[100];
-	Pt_Object* p1;
-	Pt_Object* p2;
+	Node *pENodes[100];
+	Node* p1;
+	Node* p2;
 	E_Object* pEL;
-	p1 = (Pt_Object*) NDF->Head;
+	p1 = (Node*) NDF->Head;
 	while (p1->next != NULL)
 	{
-		p2 = (Pt_Object*) p1->next;
+		p2 = (Node*) p1->next;
         pENodes[0] = p1;
 		pENodes[1] = p2;
         if ((p1 != NULL) && (p2 != NULL))
@@ -8655,14 +8655,14 @@ void DBase::ElSweepB(ObjList* Items, int iDir)
 						NDF->Add(oF);			
 						oF->fNodes->Add(pEB->GetNode(0));
 						oF->iPID = pEB->PID;
-						oF->vN = GetNodalNormal((Pt_Object*) pEB->GetNode(0), ELF);
+						oF->vN = GetNodalNormal((Node*) pEB->GetNode(0), ELF);
 						if (iDir == 0)
 							oF->vN *= -1.0;
 						oF = new c2dFront();
 						NDF->Add(oF);
 						oF->fNodes->Add(pEB->GetNode(1));
 						oF->iPID = pEB->PID;
-						oF->vN = GetNodalNormal((Pt_Object*) pEB->GetNode(1), ELF);
+						oF->vN = GetNodalNormal((Node*) pEB->GetNode(1), ELF);
 						if (iDir == 0)
 							oF->vN *= -1.0;
 						bFirst = FALSE;
@@ -8673,7 +8673,7 @@ void DBase::ElSweepB(ObjList* Items, int iDir)
 						NDF->Add(oF);
 						oF->fNodes->Add(pEB->GetNode(1));	//AddEx
 						oF->iPID = pEB->PID;
-						oF->vN = GetNodalNormal((Pt_Object*) pEB->GetNode(1), ELF);
+						oF->vN = GetNodalNormal((Node*) pEB->GetNode(1), ELF);
 						if (iDir == 0)
 							oF->vN *= -1.0;
 					}
@@ -9252,7 +9252,7 @@ E_Object* DBase::AddEl(int iPos,BOOL AddDsp)
 int iNo=pCurrentMesh->GetNoNode(iCurElemType);
 BOOL bChk = TRUE;
 E_Object* cAddedEl;
-Pt_Object *pENodes[200];
+Node *pENodes[200];
 cAddedEl=NULL;
 int i;
 char S1[80];
@@ -9274,7 +9274,7 @@ if (bChk==TRUE)
   {
     if (S_Buff[i]->iObjType==1)
 	  {
-	    pENodes[i]=(Pt_Object*) S_Buff[i];
+	    pENodes[i]=(Node*) S_Buff[i];
 		if (pCurrentMesh->sName != "NULL")
 		{
 			if (S_Buff[i]->pParent != pCurrentMesh)
@@ -9289,7 +9289,7 @@ if (bChk==TRUE)
 	  }
 	
   }
-Pt_Object* cAddedNode;
+Node* cAddedNode;
 if (bChk==TRUE)
 {
   pCurrentMesh->MaxLab();
@@ -9348,7 +9348,7 @@ return (cAddedEl);
 int DBase::AddEl2(int pVnode[200], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C)
 {
 E_Object* cAddedEl;
-Pt_Object *pENodes[100];
+Node *pENodes[100];
 int iCnt;
 if (pCurrentMesh != NULL)
   {
@@ -10470,7 +10470,7 @@ return (cSel);
 void DBase::NodesOnCurve(NCurve* pC,int iNo, cLinkedList* pN)
 {
 	C3dVector v;
-	Pt_Object* pNode;
+	Node* pNode;
 	int i, iCO;
 	double dW = 0;
 	double dInc;
@@ -10497,7 +10497,7 @@ void DBase::NodesOnCurve(NCurve* pC,int iNo, cLinkedList* pN)
 void DBase::GenNodesOnCurve(int iNo,cLinkedList* pN)
 {
 C3dVector v;
-Pt_Object* pNode;
+Node* pNode;
 int i,iCO;
 double dW=0;
 double dInc;
@@ -10576,7 +10576,7 @@ if (iU<= 0)
    iU=1;
 if (iV<= 0)
    iV=1;
-Matrix<Pt_Object*> Nds(iU+1,iV+1) ;
+Matrix<Node*> Nds(iU+1,iV+1) ;
 pCurrentMesh->MaxLab();
 iSNd=pCurrentMesh->iNodeLab;
 iSEl=pCurrentMesh->iElementLab;
@@ -10612,7 +10612,7 @@ iFEl=iSEl;
 		    if (dU>1) {dU=1;}
 		}
 	}
-	Pt_Object* iNlabs[200]; 
+	Node* iNlabs[200]; 
   E_Object* pEl;
   for (i=0;i<iU;i++)
   {
@@ -10670,7 +10670,7 @@ if (iU<= 0)
    iU=1;
 if (iV<= 0)
    iV=1;
-Matrix<Pt_Object*> Nds(iU+1,iV+1) ;
+Matrix<Node*> Nds(iU+1,iV+1) ;
 pCurrentMesh->MaxLab();
 iSNd=pCurrentMesh->iNodeLab;
 iSEl=pCurrentMesh->iElementLab;
@@ -10706,7 +10706,7 @@ iFEl=iSEl;
 		    if (dU>1) {dU=1;}
 		}
 	}
-	Pt_Object* iNlabs[200]; 
+	Node* iNlabs[200]; 
     E_Object* pEl;
     for (i=0;i<iU;i++)
     {
@@ -13292,7 +13292,7 @@ void DBase::DeleteObj()
 			else if (S_Buff[iCO]->iObjType==1)
 			{
 				ME_Object* Me = (ME_Object*) S_Buff[iCO]->pParent;
-				if (Me->DeleteNd((Pt_Object*) S_Buff[iCO])==TRUE)
+				if (Me->DeleteNd((Node*) S_Buff[iCO])==TRUE)
 				{
 					//RemObj(S_Buff[iCO]);
 					Dsp_Rem(S_Buff[iCO]);
@@ -13432,7 +13432,7 @@ void DBase::ExportPermGroupsTXT(FILE* pFile2)
 {
 int i;
 int j;
-Pt_Object* pN;
+Node* pN;
 E_Object* pE;
  fprintf(pFile2,"%-10s%-10s%-10s%-10s%-10s\n","$ELEM","ID","COL","PID","TYPE");
  fprintf(pFile2,"%-10s%-10s%-10s%-10s%-10s\n","$NODE","ID","COL","DEF","OUT");
@@ -13446,7 +13446,7 @@ for (i=0;i<iNoGPs ;i++)
     {
       if ((Groups[i]->Objs[j]->iObjType==1) && (Groups[i]->Objs[j]->pParent==pCurrentMesh))
       {
-        pN=(Pt_Object*) Groups[i]->Objs[j];
+        pN=(Node*) Groups[i]->Objs[j];
         fprintf(pFile2,"%-10s%-10i%-10i%-10i%-10i\n","NODE",pN->iLabel,pN->iColour,pN->DefSys,pN->OutSys);
       }
       else if ((Groups[i]->Objs[j]->iObjType==3) && (Groups[i]->Objs[j]->pParent==pCurrentMesh))
@@ -15696,7 +15696,7 @@ if (pM!=NULL)
   vX.Normalize();
   if (iONID!=-1)
   {
-    Pt_Object* pN=pM->GetNode(iONID);
+    Node* pN=pM->GetNode(iONID);
     if (pN!=NULL)
     {
       vY=pM->GetNode(iONID)->GetCoords();
@@ -16956,7 +16956,7 @@ ReDraw();
 }
 
 //set relative displacement offset
-void DBase::SetResDispOff(Pt_Object* pN)
+void DBase::SetResDispOff(Node* pN)
 {
 
 	if (pCurrentMesh != NULL)
@@ -17395,7 +17395,7 @@ for (j=0;j<S_Count;j++)
         rMat.m_12 = vZ.y;
         rMat.m_22 = vZ.z;
         CoordSys* pRet = pCurrentMesh->AddSys(vO,rMat,-1,1,S_Buff[j]->iLabel,55);
-        Pt_Object* pN = (Pt_Object*) S_Buff[j];
+        Node* pN = (Node*) S_Buff[j];
         pN->OutSys = pRet->iLabel;
         pObj->Add(pRet);
         S_Buff[j]->iColour=124;
@@ -18017,7 +18017,7 @@ for (iCO=0;iCO<S_Count;iCO++)
 {
   if (S_Buff[iCO]->iObjType == 1)
   {
-    Pt_Object* pN = (Pt_Object*) S_Buff[iCO];  
+    Node* pN = (Node*) S_Buff[iCO];  
     pN->OutSys=iSys;
 	iNoC++;
   }
@@ -18103,12 +18103,12 @@ for (iCO=0;iCO<S_Count;iCO++)
 {
   if (S_Buff[iCO]->iObjType == 1)
   {
-    Pt_Object* pN = (Pt_Object*) S_Buff[iCO];  
+    Node* pN = (Node*) S_Buff[iCO];  
     iNewLab=pN->iLabel+iN;
     if (pCurrentMesh==pN->pParent)
     {
       //Check to see if the node exists;
-      Pt_Object* pNC=pCurrentMesh->GetNode(iNewLab);
+      Node* pNC=pCurrentMesh->GetNode(iNewLab);
       if (pNC==NULL)
       {
         pN->iLabel=iNewLab;
@@ -18138,11 +18138,11 @@ for (iCO=0;iCO<S_Count;iCO++)
 {
   if (S_Buff[iCO]->iObjType == 1)
   {
-    Pt_Object* pN = (Pt_Object*) S_Buff[iCO];  
+    Node* pN = (Node*) S_Buff[iCO];  
     if (pCurrentMesh==pN->pParent)
     {
       //Check to see if the node exists;
-      Pt_Object* pNC=pCurrentMesh->GetNode(iNewLab);
+      Node* pNC=pCurrentMesh->GetNode(iNewLab);
       if (pNC==NULL)
       {
         pN->iLabel=iNewLab;
@@ -18172,7 +18172,7 @@ for (iCO=0;iCO<S_Count;iCO++)
 {
   if (S_Buff[iCO]->iObjType == 1)
   {
-    Pt_Object* pN = (Pt_Object*) S_Buff[iCO];  
+    Node* pN = (Node*) S_Buff[iCO];  
     pN->DefSys=iSys;
 	iNoC++;
   }
@@ -18535,13 +18535,13 @@ else
 {
     outtext1("ERROR: Unable to Merge - No Current Mesh.");
 }
-Pt_Object* pKeep=NULL;
+Node* pKeep=NULL;
 if (ChkNodes->iNo>0)
 {
   outtext1("Coincident Node List:-");
   do
   {
-    Pt_Object* pN = (Pt_Object*) ChkNodes->Objs[0];
+    Node* pN = (Node*) ChkNodes->Objs[0];
     GetClosestNodes(ChkNodes,pN->GetCoords(),CNodes,dTol);
     ChkNodes->RemoveGP(CNodes);
     if (CNodes->iNo>1)
@@ -18550,14 +18550,14 @@ if (ChkNodes->iNo>0)
       if (bDel)         //Thean merge else just list
       {
         if (UpLab)
-          pKeep=(Pt_Object*) CNodes->GetMaxLabItem();
+          pKeep=(Node*) CNodes->GetMaxLabItem();
         else
-          pKeep=(Pt_Object*) CNodes->GetMinLabItem();
+          pKeep=(Node*) CNodes->GetMinLabItem();
         if (pKeep!=NULL)
         {
           for (i=0;i<CNodes->iNo;i++)
           {
-            pCurrentMesh->RepNodeInEl((Pt_Object*) CNodes->Objs[i],pKeep);
+            pCurrentMesh->RepNodeInEl((Node*) CNodes->Objs[i],pKeep);
           }
         }
       }
@@ -20374,13 +20374,13 @@ BOOL DBase::UpdateFront(NSurf* pSf, int &iNodeLab, int &iSegLab, BOOL isNewNd, c
 CONST int MAX_PTS_2D = 50000;
 cFaceList* DBase::GenTesselation(ObjList* pN, ObjList* pE)
 {
-	Pt_Object* PtRealXYX[MAX_PTS_2D];
+	Node* PtRealXYX[MAX_PTS_2D];
 	int i;
 	int N1,N2,N3;
 	NSurf* pS;
 	c2dParPt* pPt;
 	C3dVector ptXYZ;
-	Pt_Object* pENodes[100];
+	Node* pENodes[100];
 	E_Object3* pRet;
 	if (pN->iNo < MAX_PTS_2D)
 	{
