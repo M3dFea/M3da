@@ -2462,7 +2462,7 @@ if ((pCurrentMesh->LkList == NULL) && (LkList != NULL))
 		//Line below added to force related to to pick
 		//nodes on edges instead of connected element
 		//maybe wrond behaviour for this
-		pNext->pParent = NULL;
+		//pNext->pParent = NULL;
 		pNext = (eEdge*)pNext->next;
 	}
 	InvalidateOGL();
@@ -17337,7 +17337,11 @@ pObj->Clear();
 int i,j;
 for (j=0;j<S_Count;j++)
 {
-  if (S_Buff[j]->pParent!=NULL)
+  if ((S_Buff[j]->iObjType == 8) && (iType == 1))
+  {
+	S_Buff[j]->RelTo(S_Buff[j], pObj, iType);
+  }
+  else if (S_Buff[j]->pParent!=NULL)
   {
     S_Buff[j]->pParent->RelTo(S_Buff[j],pObj,iType);       //all 
   }
