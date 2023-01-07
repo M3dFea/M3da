@@ -2181,13 +2181,13 @@ for (i=0;i<Els->iNo;i++)
 }
 int iN;
 int iDir;
-cLink* pLk;
+cEdge* pLk;
 if (Els2->iNo>0)
 {
   E_Object* pE = (E_Object*) Els2->Objs[0];
   Els2->Remove(pE);
-  cLinkList* LkList = new cLinkList();
-  cLink* Lk[200];
+  cEdgeList* LkList = new cEdgeList();
+  cEdge* Lk[200];
   iN = pE->GetLinkList(Lk);
   LkList->AddGp(iN,Lk);
   int ii;
@@ -2422,6 +2422,7 @@ void DBase::SectionProps(ObjList* Els)
 void DBase::FreeEdgeDsp(ObjList* Els)
 {
 int i;
+cEdgeList* LkList=NULL;
 ObjList* Els2  = new ObjList();
 for (i=0;i<Els->iNo;i++)
 { 
@@ -2435,6 +2436,14 @@ for (i=0;i<Els->iNo;i++)
 	 }
   }
 }
+if (Els2->iNo > 0)
+{
+	LkList = FindEdges(Els2);
+}
+else
+{
+	outtext1("ERROR: No Valid Elements Selected.");
+}
 if (pCurrentMesh->LkList!=NULL)
 {
 	Dsp_Rem(pCurrentMesh->LkList);
@@ -2442,27 +2451,36 @@ if (pCurrentMesh->LkList!=NULL)
     delete(pCurrentMesh->LkList);
     pCurrentMesh->LkList=NULL;
 }
-if (pCurrentMesh->LkList==NULL)
-  pCurrentMesh->LkList=new cLinkList();
-cLink* Lk[200];
-int iN;
-int j;
-for(i=0;i<Els2->iNo;i++)
+if ((pCurrentMesh->LkList == NULL) && (LkList != NULL))
 {
-  E_Object* pE = (E_Object*) Els2->Objs[i];
-  iN = pE->GetLinkList(Lk);
-  for (j=0;j<iN;j++)
-  {
-	Lk[j]->iColour = 0;
-    pCurrentMesh->LkList->AddIncOnly(Lk[j]);
-  }
+	pCurrentMesh->LkList = LkList;
+	Dsp_Add(pCurrentMesh->LkList);
+	InvalidateOGL();
+	ReDraw();
 }
-pCurrentMesh->LkList->Purge();
 delete(Els2);
-Dsp_Add(pCurrentMesh->LkList);
-InvalidateOGL();
-ReDraw();
+}
 
+//Find element free edges
+cEdgeList* DBase::FindEdges(ObjList* Els)
+{
+	cEdge* Lk[200];
+	int iN;
+	int i;
+	int j;
+	cEdgeList* LkList = new cEdgeList();
+	for (i = 0; i < Els->iNo; i++)
+	{
+		E_Object* pE = (E_Object*)Els->Objs[i];
+		iN = pE->GetLinkList(Lk);
+		for (j = 0; j < iN; j++)
+		{
+			Lk[j]->iColour = 0;
+			LkList->AddIncOnly(Lk[j]);
+		}
+	}
+	LkList->Purge();
+	return (LkList);
 }
 
 void DBase::FreeFaceDsp(ObjList* Els)
@@ -20532,6 +20550,42 @@ BOOL DBase::isNodeInCircle2d(ObjList* pN, int iExclude, double dRad, C2dVector C
 	}
 
 	return (bRet);
+}
+
+//***************************************************************************
+//                     EXPERIMENTAL QMORPH
+// Cpnvert tri mesh to quads
+// Advancing Front Quadrilateral Meshing Using Triangle Transformations
+// Steven J. Owen1,2, Matthew L. Staten2, Scott A. Canann1,2 and Sunil Saigal1
+//***************************************************************************
+void DBase::QMorph(ObjList* Els)
+{
+	int i;
+	cEdgeList* LkList = NULL;
+	ObjList* Els2 = new ObjList();
+	for (i = 0; i < Els->iNo; i++)
+	{
+		if ((Els->Objs[i]->iObjType == 3) && (Els->Objs[i]->pParent == this->pCurrentMesh))
+		{
+			E_Object* pE = (E_Object*)Els->Objs[i];
+			//TRI ELEMENTS ONLY
+			if (pE->iType == 91)
+			{
+				Els2->Add(pE);
+			}
+		}
+	}
+	if (Els2->iNo == 0)
+	{
+		outtext1("ERROR: No Valid Elements Selected.");
+	}
+	else
+	{
+		//Start QMORPHing
+		LkList = FindEdges(Els2);
+	}
+	delete(Els2);
+	delete(LkList);
 }
 
 //*****************************************************************************

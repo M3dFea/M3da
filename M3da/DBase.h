@@ -350,6 +350,7 @@ ObjList* is2D(ObjList* Els, double &dxMin, double &dyMin, double &dxMax, double 
 void SectionProps(ObjList* Els);
 void FreeFaceDsp(ObjList* Els);
 void FreeEdgeDsp(ObjList* Els);
+cEdgeList* FindEdges(ObjList* Els);
 //**************** Advancing Front 2D Surface Mesher ****************
 double DistPtSeg(cSeg* pSeg, C2dVector pt);
 double DistPtSeg2d(cSeg* pSeg, C2dVector pt, double dSX, double dSY);
@@ -380,6 +381,13 @@ void MeshBeams(ObjList* pCurves);
 void MeshSurfSize(ObjList* pSurfs, double dS);
 //****************  2d Advancing Front Auto Mesher ******************
 void MeshSurfAF(ObjList* pSurfs, double dSz);
+//***************************************************************************
+//                     EXPERIMENTAL QMORPH
+// Cpnvert tri mesh to quads
+// Advancing Front Quadrilateral Meshing Using Triangle Transformations
+// Steven J. Owen1,2, Matthew L. Staten2, Scott A. Canann1,2 and Sunil Saigal1
+//***************************************************************************
+void QMorph(ObjList* Els);
 //****************   Advancing Front 3d TET Mesher   ****************
 void MeshTET(ObjList* Els,double G);
 void AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes,double dG);

@@ -439,13 +439,13 @@ void cLinkedList::RemNoDelete(G_Object* inItem)
 		}
 		else if (inItem->before == NULL)
 		{
-			Head = (cLink*)inItem->next;
+			Head = (cEdge*)inItem->next;
 			Head->before = NULL;
 			iCnt--;
 		}
 		else if (inItem->next == NULL)
 		{
-			pCur = (cLink*)inItem->before;
+			pCur = (cEdge*)inItem->before;
 			pCur->next = NULL;
 			iCnt--;
 		}
@@ -473,14 +473,14 @@ if ((inItem!=NULL) && (inItem->pParent==this))
   }
   else if (inItem->before==NULL)
   {
-	Head=(cLink*) inItem->next;
+	Head=(cEdge*) inItem->next;
     Head->before=NULL;
 	delete(inItem);
     iCnt--;
   }
   else if (inItem->next==NULL)
   {
-	pCur=(cLink*) inItem->before;
+	pCur=(cEdge*) inItem->before;
     pCur->next=NULL;
 	delete(inItem);
     iCnt--;
@@ -511,14 +511,14 @@ void cLinkedList::Remove2(G_Object* inItem)
 		}
 		else if (inItem->before == NULL)
 		{
-			Head = (cLink*)inItem->next;
+			Head = (cEdge*)inItem->next;
 			Head->before = NULL;
 			delete(inItem);
 			iCnt--;
 		}
 		else if (inItem->next == NULL)
 		{
-			pCur = (cLink*)inItem->before;
+			pCur = (cEdge*)inItem->before;
 			pCur->next = NULL;
 			delete(inItem);
 			iCnt--;
@@ -2698,7 +2698,7 @@ else if (NoVert==4)
 }
 
 
-cLink::cLink()
+cEdge::cEdge()
 {
 iColour=-1;
 pVertex[0]=NULL;
@@ -2708,7 +2708,7 @@ before=NULL;
 pParent=NULL;
 }
 
-cLink::~cLink()
+cEdge::~cEdge()
 {
 iColour=-1;
 pVertex[0]=NULL;
@@ -2718,7 +2718,7 @@ before=NULL;
 pParent=NULL;
 }
 
-BOOL cLink::isSame(cLink* inLink)
+BOOL cEdge::isSame(cEdge* inLink)
 {
 BOOL brc=FALSE;
 if (inLink != NULL)
@@ -2742,7 +2742,7 @@ return (brc);
 //1 the same
 //2 the same bit wrond direction
 
-int cLink::isSameWithDir(cLink* inLink)
+int cEdge::isSameWithDir(cEdge* inLink)
 {
   int irc = 0;
   if ((pVertex[0] == inLink->pVertex[0]) &&
@@ -2758,7 +2758,7 @@ int cLink::isSameWithDir(cLink* inLink)
   return (irc);
 }
 
-void cLink::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void cEdge::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
 glLineWidth(5.0);
 glColor3fv(cols[iColour]);
@@ -2769,7 +2769,7 @@ glEnd();
 glLineWidth(2.0);
 }
 
-void cLink::OglDraw(int iDspFlgs,double dS1,double dS2)
+void cEdge::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
   OglDrawW(iDspFlgs,dS1,dS2);
 }
@@ -3144,21 +3144,21 @@ while (pNext!=NULL)
 }
 }
 
-cLinkList::cLinkList()
+cEdgeList::cEdgeList()
 {
 Head=NULL;
 pCur=NULL;
 iNo=0;
 }
 
-cLinkList::~cLinkList()
+cEdgeList::~cEdgeList()
 {
-cLink* pNext;
-cLink* p;
+cEdge* pNext;
+cEdge* p;
 p=Head;
 while (p!=NULL)
 { 
-  pNext=(cLink*) p->next;
+  pNext=(cEdge*) p->next;
   delete (p);
   p=pNext;
 }
@@ -3166,10 +3166,10 @@ Head=NULL;
 pCur=NULL;
 }
 
-cLink* cLinkList::IsIn(cLink* inLink)
+cEdge* cEdgeList::IsIn(cEdge* inLink)
 {
-cLink* pRet=NULL;
-cLink* pNext;
+cEdge* pRet=NULL;
+cEdge* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
@@ -3178,12 +3178,12 @@ while (pNext!=NULL)
     pRet=pNext;
 	break;
   }
-  pNext=(cLink*) pNext->next;
+  pNext=(cEdge*) pNext->next;
 }
 return (pRet);
 }
 
-void cLinkList::AddGp(int iN, cLink* inLink[])
+void cEdgeList::AddGp(int iN, cEdge* inLink[])
 {
   int i;
   for (i=0;i<iN;i++)
@@ -3192,10 +3192,10 @@ void cLinkList::AddGp(int iN, cLink* inLink[])
   }
 }
 
-void cLinkList::Add(cLink* inLink)
+void cEdgeList::Add(cEdge* inLink)
 {
 
-cLink* ind;
+cEdge* ind;
 ind=IsIn(inLink);
 if (ind==NULL)
 {
@@ -3211,7 +3211,7 @@ if (ind==NULL)
   {
     inLink->before=pCur;
     pCur->next=inLink;
-    pCur=(cLink*) inLink;
+    pCur=(cEdge*) inLink;
     pCur->next=NULL;
     iNo++;
   }
@@ -3222,10 +3222,10 @@ else
 }
 }
 
-void cLinkList::AddIncOnly(cLink* inLink)
+void cEdgeList::AddIncOnly(cEdge* inLink)
 {
 
-	cLink* ind;
+	cEdge* ind;
 	ind = IsIn(inLink);
 	if (ind == NULL)
 	{
@@ -3241,7 +3241,7 @@ void cLinkList::AddIncOnly(cLink* inLink)
 		{
 			inLink->before = pCur;
 			pCur->next = inLink;
-			pCur = (cLink*)inLink;
+			pCur = (cEdge*)inLink;
 			pCur->next = NULL;
 			iNo++;
 		}
@@ -3252,7 +3252,7 @@ void cLinkList::AddIncOnly(cLink* inLink)
 	}
 }
 
-void cLinkList::Remove(cLink* inLink)
+void cEdgeList::Remove(cEdge* inLink)
 {
 if (inLink!=NULL)
 {
@@ -3273,14 +3273,14 @@ if (inLink!=NULL)
   }
   else if (inLink->before==NULL)
   {
-	  Head=(cLink*) inLink->next;
+	  Head=(cEdge*) inLink->next;
     Head->before=NULL;
 	  delete(inLink);
     iNo--;
   }
   else if (inLink->next==NULL)
   {
-	  pCur=(cLink*) inLink->before;
+	  pCur=(cEdge*) inLink->before;
     pCur->next=NULL;
 	  delete(inLink);
     iNo--;
@@ -3288,17 +3288,17 @@ if (inLink!=NULL)
 }
 }
 
-void cLinkList::Purge()
+void cEdgeList::Purge()
 {
-	cLink* pNext;
-	cLink* pDel;
+	cEdge* pNext;
+	cEdge* pDel;
 	pNext = Head;
 	while (pNext != NULL)
 	{
 		if (pNext->iColour == 1)
 		{
 			pDel = pNext;
-			pNext = (cLink*)pNext->next;
+			pNext = (cEdge*)pNext->next;
 			Remove(pDel);
 		}
 		else
@@ -3307,24 +3307,24 @@ void cLinkList::Purge()
 				pNext->iColour = 50;
 			else
 				pNext->iColour = 120;
-			pNext = (cLink*)pNext->next;
+			pNext = (cEdge*)pNext->next;
 		}
 	}
 }
 
 
-void cLinkList::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void cEdgeList::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
-cLink* pNext;
+cEdge* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
   pNext->OglDrawW(iDspFlgs,dS1,dS2);
-  pNext=(cLink*) pNext->next;
+  pNext=(cEdge*) pNext->next;
 }
 }
 
-void cLinkList::OglDraw(int iDspFlgs,double dS1,double dS2)
+void cEdgeList::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
 OglDrawW(iDspFlgs,dS1,dS2);
 }
@@ -5177,66 +5177,66 @@ G_Object* E_Object38::GetNode(int i)
 return (pVertex[i]);
 }
 
-int E_Object38::GetLinkList(cLink* Links[12])
+int E_Object38::GetLinkList(cEdge* Links[12])
 {
-Links[0]=new cLink;
+Links[0]=new cEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cLink;
+Links[1]=new cEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cLink;
+Links[2]=new cEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[3];
 Links[2]->iColour=iColour;
-Links[3]=new cLink;
+Links[3]=new cEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[3];
 Links[3]->pVertex[1]=pVertex[0];
 Links[3]->iColour=iColour;
 
-Links[4]=new cLink;
+Links[4]=new cEdge;
 Links[4]->pParent=this;
 Links[4]->pVertex[0]=pVertex[4];
 Links[4]->pVertex[1]=pVertex[5];
 Links[4]->iColour=iColour;
-Links[5]=new cLink;
+Links[5]=new cEdge;
 Links[5]->pParent=this;
 Links[5]->pVertex[0]=pVertex[5];
 Links[5]->pVertex[1]=pVertex[6];
 Links[5]->iColour=iColour;
-Links[6]=new cLink;
+Links[6]=new cEdge;
 Links[6]->pParent=this;
 Links[6]->pVertex[0]=pVertex[6];
 Links[6]->pVertex[1]=pVertex[7];
 Links[6]->iColour=iColour;
-Links[7]=new cLink;
+Links[7]=new cEdge;
 Links[7]->pParent=this;
 Links[7]->pVertex[0]=pVertex[7];
 Links[7]->pVertex[1]=pVertex[4];
 Links[7]->iColour=iColour;
 
-Links[8]=new cLink;
+Links[8]=new cEdge;
 Links[8]->pParent=this;
 Links[8]->pVertex[0]=pVertex[0];
 Links[8]->pVertex[1]=pVertex[4];
 Links[8]->iColour=iColour;
-Links[9]=new cLink;
+Links[9]=new cEdge;
 Links[9]->pParent=this;
 Links[9]->pVertex[0]=pVertex[1];
 Links[9]->pVertex[1]=pVertex[5];
 Links[9]->iColour=iColour;
-Links[10]=new cLink;
+Links[10]=new cEdge;
 Links[10]->pParent=this;
 Links[10]->pVertex[0]=pVertex[2];
 Links[10]->pVertex[1]=pVertex[6];
 Links[10]->iColour=iColour;
-Links[11]=new cLink;
+Links[11]=new cEdge;
 Links[11]->pParent=this;
 Links[11]->pVertex[0]=pVertex[3];
 Links[11]->pVertex[1]=pVertex[7];
@@ -7136,51 +7136,51 @@ return (pVertex[i]);
 }
 
 
-int E_Object36::GetLinkList(cLink* Links[200])
+int E_Object36::GetLinkList(cEdge* Links[200])
 {
-Links[0]=new cLink;
+Links[0]=new cEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cLink;
+Links[1]=new cEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cLink;
+Links[2]=new cEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[0];
 Links[2]->iColour=iColour;
-Links[3]=new cLink;
+Links[3]=new cEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[3];
 Links[3]->pVertex[1]=pVertex[4];
 Links[3]->iColour=iColour;
 
-Links[4]=new cLink;
+Links[4]=new cEdge;
 Links[4]->pParent=this;
 Links[4]->pVertex[0]=pVertex[4];
 Links[4]->pVertex[1]=pVertex[5];
 Links[4]->iColour=iColour;
-Links[5]=new cLink;
+Links[5]=new cEdge;
 Links[5]->pParent=this;
 Links[5]->pVertex[0]=pVertex[5];
 Links[5]->pVertex[1]=pVertex[3];
 Links[5]->iColour=iColour;
-Links[6]=new cLink;
+Links[6]=new cEdge;
 Links[6]->pParent=this;
 Links[6]->pVertex[0]=pVertex[0];
 Links[6]->pVertex[1]=pVertex[3];
 Links[6]->iColour=iColour;
-Links[7]=new cLink;
+Links[7]=new cEdge;
 Links[7]->pParent=this;
 Links[7]->pVertex[0]=pVertex[1];
 Links[7]->pVertex[1]=pVertex[4];
 Links[7]->iColour=iColour;
 
-Links[8]=new cLink;
+Links[8]=new cEdge;
 Links[8]->pParent=this;
 Links[8]->pVertex[0]=pVertex[2];
 Links[8]->pVertex[1]=pVertex[5];
@@ -7933,34 +7933,34 @@ void E_Object34::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 	}
 }
 
-int E_Object34::GetLinkList(cLink* Links[200])
+int E_Object34::GetLinkList(cEdge* Links[200])
 {
-Links[0]=new cLink;
+Links[0]=new cEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cLink;
+Links[1]=new cEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cLink;
+Links[2]=new cEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[0];
 Links[2]->iColour=iColour;
-Links[3]=new cLink;
+Links[3]=new cEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[0];
 Links[3]->pVertex[1]=pVertex[3];
 Links[3]->iColour=iColour;
-Links[4]=new cLink;
+Links[4]=new cEdge;
 Links[4]->pParent=this;
 Links[4]->pVertex[0]=pVertex[1];
 Links[4]->pVertex[1]=pVertex[3];
 Links[4]->iColour=iColour;
-Links[5]=new cLink;
+Links[5]=new cEdge;
 Links[5]->pParent=this;
 Links[5]->pVertex[0]=pVertex[2];
 Links[5]->pVertex[1]=pVertex[3];
@@ -9176,34 +9176,34 @@ void E_Object310::Serialize(CArchive& ar, int iV, ME_Object* MESH)
 	}
 }
 
-int E_Object310::GetLinkList(cLink* Links[200])
+int E_Object310::GetLinkList(cEdge* Links[200])
 {
-	Links[0] = new cLink;
+	Links[0] = new cEdge;
 	Links[0]->pParent = this;
 	Links[0]->pVertex[0] = pVertex[0];
 	Links[0]->pVertex[1] = pVertex[1];
 	Links[0]->iColour = iColour;
-	Links[1] = new cLink;
+	Links[1] = new cEdge;
 	Links[1]->pParent = this;
 	Links[1]->pVertex[0] = pVertex[1];
 	Links[1]->pVertex[1] = pVertex[2];
 	Links[1]->iColour = iColour;
-	Links[2] = new cLink;
+	Links[2] = new cEdge;
 	Links[2]->pParent = this;
 	Links[2]->pVertex[0] = pVertex[2];
 	Links[2]->pVertex[1] = pVertex[0];
 	Links[2]->iColour = iColour;
-	Links[3] = new cLink;
+	Links[3] = new cEdge;
 	Links[3]->pParent = this;
 	Links[3]->pVertex[0] = pVertex[0];
 	Links[3]->pVertex[1] = pVertex[3];
 	Links[3]->iColour = iColour;
-	Links[4] = new cLink;
+	Links[4] = new cEdge;
 	Links[4]->pParent = this;
 	Links[4]->pVertex[0] = pVertex[1];
 	Links[4]->pVertex[1] = pVertex[3];
 	Links[4]->iColour = iColour;
-	Links[5] = new cLink;
+	Links[5] = new cEdge;
 	Links[5]->pParent = this;
 	Links[5]->pVertex[0] = pVertex[2];
 	Links[5]->pVertex[1] = pVertex[3];
@@ -10185,7 +10185,7 @@ int E_Object::GetfaceList(cFace* Faces[6])
 return (0);
 }
 
-int E_Object::GetLinkList(cLink* Links[200])
+int E_Object::GetLinkList(cEdge* Links[200])
 {
 return (0);
 }
@@ -11680,9 +11680,9 @@ pDC->MoveTo((int) pVertex[0]->DSP_Point->x,(int) pVertex[0]->DSP_Point->y);
 pDC->LineTo((int) pVertex[1]->DSP_Point->x,(int) pVertex[1]->DSP_Point->y);
 }
 
-int E_Object2::GetLinkList(cLink* Links[200])
+int E_Object2::GetLinkList(cEdge* Links[200])
 {
-Links[0]=new cLink;
+Links[0]=new cEdge;
 Links[0]->pParent=this;
 Links[0]->iColour=iColour;
 Links[0]->pVertex[0]=pVertex[0];
@@ -12359,9 +12359,9 @@ void E_Object2R::Info()
 
 
 
-int E_Object2R::GetLinkList(cLink* Links[200])
+int E_Object2R::GetLinkList(cEdge* Links[200])
 {
-Links[0]=new cLink;
+Links[0]=new cEdge;
 Links[0]->pParent=this;
 Links[0]->iColour=iColour;
 Links[0]->pVertex[0]=pVertex[0];
@@ -13990,19 +13990,19 @@ pDC->LineTo((int) pVertex[2]->DSP_Point->x,(int) pVertex[2]->DSP_Point->y);
 pDC->LineTo((int) pVertex[0]->DSP_Point->x,(int) pVertex[0]->DSP_Point->y);
 }
 
-int E_Object3::GetLinkList(cLink* Links[200])
+int E_Object3::GetLinkList(cEdge* Links[200])
 {
-Links[0]=new cLink;
+Links[0]=new cEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cLink;
+Links[1]=new cEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cLink;
+Links[2]=new cEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[0];
@@ -17049,26 +17049,26 @@ G_Object* E_Object4::GetNode(int i)
 return (pVertex[i]);
 }
 
-int E_Object4::GetLinkList(cLink* Links[200])
+int E_Object4::GetLinkList(cEdge* Links[200])
 {
 int ic;
 ic=GetCol();
-Links[0]=new cLink;
+Links[0]=new cEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cLink;
+Links[1]=new cEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cLink;
+Links[2]=new cEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[3];
 Links[2]->iColour=iColour;
-Links[3]=new cLink;
+Links[3]=new cEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[3];
 Links[3]->pVertex[1]=pVertex[0];
@@ -18416,12 +18416,12 @@ else
 }
 }
 
-int E_ObjectR::GetLinkList(cLink* Links[200])
+int E_ObjectR::GetLinkList(cEdge* Links[200])
 {
 int i;
 for (i=0;i<iNoNodes-1;i++)
 {
-  Links[i]=new cLink;
+  Links[i]=new cEdge;
   Links[i]->pParent=this;
   Links[i]->pVertex[0]=pVertex[0];
   Links[i]->pVertex[1]=pVertex[i+1];
@@ -20757,10 +20757,10 @@ if (iC>1)
 return(bRet);
 }
 
-BOOL ME_Object::isLinkDeletable(cLink* inLink)
+BOOL ME_Object::isLinkDeletable(cEdge* inLink)
 {
 BOOL bRet=TRUE;
-cLink* Lk[12];
+cEdge* Lk[12];
 int iN;
 int i,j;
 int iC;
@@ -20792,7 +20792,7 @@ return(bRet);
 void ME_Object::BuildLinkList()
 {
 cFace* Fc[8];
-cLink* Lk[200];
+cEdge* Lk[200];
 int iN;
 int i,j;
 for(i=0;i<iElNo;i++)
@@ -24319,7 +24319,7 @@ for (i = 0; i < iNoLCs; i++)
         brc = TRUE;
         break;
       }
-      pC = (cLink*)pC->next;
+      pC = (cEdge*)pC->next;
     }
   }
 }
@@ -24336,7 +24336,7 @@ for (i = 0; i < iNoBCs; i++)
         brc = TRUE;
         break;
       }
-      pC = (cLink*)pC->next;
+      pC = (cEdge*)pC->next;
     }
   }
 }
@@ -24366,7 +24366,7 @@ BOOL ME_Object::ElemInBCSet(E_Object* pE)
           brc = TRUE;
           break;
         }
-        pC = (cLink*)pC->next;
+        pC = (cEdge*)pC->next;
       }
     }
   }
@@ -24383,7 +24383,7 @@ BOOL ME_Object::ElemInBCSet(E_Object* pE)
           brc = TRUE;
           break;
         }
-        pC = (cLink*)pC->next;
+        pC = (cEdge*)pC->next;
       }
     }
   }

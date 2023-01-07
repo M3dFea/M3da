@@ -2665,14 +2665,14 @@ virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 };
 
-class cLink : public G_Object
+class cEdge : public G_Object
 {
 public:
 Pt_Object* pVertex[2];
-cLink();
-~cLink();
-BOOL isSame(cLink* inLink);
-int isSameWithDir(cLink* inLink);
+cEdge();
+~cEdge();
+BOOL isSame(cEdge* inLink);
+int isSameWithDir(cEdge* inLink);
 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 };
@@ -2722,19 +2722,19 @@ public:
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
 };
 
-class cLinkList : public G_Object
+class cEdgeList : public G_Object
 {
 public:
 int iNo;
-cLink* Head;
-cLink* pCur;
-cLinkList();
-~cLinkList();
-cLink* IsIn(cLink* inLink);
-void Add(cLink* inLink);
-void AddIncOnly(cLink* inLink);
-void AddGp(int iN, cLink* inLink[]);
-void Remove(cLink* inLink);
+cEdge* Head;
+cEdge* pCur;
+cEdgeList();
+~cEdgeList();
+cEdge* IsIn(cEdge* inLink);
+void Add(cEdge* inLink);
+void AddIncOnly(cEdge* inLink);
+void AddGp(int iN, cEdge* inLink[]);
+void Remove(cEdge* inLink);
 void Purge();
 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
@@ -2853,7 +2853,7 @@ public:
    virtual int noDof();
    virtual BOOL ChkNegJac();
    virtual int GetfaceList(cFace* Faces[6]);
-   virtual int GetLinkList(cLink* Links[200]);
+   virtual int GetLinkList(cEdge* Links[200]);
    virtual void Info();
    virtual G_Object* GetNode(int i);
    virtual C3dVector GetNodalCoords(int i);
@@ -2902,7 +2902,7 @@ public:
    virtual int MaxBW();
    virtual int noDof();
    virtual int GetfaceList(cFace* Faces[6]);
-   virtual int GetLinkList(cLink* Links[200]);
+   virtual int GetLinkList(cEdge* Links[200]);
    virtual G_Object* GetNode(int i);
    virtual void Reverse();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
@@ -2942,7 +2942,7 @@ public:
    virtual Vec<int> GetSteerVec3d();
    virtual Vec<int> GetSteerVec1d();
    virtual int GetfaceList(cFace* Faces[6]);
-   virtual int GetLinkList(cLink* Links[200]);
+   virtual int GetLinkList(cEdge* Links[200]);
    virtual G_Object* GetNode(int i);
    virtual void Reverse();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
@@ -2984,7 +2984,7 @@ public:
   virtual void ExportUPVecs(FILE* pFile);
   virtual BOOL NodeInEl(Pt_Object* pN);
   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
-  virtual int GetLinkList(cLink* Links[200]);
+  virtual int GetLinkList(cEdge* Links[200]);
   virtual G_Object* GetNode(int i);
   virtual C3dMatrix GetElSys();
   virtual int noDof();
@@ -3036,7 +3036,7 @@ public:
   virtual void ExportUPVecs(FILE* pFile);
   virtual BOOL NodeInEl(Pt_Object* pN);
   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
-  virtual int GetLinkList(cLink* Links[200]);
+  virtual int GetLinkList(cEdge* Links[200]);
   virtual G_Object* GetNode(int i);
   C3dMatrix GetBeamTform();
   C3dMatrix GetBeamTformA();
@@ -3157,7 +3157,7 @@ public:
    virtual BOOL NodeInEl(Pt_Object* pN);
    virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
    virtual int noDof();
-   virtual int GetLinkList(cLink* Links[200]);
+   virtual int GetLinkList(cEdge* Links[200]);
    virtual G_Object* GetNode(int i);
    virtual C3dVector Get_Normal();
    virtual void Info();
@@ -3245,7 +3245,7 @@ public:
 	virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
 	virtual int noDof();
 	virtual int GetfaceList(cFace* Faces[6]);
-	virtual int GetLinkList(cLink* Links[200]);
+	virtual int GetLinkList(cEdge* Links[200]);
 	virtual G_Object* GetNode(int i);
 	virtual C3dVector Get_Normal();
 	virtual void Info();
@@ -3299,7 +3299,7 @@ public:
    virtual int MaxBW();
    virtual int noDof();
    virtual int GetfaceList(cFace* Faces[6]);
-   virtual int GetLinkList(cLink* Links[200]);
+   virtual int GetLinkList(cEdge* Links[200]);
    virtual G_Object* GetNode(int i);
    virtual C3dVector GetNodalCoords(int i);
    virtual void Reverse();
@@ -3352,7 +3352,7 @@ public:
 	virtual int MaxBW();
 	virtual int noDof();
 	virtual int GetfaceList(cFace* Faces[6]);
-	virtual int GetLinkList(cLink* Links[200]);
+	virtual int GetLinkList(cEdge* Links[200]);
 	virtual G_Object* GetNode(int i);
 	virtual C3dVector GetNodalCoords(int i);
 	virtual void Reverse();
@@ -3393,7 +3393,7 @@ public:
    virtual void ExportNAS(FILE* pFile);
    virtual BOOL NodeInEl(Pt_Object* pN);
    virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
-   int GetLinkList(cLink* Links[200]);
+   int GetLinkList(cEdge* Links[200]);
    virtual G_Object* GetNode(int i);
    virtual void SetDOFString(CString sDOF);
    virtual void Info();
@@ -3554,7 +3554,7 @@ public:
    ME_Object();
    ~ME_Object();
    cFaceList* FcList;
-   cLinkList* LkList;
+   cEdgeList* LkList;
    CvPt_Object BBox[8]; //bounding box
    int iNdNo;				  //No of Nodes
    int iElNo;//No of Elems	
@@ -3765,7 +3765,7 @@ BOOL bDrawN;
 BOOL bDrawCYS;
 void BuildLinkList();
 BOOL isFaceDeletable(cFace* inFace);
-BOOL isLinkDeletable(cLink* inLink);
+BOOL isLinkDeletable(cEdge* inLink);
 virtual void S_Box(CPoint P1,CPoint P2,ObjList* pSel);
 virtual void S_Sel(int iT,ObjList* pSel);
 CoordSys* AddSys(C3dVector Orig,C3dMatrix RMat,int iRID,int iTp, int iLab, int iC);
