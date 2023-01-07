@@ -2454,7 +2454,17 @@ if (pCurrentMesh->LkList!=NULL)
 if ((pCurrentMesh->LkList == NULL) && (LkList != NULL))
 {
 	pCurrentMesh->LkList = LkList;
-	Dsp_Add(pCurrentMesh->LkList);
+	//Dsp_Add(pCurrentMesh->LkList);
+	eEdge* pNext = LkList->Head;
+	while (pNext != NULL)
+	{
+		Dsp_Add(pNext);
+		//Line below added to force related to to pick
+		//nodes on edges instead of connected element
+		//maybe wrond behaviour for this
+		pNext->pParent = NULL;
+		pNext = (eEdge*)pNext->next;
+	}
 	InvalidateOGL();
 	ReDraw();
 }
@@ -20582,10 +20592,29 @@ void DBase::QMorph(ObjList* Els)
 	else
 	{
 		//Start QMORPHing
+		if (pCurrentMesh->LkList != NULL)
+		{
+			Dsp_Rem(pCurrentMesh->LkList);
+			RemTempGraphics(pCurrentMesh->LkList);
+			delete(pCurrentMesh->LkList);
+			pCurrentMesh->LkList = NULL;
+		}
 		LkList = FindEdges(Els2);
+		if ((pCurrentMesh->LkList == NULL) && (LkList != NULL))
+		{
+			pCurrentMesh->LkList = LkList;
+			eEdge* pNext = LkList->Head;
+			while (pNext != NULL)
+			{
+				Dsp_Add(pNext);
+				pNext = (eEdge*)pNext->next;
+			}
+			InvalidateOGL();
+			ReDraw();
+		}
 	}
 	delete(Els2);
-	delete(LkList);
+	//delete(LkList);
 }
 
 //*****************************************************************************

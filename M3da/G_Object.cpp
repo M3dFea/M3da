@@ -1060,26 +1060,28 @@ iType[4] =(4);		//MESH
 iType[5] =(5);		//SYMBOL
 iType[6] =(6);		//TEXT
 iType[7] =(7);		//NURBS CURVE
-iType[8] =(12);		//COORDSYS
-iType[9] =(13);		//CURVE ON SURFACE
-iType[10] =(14);		//SOLID SECTION
-iType[11] =(15);	//NURBS SURFACE
-iType[12] =(18);	//FACE
-iType[13] =(19);	//SHELL
-iType[14] =(20);	//PART
-iType[15] =(200);	//LSET
-iType[16] =(201);	//BSET
-iType[17] =(202);	//TSET
-iType[18] =(321);	//FORCE
-iType[19] =(323);	//MOMENT
-iType[20] =(324);	//PRESSURE
-iType[21] =(322);	//RESTRAINT
-iType[22] =(325);	//TEMPERATURE
-iType[23] =(326);	//FLUX LOAD
-iType[24] =(327);	//T BC
-iType[25] =(328);	//ACCEL LOAD
-iType[26] =(329);	//ROTATION ACCEL LOAD
-iType[27] =(330);	//RESULTS VECTOR
+iType[8] = (8);		//EEDGE
+iType[9] = (9);	    //EFACE
+iType[10] =(12);		//COORDSYS
+iType[11] =(13);		//CURVE ON SURFACE
+iType[12] =(14);		//SOLID SECTION
+iType[13] =(15);	//NURBS SURFACE
+iType[14] =(18);	//FACE
+iType[15] =(19);	//SHELL
+iType[16] =(20);	//PART
+iType[17] =(200);	//LSET
+iType[18] =(201);	//BSET
+iType[19] =(202);	//TSET
+iType[20] =(321);	//FORCE
+iType[21] =(323);	//MOMENT
+iType[22] =(324);	//PRESSURE
+iType[23] =(322);	//RESTRAINT
+iType[24] =(325);	//TEMPERATURE
+iType[25] =(326);	//FLUX LOAD
+iType[26] =(327);	//T BC
+iType[27] =(328);	//ACCEL LOAD
+iType[28] =(329);	//ROTATION ACCEL LOAD
+iType[29] =(330);	//RESULTS VECTOR
 
 sType[0] = "POINT";
 sType[1] = "NODE";
@@ -1089,27 +1091,29 @@ sType[4] = "MESH";
 sType[5] = "SYMBOL";
 sType[6] = "TEXT";
 sType[7] = "CURVE";
-sType[8] = "COORDSYS";
-sType[9] = "CURVE ON SURFACE";
-sType[10] = "SECTION";
-sType[11] = "SURFACE";
-sType[12] = "FACE";
-sType[13] = "SHELL";
-sType[14] = "PART";
-sType[15] = "LOAD SET";        // LOAD SET
-sType[16] = "BC SET";          //SET
-sType[17] = "TEMPERATURE SET"; //SET
-sType[18] = "FORCE";
-sType[19] = "MOMENT";
-sType[20] = "PRESSURE";
-sType[21] = "RESTRAINT";
-sType[22] ="TEMP STRUCTURAL";
-sType[23] ="NET FLUX Q";
-sType[24] ="TEMP BC T";
-sType[25] ="ACCEL BODY LOAD";
-sType[26] = "ROTATIONAL BODY LOAD";
-sType[27] = "RESULTS VECTOR";
-iNoOfType=28;
+sType[8] = "EEDGE";
+sType[9] = "EFACE";
+sType[10] = "COORDSYS";
+sType[11] = "CURVE ON SURFACE";
+sType[12] = "SECTION";
+sType[13] = "SURFACE";
+sType[14] = "FACE";
+sType[15] = "SHELL";
+sType[16] = "PART";
+sType[17] = "LOAD SET";        // LOAD SET
+sType[18] = "BC SET";          //SET
+sType[19] = "TEMPERATURE SET"; //SET
+sType[20] = "FORCE";
+sType[21] = "MOMENT";
+sType[22] = "PRESSURE";
+sType[23] = "RESTRAINT";
+sType[24] ="TEMP STRUCTURAL";
+sType[25] ="NET FLUX Q";
+sType[26] ="TEMP BC T";
+sType[27] ="ACCEL BODY LOAD";
+sType[28] = "ROTATIONAL BODY LOAD";
+sType[29] = "RESULTS VECTOR";
+iNoOfType=30;
 
 //USED IN ASTRIUMS QUANTA PROGRAM
 //iType[17] =(500); //WG DEF
@@ -2565,6 +2569,7 @@ void Node::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 
 eFace::eFace()
 {
+iObjType = 9;
 iColour=1;
 NoVert=0;
 pVertex[0]=NULL;
@@ -2646,6 +2651,10 @@ else if (NoVert==4)
 glLineWidth(2.0);
 }
 
+void eFace::Serialize(CArchive& ar, int iV)
+{
+}
+
 void eFace::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
 C3dVector v1;
@@ -2700,6 +2709,7 @@ else if (NoVert==4)
 
 eEdge::eEdge()
 {
+iObjType = 8;
 iColour=-1;
 pVertex[0]=NULL;
 pVertex[1]=NULL;
@@ -2737,7 +2747,15 @@ if (inLink != NULL)
 return (brc);
 }
 
-
+void eEdge::Info()
+{
+	char S1[80];
+	G_Object::Info();
+	sprintf_s(S1, "LAB: %i X: %f Y: %f Z: %f", pVertex[0]->iLabel, pVertex[0]->Pt_Point->x, pVertex[0]->Pt_Point->y, pVertex[0]->Pt_Point->z);
+	outtext1(_T(S1));
+	sprintf_s(S1, "LAB: %i X: %f Y: %f Z: %f", pVertex[1]->iLabel, pVertex[1]->Pt_Point->x, pVertex[1]->Pt_Point->y, pVertex[1]->Pt_Point->z);
+	outtext1(_T(S1));
+}
 //0 not the same
 //1 the same
 //2 the same bit wrond direction
@@ -2768,6 +2786,35 @@ glVertex3f((float) pVertex[1]->Pt_Point->x,(float) pVertex[1]->Pt_Point->y,(floa
 glEnd();
 glLineWidth(2.0);
 }
+
+void eEdge::Serialize(CArchive& ar, int iV)
+{
+}
+
+void eEdge::RelTo(G_Object* pThis, ObjList* pList, int iType)
+{
+	if (iType==1)
+	{
+	  pList->AddEx(pVertex[0]);
+	  pList->AddEx(pVertex[1]);
+	}
+}
+
+C3dVector eEdge::Get_Centroid()
+{
+	C3dVector vT;
+	vT.Set(0, 0, 0);
+	int j = 0;
+	for (j = 0; j < 2; j++)
+	{
+		vT += pVertex[j]->Get_Centroid();
+	}
+	vT.x /= 2;
+	vT.y /= 2;
+	vT.z /= 2;
+	return (vT);
+}
+
 
 void eEdge::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
