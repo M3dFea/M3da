@@ -2661,6 +2661,8 @@ Node* pVertex[4];
 eFace();
 ~eFace();
 BOOL isSame(eFace* inFace);
+virtual C3dVector Get_Centroid();
+void RelTo(G_Object* pThis, ObjList* pList, int iType);
 virtual void Serialize(CArchive& ar, int iV);
 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);

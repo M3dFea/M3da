@@ -2622,7 +2622,7 @@ void eFace::OglDrawW(int iDspFlgs,double dS1,double dS2)
 C3dVector v1;
 C3dVector v2;
 C3dVector Vn;
-glLineWidth(5.0);
+glLineWidth(3.0);
 glColor3fv(cols[124]);
 if (NoVert==3)
 {
@@ -2649,6 +2649,31 @@ else if (NoVert==4)
   glEnd();
 }
 glLineWidth(2.0);
+}
+
+C3dVector eFace::Get_Centroid()
+{
+	C3dVector vT;
+	vT.Set(0, 0, 0);
+	int j = 0;
+	for (j = 0; j < NoVert; j++)
+	{
+		vT += pVertex[j]->Get_Centroid();
+	}
+	vT.x /= NoVert;
+	vT.y /= NoVert;
+	vT.z /= NoVert;
+	return (vT);
+}
+
+void eFace::RelTo(G_Object* pThis, ObjList* pList, int iType)
+{
+	int j;
+	if (iType == 1)
+	{
+		for (j=0;j<NoVert;j++)
+	      pList->AddEx(pVertex[j]);
+	}
 }
 
 void eFace::Serialize(CArchive& ar, int iV)

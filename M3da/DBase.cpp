@@ -2459,10 +2459,6 @@ if ((pCurrentMesh->LkList == NULL) && (LkList != NULL))
 	while (pNext != NULL)
 	{
 		Dsp_Add(pNext);
-		//Line below added to force related to to pick
-		//nodes on edges instead of connected element
-		//maybe wrond behaviour for this
-		//pNext->pParent = NULL;
 		pNext = (eEdge*)pNext->next;
 	}
 	InvalidateOGL();
@@ -2528,7 +2524,15 @@ for(i=0;i<Els2->iNo;i++)
   }
 }
 delete(Els2);
-Dsp_Add(pCurrentMesh->FcList);
+
+
+//Dsp_Add(pCurrentMesh->LkList);
+eFace* pNext = pCurrentMesh->FcList->Head;
+while (pNext != NULL)
+{
+	Dsp_Add(pNext);
+	pNext = (eFace*)pNext->next;
+}
 InvalidateOGL();
 ReDraw();
 }
@@ -17338,6 +17342,10 @@ int i,j;
 for (j=0;j<S_Count;j++)
 {
   if ((S_Buff[j]->iObjType == 8) && (iType == 1))
+  {
+	S_Buff[j]->RelTo(S_Buff[j], pObj, iType);
+  }
+  else if ((S_Buff[j]->iObjType == 9) && (iType == 1))
   {
 	S_Buff[j]->RelTo(S_Buff[j], pObj, iType);
   }
