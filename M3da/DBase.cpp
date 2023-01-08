@@ -7976,6 +7976,8 @@ int i;
 int j;
 int k;
 double dd = iNoOff;
+eFace* eF = NULL;
+eEdge* eE = NULL;
 //change to how sweep is done now tVec is the totatl vector
 //to move in iNoOff increments
 if (iNoOff > 0)
@@ -8016,6 +8018,42 @@ if (Items->iNo>0)
             NDF->AddEx(El->GetNode(j)); 
 		  }
         }
+	}
+	else if (Items->Objs[i]->iObjType == 9) //eFace
+	{
+		eF = (eFace*) Items->Objs[i];
+		if (eF->NoVert == 4)	 //Used as a marker to tell what type of element it is
+		{
+			E_Object4* El4 = new E_Object4();
+			ELF->Add(El4);
+			for (j = 0; j < eF->NoVert; j++)
+			{
+				El4->pVertex[j] = eF->pVertex[j];
+				NDF->AddEx(eF->pVertex[j]);
+			}
+		}
+		else if (eF->NoVert == 3)
+		{
+			E_Object3* EL3 = new E_Object3();
+			ELF->Add(EL3);
+			for (j = 0; j < eF->NoVert; j++)
+			{
+				EL3->pVertex[j] = eF->pVertex[j];
+				NDF->AddEx(eF->pVertex[j]);
+			}
+		}
+		
+	}
+	else if (Items->Objs[i]->iObjType == 8) //eEdge
+	{
+		eE = (eEdge*)Items->Objs[i];
+		E_Object2* El2 = new E_Object2B();
+		ELF->Add(El2);
+		for (j = 0; j < 2; j++)
+		{
+			El2->pVertex[j] = eE->pVertex[j];
+			NDF->AddEx(eE->pVertex[j]);
+		}
 	}
   }
 

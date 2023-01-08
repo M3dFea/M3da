@@ -13658,9 +13658,11 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/PICK ELEMENTS TO SWEEP");
+  outtext2("/PICK ELEMENTS,FACES,EDGES TO SWEEP");
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
+  cDBase->FILTER.SetFilter(8);
+  cDBase->FILTER.SetFilter(9);
   iStat=1;
 }
 if (iStat == 1)
