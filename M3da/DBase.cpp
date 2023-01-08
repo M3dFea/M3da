@@ -2730,7 +2730,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		// in order of distance.
 	    //GetCandiates(fNodes, vC, 2*dC, pCandidateNodes);
 		//GetCandiateFaces(pE,fEls, vC, 2.0*dC, pCandidateFaces);
-		GetCandiates(fEls, vC,2.0*dC, pCandidateFaces);
+		GetCandiates(fEls, vC,1.5*dC, pCandidateFaces);
 		pFrontNodes->Clear();
 		for (i = 0; i < pCandidateFaces->iNo; i++)
 		{
@@ -2748,7 +2748,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		GetAdjFaces(pCandidateFaces, pE, pAdjFaces, &dAdjAng, pAdjEl);
 		if (pAdjFaces->iNo > 0)	  //070122 SEEMS TO WORK BETTER WITH OUT THIS
 		{
-			if (dAdjAng < 60)
+			if (dAdjAng < 120)
 			{
 				nNodeTry = GetOtherNode(pAdjEl, pE);
 				CreateTET(eTET, pE, nNodeTry);
