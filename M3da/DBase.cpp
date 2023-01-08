@@ -2746,21 +2746,21 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		pCandidateNodes->Clear();
 		GetCandiatesNode(pE, pFrontNodes, vC, 1.0*dC, pCandidateNodes);
 		GetAdjFaces(pCandidateFaces, pE, pAdjFaces, &dAdjAng, pAdjEl);
-		if (pAdjFaces->iNo > 0)	  //070122 SEEMS TO WORK BETTER WITH OUT THIS
-		{
-			if (dAdjAng < 120)
-			{
-				nNodeTry = GetOtherNode(pAdjEl, pE);
-				CreateTET(eTET, pE, nNodeTry);
-				bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
-				pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);
-				if ((pIntFace == NULL) && (bV))
-				{
-					nNode = nNodeTry;
-					bIsTet = TRUE;
-				}
-			}
-		}
+		//if (pAdjFaces->iNo > 0)	  //070122 SEEMS TO WORK BETTER WITH OUT THIS
+		//{
+		//	if (dAdjAng < 100)
+		//	{
+		//		nNodeTry = GetOtherNode(pAdjEl, pE);
+		//		CreateTET(eTET, pE, nNodeTry);
+		//		bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
+		//		pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);
+		//		if ((pIntFace == NULL) && (bV))
+		//		{
+		//			nNode = nNodeTry;
+		//			bIsTet = TRUE;
+		//		}
+		//	}
+		//}
 
 		if (!bIsTet)
 		{
@@ -2829,7 +2829,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 				sprintf_s(S1, "BOUNDARY VIOLATION DELETEING TET: %i CNT: %i", pEDel->iLabel, iTT);
 				outtext1(S1);
 				DeleteTET(fEls, fNodes, pCandidateFaces, pEDel);
-				bReTry = FALSE;	   //Should be TRUE
+				bReTry = TRUE;	   //Should be TRUE
 				//bExit = TRUE;
 			}
 		}
