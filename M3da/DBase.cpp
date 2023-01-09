@@ -2710,7 +2710,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		dMaxAng = 0;
 		bIsTet = FALSE;
 		pE = (E_Object3*)fEls->Head;
-		dMinAng = 30;
+		dMinAng = 35;
 		if (pE->iNoRemesh > 0)
 			dMinAng = 15;
 		else if (pE->iNoRemesh > 1)
@@ -18629,6 +18629,63 @@ delete (CNodes);
 delete (ChkNodes);
 InvalidateOGL();
 ReDraw();
+}
+
+void DBase::EqLab(ObjList* Nodes, double dTol, BOOL UpLab, BOOL bDel)
+{
+	char S1[200];
+	int i;
+	CString OutT;
+	ObjList* CNodes = new ObjList();
+	ObjList* ChkNodes = new ObjList();
+	sprintf_s(S1, "%s%f", "Relabeling Coincident Nodes Across Meshes, Tol:", dTol);
+
+
+
+	for (i = 0; i < Nodes->iNo; i++)
+	{
+		if (Nodes->Objs[i]->iObjType == 1) 
+		{
+			ChkNodes->Add(Nodes->Objs[i]);
+		}
+	}
+
+	Node* pKeep = NULL;
+	if (ChkNodes->iNo > 0)
+	{
+		outtext1("Coincident Node List:-");
+		do
+		{
+			Node* pN = (Node*)ChkNodes->Objs[0];
+			GetClosestNodes(ChkNodes, pN->GetCoords(), CNodes, dTol);
+			ChkNodes->RemoveGP(CNodes);
+			int iLabN;
+			if (CNodes->iNo > 1)
+			{
+				CNodes->ListIDs();
+                for (i = 0; i < CNodes->iNo; i++)
+				{
+					if (CNodes->Objs[i]->pParent != pCurrentMesh)
+					{
+						iLabN = CNodes->Objs[i]->iLabel;
+						break;
+					}
+				}
+				for (i = 0; i < CNodes->iNo; i++)
+				{
+					if (CNodes->Objs[i]->pParent == pCurrentMesh)
+					{
+						CNodes->Objs[i]->iLabel = iLabN;
+						break;
+					}
+				}
+			}
+		}   while (ChkNodes->iNo > 0);
+	}
+	delete (CNodes);
+	delete (ChkNodes);
+	InvalidateOGL();
+	ReDraw();
 }
 
 UINT MyThreadProc( LPVOID pParam )

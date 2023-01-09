@@ -2454,6 +2454,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "NDEQLAB")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zNDEQLAB_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "CHKCOUNT")
 	  {
 		  iResumePos = 0;
@@ -9706,6 +9716,80 @@ if (iStat == 100)
 }
 MenuEnd:
 return RetVal;
+}
+
+int zNDEQLAB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(1);
+			//cDBase->FILTER.SetFilter(4);
+			outtext2("/PICK NODES");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, 1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp); //Save selection
+			cDBase->S_Des();       //clear selection buffer
+			outtext2("/ENTER TOLERENCE (Def:0.0001)");
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			dTol = atof(CInMsg);
+			if (dTol <= 0)
+			{
+				dTol = 0.0001;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			RetVal = 1;
+			cDBase->EqLab(cDBase->OTemp, dTol, bUp, bDel);
+			cDBase->FILTER.SetAll();
+			cDBase->S_Res();
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
 }
 
 int zCHKSHELLASP_Mnu::DoMenu(CString CInMsg, CPoint Pt)

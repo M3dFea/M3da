@@ -682,6 +682,15 @@ BOOL bDel;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zNDEQLAB_Mnu : public zMnu
+{
+public:
+	double dTol;
+	BOOL bUp;
+	BOOL bDel;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zCHKSHELLASP_Mnu : public zMnu
 {
 public:
