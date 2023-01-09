@@ -2223,7 +2223,7 @@ if (iRID > 0)
 	}
 	//}
 }
-sprintf_s(S1,"%8s%8i%8i%8s%8s%8s%8i\n","GRID    ",iLabel,DefSys,e8(Pt_Point->x).GetString(),e8(Pt_Point->y).GetString(),e8(Pt_Point->z).GetString(),OutSys);
+sprintf_s(S1,"%8s%8i%8i%8s%8s%8s%8i\n","GRID    ",iLabel,DefSys,e8(pt.x).GetString(),e8(pt.y).GetString(),e8(pt.z).GetString(),OutSys);
 sRT=S1;
 return(sRT);
 }
@@ -20409,193 +20409,239 @@ return (irc);
 
 //iType is resulatant entity type
 //pThis the object that has the association
-void ME_Object::RelTo(G_Object* pThis,ObjList* pList,int iType)
+void ME_Object::RelTo(G_Object* pThis, ObjList* pList, int iType)
 {
-int i;
-int j;
+	int i;
+	int j;
 
-//we are looking for Loads related to either element or node
-if ((iType==321) || (iType==323) 
-||  (iType==324) || (iType==326) 
-||  (iType==328) || (iType==329))
-{
-  if (iCurLC!=-1)
-  {
-    BCLD* pNext;
-    pNext=(BCLD*) LCS[iCurLC]->Head;
-    while (pNext!=NULL)
-    {
-      if (pNext->pObj==pThis)
-        pList->AddEx(pNext);
-      pNext=(BCLD*) pNext->next;
-    }
-  }
-}
-//we are looking for Restrainrs related to node
-if ((iType==322) || (iType==327))
-{
-  if (iCurBC!=-1)
-  {
-    BCLD* pNext;
-    pNext=(BCLD*) BCS[iCurBC]->Head;
-    while (pNext!=NULL)
-    {
-      if (pNext->pObj==pThis)
-        pList->AddEx(pNext);
-      pNext=(BCLD*) pNext->next;
-    }
-  }
-}
+	//we are looking for Loads related to either element or node
+	if ((iType == 321) || (iType == 323)
+		|| (iType == 324) || (iType == 326)
+		|| (iType == 328) || (iType == 329))
+	{
+		if (iCurLC != -1)
+		{
+			BCLD* pNext;
+			pNext = (BCLD*)LCS[iCurLC]->Head;
+			while (pNext != NULL)
+			{
+				if (pNext->pObj == pThis)
+					pList->AddEx(pNext);
+				pNext = (BCLD*)pNext->next;
+			}
+		}
+	}
+	//we are looking for Restrainrs related to node
+	if ((iType == 322) || (iType == 327))
+	{
+		if (iCurBC != -1)
+		{
+			BCLD* pNext;
+			pNext = (BCLD*)BCS[iCurBC]->Head;
+			while (pNext != NULL)
+			{
+				if (pNext->pObj == pThis)
+					pList->AddEx(pNext);
+				pNext = (BCLD*)pNext->next;
+			}
+		}
+	}
 
-if (iType==325)
-{
-  if (iCurTSet!=-1)
-  {
-    BCLD* pNext;
-    pNext=(BCLD*) TSETS[iCurTSet]->Head;
-    while (pNext!=NULL)
-    {
-      if (pNext->pObj==pThis)
-        pList->AddEx(pNext);
-      pNext=(BCLD*) pNext->next;
-    }
-  }
-}
+	if (iType == 325)
+	{
+		if (iCurTSet != -1)
+		{
+			BCLD* pNext;
+			pNext = (BCLD*)TSETS[iCurTSet]->Head;
+			while (pNext != NULL)
+			{
+				if (pNext->pObj == pThis)
+					pList->AddEx(pNext);
+				pNext = (BCLD*)pNext->next;
+			}
+		}
+	}
 
 
-if ((iType==1) ||  (iType==3) ||  (iType==4) ||  (iType==12))
-{
-if ((pThis->iObjType==1) ||  
-	  (pThis->iObjType==3) ||  
-    (pThis->iObjType==200) ||
-    (pThis->iObjType==201) ||
-    (pThis->iObjType==202))
-{
-  if (iType==4)
-  {
-    if (pThis->pParent!=NULL)
-    {
-     pList->AddEx(pThis->pParent);
-    }
-  }
-  else if ((iType==1) &&  (pThis->iObjType==3)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     for (i=0;i<iElNo;i++)
-     {
-       if (pElems[i]== pThis)
-       {
-          for (j=0;j<pElems[i]->iNoNodes;j++)
-          {
-             pList->AddEx(pElems[i]->GetNode(j));
-          }
-          break;
-       }
-     }
-  }
-  else if ((iType==1) &&  (pThis->iObjType==321)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     G_Object* pN;
-     pN=GetNode(pThis->iLabel);
-     if (pN!=NULL)
-       pList->AddEx(pN);
-  }
-  else if ((iType==1) &&  (pThis->iObjType==322)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     G_Object* pN;
-     pN=GetNode(pThis->iLabel);
-     if (pN!=NULL)
-       pList->AddEx(pN);
-  }
-  else if ((iType==1) &&  (pThis->iObjType==326)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     G_Object* pN;
-     pN=GetNode(pThis->iLabel);
-     if (pN!=NULL)
-       pList->AddEx(pN);
-  }
-    else if ((iType==1) &&  (pThis->iObjType==327)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     G_Object* pN;
-     pN=GetNode(pThis->iLabel);
-     if (pN!=NULL)
-       pList->AddEx(pN);
-  }
-  else if ((iType==3) &&  (pThis->iObjType==324)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     E_Object* pE;
-     pE=GetElement(pThis->iLabel);
-     if (pE!=NULL)
-       pList->AddEx(pE);
-  }
-  else if ((iType==3) &&  (pThis->iObjType==325)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     E_Object* pE;
-     pE=GetElement(pThis->iLabel);
-     if (pE!=NULL)
-       pList->AddEx(pE);
-  }
-  else if ((iType==3) &&  (pThis->iObjType==328)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     E_Object* pE;
-     pE=GetElement(pThis->iLabel);
-     if (pE!=NULL)
-       pList->AddEx(pE);
-  }
-  else if ((iType == 3) && (pThis->iObjType == 329) && (pThis->pParent == this))
-  {
-    //Node related to element pThis
-    E_Object* pE;
-    pE = GetElement(pThis->iLabel);
-    if (pE != NULL)
-      pList->AddEx(pE);
-  }
-  else if ((iType==3) &&  (pThis->iObjType==1)  &&  (pThis->pParent==this))
-  {
-     //Element related to Node pThis
-     for (i=0;i<iElNo;i++)
-     {
-       for (j=0;j<pElems[i]->iNoNodes;j++)
-       {
-         if (pElems[i]->GetNode(j)==pThis)
-         {
-             pList->AddEx(pElems[i]);
-         }
-       }
-     }
-  }
-  else if ((iType==12) &&  (pThis->iObjType==1)  &&  (pThis->pParent==this))
-  {
-     //Coord related to Node pThis
-     G_Object* pC;
-	 Node* pN;
-	 pN=(Node*) pThis;
-	 if (pN->DefSys>0)
-	 {
-       pC=GetSys(pN->DefSys);
-       if (pC!=NULL)
-	   {
-         pList->AddEx(pC);
-	   }
-	 }
-	 if (pN->OutSys>0)
-	 {
-       pC=GetSys(pN->OutSys);
-       if (pC!=NULL)
-	   {
-         pList->AddEx(pC);
-	   }
-     }
-  }
-}
-}
+	if ((iType == 1) || (iType == 3) || (iType == 4) || (iType == 12))
+	{
+		if ((pThis->iObjType == 1) ||
+			(pThis->iObjType == 3) ||
+			(pThis->iObjType == 200) ||
+			(pThis->iObjType == 201) ||
+			(pThis->iObjType == 202))
+		{
+			if (iType == 4)
+			{
+				if (pThis->pParent != NULL)
+				{
+					pList->AddEx(pThis->pParent);
+				}
+			}
+			else if ((iType == 1) && (pThis->iObjType == 3) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				for (i = 0; i < iElNo; i++)
+				{
+					if (pElems[i] == pThis)
+					{
+						for (j = 0; j < pElems[i]->iNoNodes; j++)
+						{
+							pList->AddEx(pElems[i]->GetNode(j));
+						}
+						break;
+					}
+				}
+			}
+			else if ((iType == 1) && (pThis->iObjType == 321) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				G_Object* pN;
+				pN = GetNode(pThis->iLabel);
+				if (pN != NULL)
+					pList->AddEx(pN);
+			}
+			else if ((iType == 1) && (pThis->iObjType == 322) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				G_Object* pN;
+				pN = GetNode(pThis->iLabel);
+				if (pN != NULL)
+					pList->AddEx(pN);
+			}
+			else if ((iType == 1) && (pThis->iObjType == 326) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				G_Object* pN;
+				pN = GetNode(pThis->iLabel);
+				if (pN != NULL)
+					pList->AddEx(pN);
+			}
+			else if ((iType == 1) && (pThis->iObjType == 327) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				G_Object* pN;
+				pN = GetNode(pThis->iLabel);
+				if (pN != NULL)
+					pList->AddEx(pN);
+			}
+			else if ((iType == 3) && (pThis->iObjType == 324) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				E_Object* pE;
+				pE = GetElement(pThis->iLabel);
+				if (pE != NULL)
+					pList->AddEx(pE);
+			}
+			else if ((iType == 3) && (pThis->iObjType == 325) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				E_Object* pE;
+				pE = GetElement(pThis->iLabel);
+				if (pE != NULL)
+					pList->AddEx(pE);
+			}
+			else if ((iType == 3) && (pThis->iObjType == 328) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				E_Object* pE;
+				pE = GetElement(pThis->iLabel);
+				if (pE != NULL)
+					pList->AddEx(pE);
+			}
+			else if ((iType == 3) && (pThis->iObjType == 329) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				E_Object* pE;
+				pE = GetElement(pThis->iLabel);
+				if (pE != NULL)
+					pList->AddEx(pE);
+			}
+			else if ((iType == 3) && (pThis->iObjType == 1) && (pThis->pParent == this))
+			{
+				//Element related to Node pThis
+				for (i = 0; i < iElNo; i++)
+				{
+					for (j = 0; j < pElems[i]->iNoNodes; j++)
+					{
+						if (pElems[i]->GetNode(j) == pThis)
+						{
+							pList->AddEx(pElems[i]);
+						}
+					}
+				}
+			}
+			else if ((iType == 12) && (pThis->iObjType == 1) && (pThis->pParent == this))
+			{
+				//Coord related to Node pThis
+				G_Object* pC;
+				Node* pN;
+				pN = (Node*)pThis;
+				if (pN->DefSys > 0)
+				{
+					pC = GetSys(pN->DefSys);
+					if (pC != NULL)
+					{
+						pList->AddEx(pC);
+					}
+				}
+				if (pN->OutSys > 0)
+				{
+					pC = GetSys(pN->OutSys);
+					if (pC != NULL)
+					{
+						pList->AddEx(pC);
+					}
+				}
+			}
+			else if ((iType == 12) && (pThis->iObjType == 3) && (pThis->pParent == this))
+			{
+				//Coord related to Element pThis
+				G_Object* pC;
+				E_Object* pE;
+				pE = (E_Object*)pThis;
+				if (pE->iType == 136)
+				{
+					E_Object2* pE2;
+					pE2 = (E_Object2*)pE;
+					if (pE2->iCSYS > 0)
+					{
+						pC = GetSys(pE2->iCSYS);
+						if (pC != NULL)
+						{
+							pList->AddEx(pC);
+						}
+					}
+				}
+				else if (pE->iType == 91)
+				{
+					E_Object3* pE3;
+					pE3 = (E_Object3*)pE;
+					if (pE3->iMCys > 0)
+					{
+						pC = GetSys(pE3->iMCys);
+						if (pC != NULL)
+						{
+							pList->AddEx(pC);
+						}
+					}
+				}
+				else if (pE->iType == 94)
+				{
+					E_Object4* pE4;
+					pE4 = (E_Object4*)pE;
+					if (pE4->iMCys > 0)
+					{
+						pC = GetSys(pE4->iMCys);
+						if (pC != NULL)
+						{
+							pList->AddEx(pC);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void ME_Object::Serialize(CArchive& ar,int iV)

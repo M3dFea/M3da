@@ -2710,7 +2710,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		dMaxAng = 0;
 		bIsTet = FALSE;
 		pE = (E_Object3*)fEls->Head;
-		dMinAng = 25;
+		dMinAng = 30;
 		if (pE->iNoRemesh > 0)
 			dMinAng = 15;
 		else if (pE->iNoRemesh > 1)
