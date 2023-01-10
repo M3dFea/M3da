@@ -18676,6 +18676,7 @@ void DBase::EqLab(ObjList* Nodes, double dTol, BOOL UpLab, BOOL bDel)
 					if (CNodes->Objs[i]->pParent == pCurrentMesh)
 					{
 						CNodes->Objs[i]->iLabel = iLabN;
+						CNodes->Objs[i]->iColour = 124;
 						break;
 					}
 				}
