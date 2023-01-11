@@ -500,6 +500,7 @@ public:
   afx_msg void OnChecksCountf();
   afx_msg void OnCurvemodifySplitatpoint();
   afx_msg void OnElementmodifiyIntersecttrielements();
+  afx_msg void OnNodemodifyEquivalencelab();
 };
 
 

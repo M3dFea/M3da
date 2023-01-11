@@ -353,6 +353,7 @@ ON_COMMAND(ID_SELECTION_RBECENTRENODES, &CM3daDoc::OnSelectionRbecentrenodes)
 ON_COMMAND(ID_CHECKS_COUNTF, &CM3daDoc::OnChecksCountf)
 ON_COMMAND(ID_CURVEMODIFY_SPLITATPOINT, &CM3daDoc::OnCurvemodifySplitatpoint)
 ON_COMMAND(ID_ELEMENTMODIFIY_INTERSECTTRIELEMENTS, &CM3daDoc::OnElementmodifiyIntersecttrielements)
+ON_COMMAND(ID_NODEMODIFY_EQUIVALENCELAB, &CM3daDoc::OnNodemodifyEquivalencelab)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5942,6 +5943,22 @@ void CM3daDoc::OnElementmodifiyIntersecttrielements()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("MESHINT");
 		sLastcmd = "MESHINT";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnNodemodifyEquivalencelab()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("NDEQLAB");
+		sLastcmd = "NDEQLAB";
 	}
 	else
 	{

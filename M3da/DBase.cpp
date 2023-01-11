@@ -18671,10 +18671,19 @@ void DBase::EqLab(ObjList* Nodes, double dTol, BOOL UpLab, BOOL bDel)
 						break;
 					}
 				}
+				Node* pRetPt;
 				for (i = 0; i < CNodes->iNo; i++)
 				{
 					if (CNodes->Objs[i]->pParent == pCurrentMesh)
 					{
+						pRetPt=pCurrentMesh->GetNode(iLabN);
+						if (pRetPt != NULL)
+						{
+							sprintf_s(S1, "%s %i %s %i", "WARNING: Node", iLabN, "Exists Renaming to", pCurrentMesh->iNodeLab);
+							pRetPt->iLabel = pCurrentMesh->iNodeLab;
+							pCurrentMesh->iNodeLab++;
+							outtext1(S1);
+						}
 						CNodes->Objs[i]->iLabel = iLabN;
 						CNodes->Objs[i]->iColour = 124;
 						break;
