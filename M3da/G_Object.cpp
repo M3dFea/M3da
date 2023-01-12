@@ -20729,7 +20729,7 @@ void ME_Object::Serialize(CArchive& ar,int iV)
       pNodes[i]= new Node;
       pNodes[i]->Serialize(ar,iV);
       pNodes[i]->pParent=this;
-      if (TempList!=NULL)
+      if ((TempList!=NULL)  && (pNodes[i]->iLabel<99999999))
         {TempList->Objs[pNodes[i]->iLabel]=pNodes[i];}
     }
     ar >> iElNo;
