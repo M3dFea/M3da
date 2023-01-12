@@ -25312,7 +25312,7 @@ Node* ME_Object::GetNode(int iRLab)
 {
 int iCnt;
 Node *pRetPt = NULL;
-if ((TempList!=NULL) && (iRLab<=99999999))
+if ((TempList!=NULL) && (iRLab<99999999))
 {
   pRetPt = (Node*) TempList->Objs[iRLab];
 }
