@@ -2732,10 +2732,11 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		//GetCandiateFaces(pE,fEls, vC, 2.0*dC, pCandidateFaces);
 		GetCandiates(fEls, vC,1.5*dC, pCandidateFaces);
 		pFrontNodes->Clear();
+		//Build list of possible face nodes that may create a TET
 		for (i = 0; i < pCandidateFaces->iNo; i++)
 		{
 			E_Object3* pEl2;
-			pEl2 = (E_Object3*)pCandidateFaces->Objs[i];
+			pEl2 = (E_Object3*) pCandidateFaces->Objs[i];
 			if (pEl2 != NULL)
 			{
 				pFrontNodes->AddEx(pEl2->pVertex[0]);
@@ -13566,7 +13567,7 @@ if (this->pCurrentMesh!=NULL)
     {
     fprintf(pFile2,"%s\n","$**********************************************************");
     fprintf(pFile2,"%s\n","$      NASTRAN DECK EXPORTED FROM M3D");
-    fprintf(pFile2,"%s\n","$      VERSION 5.7");
+    fprintf(pFile2,"%s\n","$      VERSION 6.1");
     fprintf(pFile2,"%s\n","$      www.M3dFea.com");
     fprintf(pFile2,"%s %i:%i:%i\n","$      DATE",Day,Mon,Year);
     fprintf(pFile2,"%s %i:%i:%i\n","$      TIME",Hour,Min,Sec);
@@ -13609,7 +13610,7 @@ if (this->pCurrentMesh!=NULL)
     {
       fprintf(pFile2,"%s\n","$**********************************************************");
       fprintf(pFile2,"%s\n","$      NASTRAN DECK EXPORTED FROM M3D");
-      fprintf(pFile2,"%s\n","$      VERSION 5.7");
+      fprintf(pFile2,"%s\n","$      VERSION 6.1");
       fprintf(pFile2,"%s\n","$      WWW.M3d.org.uk");
       fprintf(pFile2,"%s %i:%i:%i\n","$      DATE",Day,Mon,Year);
       fprintf(pFile2,"%s %i:%i:%i\n","$      TIME",Hour,Min,Sec);

@@ -3563,6 +3563,7 @@ public:
    eFaceList* FcList;
    eEdgeList* LkList;
    CvPt_Object BBox[8]; //bounding box
+   int iIntID; //Internal ID
    int iNdNo;				  //No of Nodes
    int iElNo;//No of Elems	
    int iBCLDs;

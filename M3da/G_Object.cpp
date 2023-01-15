@@ -19793,6 +19793,7 @@ pResVectors = NULL;
 FcList=NULL;
 LkList=NULL;
 pSOLS=new SolSets("UNDEFINED");
+iIntID =  (int) this;
 }
 
 CString ME_Object::GetName()
@@ -19913,6 +19914,8 @@ void ME_Object::Info()
   sprintf_s(S1,"%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour);
   outtext1("MESH OBJECT");
   outtext1(S1); 
+  sprintf_s(S1, "%s%i%s%X","ID : ", iLabel, " Internal ID : ", iIntID);
+  outtext1(S1);
   sprintf_s(S1,"%s%s","Name : ",sName.GetString());
   outtext1(S1);
   sprintf_s(S1, "%s%i", "Number of Nodes : ", iNdNo);
