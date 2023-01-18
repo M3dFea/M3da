@@ -11969,7 +11969,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
         }
       }
 		C3dVector vC = Get_Centroid();
-		mS.Transpose();
+		//mS.Transpose();
 		C3dVector vX=mS.GetColVec(1);
 		C3dVector vY=mS.GetColVec(2);;
 		C3dVector vZ=mS.GetColVec(3);;
@@ -20657,6 +20657,7 @@ void ME_Object::Serialize(CArchive& ar,int iV)
 		  // TODO: add storing code here
 		  G_Object::Serialize(ar, iV);
 			  ar << sName;
+			  ar << iIntID;
 			  ar << bDrawN;
 			  ar << TransMat.m_00; ar << TransMat.m_01; ar << TransMat.m_02; ar << TransMat.m_03;
 			  ar << TransMat.m_10; ar << TransMat.m_11; ar << TransMat.m_12; ar << TransMat.m_13;
@@ -20712,6 +20713,8 @@ void ME_Object::Serialize(CArchive& ar,int iV)
 	  {
         G_Object::Serialize(ar,iV);
         ar>>sName;
+		if (iV<=-62)
+		  ar >> iIntID;
 	    ar>>bDrawN;
         ar>>TransMat.m_00; ar>>TransMat.m_01; ar>>TransMat.m_02; ar>>TransMat.m_03;
 	    ar>>TransMat.m_10; ar>>TransMat.m_11; ar>>TransMat.m_12; ar>>TransMat.m_13;
