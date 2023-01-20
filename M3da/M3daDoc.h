@@ -501,6 +501,7 @@ public:
   afx_msg void OnCurvemodifySplitatpoint();
   afx_msg void OnElementmodifiyIntersecttrielements();
   afx_msg void OnNodemodifyEquivalencelab();
+  afx_msg void OnElementmodifiyColourbypid();
 };
 
 

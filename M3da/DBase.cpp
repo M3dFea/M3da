@@ -17549,6 +17549,33 @@ void DBase::AddToGroupbyPID(int PID)
   delete (PIDS);
 }
 
+void DBase::ColourByPID(int PID)
+{
+	NEList* PIDS = new NEList();
+	CString sTit;
+	CString sNum;
+	int iCurCol = 2;
+	int iPID;
+	int iCO;
+	int iCol;
+	for (iCO = 0; iCO < pCurrentMesh->iElNo; iCO++)
+	{
+		iPID = pCurrentMesh->pElems[iCO]->PID;
+		iCol = PIDS->Get(iPID);  
+		if (iCol == -1)
+		{
+			PIDS->Add(iPID, iCurCol);
+			iCol = iCurCol;
+			iCurCol++;
+			if (iCurCol > 122)
+				iCurCol = 2;
+		}
+		pCurrentMesh->pElems[iCO]->iColour = iCol;
+	}
+	delete (PIDS);
+	InvalidateOGL();
+	ReDraw();
+}
 
 void DBase::ChkNegJac()
 {

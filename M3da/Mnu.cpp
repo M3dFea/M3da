@@ -2634,6 +2634,16 @@ if (iStat == 0)
 	  pNext->Init(cDBase, -1);
 	  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "COLPID")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zCOLPID_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "RESLSTRESPFULL")
 	  {
 	  iResumePos = 0;
@@ -14804,6 +14814,14 @@ outtext1("Creating Groups by Property ID.");
 cDBase->AddToGroupbyPID(-1);
 RetVal = 1;
 return RetVal;
+}
+
+int zCOLPID_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	outtext1("Colouring Elements by Property.");
+	cDBase->ColourByPID(-1);
+	RetVal = 1;
+	return RetVal;
 }
 
 int zCHKJAC_Mnu::DoMenu(CString CInMsg, CPoint Pt)

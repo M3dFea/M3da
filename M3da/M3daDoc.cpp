@@ -354,6 +354,7 @@ ON_COMMAND(ID_CHECKS_COUNTF, &CM3daDoc::OnChecksCountf)
 ON_COMMAND(ID_CURVEMODIFY_SPLITATPOINT, &CM3daDoc::OnCurvemodifySplitatpoint)
 ON_COMMAND(ID_ELEMENTMODIFIY_INTERSECTTRIELEMENTS, &CM3daDoc::OnElementmodifiyIntersecttrielements)
 ON_COMMAND(ID_NODEMODIFY_EQUIVALENCELAB, &CM3daDoc::OnNodemodifyEquivalencelab)
+ON_COMMAND(ID_ELEMENTMODIFIY_COLOURBYPID, &CM3daDoc::OnElementmodifiyColourbypid)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -5959,6 +5960,22 @@ void CM3daDoc::OnNodemodifyEquivalencelab()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("NDEQLAB");
 		sLastcmd = "NDEQLAB";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnElementmodifiyColourbypid()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("COLPID");
+		sLastcmd = "COLPID";
 	}
 	else
 	{

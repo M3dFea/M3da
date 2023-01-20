@@ -1141,6 +1141,12 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zCOLPID_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zCHKJAC_Mnu : public zMnu
 {
 public:

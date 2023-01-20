@@ -394,6 +394,7 @@ BEGIN
             MENUITEM "Shell Offset",                ID_ELEMENTMODIFIY_SHELLOFFSET
             MENUITEM "Reverse",                     ID_ELEMENTMODIFIY_REVERSE
             MENUITEM "Intersect TRI Elements",      ID_ELEMENTMODIFIY_INTERSECTTRIELEMENTS
+            MENUITEM "Colour byPID",                ID_ELEMENTMODIFIY_COLOURBYPID
         END
         POPUP "Property / Material Modify"
         BEGIN
@@ -1263,6 +1264,7 @@ BEGIN
     ID_ELEMENTMODIFIY_INTERSECTTRIELEMENTS 
                             "Experimental, Intersect TRI elements."
     ID_NODEMODIFY_EQUIVALENCELAB "Equivalence node labels between meshes"
+    ID_ELEMENTMODIFIY_COLOURBYPID "Colour elements according to PID"
 END
 
 #endif    // English (United States) resources
