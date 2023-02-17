@@ -460,7 +460,7 @@ void outtextMSG(CString AAA)
     a = b.Left(iRetPos);
     b = b.Right(b.GetLength()-iRetPos-2);
 	//a.MakeUpper();
-	if (a.Find("/")==-1)
+	if (a.Find("//")==-1)
 	{
 	 outtext2(a);
      SendMsg(a);
