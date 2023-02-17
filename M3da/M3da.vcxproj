@@ -234,6 +234,7 @@
     <ClCompile Include="Mnu.cpp" />
     <ClCompile Include="MyEdit.cpp" />
     <ClCompile Include="MyEditBasicFnc.cpp" />
+    <ClCompile Include="Parser.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

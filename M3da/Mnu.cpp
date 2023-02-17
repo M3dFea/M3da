@@ -1,6 +1,7 @@
 #include "Mnu.h"
 #include "M3Da.h"
 #include "math.h"
+#include "Parser.h"
 // constructor sets where to out text
 const double Pi = 3.1415926535;
 	
@@ -2737,9 +2738,12 @@ if (iCommaNo == 0)
   CZtxt = mCInMsg.Right(iLen-iComPos[1]-1);
   }
   //pTextDia->OutStr(CXtxt+' '+CYtxt+' '+CZtxt);
-  ReturnPt->x = atof(CXtxt);
-  ReturnPt->y = atof(CYtxt);
-  ReturnPt->z = atof(CZtxt);
+  //ReturnPt->x = atof(CXtxt);
+  //ReturnPt->y = atof(CYtxt);
+  //ReturnPt->z = atof(CZtxt);
+  ReturnPt->x = evaluate(CXtxt.GetString());
+  ReturnPt->y = evaluate(CYtxt.GetString());
+  ReturnPt->z = evaluate(CZtxt.GetString());
   mCInMsg = "11";
  //-------------------REMOVE------------
    
