@@ -25,7 +25,58 @@ double applyOp(double a, double b, char op) {
     return 0;
 }
 
+bool isOp(char op)
+{
+    switch (op) {
+    case '+': return (true);
+    case '-': return (true);
+    case '*': return (true);
+    case '/': return (true);
+    case '^': return (true);
+    }
+    return (false);
+}
 
+bool isOp2(char op)
+{
+    switch (op) {
+    case '+': return (true);
+    case '-': return (true);
+    case '*': return (true);
+    case '/': return (true);
+    case '^': return (true);
+    case '(': return (true);
+    case ')': return (true);
+    case 'e': return (true);
+    case 'E': return (true);
+    }
+    return (false);
+}
+
+//Check to see if the operator is actually meant
+//to part os the number i.e -1.2 or +1.2
+//                          (-1.2.....
+//                          *(-1.2.....
+//                          ^(-1.2+2....
+// 
+bool isPartofNumber(string expression, int iC )
+{
+    int i;
+    bool brc = false;
+    if ((expression[iC] == '+') || (expression[iC] == '-'))
+    {
+        if (iC == 0)
+        {
+            brc = true;
+        }
+        else if (iC>0)
+        {
+            if (isOp2(expression[iC-1])==true)
+                brc = true;
+        }
+    }
+    return (brc);
+}
 
 double evaluate(string expression)
 {
@@ -41,33 +92,28 @@ double evaluate(string expression)
             ops.push(expression[i]);
         }
         else if (isdigit(expression[i]) ||
-            expression[i] == '.' ||
-            expression[i] == 'e' ||
-            expression[i] == 'E') {
+                 isPartofNumber(expression, i) ||
+                 expression[i] == '.') 
+        {
 
             double val = 0;
-            char Num[] = "          ";
+            char Num[] = "                    ";
             int iNC = 0;
-            while (i < expression.length() && (isdigit(expression[i]) ||
-                expression[i] == '.' ||
-                (expression[i] == '+' && bExp) ||
-                (expression[i] == '-' && bExp) ||
-                expression[i] == 'e' ||
-                expression[i] == 'E'))
+            while (i < expression.length() && 
+                  (isdigit(expression[i]) ||
+                   isPartofNumber(expression, i) ||
+                   expression[i] == '.' ||
+                   expression[i] == 'e' ||
+                   expression[i] == 'E'))
 
             {
-                if ((expression[i] == 'e' || expression[i] == 'E'))
-                    bExp = true;
-                else
-                    bExp = false;
                 Num[iNC] = expression[i];
                 iNC++;
                 i++;
             }
             val = atof(Num);
             values.push(val);
-            cout << Num << endl;
-            bExp = false;
+            //cout << Num << endl;
             i--;
         }
         else if (expression[i] == ')') {
@@ -82,24 +128,14 @@ double evaluate(string expression)
             }
             ops.pop();
         }
-        else if (expression[i] == '^') {
-            while (!ops.empty() && precedence(ops.top()) >= precedence(expression[i])) {
-                double val2 = values.top();
-                values.pop();
-                double val1 = values.top();
-                values.pop();
-                char op = ops.top();
-                ops.pop();
-                values.push(applyOp(val1, val2, op));
-            }
-            ops.push(expression[i]);
-        }
         else {
             if (values.empty())
             {
                 return(0); //error
             }
             while (!ops.empty() && precedence(ops.top()) >= precedence(expression[i])) {
+                if (values.size() < 2)
+                    return(0); //error
                 double val2 = values.top();
                 values.pop();
                 double val1 = values.top();
@@ -108,7 +144,8 @@ double evaluate(string expression)
                 ops.pop();
                 values.push(applyOp(val1, val2, op));
             }
-            ops.push(expression[i]);
+            if (isOp(expression[i]))
+              ops.push(expression[i]);
         }
     }
     if (values.empty())
