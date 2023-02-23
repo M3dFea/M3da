@@ -7386,12 +7386,15 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-	outtext2("//ENTER PT TO PROJECT");
+  outtext2("//ENTER PT TO PROJECT");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zPT_Mnu();
   pNext->Init(cDBase,-1);
   DoNext(&CInMsg,Pt);
+  cDBase->FILTER.Clear();
+  cDBase->FILTER.SetFilter(0);
+  cDBase->FILTER.SetFilter(1);
 }
 if (iStat == 3)
 {
@@ -7401,6 +7404,7 @@ if (iStat == 3)
     p1= cDBase->ClosestTo(p2);
     cDBase->DB_AddPtBuff(p1);
     RetVal = 1;
+	cDBase->FILTER.SetAll();
 }
 //Escape clause
 if (iStat == 100)
