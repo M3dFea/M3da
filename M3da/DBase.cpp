@@ -5448,6 +5448,7 @@ int j;
 C3dVector vTrans;
 C3dVector vCart;
 WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
+int bWPMode = pWPlane->iWPMode;
 Node* cAddedNode;
 Node* pT;
 C3dVector vNewNode;
@@ -5471,20 +5472,25 @@ if (Nodes->iNo == Nodes2->iNo)
       vN2.z = pT->Pt_Point->z;
 	  vN1=GlobaltoWP(vN1);
       vN2=GlobaltoWP(vN2);
+	  if (bWPMode == 1) // polar coords
+	  {
+		  if (vN2.y < vN1.y)
+			  vN2.y += 360.0;
+	  }
 	  vDiff=vN2;
       vDiff-=vN1;
 	  for (j=1;j<=iNoOfTimes;j++)
-	  {   
+		{   
 		  ds=j;
 		  ds = ds	/(iNoOfTimes+1);
-      vNewNode=vN1;
+          vNewNode=vN1;
 		  vNewNode.x=vNewNode.x+vDiff.x*ds;
 		  vNewNode.y=vNewNode.y+vDiff.y*ds;
 		  vNewNode.z=vNewNode.z+vDiff.z*ds;
-      vNewNode=WPtoGlobal(vNewNode);
-      cAddedNode=pCurrentMesh->AddNode(vNewNode, pCurrentMesh->iNodeLab,0,0,11,0,0);
+          vNewNode=WPtoGlobal(vNewNode);
+          cAddedNode=pCurrentMesh->AddNode(vNewNode, pCurrentMesh->iNodeLab,0,0,11,0,0);
 		  pCurrentMesh->iNodeLab++;
-      AddTempGraphics(cAddedNode);
+          AddTempGraphics(cAddedNode);
 		  Dsp_Add(cAddedNode);
 	  }
      }
@@ -5503,6 +5509,11 @@ else if ((Nodes->iNo == 1) && (Nodes2->iNo>0))
       vN2.z = pT->Pt_Point->z;
 	  vN1=GlobaltoWP(vN1);
       vN2=GlobaltoWP(vN2);
+	  if (bWPMode == 1) // polar coords
+	  {
+		  if (vN2.y < vN1.y)
+			  vN2.y += 360.0;
+	  }
 	  vDiff=vN2;
       vDiff-=vN1;
 	  for (j=1;j<=iNoOfTimes;j++)
@@ -5516,7 +5527,7 @@ else if ((Nodes->iNo == 1) && (Nodes2->iNo>0))
         vNewNode=WPtoGlobal(vNewNode);
         cAddedNode=pCurrentMesh->AddNode(vNewNode, pCurrentMesh->iNodeLab,0,0,11,0,0);
 		pCurrentMesh->iNodeLab++;
-    AddTempGraphics(cAddedNode);
+        AddTempGraphics(cAddedNode);
 		Dsp_Add(cAddedNode);
 	  }
      }
@@ -5535,6 +5546,11 @@ else if ((Nodes->iNo > 0) && (Nodes2->iNo==1))
       vN2.z = pT->Pt_Point->z;
 	  vN1=GlobaltoWP(vN1);
       vN2=GlobaltoWP(vN2);
+	  if (bWPMode == 1) // polar coords
+	  {
+		  if (vN2.y < vN1.y)
+			  vN2.y += 360.0;
+	  }
 	  vDiff=vN2;
       vDiff-=vN1;
 	  for (j=1;j<=iNoOfTimes;j++)
@@ -5549,7 +5565,7 @@ else if ((Nodes->iNo > 0) && (Nodes2->iNo==1))
         cAddedNode=pCurrentMesh->AddNode(vNewNode, pCurrentMesh->iNodeLab,0,0,11,0,0);
 		pCurrentMesh->iNodeLab++;
 		Dsp_Add(cAddedNode);
-    AddTempGraphics(cAddedNode);
+        AddTempGraphics(cAddedNode);
 	  }
      }
 }
@@ -6330,7 +6346,7 @@ C3dVector DBase::PickPointToGlobal2(CPoint Pt)
 	AA = pModelMat;
 	do
 	{
-		P0 = this->WPtoGlobal(P0);
+		P0 = this->WPtoGlobal2(P0); //was WPtoGlobal1
 		M = P0;
 		V.x = AA.m_00 * M.x + AA.m_01 * M.y + AA.m_02 * M.z + AA.m_30;
 		V.y = AA.m_10 * M.x + AA.m_11 * M.y + AA.m_12 * M.z + AA.m_31;
@@ -6352,7 +6368,7 @@ C3dVector DBase::PickPointToGlobal2(CPoint Pt)
 		iErrCnt++;
 	} 
 	while ((dErr > 5) && (iErrCnt<100));
-	P0 = this->WPtoGlobal(P0);
+	  P0 = this->WPtoGlobal(P0);
 	//sprintf_s(s1, "Error %g cnt %i", dErr, iErrCnt);
 	//outtext1(s1);
 	return (P0);

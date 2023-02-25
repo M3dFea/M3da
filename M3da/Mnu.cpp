@@ -2990,6 +2990,14 @@ else if (iStat == 2)
   p1=cDBase->DB_PopBuff();
   p1=cDBase->GlobaltoWP(p1);
   p2=cDBase->GlobaltoWP(p2);
+  WP_Object* pWPlane = (WP_Object*)cDBase->DB_Obj[cDBase->iWP];
+  int bWPMode = pWPlane->iWPMode;
+
+  if (bWPMode == 1) // polar coords
+  {
+	  if (p2.y < p1.y)
+		  p2.y += 360.0;
+  }
   p1+=p2;
   p1/=2;
   p1=cDBase->WPtoGlobal(p1);
@@ -14548,7 +14556,7 @@ if (iStat == 3)
 {
   if ((CInMsg=="D") || (CInMsg==""))
   {
-	  cDBase->S_Save(cDBase->OTemp2);
+	cDBase->S_Save(cDBase->OTemp2);
     cDBase->S_Count=0;
     iStat=4;
   }
