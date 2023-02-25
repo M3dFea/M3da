@@ -46,7 +46,6 @@ bool isOp2(char op)
     case '/': return (true);
     case '^': return (true);
     case '(': return (true);
-    case ')': return (true);
     case 'e': return (true);
     case 'E': return (true);
     }
@@ -82,9 +81,7 @@ double evaluate(string expression)
 {
     stack<double> values;
     stack<char> ops;
-    bool bExp = false;
     for (int i = 0; i < expression.length(); i++) {
-        bExp = false;
         if (expression[i] == ' ') {
             continue;
         }

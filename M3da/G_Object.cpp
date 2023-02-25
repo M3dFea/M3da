@@ -2805,77 +2805,77 @@ void eEdge::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
 glLineWidth(5.0);
 glColor3fv(cols[iColour]);
-//glBegin(GL_LINES);
-//glVertex3f((float) pVertex[0]->Pt_Point->x,(float) pVertex[0]->Pt_Point->y,(float) pVertex[0]->Pt_Point->z);
-//glVertex3f((float) pVertex[1]->Pt_Point->x,(float) pVertex[1]->Pt_Point->y,(float) pVertex[1]->Pt_Point->z);
-//glEnd();
+glBegin(GL_LINES);
+glVertex3f((float) pVertex[0]->Pt_Point->x,(float) pVertex[0]->Pt_Point->y,(float) pVertex[0]->Pt_Point->z);
+glVertex3f((float) pVertex[1]->Pt_Point->x,(float) pVertex[1]->Pt_Point->y,(float) pVertex[1]->Pt_Point->z);
+glEnd();
 //
 
-int i;
-double X, Y, Z;
-C3dVector Point[2];
-C3dVector vDir;
-C3dVector Pts[7];  //Arrow Head
-C3dMatrix mT;
-C3dVector vOff;
-
-	Selectable = 1;
-	Point[0] = pVertex[0]->Pt_Point;
-	Point[1] = pVertex[1]->Pt_Point;
-	vOff.Set(AHead[0][0], AHead[0][1], AHead[0][2]);
-	vDir = Point[1]- Point[0];
-
-	vDir.Normalize();
-	mT = vDir.GetTMat();
-
-	for (i = 0; i < 7; i++)
-	{
-		Pts[i].Set(AHead[i][0], AHead[i][1], AHead[i][2]);
-		Pts[i] -= vOff;
-		Pts[i] = mT.Mult(Pts[i]);
-		Pts[i] *= 0.2 * dS1;
-	}
-	X = Point[1].x; Y = Point[1].y; Z = Point[1].z;
-
-	glColor3fv(cols[iColour]);
-	glBegin(GL_LINES);
-	glVertex3f((float)Point[0].x, (float)Point[0].y, (float)Point[0].z);
-	glVertex3f((float)Point[1].x, (float)Point[1].y, (float)Point[1].z);
-	glEnd();
-	glPointSize(10.0f);
-	glBegin(GL_POINTS);
-	glVertex3f((float)0.5 * (Point[0].x + Point[1].x), (float)0.5 * (Point[0].y + Point[1].y), (float)0.5 * (Point[0].z + Point[1].z));
-	glEnd();
-	glBegin(GL_POLYGON);
-	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
-	glVertex3f((float)Pts[2].x + X, (float)Pts[2].y + Y, (float)Pts[2].z + Z);
-	glVertex3f((float)Pts[1].x + X, (float)Pts[1].y + Y, (float)Pts[1].z + Z);
-	glEnd();
-	glBegin(GL_POLYGON);
-	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
-	glVertex3f((float)Pts[3].x + X, (float)Pts[3].y + Y, (float)Pts[3].z + Z);
-	glVertex3f((float)Pts[2].x + X, (float)Pts[2].y + Y, (float)Pts[2].z + Z);
-	glEnd();
-	glBegin(GL_POLYGON);
-	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
-	glVertex3f((float)Pts[4].x + X, (float)Pts[4].y + Y, (float)Pts[4].z + Z);
-	glVertex3f((float)Pts[3].x + X, (float)Pts[3].y + Y, (float)Pts[3].z + Z);
-	glEnd();
-	glBegin(GL_POLYGON);
-	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
-	glVertex3f((float)Pts[5].x + X, (float)Pts[5].y + Y, (float)Pts[5].z + Z);
-	glVertex3f((float)Pts[4].x + X, (float)Pts[4].y + Y, (float)Pts[4].z + Z);
-	glEnd();
-	glBegin(GL_POLYGON);
-	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
-	glVertex3f((float)Pts[6].x + X, (float)Pts[6].y + Y, (float)Pts[6].z + Z);
-	glVertex3f((float)Pts[5].x + X, (float)Pts[5].y + Y, (float)Pts[5].z + Z);
-	glEnd();
-	glBegin(GL_POLYGON);
-	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
-	glVertex3f((float)Pts[1].x + X, (float)Pts[1].y + Y, (float)Pts[1].z + Z);
-	glVertex3f((float)Pts[6].x + X, (float)Pts[6].y + Y, (float)Pts[6].z + Z);
-	glEnd();
+//int i;
+//double X, Y, Z;
+//C3dVector Point[2];
+//C3dVector vDir;
+//C3dVector Pts[7];  //Arrow Head
+//C3dMatrix mT;
+//C3dVector vOff;
+//
+//	Selectable = 1;
+//	Point[0] = pVertex[0]->Pt_Point;
+//	Point[1] = pVertex[1]->Pt_Point;
+//	vOff.Set(AHead[0][0], AHead[0][1], AHead[0][2]);
+//	vDir = Point[1]- Point[0];
+//
+//	vDir.Normalize();
+//	mT = vDir.GetTMat();
+//
+//	for (i = 0; i < 7; i++)
+//	{
+//		Pts[i].Set(AHead[i][0], AHead[i][1], AHead[i][2]);
+//		Pts[i] -= vOff;
+//		Pts[i] = mT.Mult(Pts[i]);
+//		Pts[i] *= 0.2 * dS1;
+//	}
+//	X = Point[1].x; Y = Point[1].y; Z = Point[1].z;
+//
+//	glColor3fv(cols[iColour]);
+//	glBegin(GL_LINES);
+//	glVertex3f((float)Point[0].x, (float)Point[0].y, (float)Point[0].z);
+//	glVertex3f((float)Point[1].x, (float)Point[1].y, (float)Point[1].z);
+//	glEnd();
+//	glPointSize(10.0f);
+//	glBegin(GL_POINTS);
+//	glVertex3f((float)0.5 * (Point[0].x + Point[1].x), (float)0.5 * (Point[0].y + Point[1].y), (float)0.5 * (Point[0].z + Point[1].z));
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[2].x + X, (float)Pts[2].y + Y, (float)Pts[2].z + Z);
+//	glVertex3f((float)Pts[1].x + X, (float)Pts[1].y + Y, (float)Pts[1].z + Z);
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[3].x + X, (float)Pts[3].y + Y, (float)Pts[3].z + Z);
+//	glVertex3f((float)Pts[2].x + X, (float)Pts[2].y + Y, (float)Pts[2].z + Z);
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[4].x + X, (float)Pts[4].y + Y, (float)Pts[4].z + Z);
+//	glVertex3f((float)Pts[3].x + X, (float)Pts[3].y + Y, (float)Pts[3].z + Z);
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[5].x + X, (float)Pts[5].y + Y, (float)Pts[5].z + Z);
+//	glVertex3f((float)Pts[4].x + X, (float)Pts[4].y + Y, (float)Pts[4].z + Z);
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[6].x + X, (float)Pts[6].y + Y, (float)Pts[6].z + Z);
+//	glVertex3f((float)Pts[5].x + X, (float)Pts[5].y + Y, (float)Pts[5].z + Z);
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[1].x + X, (float)Pts[1].y + Y, (float)Pts[1].z + Z);
+//	glVertex3f((float)Pts[6].x + X, (float)Pts[6].y + Y, (float)Pts[6].z + Z);
+//	glEnd();
 	glLineWidth(2.0);
 }
 
