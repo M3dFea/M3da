@@ -150,6 +150,8 @@ double evaluate(string expression)
         return(0);   //error
     }
     while (!ops.empty()) {
+        if (values.size() < 2)
+            return(0); //error
         double val2 = values.top();
         values.pop();
         double val1 = values.top();

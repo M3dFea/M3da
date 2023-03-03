@@ -15181,8 +15181,9 @@ int iPID=0;
 int iFN;
 int i;
 int iNDID;
+double dCTE = 0.0;
 CString sDof;
-
+CString sF;
 iID=atoi(oC.GetField(0));
 iNlabs[0] = atoi(oC.GetField(1));
 sDof=oC.GetField(2); 
@@ -15190,16 +15191,27 @@ iFN=4;
 int iCnt=1;
 for (i=3;i<oC.iNo;i++)
 {
-  iNDID= atoi(oC.GetField(i));
-  if ((iNDID>0) && (oC.GetField(i).Find(".")==-1))
+  sF = oC.GetField(i);
+  iNDID= atoi(sF);
+  if ((iNDID>0) && (sF.Find(".")==-1))
   {
     iNlabs[iCnt] = iNDID;
     iCnt++;
-  }
+	if (iCnt > 199) 
+	   {
+		outtext1("ERROR: Max Number of Nodes in RBE2 Reached.");
+		break;
+	   }
+  } 
+  else if (sF.Find(".") != -1)
+	  dCTE = atofNAS(sF);
 }
+//sF = oC.GetField(oC.iNo-3);
+
 
 E_ObjectR* pR =(E_ObjectR*) pM->AddEl2(iNlabs,iID,160,122,iPID,1,iCnt,0,0,0,-1,0);
 pR->SetDOFString(sDof);
+pR->dALPHA = dCTE;
 return (pR);
 }
 
