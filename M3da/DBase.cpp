@@ -8042,6 +8042,7 @@ if (Items->iNo>0)
 		if (eF->NoVert == 4)	 //Used as a marker to tell what type of element it is
 		{
 			E_Object4* El4 = new E_Object4();
+			El4->iType = 94;
 			ELF->Add(El4);
 			for (j = 0; j < eF->NoVert; j++)
 			{
@@ -8052,6 +8053,7 @@ if (Items->iNo>0)
 		else if (eF->NoVert == 3)
 		{
 			E_Object3* EL3 = new E_Object3();
+			EL3->iType = 91;
 			ELF->Add(EL3);
 			for (j = 0; j < eF->NoVert; j++)
 			{
@@ -8065,6 +8067,7 @@ if (Items->iNo>0)
 	{
 		eE = (eEdge*)Items->Objs[i];
 		E_Object2* El2 = new E_Object2B();
+		El2->iType = 21;
 		ELF->Add(El2);
 		for (j = 0; j < 2; j++)
 		{
