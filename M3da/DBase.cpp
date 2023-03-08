@@ -17857,24 +17857,67 @@ void DBase::CountItems()
 	int iNode = 0;
 	int iEl = 0;
 	int iCYS = 0;
+	int iNodeMin = 99999999;
+	int iElMin = 99999999;
+	int iCYSMin = 99999999;
+	int iNodeMax = 0;
+	int iElMax = 0;
+	int iCYSMax = 0;
+
 	int iCO;
 	for (iCO = 0; iCO < S_Count; iCO++)
 	{
 		if (S_Buff[iCO]->iObjType == 1)
+		{
 			iNode++;
+			if (S_Buff[iCO]->iLabel < iNodeMin)
+				iNodeMin = S_Buff[iCO]->iLabel;
+			if (S_Buff[iCO]->iLabel > iNodeMax)
+				iNodeMax = S_Buff[iCO]->iLabel;
+		}
 		else if (S_Buff[iCO]->iObjType == 3)
+		{
 			iEl++;
+			if (S_Buff[iCO]->iLabel < iElMin)
+				iElMin = S_Buff[iCO]->iLabel;
+			if (S_Buff[iCO]->iLabel > iElMax)
+				iElMax = S_Buff[iCO]->iLabel;
+		}
 		else if (S_Buff[iCO]->iObjType == 12)
+		{
 			iCYS++;
+			if (S_Buff[iCO]->iLabel < iCYSMin)
+				iCYSMin = S_Buff[iCO]->iLabel;
+			if (S_Buff[iCO]->iLabel > iCYSMax)
+				iCYSMax = S_Buff[iCO]->iLabel;
+		}
 
 	}
-		//InvalidateOGL();
+	if (iNodeMin == 99999999)
+		iNodeMin = 0;
+	if (iElMin == 99999999)
+		iElMin = 0;
+	if (iCYSMin == 99999999)
+		iCYSMin = 0;
+
 	outtext1("Count of Selected F.E. Items:-");
 	sprintf_s(S1, "%s%i", "Number of Nodes : ", iNode);
 	outtext1(S1);
 	sprintf_s(S1, "%s%i", "Number of Elements : ", iEl);
 	outtext1(S1);
 	sprintf_s(S1, "%s%i", "Number of Coord-Systems : ", iCYS);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Min Node Label : ", iNodeMin);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Min Elem Label : ", iElMin);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Min CSYS Label : ", iCYSMin);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Max Node Label : ", iNodeMax);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Max Elem Label : ", iElMax);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Max CSYS Label : ", iCYSMax);
 	outtext1(S1);
 	ReDraw();
 
