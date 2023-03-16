@@ -8936,9 +8936,16 @@ for (i=0;i<S_Count;i++)
      pS->AddCV(pSS->GetSurfaceCVG(pSS->pParent));
   }
 }
-bErr=pS->GenerateFit(2,0,1);
-pS->iLabel=iSFLabCnt;
-iSFLabCnt++;
+if (pS->iNoCvs > 1)
+{
+	bErr = pS->GenerateFit(2, 0, 1);
+	pS->iLabel = iSFLabCnt;
+	iSFLabCnt++;
+}
+else
+{
+	bErr = TRUE;
+}
 
 if (bErr==TRUE)
 {
@@ -8948,14 +8955,15 @@ if (bErr==TRUE)
 }
 else
 {
+	C3dVector pT;
+	pT = pS->Get_Centroid();
+	Matrix <C3dVector> Mat1;
+	pS->deriveAt(0.5, 0.5, 1, Mat1);
+	pT = Mat1(0, 0);
   AddObj(pS);
   ReDraw();
 }
-C3dVector pT;
-pT=pS->Get_Centroid();
-Matrix <C3dVector> Mat1;
-pS->deriveAt(0.5, 0.5,1, Mat1);
-pT=Mat1(0,0);
+
 }
 
 C3dMatrix DBase::CalcTranSsswep(C3dMatrix TMat,C3dVector vDir)
