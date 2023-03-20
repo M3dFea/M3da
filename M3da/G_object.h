@@ -3077,6 +3077,9 @@ virtual G_Object* Copy(G_Object* Parrent);
 virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
 virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
 CString GetName();
+virtual int GetVarHeaders(CString sVar[]);
+virtual int GetVarValues(CString sVar[]);
+virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 

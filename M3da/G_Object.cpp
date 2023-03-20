@@ -10454,6 +10454,7 @@ int E_Object::GetDOFInt(CString sDOF)
   return(iDOF);
 }
 
+
 BOOL E_Object::SetProperty(Property* Pr)
 {
 
@@ -13666,6 +13667,7 @@ return (KM);
 
 Mat E_Object2B::GetStiffMat(PropTable* PropsT,MatTable* MatT)
 {
+int i, j;
 BOOL AX = FALSE;
 BOOL BX = FALSE;
 Mat KM(12,12);
@@ -13751,49 +13753,44 @@ a1=ea/ell; a2=12.0*eiz/(ell*ell*ell);
 a3=12.0*eiy/(ell*ell*ell);a4=6.0*eiz/(ell*ell);
 a5=6.0*eiy/(ell*ell);a6=4.0*eiz/ell;
 a7=4.0*eiy/ell;a8=gj/ell;
-//End Releases
+
 
 *KM.mn(1,1)=a1;
 *KM.mn(7,7)=a1;
 *KM.mn(1,7)=-a1;
 *KM.mn(7,1)=-a1;
+
 *KM.mn(2,2)=a2;
 *KM.mn(8,8)=a2;
-////**********Note sure about this yet*************
-// This does not converge
-//if (iDOFA & DOF_1) //End A release
-//{
-//	outtext1("End A X release");
-//	*KM.mn(1, 1) = 1000;
-//	*KM.mn(7, 1) = 1000;
-//}
-//***********************************************
 *KM.mn(2,8)=-a2;
 *KM.mn(8,2)=-a2;
+
 *KM.mn(3,3)=a3;
 *KM.mn(9,9)=a3;
 *KM.mn(3,9)=-a3;
 *KM.mn(9,3)=-a3;
 
+
 *KM.mn(4,4)=a8;
 *KM.mn(10,10)=a8;
 *KM.mn(4,10)=-a8;
 *KM.mn(10,4)=-a8;
-*KM.mn(5,5)=a7;
 
+*KM.mn(5,5)=a7;
 *KM.mn(11,11)=a7;
 *KM.mn(5,11)=0.5*a7;
 *KM.mn(11,5)=0.5*a7;
+
 *KM.mn(6,6)=a6;
 *KM.mn(12,12)=a6;
-
 *KM.mn(6,12)=0.5*a6;
 *KM.mn(12,6)=0.5*a6;
+
 *KM.mn(2,6)=a4;
 *KM.mn(6,2)=a4;
 *KM.mn(2,12)=a4;
-
 *KM.mn(12,2)=a4;
+
 *KM.mn(6,8)=-a4;
 *KM.mn(8,6)=-a4;
 *KM.mn(8,12)=-a4;
@@ -13803,10 +13800,12 @@ a7=4.0*eiy/ell;a8=gj/ell;
 *KM.mn(9,5)=a5;
 *KM.mn(9,11)=a5;
 *KM.mn(11,9)=a5;
+
 *KM.mn(3,5)=-a5;
 *KM.mn(5,3)=-a5;
 *KM.mn(3,11)=-a5;
 *KM.mn(11,3)=-a5;
+
 C3dMatrix r;
 r=GetElSys();
 Mat mr(3,3);
@@ -13814,8 +13813,60 @@ Mat mr(3,3);
 *mr.mn(2,1)=r.m_10; *mr.mn(2,2)=r.m_11; *mr.mn(2,3)=r.m_12;
 *mr.mn(3,1)=r.m_20; *mr.mn(3,2)=r.m_21; *mr.mn(3,3)=r.m_22;
 
+////**********Note sure about this yet*************
+//Not really end release just zeroing out the k values
+//if ((iDOFA & DOF_1) || (iDOFB & DOF_1)) //End A release
+//{
+//	outtext1("End A X release");
+//	*KM.mn(1, 1) = 0;
+//	*KM.mn(7, 7) = 0;
+//	*KM.mn(1, 7) = 0;
+//	*KM.mn(7, 1) = 0;
+//}
+//if ((iDOFA & DOF_2) || (iDOFB & DOF_2))//End A release
+//{
+//	outtext1("End A Y release");
+//	*KM.mn(2, 2) = 0;
+//	*KM.mn(8, 8) = 0;
+//	*KM.mn(2, 8) = 0;
+//	*KM.mn(8, 2) = 0;
+//}
+//if ((iDOFA & DOF_3) || (iDOFB & DOF_3)) //End A release
+//{
+//	outtext1("End A Z release");
+//	*KM.mn(3, 3) = 0;
+//	*KM.mn(9, 9) = 0;
+//	*KM.mn(3, 9) = 0;
+//	*KM.mn(9, 3) = 0;
+//}
+//if ((iDOFA & DOF_4) || (iDOFB & DOF_4))
+//{
+//	outtext1("End A RX release");
+//	*KM.mn(4, 4) = 0;
+//	*KM.mn(10, 10) = 0;
+//	*KM.mn(4, 10) = 0;
+//	*KM.mn(10, 4) = 0;
+//}
+//if ((iDOFA & DOF_5) || (iDOFB & DOF_5))
+//{
+//	outtext1("End A RY release");
+//	*KM.mn(5, 5) = 0;
+//	*KM.mn(11, 11) = 0;
+//	*KM.mn(5, 11) = 0;
+//	*KM.mn(11, 5) = 0;
+//}
+//if ((iDOFA & DOF_6) || (iDOFB & DOF_6))
+//{
+//	outtext1("End A RZ release");
+//	*KM.mn(6, 6) = 0;
+//	*KM.mn(12, 12) = 0;
+//	*KM.mn(6, 12) = 0;
+//	*KM.mn(12, 6) = 0;
+//
+//}
+//***********************************************
 
-int i,j;
+
 for (i=1;i<4;i++)
 {
   for (j=1;j<4;j++)
@@ -13874,6 +13925,75 @@ return(V);
 CString E_Object2B::GetName()
 {
 	return("Beam (CBAR)");
+}
+
+int E_Object2B::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = "PID";
+	iNo++;
+	sVar[iNo] = "CID";
+	iNo++;
+	sVar[iNo] = "N1";
+	iNo++;
+	sVar[iNo] = "N2";
+	iNo++;
+	sVar[iNo] = "RELEASE END A";
+	iNo++;
+	sVar[iNo] = "RELEASE END B";
+	iNo++;
+	return(iNo);
+}
+
+
+int E_Object2B::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", PID);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", iCSYS);
+	sVar[iNo] = S1;
+	iNo++;
+
+	sprintf_s(S1, "%i", pVertex[0]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", pVertex[1]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sVar[iNo] = GetDOFString(iDOFA);
+	iNo++;
+	sVar[iNo] = GetDOFString(iDOFB);
+	iNo++;
+	return (iNo);
+}
+
+void E_Object2B::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+
+	Node* pN;
+	ME_Object* pMe = (ME_Object*)this->pParent;
+	PID = atoi(sVar[0]);
+	iCSYS = atoi(sVar[1]);
+	int N1 = atof(sVar[2]);
+	int N2 = atof(sVar[3]);
+	if (pVertex[0]->iLabel != N1)
+	{
+		pN = pMe->GetNode(N1);
+		if (pN != NULL)
+			pVertex[0] = pN;
+	}
+	if (pVertex[1]->iLabel != N2)
+	{
+		pN = pMe->GetNode(N2);
+		if (pN != NULL)
+			pVertex[1] = pN;
+	}
+	iDOFA = GetDOFInt(sVar[4]);
+	iDOFB = GetDOFInt(sVar[5]);
+
 }
 
 IMPLEMENT_DYNAMIC( E_Object3, CObject )

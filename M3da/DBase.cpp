@@ -2568,6 +2568,7 @@ void DBase::ElMass(ObjList* Els)
     for(j=0;j<pE->iNoNodes;j++)
     {
 	  vC = pE->GetNode(j)->Get_Centroid();
+	  vC = GlobaltoWP(vC);
 	  mx += *mm.mn(j + 1, 1) * vC.x;
 	  my += *mm.mn(j + 1, 1) * vC.y;
 	  mz += *mm.mn(j + 1, 1) * vC.z;
@@ -2582,7 +2583,7 @@ void DBase::ElMass(ObjList* Els)
     }
     mm.clear();
   }
-  outtext1("ELEMENT MASS SUMATION");
+  outtext1("ELEMENT MASS SUMATION IN WP COORDINATES");
   sprintf_s(S1, "Number off Elements summed: %i", Els->iNo);
   sprintf_s(S1, "CofG X,Y,Z : %g,%g,%g", mx/dM, my / dM, mz / dM);
   outtext1(S1);
