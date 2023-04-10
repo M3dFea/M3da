@@ -328,7 +328,7 @@ BEGIN
     END
     POPUP "Tools"
     BEGIN
-        POPUP "Workplain"
+        POPUP "Workplane"
         BEGIN
             MENUITEM "WP Size",                     ID_TOOLS_WPSIZE
             MENUITEM "WP Mode",                     ID_TOOLS_WPMODE
