@@ -3568,8 +3568,12 @@ class ME_Object : public G_Object
 {
 DECLARE_DYNAMIC(ME_Object)
 public:
+
    ME_Object();
    ~ME_Object();
+   //Include Nastran files try out 15/04/2023
+   int iFileNo = -1;
+   CString sFiles[200];
    eFaceList* FcList;
    eEdgeList* LkList;
    CvPt_Object BBox[8]; //bounding box

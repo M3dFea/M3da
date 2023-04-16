@@ -16399,6 +16399,7 @@ if (pFile!=NULL)
 
 ME_Object* DBase::ImportNASTRAN(CString inName)
 {
+int i;
 iFileNo = 0;
 CString sP;
 CString sF;
@@ -16426,6 +16427,15 @@ RetMesh->TempList = NULL;
 RetMesh->UpdatePropRef(PropsT);
 RetMesh->CoordToGlocal();
 outtext1("Finished Read.");
+RetMesh->iFileNo = iFileNo;
+char buff[200];
+for (i = 0; i < iFileNo; i++)
+{
+	RetMesh->sFiles[i] = sFiles[i];
+	sprintf_s(buff, "File No %i %s", i, sFiles[i]);
+	outtext1(buff);
+}
+
 delete (newPids);
 delete (newMats);
 return (RetMesh);

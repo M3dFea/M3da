@@ -19955,6 +19955,7 @@ FcList=NULL;
 LkList=NULL;
 pSOLS=new SolSets("UNDEFINED");
 iIntID =  (int) this;
+iFileNo = -1;
 }
 
 CString ME_Object::GetName()
@@ -20071,10 +20072,18 @@ iSecVecID = -1;
 
 void ME_Object::Info()
 {
+  int i;
   char S1[200];
   sprintf_s(S1,"%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour);
   outtext1("MESH OBJECT");
   outtext1(S1); 
+  outtext1("FILES:-");
+  outtext1(S1);
+  for (i = 0; i < iFileNo; i++)
+  {
+	  sprintf_s(S1, "File No %i %s", i, sFiles[i]);
+	  outtext1(S1);
+  }
   sprintf_s(S1, "%s%i%s%X","ID : ", iLabel, " Internal ID : ", iIntID);
   outtext1(S1);
   sprintf_s(S1,"%s%s","Name : ",sName.GetString());
@@ -20818,6 +20827,9 @@ void ME_Object::Serialize(CArchive& ar,int iV)
 		  // TODO: add storing code here
 		  G_Object::Serialize(ar, iV);
 			  ar << sName;
+			  ar << iFileNo;					//new
+			  for (i = 0; i < iFileNo; i++)		//new
+				ar << sFiles[i];				//new
 			  ar << iIntID;
 			  ar << bDrawN;
 			  ar << TransMat.m_00; ar << TransMat.m_01; ar << TransMat.m_02; ar << TransMat.m_03;
@@ -20874,6 +20886,12 @@ void ME_Object::Serialize(CArchive& ar,int iV)
 	  {
         G_Object::Serialize(ar,iV);
         ar>>sName;
+		if (iV <= -63)
+		{
+			ar >> iFileNo;						//new
+			for (i = 0; i < iFileNo; i++)		//new
+				ar >> sFiles[i];				//new
+		}
 		if (iV<=-62)
 		  ar >> iIntID;
 	    ar>>bDrawN;
