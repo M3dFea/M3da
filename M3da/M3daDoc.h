@@ -502,6 +502,9 @@ public:
   afx_msg void OnElementmodifiyIntersecttrielements();
   afx_msg void OnNodemodifyEquivalencelab();
   afx_msg void OnElementmodifiyColourbypid();
+  afx_msg void OnExportIncludefile();
+  afx_msg void OnGroupGroupfromincludefile();
+  afx_msg void OnMeshmanagementSetincludefileno();
 };
 
 

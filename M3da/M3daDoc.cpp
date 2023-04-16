@@ -355,6 +355,9 @@ ON_COMMAND(ID_CURVEMODIFY_SPLITATPOINT, &CM3daDoc::OnCurvemodifySplitatpoint)
 ON_COMMAND(ID_ELEMENTMODIFIY_INTERSECTTRIELEMENTS, &CM3daDoc::OnElementmodifiyIntersecttrielements)
 ON_COMMAND(ID_NODEMODIFY_EQUIVALENCELAB, &CM3daDoc::OnNodemodifyEquivalencelab)
 ON_COMMAND(ID_ELEMENTMODIFIY_COLOURBYPID, &CM3daDoc::OnElementmodifiyColourbypid)
+ON_COMMAND(ID_EXPORT_INCLUDEFILE, &CM3daDoc::OnExportIncludefile)
+ON_COMMAND(ID_GROUP_GROUPFROMINCLUDEFILE, &CM3daDoc::OnGroupGroupfromincludefile)
+ON_COMMAND(ID_MESHMANAGEMENT_SETINCLUDEFILENO, &CM3daDoc::OnMeshmanagementSetincludefileno)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -1563,22 +1566,7 @@ void CM3daDoc::OnToolsSetcurrentmesh()
 
 void CM3daDoc::OnExportCurrentmesttonas()
 {
-// TODO: Add your command handler code here
-outtext1("EXPORTING NASTRAN DECK");
-FILE* pFile;
-CFileDialog FDia(FALSE,"dat", "*.dat",OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL );
-FDia.DoModal();	
-CString sPath = FDia.GetPathName();
-CString sFile = FDia.GetFileName();
-if (sFile != "")
-{
-  pFile = fopen(sPath,"w");
-  if (pFile!=NULL)
-  {
-	cDBase->ExportMeshNAS(pFile);
-	fclose(pFile);
-  } 
-}
+cDBase->ExporttoNAS(-1);
 }
 
 void CM3daDoc::OnExportCurrentmeshto()
@@ -5976,6 +5964,54 @@ void CM3daDoc::OnElementmodifiyColourbypid()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("COLPID");
 		sLastcmd = "COLPID";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnExportIncludefile()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		//SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("EXPINC");
+		sLastcmd = "EXPINC";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnGroupGroupfromincludefile()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("GPBYINC");
+		sLastcmd = "GPBYINC";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnMeshmanagementSetincludefileno()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("MODINCNO");
+		sLastcmd = "MODINCNO";
 	}
 	else
 	{

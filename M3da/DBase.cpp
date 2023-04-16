@@ -332,6 +332,42 @@ void DBase::PrintTime(CString cS)
 	outtext1(s1);
 }
 
+void DBase::ExporttoNAS(int iFileNo)
+{
+	outtext1("EXPORTING NASTRAN DECK");
+	FILE* pFile;
+	CFileDialog FDia(FALSE, "dat", "*.dat", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
+	FDia.DoModal();
+	CString sPath = FDia.GetPathName();
+	CString sFile = FDia.GetFileName();
+	if (sFile != "")
+	{
+		pFile = fopen(sPath, "w");
+		if (pFile != NULL)
+		{
+			ExportMeshNAS(pFile, iFileNo);
+			fclose(pFile);
+		}
+	}
+}
+
+
+
+int DBase::GetFileByNo(CString sF)
+{
+	int irc=-1;
+	int i;
+	for (i = 0; i < iFileNo; i++)
+	{
+		if (sFiles[i] == sF)
+		{
+			irc = i;
+			break;
+		}
+
+	}
+	return(irc);
+}
 
 void DBase::SetLineStart(CPoint pS)
 {
@@ -13577,7 +13613,7 @@ fclose(pFile2);
 
 
 
-void DBase::ExportMeshNAS(FILE* pFile2)
+void DBase::ExportMeshNAS(FILE* pFile2, int iFile)
 {
 if (this->pCurrentMesh!=NULL)
 {
@@ -13602,14 +13638,19 @@ if (this->pCurrentMesh!=NULL)
     fprintf(pFile2,"%s\n","$**********************************************************");
 	if (pCurrentMesh->pSOLS != NULL)
 		pCurrentMesh->ExportNASExec(pFile2, pSecs);
-    fprintf(pFile2, "%s\n", "BEGIN BULK");
-	fprintf(pFile2, "%s\n", "PARAM,POST,-1");
-    fprintf(pFile2,"%s\n","$******************** MATERIALS ***************************");
-    MatT->ExportNAS(pFile2);
+	if (iFile == -1)
+	{
+		fprintf(pFile2, "%s\n", "BEGIN BULK");
+		fprintf(pFile2, "%s\n", "PARAM,POST,-1");
+	}
+	fprintf(pFile2, "%s\n", "$******************** MATERIALS ***************************");
+    MatT->ExportNAS(pFile2, iFile);
     fprintf(pFile2,"%s\n","$******************* PROPERTIES ***************************");
-	PropsT->ExportNAS(pFile2);
-    pCurrentMesh->ExportNAS(pFile2,pSecs);
-	fprintf(pFile2, "%s\n", "ENDDATA");
+	PropsT->ExportNAS(pFile2, iFile);
+
+    pCurrentMesh->ExportNAS(pFile2,pSecs,iFile);
+	if (iFile == -1)
+	   fprintf(pFile2, "%s\n", "ENDDATA");
     }
     else
     {
@@ -14674,7 +14715,8 @@ return (drc);
 
 CoordSys* NASReadCoord(ME_Object* pM,
                        NasCard& oC,
-                       int iType)
+                       int iType,
+	                   int iF)
 {
 
   int iID;
@@ -14715,12 +14757,14 @@ CoordSys* NASReadCoord(ME_Object* pM,
   rMat.m_12 = Z.y;
   rMat.m_22 = Z.z;
   pRet = pM->AddSys(Org,rMat,iRID,iType,iID,12);
+  pRet->iFile = iF;
   return (pRet);
 }
 
 void NASReadGRID(ME_Object* pM,
                  NasCard& oC,
-                 int iType)
+                 int iType,
+	             int iF)
 {
 int iID;
 int iDef;
@@ -14728,6 +14772,7 @@ int iOut;
 double d1;
 double d2;
 double d3;
+Node* pRet;
 C3dVector vPtIn;
 iID=atoi(oC.GetField(0));
 iDef=atoi(oC.GetField(1));
@@ -14742,15 +14787,18 @@ if (iID==6821383)
 {
   iID=iID;
 }
-pM->AddNode(vPtIn, iID,1,1,1,iDef,iOut);
+pRet=pM->AddNode(vPtIn, iID,1,1,1,iDef,iOut);
+pRet->iFile = iF;
 }
 
 void NASReadGRIDD(ME_Object* pM,
                  FILE* pFile,
                  CString* L1, 
                  CString* LNext,
-                 int iType)
+                 int iType,
+	             int iF)
 {
+Node* pRet;
 int iID;
 int iDef;
 int iOut;
@@ -14771,14 +14819,16 @@ iOut=atoi(L1->Mid(24,16));
 vPtIn.x = d1;
 vPtIn.y = d2;
 vPtIn.z = d3;
-pM->AddNode(vPtIn, iID,1,1,1,iDef,iOut);
+pRet=pM->AddNode(vPtIn, iID,1,1,1,iDef,iOut);
+pRet->iFile = iF;
 }
 
 
 E_Object* NASReadCHEXA(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
-                        int iType)
+                        int iType,
+	                    int iF)
 {
 int iNlabs[200];
 int iID;
@@ -14797,6 +14847,7 @@ iNlabs[6] = atoi(oC.GetField(8));
 iNlabs[7] = atoi(oC.GetField(9));
 E_Object* El=(E_Object*) pM->AddEl2(iNlabs,iID,159,115,iPID,1,8,0,0,0,-1,0);
 El->PIDunv=iPID;
+El->iFile = iF;
 return (El);
 }
 
@@ -14804,7 +14855,8 @@ return (El);
 E_Object* NASReadCONM2(NasCard& oC,
                        ME_Object* pM,
                        NEList* newPids,
-                       int iType)
+                       int iType,
+	                   int iF)
 {
 int iNlabs[200];
 int iID;
@@ -14827,13 +14879,15 @@ if (oC.iNo>8)
   pE->dI33= (ae(oC.GetField(13)));
 }
 pE->PIDunv=-1;
+pE->iFile = iF;
 return (pE);
 }
 
 E_Object* NASReadCONM1(NasCard& oC,
                        ME_Object* pM,
                        NEList* newPids,
-                       int iType)
+                       int iType,
+	                   int iF)
 {
 	outtext1("WARNING: CONM1 is not supported.");
 	int iNlabs[200];
@@ -14857,13 +14911,15 @@ E_Object* NASReadCONM1(NasCard& oC,
 	//	pE->dI33 = (ae(oC.GetField(13)));
 	//}
 	pE->PIDunv = -1;
+	pE->iFile = iF;
 	return (pE);
 }
 
 E_Object* NASReadCQUAD4(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
-                        int iType)
+                        int iType,
+	                    int iF)
 {
 int iNlabs[200];
 int iID;
@@ -14895,13 +14951,15 @@ dZ = ae(oC.GetField(7));
 E_Object4* El= (E_Object4*) pM->AddEl2(iNlabs,iID,157,94,iPID,1,4,0,0,0,MCID,dAng);
 El->dZOFFS=dZ;
 El->PIDunv=iPID;
+El->iFile = iF;
 return (El);
 }
 
 E_Object* NASReadCTRIA3(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
-                        int iType)
+                        int iType,
+	                    int iF)
 {
 int iNlabs[200];
 int iID;
@@ -14932,6 +14990,7 @@ dZ = ae(oC.GetField(6));
 E_Object3* El=(E_Object3*) pM->AddEl2(iNlabs,iID,156,91,iPID,1,3,0,0,0,MCID,dAng);
 El->dZOFFS=dZ;
 El->PIDunv=iPID;
+El->iFile = iF;
 return (El);
 }
 
@@ -14940,7 +14999,8 @@ E_Object* NASReadCQUAD4D(ME_Object* pM,
                   FILE* pFile,
                   CString* L1, 
                   CString* LNext,
-                  int iType)
+                  int iType,
+	              int iF)
 {
 int iNlabs[200];
 char s1[200];
@@ -14974,6 +15034,7 @@ else
 
 E_Object* pE=(E_Object*) pM->AddEl2(iNlabs,iID,7,94,iPID,1,4,0,0,0,MCID,dAng);
 pE->PIDunv=iPID;
+pE->iFile = iF;
 return (pE);
 }
 
@@ -14981,7 +15042,8 @@ return (pE);
 E_Object* NASReadCPENTA(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
-                        int iType)
+                        int iType,
+                        int iF)
 {
 int iNlabs[200];
 int iID;
@@ -14998,6 +15060,7 @@ iNlabs[4] = atoi(oC.GetField(6));
 iNlabs[5] = atoi(oC.GetField(7));
 E_Object* pE=(E_Object*) pM->AddEl2(iNlabs,iID,159,112,iPID,1,6,0,0,0,-1,0);
 pE->PIDunv=iPID;
+pE->iFile = iF;
 return (pE);
 }
 
@@ -15006,7 +15069,8 @@ E_Object2* NASReadCBUSH(NasCard& oC,
                        NEList* newPids,
                        int iType,
 					   int& iONID,
-					   C3dVector& pUp)
+					   C3dVector& pUp,
+	                   int iF)
 {
 int iNlabs[200];
 int iID;
@@ -15032,6 +15096,7 @@ if (sOmid.Find(".")==-1)
 
 E_Object2* pE=(E_Object2*) pM->AddEl2(iNlabs,iID,7,136,iPID,1,2,0,0,0, iONID,0);
 pE->PIDunv=iPID;
+pE->iFile = iF;
 return(pE);
 }
 
@@ -15042,7 +15107,8 @@ E_Object2B* NASReadCBAR(NasCard& oC,
 					   int& iONID,
 					   C3dVector& pUp,
 					   C3dVector& OffA,
-					   C3dVector& OffB)
+					   C3dVector& OffB,
+	                   int iF)
 {
 int iNlabs[200];
 int iID;
@@ -15088,6 +15154,7 @@ if (oC.iNo>8)
 pB->SetDOFStringA(Pin1);
 pB->SetDOFStringB(Pin2);
 pB->PIDunv=iPID;
+pB->iFile = iF;
 return (pB);
 }
 
@@ -15098,7 +15165,8 @@ E_Object2B* NASReadCBEAM(NasCard& oC,
 					   int& iONID,
 					   C3dVector& pUp,
 					   C3dVector& OffA,
-					   C3dVector& OffB)
+					   C3dVector& OffB,
+	                   int iF)
 {
 int iNlabs[200];
 int iID;
@@ -15147,6 +15215,7 @@ if (oC.iNo>8)
 pB->SetDOFStringA(Pin1);
 pB->SetDOFStringB(Pin2);
 pB->PIDunv=iPID;
+pB->iFile = iF;
 return (pB);
 }
 
@@ -15154,7 +15223,8 @@ return (pB);
 E_Object* NASReadCTETRA(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
-                        int iType)
+                        int iType,
+                        int iF)
 {
 int iNlabs[200];
 int iID;
@@ -15179,13 +15249,15 @@ if (iNlabs[5]==0)
 else
    pE = (E_Object*)pM->AddEl2(iNlabs, iID, 162, 310, iPID, 1, 10, 0, 0, 0, -1, 0);
 pE->PIDunv=iPID;
+pE->iFile = iF;
 return (pE);
 }
 
 E_Object* NASReadRBE2(NasCard& oC,
                       ME_Object* pM,
                       NEList* newPids,
-                      int iType)
+                      int iType,
+	                  int iF)
 {
 int iNlabs[200];
 int iID;
@@ -15224,6 +15296,7 @@ for (i=3;i<oC.iNo;i++)
 E_ObjectR* pR =(E_ObjectR*) pM->AddEl2(iNlabs,iID,160,122,iPID,1,iCnt,0,0,0,-1,0);
 pR->SetDOFString(sDof);
 pR->dALPHA = dCTE;
+pR->iFile = iF;
 return (pR);
 }
 
@@ -15231,7 +15304,8 @@ return (pR);
 E_Object* NASReadRBAR(NasCard& oC,
                       ME_Object* pM,
                       NEList* newPids,
-                      int iType)
+                      int iType,
+	                  int iF)
 {
 int iNlabs[200];
 
@@ -15258,13 +15332,15 @@ ALPHA= atofNAS(oC.GetField(7));
 
 E_ObjectR2* pR =(E_ObjectR2*) pM->AddEl2(iNlabs,iID,160,121,iPID,1,2,0,0,0,-1,0);
 pR->SetOther(CNA,CNB,CMA,CMA,ALPHA);
+pR->iFile = iF;
 return (pR);
 }
 
 E_Object* NASReadCROD(NasCard& oC,
                       ME_Object* pM,
                       NEList* newPids,
-                      int iType)
+                      int iType,
+                      int iF)
 {
 int iNlabs[200];
 
@@ -15278,7 +15354,7 @@ iNlabs[0] = atoi(oC.GetField(2));
 iNlabs[1] = atoi(oC.GetField(3));
 
 E_ObjectR2* pR =(E_ObjectR2*) pM->AddEl2(iNlabs,iID,160,11,iPID,1,2,0,0,0,-1,0);
-
+pR->iFile = iF;
 return (pR);
 }
 
@@ -15287,7 +15363,8 @@ void NASReadPSHELL(NasCard& oC,
                    PropTable* pM,
                    NEList* cPID,
                    int iType,
-                   BOOL Relab)
+                   BOOL Relab,
+	               int iF)
 {
 
 PSHELL* pS=new PSHELL();
@@ -15316,6 +15393,7 @@ else
  NextID=pS->iID;
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -15323,7 +15401,8 @@ void NASReadPBAR(NasCard& oC,
                  PropTable* pM,
                  NEList* cPID,
                  int iType,
-                 BOOL Relab)
+                 BOOL Relab,
+	             int iF)
 {
 PBAR* pS=new PBAR();
 pS->iType=4;
@@ -15360,6 +15439,7 @@ else
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
 pS->CreateSec();
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -15368,7 +15448,8 @@ void NASReadPROD(NasCard& oC,
                  PropTable* pM,
                  NEList* cPID,
                  int iType,
-                 BOOL Relab)
+                 BOOL Relab,
+	             int iF)
 {
 PROD* pS=new PROD();
 pS->iType=11;
@@ -15386,6 +15467,7 @@ else
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
 pS->CreateSec();
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -15393,7 +15475,8 @@ void NASReadPBUSH(NasCard& oC,
 	              PropTable* pM,
 	              NEList* cPID,
 	              int iType,
-	              BOOL Relab)
+	              BOOL Relab,
+	              int iF)
 {
 	PBUSH* pS = new PBUSH();
 	pS->iType = 138;
@@ -15413,10 +15496,15 @@ void NASReadPBUSH(NasCard& oC,
 		NextID = pS->iID;
 	cPID->Add(pS->iID, NextID);
 	pS->iID = NextID;
+	pS->iFile = iF;
 	pM->AddItem(pS);
 }
 
-BOOL NASReadPBEAM_C2(FILE* pFile,CString* L1,CString* LNext,PBEAM* pS)
+BOOL NASReadPBEAM_C2(FILE* pFile,
+	                 CString* L1,
+	                 CString* LNext,
+	                 PBEAM* pS,
+	                 int iF)
 {
 char s1[200];
 BOOL bN=FALSE;
@@ -15459,6 +15547,7 @@ if ((SONext.Find ("NO")>-1) ||
     
   }
   pS->iNo++;
+  pS->iFile = iF;
 }
 return (bRet);
 }
@@ -15467,7 +15556,8 @@ void NASReadPBEAM(NasCard& oC,
                   PropTable* pM,
                   NEList* cPID,
                   int iType,
-                  BOOL Relab)
+                  BOOL Relab,
+	              int iF)
 {
 PBEAM* pS=new PBEAM();
 pS->iType=6;
@@ -15541,6 +15631,7 @@ else
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
 pS->CreateSec();
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -15548,7 +15639,8 @@ void NASReadPBARL(NasCard& oC,
                    PropTable* pM,
                    NEList* cPID,
                    int iType,
-                   BOOL Relab)
+                   BOOL Relab,
+	               int iF)
 {
 PBARL* pS=new PBARL();
 pS->iType=5;
@@ -15577,6 +15669,7 @@ else
  NextID=pS->iID;
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -15585,7 +15678,8 @@ void NASReadPSOLID(NasCard& oC,
                    PropTable* pM,
                    NEList* cPID,
                    int iType,
-                   BOOL Relab)
+                   BOOL Relab,
+	               int iF)
 {
 PSOLID* pS=new PSOLID();
 pS->iType=3;
@@ -15605,6 +15699,7 @@ else
  NextID=pS->iID;
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -15612,7 +15707,8 @@ void NASReadMAT1(NasCard& oC,
                  MatTable* pM,
                  NEList* nMats,
                  int iType,
-                 BOOL Relab)
+                 BOOL Relab,
+	             int iF)
 {
 MAT1* pS=new MAT1();
 pS->iType=1;
@@ -15640,6 +15736,7 @@ else
  NextID=pS->iID;
 nMats->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -15647,7 +15744,8 @@ void NASReadMAT8(NasCard& oC,
                  MatTable* pM,
                  NEList* nMats,
                  int iType,
-                 BOOL Relab)
+                 BOOL Relab,
+	             int iF)
 {
 MAT8* pS=new MAT8();
 pS->iType=8;
@@ -15684,6 +15782,7 @@ else
  NextID=pS->iID;
 nMats->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -15691,7 +15790,8 @@ void NASReadPCOMP(NasCard& oC,
                   PropTable* pM,
                   NEList* cPID,
                   int iType,
-                  BOOL Relab)
+                  BOOL Relab,
+	              int iF)
 {
 int iFT;
 int iStop=0;
@@ -15765,6 +15865,7 @@ else
  NextID=pS->iID;
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 
 }
@@ -16022,6 +16123,7 @@ return (brc);
 void DBase::ImportNASTRANFirstPass(CString inName, ME_Object* pME,NEList* PIDs,NEList* MATs)
 {
 char s1[200];
+int iCurFileNo = -1;
 FILE* pFile;
 CString datline;  
 CString datlineNxt;
@@ -16034,6 +16136,13 @@ CoordSys* pRet;
 pFile = fopen(inName,"r");
 if (pFile!=NULL)
 {
+	iCurFileNo = GetFileByNo(sInc);
+	if (iCurFileNo == -1)
+	{
+		sFiles[iFileNo] = sInc;
+		iCurFileNo = iFileNo;
+		iFileNo++;
+	}
   do
   {
    if (feof(pFile)) 
@@ -16067,31 +16176,31 @@ if (pFile!=NULL)
       oCard.Clear();
       oCard.Read(pFile,datline,datlineNxt);
       if ((sKwrd.Find("CORD2R") == 0) && (datline.Find(",") == -1))
-        {pRet = NASReadCoord(pME,oCard,1);}
+        {pRet = NASReadCoord(pME,oCard,1,iCurFileNo);}
       else if ((sKwrd.Find("CORD2C") == 0))
-        {pRet = NASReadCoord(pME,oCard,2);}
+        {pRet = NASReadCoord(pME,oCard,2, iCurFileNo);}
       else if ((sKwrd.Find("CORD2S") == 0))
-        {pRet = NASReadCoord(pME,oCard,3);}
+        {pRet = NASReadCoord(pME,oCard,3, iCurFileNo);}
       else if ((sKwrd.Find("PSHELL") == 0))
-        {NASReadPSHELL(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPSHELL(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PCOMP ") == 0))
-        {NASReadPCOMP(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPCOMP(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PSOLID") == 0))
-        {NASReadPSOLID(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPSOLID(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PBARL") == 0))
-        {NASReadPBARL(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPBARL(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PBAR ") == 0))
-        {NASReadPBAR(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPBAR(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PROD ") == 0))
-        {NASReadPROD(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPROD(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
 	  else if ((sKwrd.Find("PBUSH") == 0))
-	    {NASReadPBUSH(oCard, PropsT, PIDs, 2, FALSE);}
+	    {NASReadPBUSH(oCard, PropsT, PIDs, 2, FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PBEAM") == 0))
-        {NASReadPBEAM(oCard,PropsT,PIDs,2,FALSE);} //NOT DONE
+        {NASReadPBEAM(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);} //NOT DONE
      else if ((sKwrd.Find("MAT1") == 0))
-        {NASReadMAT1(oCard,MatT,MATs,2,FALSE);}
+        {NASReadMAT1(oCard,MatT,MATs,2,FALSE, iCurFileNo);}
      else if ((sKwrd.Find("MAT8") == 0))
-        {NASReadMAT8(oCard,MatT,MATs,2,FALSE);}
+        {NASReadMAT8(oCard,MatT,MATs,2,FALSE, iCurFileNo);}
     }
     datline = datlineNxt;
   } 
@@ -16103,6 +16212,7 @@ if (pFile!=NULL)
 
 void DBase::ImportNASTRANGRID(CString inName, ME_Object* pME)
 {
+int iCurFileNo = -1;
 char s1[200];
 FILE* pFile;
 CString datline;
@@ -16115,6 +16225,13 @@ BOOL bDone=FALSE;
 pFile = fopen(inName,"r");
 if (pFile!=NULL)
 {
+	iCurFileNo = GetFileByNo(sInc);
+	if (iCurFileNo == -1)
+	{
+		sFiles[iFileNo] = sInc;
+		iCurFileNo = iFileNo;
+		iFileNo++;
+	}
   do
   {
    if (feof(pFile)) 
@@ -16147,7 +16264,7 @@ if (pFile!=NULL)
       oCard.Clear();
       oCard.Read(pFile,datline,datlineNxt);
       if ((sKwrd.Find("GRID") == 0))
-          NASReadGRID(pME,oCard,1);
+          NASReadGRID(pME,oCard,1, iCurFileNo);
     }
     datline = datlineNxt;
   } 
@@ -16160,6 +16277,7 @@ if (pFile!=NULL)
 
 void DBase::ImportNASTRANELEM(CString inName, ME_Object* pME,NEList* PIDs)
 {
+int iCurFileNo = -1;
 char s1[200];
 E_Object* El;
 FILE* pFile;
@@ -16173,8 +16291,16 @@ BOOL bDone=FALSE;
 pFile = fopen(inName,"r");
 if (pFile!=NULL)
 {
+	iCurFileNo = GetFileByNo(sInc);
+	if (iCurFileNo == -1)
+	{
+		sFiles[iFileNo] = sInc;
+		iCurFileNo = iFileNo;
+		iFileNo++;
+	}
   do
   {
+
    if (feof(pFile)) 
    {
      bDone = TRUE;
@@ -16205,35 +16331,35 @@ if (pFile!=NULL)
       oCard.Clear();
       oCard.Read(pFile,datline,datlineNxt);
       if ((sKwrd.Find("CQUAD4") == 0))
-          El = NASReadCQUAD4(oCard,pME,PIDs,2);
+          El = NASReadCQUAD4(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CONM2") == 0))
-          El = NASReadCONM2(oCard,pME,PIDs,2);
+          El = NASReadCONM2(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CONM1") == 0))
-		  El = NASReadCONM1(oCard, pME, PIDs, 2);
+		  El = NASReadCONM1(oCard, pME, PIDs, 2, iCurFileNo);
 	  else if ((sKwrd.Find("CHEXA") == 0))
-          El = NASReadCHEXA(oCard,pME,PIDs,2);
+          El = NASReadCHEXA(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CPENTA") == 0))
-          El = NASReadCPENTA(oCard,pME,PIDs,2);
+          El = NASReadCPENTA(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("RBE2") == 0))
-          El = NASReadRBE2(oCard,pME,PIDs,2);
+          El = NASReadRBE2(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("RBAR") == 0))
-          El = NASReadRBAR(oCard,pME,PIDs,2);
+          El = NASReadRBAR(oCard,pME,PIDs,2, iCurFileNo);
     else if ((sKwrd.Find("CROD") == 0))
-          El = NASReadCROD(oCard,pME,PIDs,2);
+          El = NASReadCROD(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CTETRA") == 0))
-          El = NASReadCTETRA(oCard,pME,PIDs,2);
+          El = NASReadCTETRA(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CBUSH ") == 0))
 	  { 
 		  E_Object2* EB;
 		  C3dVector vUP;
 		  C3dVector pUp;
 		  int iONID;
-          EB = NASReadCBUSH(oCard,pME,PIDs,2,iONID,pUp);
+          EB = NASReadCBUSH(oCard,pME,PIDs,2,iONID,pUp, iCurFileNo);
 		  vUP=CalcBeamUpVec(EB,iONID,pUp);
           EB->vUp=vUP;
 	  }
 	  else if ((sKwrd.Find("CTRIA3") == 0))
-          El = NASReadCTRIA3(oCard,pME,PIDs,2);
+          El = NASReadCTRIA3(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CBAR ") == 0))
 	  {
 		 E_Object2B* EB;
@@ -16242,7 +16368,7 @@ if (pFile!=NULL)
 		 C3dVector OffA;
 		 C3dVector OffB;
 		 C3dVector vUP;
-		 EB = NASReadCBAR(oCard,pME,PIDs,2,iONID,pUp,OffA,OffB);
+		 EB = NASReadCBAR(oCard,pME,PIDs,2,iONID,pUp,OffA,OffB, iCurFileNo);
 		 vUP=CalcBeamUpVec(EB,iONID,pUp);
          SetBeamOffs(EB,OffA,OffB);
          EB->vUp=vUP;
@@ -16255,7 +16381,7 @@ if (pFile!=NULL)
 		 C3dVector OffA;
 		 C3dVector OffB;
 		 C3dVector vUP;
-		 EB = NASReadCBEAM(oCard,pME,PIDs,2,iONID,pUp,OffA,OffB);
+		 EB = NASReadCBEAM(oCard,pME,PIDs,2,iONID,pUp,OffA,OffB, iCurFileNo);
 		 vUP=CalcBeamUpVec(EB,iONID,pUp);
          SetBeamOffs(EB,OffA,OffB);
          EB->vUp=vUP;
@@ -16273,6 +16399,7 @@ if (pFile!=NULL)
 
 ME_Object* DBase::ImportNASTRAN(CString inName)
 {
+iFileNo = 0;
 CString sP;
 CString sF;
 int iRC;
@@ -16340,7 +16467,7 @@ return (RetMesh);
 
 ME_Object* DBase::ImportNAS(FILE* pFile,CString inName,BOOL ReLab)
 {
-
+int iCurFileNo = -1;
 char s1[200];
 CString sKeyWrd;
 CString sKeyWrdNext;
@@ -16434,7 +16561,7 @@ do
     }
     else if (sKeyWrd.Find("GRID*") == 0)
 	{
-      NASReadGRIDD(RetMesh,pFile,&sKeyWrd,&sKeyWrdNext,1);
+      NASReadGRIDD(RetMesh,pFile,&sKeyWrd,&sKeyWrdNext,1, iCurFileNo);
 	}
   }
   if (feof(pFile))
@@ -16492,7 +16619,7 @@ do
     }
     else if ((sKeyWrd.Find("CQUAD4* ") == 0) && (sKeyWrd.Find(",") == -1))
     {
-      El = NASReadCQUAD4D(RetMesh,newPids,pFile,&sKeyWrd,&sKeyWrdNext,2);
+      El = NASReadCQUAD4D(RetMesh,newPids,pFile,&sKeyWrd,&sKeyWrdNext,2, iCurFileNo);
     }
 	  else if ((sKeyWrd.Find("CTRIA3") == 0) && (sKeyWrd.Find(",") == -1))
     {
@@ -17681,6 +17808,23 @@ else
 }
 }
 
+void DBase::GPByInclude(int iFile)
+{
+
+	CString sTit;
+	CString sNum;
+	int iCO;
+	int iGP;
+
+	sNum.Format(_T("%d"), iFile);
+	sTit = "INCLUDE ";
+	sTit += sNum;
+	iGP = AddGp(sTit);
+	pCurrentMesh->IncludeToGroup(iFile,Groups[iGP]);
+
+}
+
+
 void DBase::AddToGroupbyCol(int PID)
 {
 
@@ -17858,6 +18002,16 @@ if ((iCol>=0) && (iCol<=167))
 InvalidateOGL();
 ReDraw();
 }
+}
+
+void DBase::ModIncludeNo(int iF)
+{
+
+	int iCO;
+    for (iCO = 0; iCO < S_Count; iCO++)
+	{
+		S_Buff[iCO]->iFile = iF;
+	}
 }
 
 void DBase::CountItems()

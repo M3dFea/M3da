@@ -7,7 +7,7 @@
 
 //Note the version number has to be negative
 //so we can maintain compatability with older files
-const int VERSION_NO=-62;
+const int VERSION_NO=-63;
 const int MAX_GPS = 1000;
 const int MAX_TEMPGRP = 10000;
 const int MAX_SYMBOLS = 10000;
@@ -19,6 +19,14 @@ class DBase : public CCmdTarget
 DECLARE_DYNAMIC(DBase)
 
 public:
+//Include Nastran files try out 15/04/2023
+    int iFileNo = 0;
+    CString sFiles[200];
+    int GetFileByNo(CString sF);
+    void ExporttoNAS(int iFileNo);
+    void ModIncludeNo(int iF);
+
+
 HGLRC		hrc;
 BOOL bLineDrag;
 //int iSelLabType;
@@ -227,6 +235,7 @@ void SelSurfsbyCOL (int iCol);
 void SelPtsbyCOL(int iCOl);
 void SelCursbyCOL(int iCOl);
 void AddToGroupbyCol(int PID);
+void GPByInclude(int iFile);
 void AddToGroupbyNDCol(int PID);
 void AddToGroupbyNDOSYS(int PID);
 void AddToGroupbyNDDSYS(int PID);
@@ -564,7 +573,7 @@ void UserCalc2();
 void TestTrans();
 void ExportMesh(FILE* pFile2);
 void ExportRes(FILE* pFile2);
-void ExportMeshNAS(FILE* pFile2);
+void ExportMeshNAS(FILE* pFile2,int iFile); //iFile is include file no or -1 all
 void ExportToText(FILE* pFile2);
 void ExportCMesh(FILE* pFile2);
 void ExportGroupsTXT(FILE* pFile2);

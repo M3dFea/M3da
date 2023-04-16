@@ -1900,3 +1900,21 @@ class zGPREM_Mnu: public zMnu
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
+
+class zEXPINC_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zGPBYINC_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zMODINCNO_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};

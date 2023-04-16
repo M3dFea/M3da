@@ -728,6 +728,7 @@ class Entity : public CObject
 DECLARE_DYNAMIC(Entity)
 public:
 CString sTitle;
+int iFile;
 int iID;
 int iType;
 Entity();
@@ -1622,6 +1623,7 @@ public:
   G_Object* next;
   G_Object* before;
   C3dVector SelPt;
+  int iFile;
   int iObjType;
   int iType; //Secondary type specifier
   int iLabel;
@@ -2883,6 +2885,7 @@ class E_Object38 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object38 )
 public:
+   E_Object38();
    ~E_Object38();
    Node* pVertex[8];
    virtual void Info();
@@ -2924,6 +2927,7 @@ class E_Object36 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object36 )
 public:
+   E_Object36();
    ~E_Object36();
    Node* pVertex[6];
    virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
@@ -3220,6 +3224,7 @@ public:
 	double MAng;
 	double dZOFFS;
 	Node* pVertex[4];
+	E_Object4();
 	~E_Object4();
 	virtual void Create(Node* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);	 
 	virtual G_Object* Copy(G_Object* Parrent);
@@ -3280,6 +3285,7 @@ class E_Object34 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object34 )
 public:
+   E_Object34();
    ~E_Object34();
    Node* pVertex[4];
    virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
@@ -3332,6 +3338,7 @@ class E_Object310 : public E_Object
 {
 	DECLARE_DYNAMIC(E_Object310)
 public:
+	E_Object310();
 	~E_Object310();
 	Node* pVertex[10];
 	virtual void Create(Node* pInVertex[100], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
@@ -3465,7 +3472,7 @@ virtual Entity* GetItem(int iID);
 virtual int NextID();
 virtual void ListAll();
 virtual void Serialize(CArchive& ar,int iV);
-virtual void ExportNAS(FILE* pF);
+virtual void ExportNAS(FILE* pF, int iFileNo);
 virtual BOOL Exists(int iPID);
 };
 
@@ -3658,6 +3665,7 @@ public:
    Node* pNodes[MAX_FESIZE];  //Nodes
    E_Object* pElems[MAX_FESIZE];   //Elements
    BCLD* pBCLDs[MAX_FESIZE];
+   void IncludeToGroup(int iF, ObjGp* Group);
    void CoordToGlocal();
    void UpdatePropRef(PropTable* pT);
    ME_Object* GetMesh();    //GetPtr to this
@@ -3702,7 +3710,7 @@ public:
    void ExportUNV(FILE* pFile,SecTable* pS);
    void ExportNASExec(FILE* pFile, SecTable* pS);
    void ExportNASCase101(FILE* pFile, SecTable* pS);
-   void ExportNAS(FILE* pFile,SecTable* pS);
+   void ExportNAS(FILE* pFile,SecTable* pS,int iFileNo);
    void ExportRes(FILE* pFile);
    void ExportSec(FILE* pFile,int id,CString Name, double w,double h,double t);
    virtual C3dVector Get_Centroid();

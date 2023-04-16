@@ -1723,6 +1723,7 @@ return (Selectable);
 
 G_Object::G_Object()
 {
+iFile = -1;
 iType = -1;
 Drawn = 0;
 Selectable  = 1; 
@@ -1815,6 +1816,7 @@ void G_Object::Serialize(CArchive& ar,int iV)
 	{
 		// TODO: add storing code here
     ar << iObjType;
+	ar << iFile;
 	ar << iType;
     ar << iLabel;
     ar << iColour;
@@ -1825,10 +1827,17 @@ void G_Object::Serialize(CArchive& ar,int iV)
 	else
 	{
     ar >> iObjType;
+	//New file number to group include files
+	if (iV < -62)
+		ar >> iFile;
+	else
+		iFile = -1;
+
 	if (iV < -52)
 		ar >> iType;
 	else
 		iType = -1;
+
     ar >> iLabel;
     ar >> iColour;
     ar >> Drawn;
@@ -1846,7 +1855,7 @@ void G_Object::Info()
 {
   char S1[80];
   CString OutT;
-  sprintf_s(S1,"%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour);
+  sprintf_s(S1,"%s %i %s %i %s %i %s %i","Type",iObjType,"FileNo",iFile,"Label",iLabel,"Col",iColour);
   OutT+=S1;
   outtext1(OutT); 
 }
@@ -2315,12 +2324,12 @@ void Node::Serialize(CArchive& ar,int iV)
 	if (ar.IsStoring())
 	{
 		// TODO: add storing code here
-    G_Object::Serialize(ar,iV);
-	ar<<DefSys;
-    ar<<OutSys;
-    ar<<Pt_Point->x;
-    ar<<Pt_Point->y;
-    ar<<Pt_Point->z;  
+      G_Object::Serialize(ar,iV);
+	  ar<<DefSys;
+      ar<<OutSys;
+      ar<<Pt_Point->x;
+      ar<<Pt_Point->y;
+      ar<<Pt_Point->z;  
 	}
 	else
 	{
@@ -5255,6 +5264,10 @@ return (vRetPt);
 
 IMPLEMENT_DYNAMIC( E_Object38, CObject )
 
+E_Object38::E_Object38()
+{
+	G_Object();
+}
 
 E_Object38::~E_Object38()
 {
@@ -6547,6 +6560,11 @@ void E_Object38::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 IMPLEMENT_DYNAMIC( E_Object36, CObject )
 
+E_Object36::E_Object36()
+{
+	G_Object();
+}
+
 E_Object36::~E_Object36()
 {
 pVertex[0]=NULL;
@@ -7674,6 +7692,11 @@ void E_Object36::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 //----------------------------------------------------------------------------
 
 IMPLEMENT_DYNAMIC( E_Object34, CObject )
+
+E_Object34::E_Object34()
+{
+	G_Object();
+}
 
 E_Object34::~E_Object34()
 {
@@ -8865,6 +8888,10 @@ void E_Object34::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 //----------------------------------------------------------------------------
 
 IMPLEMENT_DYNAMIC(E_Object310, CObject)
+E_Object310::E_Object310()
+{
+	G_Object();
+}
 
 E_Object310::~E_Object310()
 {
@@ -10594,8 +10621,9 @@ return (bC);
 void E_Object::Info()
 {
   char S1[80];
-  sprintf_s(S1,"%s%i%s%i%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour," PID; ",PID," ELTYPE; ",iType);
-  outtext1(S1); 
+  //sprintf_s(S1,"%s%i%s%i%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour," PID; ",PID," ELTYPE; ",iType);
+  //outtext1(S1); 
+  G_Object::Info();
 }
 
 
@@ -11387,7 +11415,7 @@ IMPLEMENT_DYNAMIC( E_Object2, CObject )
 
 E_Object2::E_Object2()
 {
-//(iType == 136) || (iType == 137)
+G_Object();
 iCSYS=-1;
 }
 
@@ -11419,8 +11447,7 @@ return(3);
 void E_Object2::Info()
 {
   char S1[80];
-  sprintf_s(S1,"%s%i%s%i%s%i%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour," PID; ",PID," ELTYPE; ",iType," CSYS; ",iCSYS);
-  outtext1(S1); 
+  G_Object::Info();
   sprintf_s(S1, "%s%i%s%i", "ND1 ", pVertex[0]->iLabel, "ND2 ", pVertex[1]->iLabel);
   outtext1(S1);
 }
@@ -12238,6 +12265,7 @@ IMPLEMENT_DYNAMIC( E_Object2R, CObject )
 
 E_Object2R::E_Object2R()
 {
+G_Object();
 iDOFA=0;
 iDOFB=0;
 iONID = -1;
@@ -12478,6 +12506,7 @@ pDC->LineTo((int) pVertex[1]->DSP_Point->x,(int) pVertex[1]->DSP_Point->y);
 void E_Object2R::Info()
 {
 	char S1[80];
+	G_Object::Info();
 	sprintf_s(S1, "%s%i%s%i%s%i%s%i%s%i%s%i", "Type ", iObjType, "; Label ", iLabel, " Col; ", iColour, " PID; ", PID, " ELTYPE; ", iType, " CSYS; ", iCSYS);
 	outtext1(S1);
 	sprintf_s(S1, "%s%i%s%i", "ND1 ", pVertex[0]->iLabel, "ND2 ", pVertex[1]->iLabel);
@@ -13331,6 +13360,7 @@ IMPLEMENT_DYNAMIC(E_Object2B, CObject )
 
 E_Object2B::E_Object2B()
 {
+G_Object();
 iDOFA=0;
 iDOFB=0;
 iONID = -1;
@@ -14009,6 +14039,7 @@ pVertex[2]=NULL;
 
 E_Object3::E_Object3()
 {
+G_Object();
 this->iNoNodes=3;
 this->iType=91;
 this->pParent=NULL;
@@ -14873,6 +14904,7 @@ return (vX);
 void E_Object3::Info()
 {
   char S1[80];
+  G_Object::Info();
   sprintf_s(S1,"LAB: %i COL: %i PID: %i ELTP: %i MCID: %i ANG: %f ",iLabel,iColour,PID,iType,iMCys,MAng);
   outtext1(S1); 
   sprintf_s(S1,"NODES %i %i %i",pVertex[0]->iLabel,pVertex[1]->iLabel,pVertex[2]->iLabel);
@@ -15695,7 +15727,7 @@ IMPLEMENT_DYNAMIC( E_Object1, CObject )
 
 E_Object1::E_Object1()
 {
-
+	G_Object();
 }
 
 E_Object1::~E_Object1()
@@ -16198,7 +16230,7 @@ void E_Object1::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 void E_Object1::Info()
 {
 	char S1[200];
-
+	G_Object::Info();
 	sprintf_s(S1, "%s,EID,%i,COL,%i,GRID,%i,MASS,%f,XYZ, %f,%f,%f ",sLab.GetString(), iLabel,iColour, pVertex->iLabel, dM, pVertex->Pt_Point->x, pVertex->Pt_Point->y, pVertex->Pt_Point->z);
 	outtext1(S1);
 }
@@ -16444,6 +16476,11 @@ OglDrawW(iDspFlgs,dS1,dS2);
 //----------------------------------------------------------------------------
 
 IMPLEMENT_DYNAMIC( E_Object4, CObject )
+
+E_Object4::E_Object4()
+{
+	G_Object();
+}
 
 E_Object4::~E_Object4()
 {
@@ -17807,6 +17844,7 @@ return (vT);
 void E_Object4::Info()
 {
   char S1[200]="";
+  G_Object::Info();
   sprintf_s(S1,"LAB: %i COL: %i PID: %i ELTP: %i MCID: %i ANG: %f OFF: %f ",iLabel,iColour,PID,iType,iMCys,MAng,dZOFFS);
   outtext1(S1); 
   sprintf_s(S1,"NODES %i %i %i %i",pVertex[0]->iLabel,pVertex[1]->iLabel,pVertex[2]->iLabel,pVertex[3]->iLabel);
@@ -18290,6 +18328,7 @@ IMPLEMENT_DYNAMIC( E_ObjectR, CObject )
 
 E_ObjectR::E_ObjectR()
 {
+G_Object();
 iDOF=DOF_ALL;
 PID=999;
 PIDunv=999;
@@ -18559,6 +18598,7 @@ void E_ObjectR::SetDOFString(CString sDOF)
 void E_ObjectR::Info()
 {
   char S1[80];
+  G_Object::Info();
   CString sDOF;
   sDOF=GetDOFString(iDOF);
   sprintf_s(S1,"LAB: %i COL: %i PID: %i ELTP: %i",iLabel,iColour,PID,iType);
@@ -18711,6 +18751,7 @@ IMPLEMENT_DYNAMIC( E_ObjectR2, CObject )
 
 E_ObjectR2::E_ObjectR2()
 {
+	G_Object();
 iCNA=DOF_ALL;
 iCNB=0;
 iCMA=0;
@@ -21309,25 +21350,28 @@ for (i = 0; i < iNoSteps; i++)
 }
 }
 
-void ME_Object::ExportNAS(FILE* pFile,SecTable* pS)	 
+void ME_Object::ExportNAS(FILE* pFile,SecTable* pS,int iFileNo)
 {
 int i;
 fprintf(pFile,"%s\n","$***************COORDINATE SYSTEMS*************************");
 for (i=0;i<iCYS;i++)
 {
-	pSys[i]->ExportNAS(pFile);
+	if ((iFileNo==-1) || (pSys[i]->iFile==iFileNo))
+	  pSys[i]->ExportNAS(pFile);
 }
 
 fprintf(pFile,"%s\n","$********************NODES*********************************");
 for (i=0;i<iNdNo;i++)
 {
     CoordSys* pDef = GetSys(pNodes[i]->DefSys);
-	pNodes[i]->ExportNAS(pFile,pDef);
+	if ((iFileNo == -1) || (pNodes[i]->iFile == iFileNo))
+	  pNodes[i]->ExportNAS(pFile,pDef);
 }
 fprintf(pFile,"%s\n","$*******************ELEMENTS******************************");
 for (i=0;i<iElNo;i++)
 {
-	pElems[i]->ExportNAS(pFile);
+	if ((iFileNo == -1) || (pElems[i]->iFile == iFileNo))
+	  pElems[i]->ExportNAS(pFile);
 }
 fprintf(pFile, "%s\n", "$********************LOADING*******************************");
 for (i=0;i<iNoLCs;i++)
@@ -21340,7 +21384,8 @@ for (i=0;i<iNoLCs;i++)
     pNext = (BCLD*) pCLC->Head;
     while (pNext != NULL)
     {
-      pNext->ExportNAS(pFile);	
+	  if ((iFileNo == -1) || (pNext->iFile == iFileNo))
+         pNext->ExportNAS(pFile);	
 	  pNext = (BCLD*) pNext->next;
     }
   }
@@ -21356,7 +21401,8 @@ for (i = 0; i < iNoBCs; i++)
 		pNext = (BCLD*)pCBC->Head;
 		while (pNext != NULL)
 		{
-			pNext->ExportNAS(pFile);
+			if ((iFileNo == -1) || (pNext->iFile == iFileNo))
+			  pNext->ExportNAS(pFile);
 			pNext = (BCLD*)pNext->next;
 		}
 	}
@@ -24527,6 +24573,36 @@ if (b1==FALSE)
   }
 }
 return (brc);
+}
+
+void ME_Object::IncludeToGroup(int iF,ObjGp* Group)
+{
+	int i;
+	//Coordinate systems
+	for (i = 0; i < iCYS; i++)
+	{
+      if (pSys[i]->iFile==iF)
+		  Group->Add(pSys[i]);
+	}
+	//Nodes
+	for (i = 0; i < iNdNo; i++)
+	{
+		if (pNodes[i]->iFile == iF)
+			Group->Add(pNodes[i]);
+	}
+	//Elements
+	for (i = 0; i < iElNo; i++)
+	{
+		if (pElems[i]->iFile == iF)
+			Group->Add(pElems[i]);
+	}
+	//Boundary Conditions
+	for (i = 0; i < iBCLDs; i++)
+	{
+		if (pBCLDs[i]->iFile == iF)
+			Group->Add(pBCLDs[i]);
+	}
+
 }
 
 BOOL ME_Object::CanDeleteEl(E_Object* pEl)
@@ -35405,6 +35481,7 @@ IMPLEMENT_DYNAMIC(Entity , CObject )
 
 Entity::Entity()
 {
+iFile = -1;
 sTitle="";
 iID = -1;
 iType= -1;
@@ -35431,7 +35508,7 @@ void Entity::List()
 void Entity::ListShort()
 {
   char S1[200];
-  sprintf_s(S1,"%s %i %s %i  %s","ID",iID,"TYPE",iType,this->sTitle);
+  sprintf_s(S1,"%s %i %s %i %s %i  %s", "FNO", iFile, "ID",iID,"TYPE",iType,this->sTitle);
   outtext1(_T(S1)); 
 }
 
@@ -35456,12 +35533,15 @@ void Entity::Serialize(CArchive& ar,int iV)
     ar<<iType;
     ar<<sTitle;
     ar<<iID;
+	ar << iFile;
   }
   else
   {
     ar>>iType;
     ar>>sTitle;
     ar>>iID;
+	if (iV < -62)
+		ar >> iFile;
   }
 }
 
@@ -35576,16 +35656,12 @@ void PMASS::Serialize(CArchive& ar, int iV)
 {
   if (ar.IsStoring())
   {
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << dM;
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> dM;
   }
 }
@@ -35662,9 +35738,7 @@ void PSPRINGT::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+		Entity::Serialize(ar, iV);
     ar << dkx;
     ar << dky;
     ar << dkz;
@@ -35672,9 +35746,7 @@ void PSPRINGT::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+		Entity::Serialize(ar, iV);
     ar >> dkx;
     ar >> dky;
     ar >> dkz;
@@ -35848,9 +35920,7 @@ void PBUSH::Serialize(CArchive& ar, int iV)
 {
 	if (ar.IsStoring())
 	{
-		ar << iID;
-		ar << sTitle;
-		ar << iType;
+		Entity::Serialize(ar, iV);
 		ar << sFlg;
 		ar << dK1;
 		ar << dK2;
@@ -35861,9 +35931,7 @@ void PBUSH::Serialize(CArchive& ar, int iV)
 	}
 	else
 	{
-		ar >> iID;
-		ar >> sTitle;
-		ar >> iType;
+		Entity::Serialize(ar, iV);
 		ar >> sFlg;
 		ar >> dK1;
 		ar >> dK2;
@@ -35990,9 +36058,7 @@ void PSOLID::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+		Entity::Serialize(ar, iV);
     ar << iMID;
     ar << iCORDM;
     ar << sIN;
@@ -36002,9 +36068,7 @@ void PSOLID::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+		Entity::Serialize(ar, iV);
     ar >> iMID;
     ar >> iCORDM;
     ar >> sIN;
@@ -36146,11 +36210,8 @@ void PBAR::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << iMID;
-
     ar << dA;
     ar << dI1;
     ar << dI2;
@@ -36171,11 +36232,8 @@ void PBAR::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> iMID;
-
     ar >> dA;
     ar >> dI1;
     ar >> dI2;
@@ -36396,9 +36454,7 @@ void PBEAM::Serialize(CArchive& ar,int iV)
   int i;
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << iMID;
     ar << iNo;
     for (i=0;i<iNo;i++)
@@ -36440,9 +36496,7 @@ void PBEAM::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> iMID;
     ar >> iNo;
     for (i=0;i<iNo;i++)
@@ -36708,9 +36762,7 @@ void PBARL::Serialize(CArchive& ar,int iV)
   int i;
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << iMID;
     ar << sGROUP;
     ar << sSecType;
@@ -36724,9 +36776,7 @@ void PBARL::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> iMID;
     ar >> sGROUP;
     ar >> sSecType;
@@ -37086,9 +37136,7 @@ void PROD::Serialize(CArchive& ar,int iV)
 
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+    Entity::Serialize(ar, iV);
     ar << iMID;
     ar << sGROUP;
     ar << sSecType;
@@ -37098,9 +37146,7 @@ void PROD::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> iMID;
     ar >> sGROUP;
     ar >> sSecType;
@@ -37260,9 +37306,7 @@ void PSHELL::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
-    ar<< iType;
-    ar<< sTitle;
-    ar<< iID;
+	Entity::Serialize(ar, iV);
     ar<< iMID1;
     ar<< dT;
     ar<< iMID2;
@@ -37276,9 +37320,7 @@ void PSHELL::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar>>iType;
-    ar>>sTitle;
-    ar>>iID;
+	Entity::Serialize(ar, iV);
     ar>> iMID1;
     ar>> dT;
     ar>> iMID2;
@@ -37670,11 +37712,10 @@ void MAT1::PutVarValues(int iNo, CString sVar[])
 
 void MAT1::Serialize(CArchive& ar,int iV)
 {
+
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << dE;
     ar << dG;
     ar << dNU;
@@ -37690,9 +37731,7 @@ void MAT1::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> dE;
     ar >> dG;
     ar >> dNU;
@@ -37789,9 +37828,7 @@ void MAT8::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << dE1;
     ar << dE2;
     ar << dNU12;
@@ -37816,9 +37853,7 @@ void MAT8::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> dE1;
     ar >> dE2;
     ar >> dNU12;
@@ -38079,9 +38114,7 @@ void PCOMPG::Serialize(CArchive& ar, int iV)
 	int i;
 	if (ar.IsStoring())
 	{
-		ar << sTitle;
-		ar << iID;
-		ar << iType;
+		Entity::Serialize(ar, iV);
 		ar << dZ0;
 		ar << dNSM;
 		ar << dSB;
@@ -38101,9 +38134,7 @@ void PCOMPG::Serialize(CArchive& ar, int iV)
 	}
 	else
 	{
-		ar >> sTitle;
-		ar >> iID;
-		ar >> iType;
+		Entity::Serialize(ar, iV);
 		ar >> dZ0;
 		ar >> dNSM;
 		ar >> dSB;
@@ -38230,9 +38261,7 @@ void PCOMP::Serialize(CArchive& ar,int iV)
 int i;
 	if (ar.IsStoring())
 	{
-    ar<<sTitle;
-    ar<<iID;
-    ar<<iType;
+	Entity::Serialize(ar, iV);
     ar<<dZ0;
     ar<<dNSM;
     ar<<dSB;
@@ -38251,9 +38280,7 @@ int i;
   }
   else
   {
-    ar>>sTitle;
-    ar>>iID;
-    ar>>iType;
+	Entity::Serialize(ar, iV);
     ar>>dZ0;
     ar>>dNSM;
     ar>>dSB;
@@ -39157,6 +39184,7 @@ void Temperature::Info()
 {
   char S1[80];
   CString OutT;
+
   G_Object::Info();
   sprintf_s(S1,"%s%i%s%i%s%f","SETID ",iObjType,"; NODE ",pObj->iLabel," Val; ",dV);
   OutT+=S1;
@@ -39929,10 +39957,8 @@ void Force::Info()
 {
   char S1[80];
   CString OutT;
-  sprintf_s(S1,"%s%i%s%i%s%i","Type ",iObjType,"; Label ",pObj->iLabel," Col; ",iColour);
-  OutT+=S1;
+  G_Object::Info();
   outtext1("FORCE VECTOR");
-  outtext1(OutT); 
   sprintf_s(S1,"%s%8.5f,%8.5f,%8.5f","FORCE: ",F.x,F.y,F.z);
   OutT=S1;
   outtext1(OutT); 
@@ -40202,6 +40228,7 @@ void Restraint::Info()
 {
   char S1[80];
   CString OutT;
+  G_Object::Info();
   sprintf_s(S1,"%s%i%s%i%s%i","Type ",iObjType,"; Label ",pObj->iLabel," Col; ",iColour);
   OutT+=S1;
   outtext1("RESTRAINT");
@@ -40876,6 +40903,7 @@ void CoordSys::Info()
 {
   char S1[200];
   CString OutT;
+  G_Object::Info();
   //G_Object::Info();
   sprintf_s(S1,"%i,%8.5f,%8.5f,%8.5f,,%8.5f,%8.5f,%8.5f,%8.5f,%8.5f,%8.5f,%8.5f,%8.5f,%8.5f",
             iLabel,Origin.x,Origin.y,Origin.z,
@@ -50502,7 +50530,7 @@ return (pRet);
 
 void MatTable::Serialize(CArchive& ar,int iV)
 {
-  int i;
+    int i;
 	if (ar.IsStoring())
 	{
     ar << iNo;
@@ -50768,12 +50796,13 @@ for (i=0;i<iNo;i++)
 return (pRet);
 }
 
-void Table::ExportNAS(FILE* pF)
+void Table::ExportNAS(FILE* pF, int iFileNo)
 {
 int i;
 for (i=0;i<iNo;i++)
 {
-   pEnts[i]->ExportNAS(pF);
+	if ((iFileNo == -1) || (pEnts[i]->iFile == iFileNo))
+      pEnts[i]->ExportNAS(pF);
 }
 }
 

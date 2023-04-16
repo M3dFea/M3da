@@ -110,6 +110,7 @@ BEGIN
         BEGIN
             MENUITEM "Current F.E. Model to Ideas UNV", ID_EXPORT_CURRENTMESHTO
             MENUITEM "Current F.E. Model to NASTRAN", ID_EXPORT_CURRENTMESTTONAS
+            MENUITEM "Include File",                ID_EXPORT_INCLUDEFILE
             MENUITEM "Groups to TXT",               ID_EXPORT_GROUPSTOTXT
             MENUITEM "Export Results to TEXT File", ID_POST_EXPORTRESULTSTOTEXTFILE
             MENUITEM "Export To Text",              ID_EXPORT_EXPORTTOTEXT
@@ -317,6 +318,7 @@ BEGIN
         MENUITEM "Remove Group",                ID_GROUP_REMOVEGROUP
         MENUITEM "Set Current",                 ID_GROUP_SETCURRENT
         MENUITEM "List Groups",                 ID_GROUP_LISTGROUPS
+        MENUITEM "Group From Include File",     ID_GROUP_GROUPFROMINCLUDEFILE
         MENUITEM "Elements By PID",             ID_GROUP_ELEMENTSBYPID
         MENUITEM "Elements By MID",             ID_GROUP_ELEMENTSBYMID
         MENUITEM "Elements By Colour",          ID_GROUP_ELEMENTSBYCOLOUR
@@ -344,6 +346,7 @@ BEGIN
             MENUITEM "List All Meshes",             ID_MESHMANAGEMENT_LISTALLMESHES
             MENUITEM "Set Active Mesh",             ID_MESHMANAGEMENT_SETACTIVEMESH
             MENUITEM "Toggle Mesh Visability",      ID_MESHMANAGEMENT_TOGGLEMESHVISABILITY
+            MENUITEM "Set Include File No",         ID_MESHMANAGEMENT_SETINCLUDEFILENO
             MENUITEM "Delete Mesh",                 ID_MESHMANAGEMENT_DELETEMESH
         END
         MENUITEM "Edit Object (Data Table)",    ID_TOOLS_EDITOBJECT
@@ -577,7 +580,7 @@ CAPTION "About M3da"
 FONT 12, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
-    LTEXT           "M3d, Version 6.2 15/01/2023 64BIT WIN10",IDC_STATIC,43,14,247,8,SS_NOPREFIX
+    LTEXT           "M3d, Version 6.3 15/04/2023 64BIT WIN10",IDC_STATIC,43,14,247,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010",IDC_STATIC,43,26,114,8
     DEFPUSHBUTTON   "OK",IDOK,261,123,50,14,WS_GROUP
     LTEXT           "THE AUTHOR SHALL IN NO EVENT BE LIABLE TO THE USER",IDC_STATIC,42,52,235,8
@@ -1265,6 +1268,8 @@ BEGIN
                             "Experimental, Intersect TRI elements."
     ID_NODEMODIFY_EQUIVALENCELAB "Equivalence node labels between meshes"
     ID_ELEMENTMODIFIY_COLOURBYPID "Colour elements according to PID"
+    ID_MESHMANAGEMENT_SETINCLUDEFILENO 
+                            "Set the include file no for selected items."
 END
 
 #endif    // English (United States) resources
