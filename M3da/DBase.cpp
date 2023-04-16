@@ -16136,10 +16136,10 @@ CoordSys* pRet;
 pFile = fopen(inName,"r");
 if (pFile!=NULL)
 {
-	iCurFileNo = GetFileByNo(sInc);
+	iCurFileNo = GetFileByNo(inName);
 	if (iCurFileNo == -1)
 	{
-		sFiles[iFileNo] = sInc;
+		sFiles[iFileNo] = inName;
 		iCurFileNo = iFileNo;
 		iFileNo++;
 	}
@@ -16225,10 +16225,10 @@ BOOL bDone=FALSE;
 pFile = fopen(inName,"r");
 if (pFile!=NULL)
 {
-	iCurFileNo = GetFileByNo(sInc);
+	iCurFileNo = GetFileByNo(inName);
 	if (iCurFileNo == -1)
 	{
-		sFiles[iFileNo] = sInc;
+		sFiles[iFileNo] = inName;
 		iCurFileNo = iFileNo;
 		iFileNo++;
 	}
@@ -16291,10 +16291,10 @@ BOOL bDone=FALSE;
 pFile = fopen(inName,"r");
 if (pFile!=NULL)
 {
-	iCurFileNo = GetFileByNo(sInc);
+	iCurFileNo = GetFileByNo(inName);
 	if (iCurFileNo == -1)
 	{
-		sFiles[iFileNo] = sInc;
+		sFiles[iFileNo] = inName;
 		iCurFileNo = iFileNo;
 		iFileNo++;
 	}
