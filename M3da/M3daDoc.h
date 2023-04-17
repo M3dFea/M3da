@@ -505,6 +505,7 @@ public:
   afx_msg void OnExportIncludefile();
   afx_msg void OnGroupGroupfromincludefile();
   afx_msg void OnMeshmanagementSetincludefileno();
+  afx_msg void OnElementmodifiyColourbyincludefile();
 };
 
 

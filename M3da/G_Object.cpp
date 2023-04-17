@@ -19955,7 +19955,7 @@ FcList=NULL;
 LkList=NULL;
 pSOLS=new SolSets("UNDEFINED");
 iIntID =  (int) this;
-iFileNo = -1;
+iFileNo=-1;
 }
 
 CString ME_Object::GetName()

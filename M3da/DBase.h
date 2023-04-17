@@ -220,6 +220,7 @@ void ChkShellAspect(ObjList* Nodes, double dT, BOOL bList);
 void ChkTetCollapse(ObjList* Nodes, double dT, BOOL bList);
 void AddToGroupbyPID(int PID);
 void ColourByPID(int PID);
+void ColourByINC(int PID);
 void AddToGroupbyMID(int PID);
 void RelatedTo(int iType);
 BOOL IsOnScr(G_Object* pThis);

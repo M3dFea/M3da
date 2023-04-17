@@ -17754,6 +17754,35 @@ void DBase::ColourByPID(int PID)
 	ReDraw();
 }
 
+void DBase::ColourByINC(int PID)
+{
+	NEList* PIDS = new NEList();
+	CString sTit;
+	CString sNum;
+	int iCurCol = 2;
+	int iINC;
+	int iCO;
+	int iCol;
+	for (iCO = 0; iCO < pCurrentMesh->iElNo; iCO++)
+	{
+		iINC = pCurrentMesh->pElems[iCO]->iFile;
+		iCol = PIDS->Get(iINC);
+		if (iCol == -1)
+		{
+			PIDS->Add(iINC, iCurCol);
+			iCol = iCurCol;
+			iCurCol++;
+			if (iCurCol > 122)
+				iCurCol = 2;
+		}
+		pCurrentMesh->pElems[iCO]->iColour = iCol;
+	}
+	delete (PIDS);
+	InvalidateOGL();
+	ReDraw();
+}
+
+
 void DBase::ChkNegJac()
 {
   CString sTit;

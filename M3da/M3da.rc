@@ -398,6 +398,7 @@ BEGIN
             MENUITEM "Reverse",                     ID_ELEMENTMODIFIY_REVERSE
             MENUITEM "Intersect TRI Elements",      ID_ELEMENTMODIFIY_INTERSECTTRIELEMENTS
             MENUITEM "Colour byPID",                ID_ELEMENTMODIFIY_COLOURBYPID
+            MENUITEM "Colour by Include File",      ID_ELEMENTMODIFIY_COLOURBYINCLUDEFILE
         END
         POPUP "Property / Material Modify"
         BEGIN
@@ -1270,6 +1271,7 @@ BEGIN
     ID_ELEMENTMODIFIY_COLOURBYPID "Colour elements according to PID"
     ID_MESHMANAGEMENT_SETINCLUDEFILENO 
                             "Set the include file no for selected items."
+    ID_ELEMENTMODIFIY_COLOURBYINCLUDEFILE "Colour Elements by Include File"
 END
 
 #endif    // English (United States) resources

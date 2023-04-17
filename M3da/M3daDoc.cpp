@@ -358,6 +358,7 @@ ON_COMMAND(ID_ELEMENTMODIFIY_COLOURBYPID, &CM3daDoc::OnElementmodifiyColourbypid
 ON_COMMAND(ID_EXPORT_INCLUDEFILE, &CM3daDoc::OnExportIncludefile)
 ON_COMMAND(ID_GROUP_GROUPFROMINCLUDEFILE, &CM3daDoc::OnGroupGroupfromincludefile)
 ON_COMMAND(ID_MESHMANAGEMENT_SETINCLUDEFILENO, &CM3daDoc::OnMeshmanagementSetincludefileno)
+ON_COMMAND(ID_ELEMENTMODIFIY_COLOURBYINCLUDEFILE, &CM3daDoc::OnElementmodifiyColourbyincludefile)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6012,6 +6013,22 @@ void CM3daDoc::OnMeshmanagementSetincludefileno()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("MODINCNO");
 		sLastcmd = "MODINCNO";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnElementmodifiyColourbyincludefile()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("COLINC");
+		sLastcmd = "COLINC";
 	}
 	else
 	{

@@ -2505,6 +2505,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "COLINC")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zCOLINC_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "PRBCHAN2")
 	  {
 		  iResumePos = 0;
@@ -14869,6 +14879,15 @@ int zCOLPID_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 	RetVal = 1;
 	return RetVal;
 }
+
+int zCOLINC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	outtext1("Colouring Elements by Include File.");
+	cDBase->ColourByINC(-1);
+	RetVal = 1;
+	return RetVal;
+}
+
 
 int zCHKJAC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
