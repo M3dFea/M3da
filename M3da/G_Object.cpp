@@ -2527,7 +2527,8 @@ CString Node::GetName()
 int Node::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
-
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "Def CYS";
 	iNo++;
 	sVar[iNo] = "Out CYS";
@@ -2546,6 +2547,9 @@ int Node::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", DefSys);
 	sVar[iNo] = S1;
 	iNo++;
@@ -2568,12 +2572,12 @@ void Node::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 {
 
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	DefSys = atoi(sVar[0]);
-	OutSys = atof(sVar[1]);;
-	Pt_Point->x = atof(sVar[2]);;;
-	Pt_Point->y = atof(sVar[3]);;;
-	Pt_Point->z = atof(sVar[4]);;;
+	iFile= atoi(sVar[0]);
+	DefSys = atoi(sVar[1]);
+	OutSys = atof(sVar[2]);;
+	Pt_Point->x = atof(sVar[3]);;;
+	Pt_Point->y = atof(sVar[4]);;;
+	Pt_Point->z = atof(sVar[5]);;;
 }
 
 eFace::eFace()
@@ -6409,6 +6413,8 @@ CString E_Object38::GetName()
 int E_Object38::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat ID";
@@ -6437,6 +6443,9 @@ int E_Object38::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -6476,8 +6485,8 @@ void E_Object38::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -6490,14 +6499,15 @@ void E_Object38::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 			else
 				outtext1("Invalid Property");
 		}
-		int N1 = atoi(sVar[2]);
-		int N2 = atoi(sVar[3]);
-		int N3 = atoi(sVar[4]);
-		int N4 = atoi(sVar[5]);
-		int N5 = atoi(sVar[6]);
-		int N6 = atoi(sVar[7]);
-		int N7 = atoi(sVar[8]);
-		int N8 = atoi(sVar[9]);
+		iMatID = atoi(sVar[2]);
+		int N1 = atoi(sVar[3]);
+		int N2 = atoi(sVar[4]);
+		int N3 = atoi(sVar[5]);
+		int N4 = atoi(sVar[6]);
+		int N5 = atoi(sVar[7]);
+		int N6 = atoi(sVar[8]);
+		int N7 = atoi(sVar[9]);
+		int N8 = atoi(sVar[10]);
 		if (pVertex[0]->iLabel != N1)
 		{
 			pN = pMe->GetNode(N1);
@@ -7567,6 +7577,8 @@ CString E_Object36::GetName()
 int E_Object36::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat ID";
@@ -7591,6 +7603,9 @@ int E_Object36::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -7623,8 +7638,8 @@ void E_Object36::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
 	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -7639,13 +7654,13 @@ void E_Object36::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 		}
 
 	}
-
-	int N1 = atoi(sVar[2]);
-	int N2 = atoi(sVar[3]);
-	int N3 = atoi(sVar[4]);
-	int N4 = atoi(sVar[5]);
-	int N5 = atoi(sVar[6]);
-	int N6 = atoi(sVar[7]);
+	iMatID = atoi(sVar[2]);
+	int N1 = atoi(sVar[3]);
+	int N2 = atoi(sVar[4]);
+	int N3 = atoi(sVar[5]);
+	int N4 = atoi(sVar[6]);
+	int N5 = atoi(sVar[7]);
+	int N6 = atoi(sVar[8]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -8784,6 +8799,8 @@ CString E_Object34::GetName()
 int E_Object34::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat ID";
@@ -8804,6 +8821,9 @@ int E_Object34::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -8831,8 +8851,8 @@ void E_Object34::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -8847,11 +8867,11 @@ void E_Object34::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 		}
 
 	}
-
-	int N1 = atoi(sVar[2]);
-	int N2 = atoi(sVar[3]);
-	int N3 = atoi(sVar[4]);
-	int N4 = atoi(sVar[5]);
+	iMatID = atoi(sVar[2]);
+	int N1 = atoi(sVar[3]);
+	int N2 = atoi(sVar[4]);
+	int N3 = atoi(sVar[5]);
+	int N4 = atoi(sVar[6]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -10117,6 +10137,8 @@ CString E_Object310::GetName()
 int E_Object310::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat ID";
@@ -10137,6 +10159,9 @@ int E_Object310::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -10164,8 +10189,8 @@ void E_Object310::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -10180,11 +10205,11 @@ void E_Object310::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 		}
 
 	}
-
-	int N1 = atoi(sVar[2]);
-	int N2 = atoi(sVar[3]);
-	int N3 = atoi(sVar[4]);
-	int N4 = atoi(sVar[5]);
+	iMatID = atoi(sVar[2]);
+	int N1 = atoi(sVar[3]);
+	int N2 = atoi(sVar[4]);
+	int N3 = atoi(sVar[5]);
+	int N4 = atoi(sVar[6]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -12203,6 +12228,8 @@ CString E_Object2::GetName()
 int E_Object2::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "CID";
@@ -12219,6 +12246,9 @@ int E_Object2::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -12240,10 +12270,11 @@ void E_Object2::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-	PID = atoi(sVar[0]);
-	iCSYS = atoi(sVar[1]);
-	int N1 = atof(sVar[2]);
-	int N2 = atof(sVar[3]);
+	iFile = atoi(sVar[0]);
+	PID = atoi(sVar[1]);
+	iCSYS = atoi(sVar[2]);
+	int N1 = atof(sVar[3]);
+	int N2 = atof(sVar[4]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -13960,6 +13991,8 @@ CString E_Object2B::GetName()
 int E_Object2B::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "CID";
@@ -13980,6 +14013,9 @@ int E_Object2B::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -14005,10 +14041,11 @@ void E_Object2B::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-	PID = atoi(sVar[0]);
-	iCSYS = atoi(sVar[1]);
-	int N1 = atof(sVar[2]);
-	int N2 = atof(sVar[3]);
+	iFile = atoi(sVar[0]);
+	PID = atoi(sVar[1]);
+	iCSYS = atoi(sVar[2]);
+	int N1 = atof(sVar[3]);
+	int N2 = atof(sVar[4]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -14021,8 +14058,8 @@ void E_Object2B::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 		if (pN != NULL)
 			pVertex[1] = pN;
 	}
-	iDOFA = GetDOFInt(sVar[4]);
-	iDOFB = GetDOFInt(sVar[5]);
+	iDOFA = GetDOFInt(sVar[5]);
+	iDOFB = GetDOFInt(sVar[6]);
 
 }
 
@@ -15474,6 +15511,8 @@ CString E_Object3::GetName()
 int E_Object3::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat CYS";
@@ -15496,6 +15535,9 @@ int E_Object3::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -15526,8 +15568,8 @@ void E_Object3::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 
 	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -15543,12 +15585,12 @@ void E_Object3::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 		}
 
 	}
-	iMCys = atoi(sVar[1]);
-	MAng = atof(sVar[2]);;
-	dZOFFS = atof(sVar[3]);;;
-	int N1 = atoi(sVar[4]);
-	int N2 = atoi(sVar[5]);
-	int N3 = atoi(sVar[6]);
+	iMCys = atoi(sVar[2]);
+	MAng = atof(sVar[3]);;
+	dZOFFS = atof(sVar[4]);;;
+	int N1 = atoi(sVar[5]);
+	int N2 = atoi(sVar[6]);
+	int N3 = atoi(sVar[7]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -16114,6 +16156,8 @@ return (vT);
 int E_Object1::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "COMMENT";
 	iNo++;
 	sVar[iNo] = "PID";
@@ -16154,6 +16198,8 @@ int E_Object1::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	iNo++;
 	sVar[iNo] = sLab;
 	iNo++;
 	sprintf_s(S1, "%i", PID);
@@ -16204,20 +16250,21 @@ void E_Object1::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-	sLab = sVar[0];
-	PID = atoi(sVar[1]);
-	iCID = atoi(sVar[2]);
-	dM = atof(sVar[3]);;
-	dX1 = atof(sVar[4]);;
-	dX2 = atof(sVar[5]);;
-	dX3 = atof(sVar[6]);;
-	dI11 = atof(sVar[7]);;
-	dI21 = atof(sVar[8]);;
-	dI22 = atof(sVar[9]);;
-	dI31 = atof(sVar[10]);;
-	dI32 = atof(sVar[11]);;
-	dI33 = atof(sVar[12]);;
-	int N1 = atof(sVar[13]);;
+	iFile = atoi(sVar[0]);
+	sLab = sVar[1];
+	PID = atoi(sVar[2]);
+	iCID = atoi(sVar[3]);
+	dM = atof(sVar[4]);;
+	dX1 = atof(sVar[5]);;
+	dX2 = atof(sVar[6]);;
+	dX3 = atof(sVar[7]);;
+	dI11 = atof(sVar[8]);;
+	dI21 = atof(sVar[9]);;
+	dI22 = atof(sVar[10]);;
+	dI31 = atof(sVar[11]);;
+	dI32 = atof(sVar[12]);;
+	dI33 = atof(sVar[13]);;
+	int N1 = atof(sVar[14]);;
 	if (pVertex->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -18057,6 +18104,8 @@ CString E_Object4::GetName()
 int E_Object4::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat CYS";
@@ -18081,6 +18130,9 @@ int E_Object4::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -18114,8 +18166,8 @@ void E_Object4::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 
 	Node* pN;
 	ME_Object* pMe = (ME_Object*) this->pParent;
-	
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -18130,13 +18182,13 @@ void E_Object4::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 		}
 
 	}
-	iMCys = atoi(sVar[1]);
-	MAng = atof(sVar[2]);;
-	dZOFFS = atof(sVar[3]);;;
-	int N1 = atoi(sVar[4]);
-	int N2 = atoi(sVar[5]);
-	int N3 = atoi(sVar[6]);
-	int N4 = atoi(sVar[7]);
+	iMCys = atoi(sVar[2]);
+	MAng = atof(sVar[3]);;
+	dZOFFS = atof(sVar[4]);;;
+	int N1 = atoi(sVar[5]);
+	int N2 = atoi(sVar[6]);
+	int N3 = atoi(sVar[7]);
+	int N4 = atoi(sVar[8]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -18614,6 +18666,8 @@ CString E_ObjectR::GetName()
 int E_ObjectR::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "Centre Node";
 	iNo++;
 	sVar[iNo] = "DOF String";
@@ -18629,6 +18683,9 @@ int E_ObjectR::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", pVertex[0]->iLabel);
 	sVar[iNo] = S1;
 	iNo++;
@@ -18644,15 +18701,16 @@ void E_ObjectR::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
 	ME_Object* pMe = (ME_Object*)this->pParent;
 	Node* pN;
-	int N1 = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int N1 = atoi(sVar[1]);
 	if ((pVertex[0]->iLabel != N1) && (pMe!=NULL))
 	{
 		pN = pMe->GetNode(N1);
 		if (pN != NULL)
 			pVertex[0] = pN;
 	}
-	SetDOFString(sVar[1]);
-	dALPHA = atof(sVar[2]);;
+	SetDOFString(sVar[2]);
+	dALPHA = atof(sVar[3]);;
 }
 
 
@@ -35703,7 +35761,7 @@ void PMASS::List()
 
 int PMASS::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Data:-";
+  sVar[0] = "File No";
   sVar[1] = "Point Mass (M)";
   return(2);
 }
@@ -35800,7 +35858,7 @@ void PSPRINGT::List()
 
 int PSPRINGT::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Data:-";
+  sVar[0] = "File No";
   sVar[1] = "Translational Stiffness in X (Kx)";
   sVar[2] = "Translational Stiffness in Y (Ky)";
   sVar[3] = "Translational Stiffness in Z (Kz)";
@@ -35813,6 +35871,7 @@ int PSPRINGT::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sprintf_s(S1, "%i", iFile);
   sVar[iNo] = "";
   iNo++;
   sprintf_s(S1, "%g", dkx);
@@ -35832,6 +35891,7 @@ int PSPRINGT::GetVarValues(CString sVar[])
 
 void PSPRINGT::PutVarValues(int iNo, CString sVar[])
 {
+  iFile = atoi(sVar[0]);
   dkx = atof(sVar[1]);
   dky = atof(sVar[2]);
   dkz = atof(sVar[3]);
@@ -35884,7 +35944,7 @@ void PSPRINGR::List()
 
 int PSPRINGR::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Data:-";
+  sVar[0] = "File No";
   sVar[1] = "Rotational Stiffness in X (Rx)";
   sVar[2] = "Rotational Stiffness in Y (Ry)";
   sVar[3] = "Rotational Stiffness in Z (Rz)";
@@ -35995,7 +36055,7 @@ void PBUSH::List()
 
 int PBUSH::GetVarHeaders(CString sVar[])
 {
-	sVar[0] = "Data:-";
+	sVar[0] = "File No";
 	sVar[1] = "Flag";
 	sVar[2] = "K1";
 	sVar[3] = "K2";
@@ -36011,7 +36071,8 @@ int PBUSH::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
-	sVar[iNo] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
 	iNo++;
 	sVar[iNo] = sFlg;
 	iNo++;
@@ -36038,6 +36099,7 @@ int PBUSH::GetVarValues(CString sVar[])
 
 void PBUSH::PutVarValues(int iNo, CString sVar[])
 {
+	iFile = atoi(sVar[0]);
 	sFlg = sVar[1];
 	dK1 = atof(sVar[2]);
 	dK2 = atof(sVar[3]);
@@ -36168,7 +36230,7 @@ return (pREt);
 
 int PSOLID::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Data:-";
+  sVar[0] = "File No";
   sVar[1] = "Material ID (MID)";
   sVar[2] = "Material coord system (MCID) ";
   return(3);
@@ -36179,7 +36241,8 @@ int PSOLID::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
-  sVar[0] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[0] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMID);
   sVar[1] = S1;
@@ -36193,6 +36256,7 @@ int PSOLID::GetVarValues(CString sVar[])
 
 void PSOLID::PutVarValues(int iNo, CString sVar[])
 {
+  iFile = atoi(sVar[0]);
   iMID = atoi(sVar[1]);
   iCORDM = atoi(sVar[2]);
 }
@@ -36285,7 +36349,7 @@ if (iMID==thisMat)
 
 int PBAR::GetVarHeaders(CString sVar[])
 {
-	sVar[0] = "Data:-";
+	sVar[0] = "File No";
 	sVar[1] = "Material ID (MID)";
 	sVar[2] = "Area (A)";
 	sVar[3] = "Second Moment of Inertia (I1 (Izz))";
@@ -36712,7 +36776,7 @@ int PBARL::GetVarHeaders(CString sVar[])
 	int iNo = 0;
 	int i;
 	char S1[8] = "";
-	sVar[iNo] = "Data:-";
+	sVar[iNo] = "File No";
 	iNo++;
 	sVar[iNo] = "Material ID (MID)";
 	iNo++;
@@ -36736,7 +36800,8 @@ int PBARL::GetVarValues(CString sVar[])
 	int iNo = 0;
 	int i;
 	char S1[80] = "";
-	sVar[iNo] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%i", iMID);
 	sVar[iNo] = S1;
@@ -36760,6 +36825,7 @@ void PBARL::PutVarValues(int iNo, CString sVar[])
 {
 	int iC = 1;
 	int i;
+	iFile = atoi(sVar[0]);
 	iMID = atoi(sVar[iC]);
 	iC++;
 	iC++;
@@ -37282,7 +37348,7 @@ fprintf(pFile,"%8s%8i%8i%8s%8s\n","PROD    ",iID,iMID,e8(A),e8(J));
 
 int PROD::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Data:-";
+  sVar[0] = "File No";
   sVar[1] = "Material ID (MID)";
   sVar[2] = "Secton area (A)";
   sVar[3] = "Torsional constant (J)";
@@ -37294,7 +37360,8 @@ int PROD::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
-  sVar[iNo] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMID);
   sVar[iNo] = S1;
@@ -37310,6 +37377,7 @@ int PROD::GetVarValues(CString sVar[])
 
 void PROD::PutVarValues(int iNo, CString sVar[])
 {
+  iFile = atoi(sVar[0]);
   iMID = atoi(sVar[1]);
   A = atof(sVar[2]);
   J = atof(sVar[3]);
@@ -37529,7 +37597,7 @@ PSHELL::PSHELL()
 
 int PSHELL::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Data:-";
+  sVar[0] = "File No";
   sVar[1] = "Material ID 1 (MID)";
   sVar[2] = "Thickness (T)";
   sVar[3] = "Material ID 2 (MID2)";
@@ -37548,7 +37616,8 @@ int PSHELL::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
-  sVar[iNo] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMID1);
   sVar[iNo] = S1;
@@ -37586,6 +37655,7 @@ int PSHELL::GetVarValues(CString sVar[])
 
 void PSHELL::PutVarValues(int iNo, CString sVar[])
 {
+iFile = atoi(sVar[0]);
 iMID1  = atoi(sVar[1]);
 dT     = atof(sVar[2]);
 iMID2  = atoi(sVar[3]);
@@ -37668,7 +37738,7 @@ void MAT1::Info()
 
 int MAT1::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Data:-";
+  sVar[0] = "File No";
   sVar[1] = "Young Modulus (E)";
   sVar[2] = "Shear Modulus (G)";
   sVar[3] = "Poisions Ratio )NU)";
@@ -37685,7 +37755,8 @@ int MAT1::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
-  sVar[iNo] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dE);
   sVar[iNo] = S1;
@@ -37717,6 +37788,7 @@ int MAT1::GetVarValues(CString sVar[])
 
 void MAT1::PutVarValues(int iNo, CString sVar[])
 {
+  iFile = atoi(sVar[0]);
   dE = atof(sVar[1]);
   dG = atof(sVar[2]);
   dNU = atof(sVar[3]);
@@ -37992,7 +38064,7 @@ STRN = 0;
 
 int MAT8::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Data:-";
+  sVar[0] = "File No";
   sVar[1] = "Young Modulus longitudinal (E1)";
   sVar[2] = "Young Modulus lateral (E2)";
   sVar[3] = "Poisions ratio (NU12)";
@@ -38020,7 +38092,8 @@ int MAT8::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
-  sVar[iNo] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dE1);
   sVar[iNo] = S1;
@@ -38085,6 +38158,7 @@ int MAT8::GetVarValues(CString sVar[])
 
 void MAT8::PutVarValues(int iNo, CString sVar[])
 {
+  iFile = atoi(sVar[0]);
   dE1 = atof(sVar[1]);
   dE2 = atof(sVar[2]);
   dNU12 = atof(sVar[3]);
@@ -38195,7 +38269,7 @@ int PCOMPG::GetVarHeaders(CString sVar[])
 	int iNo = 0;
 	int i;
 	char S1[80] = "";
-	sVar[iNo] = "Data:-";
+	sVar[iNo] = "File No";
 	iNo++;
 	sVar[iNo] = "Dist to bottom surf (Z0)";
 	iNo++;
@@ -38227,7 +38301,8 @@ int PCOMPG::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
-	sVar[iNo] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dZ0);
 	sVar[iNo] = S1;
@@ -38523,7 +38598,7 @@ int PCOMP::GetVarHeaders(CString sVar[])
   int iNo=0;
   int i;
   char S1[80] = "";
-  sVar[iNo] = "Data:-";
+  sVar[iNo] = "File No";
   iNo++;
   sVar[iNo] = "Dist to bottom surf (Z0)";
   iNo++;
@@ -38557,7 +38632,8 @@ int PCOMP::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
-  sVar[iNo] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dZ0);
   sVar[iNo] = S1;
@@ -38625,6 +38701,7 @@ void PCOMP::PutVarValues(int iNo, CString sVar[])
 	int iOut;
 	CString sFT;
 	CString sSYM;
+    iFile = atoi(sVar[0]);
 	dZ0 = atof(sVar[1]);
 	dNSM = atof(sVar[2]);
 	dSB = atof(sVar[3]);

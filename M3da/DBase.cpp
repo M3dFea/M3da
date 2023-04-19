@@ -18045,12 +18045,17 @@ ReDraw();
 
 void DBase::ModIncludeNo(int iF)
 {
-
+	int iNoC = 0;
+	char s1[200];
 	int iCO;
     for (iCO = 0; iCO < S_Count; iCO++)
 	{
 		S_Buff[iCO]->iFile = iF;
+		iCO++;
 	}
+	sprintf_s(s1, "%s%i", "Number of Entities Modified : ", iNoC);
+	outtext1(_T(s1));
+
 }
 
 void DBase::CountItems()
