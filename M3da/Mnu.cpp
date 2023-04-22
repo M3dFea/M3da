@@ -7553,8 +7553,20 @@ int zCVSPLIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 				iStat = 2;
 				pC = NULL;
 				if (cDBase->S_Buff[cDBase->S_Count - 1] != NULL)
+				{
 					if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7)
+					{
 						pC = (NCurve*)cDBase->S_Buff[cDBase->S_Count - 1];
+						cDBase->S_Count--;
+					}
+					else
+					{
+						cDBase->S_Count--;
+						iStat = 0;
+						outtext1("ERROR: Invalid Selection.");
+						DoMenu(CInMsg, Pt);
+					}
+				}
 			}
 		}
 		if (iStat == 2)

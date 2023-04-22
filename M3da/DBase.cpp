@@ -13909,8 +13909,9 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 				Dsp_Rem(pC);
 				Dsp_RemGP(pC);
 			}
+			
 			InvalidateOGL();
-			ReDraw();
+			S_Des();
 
 			cPts.DeleteAll();
 			knots.DeleteAll();
@@ -18051,7 +18052,7 @@ void DBase::ModIncludeNo(int iF)
     for (iCO = 0; iCO < S_Count; iCO++)
 	{
 		S_Buff[iCO]->iFile = iF;
-		iCO++;
+		iNoC++;
 	}
 	sprintf_s(s1, "%s%i", "Number of Entities Modified : ", iNoC);
 	outtext1(_T(s1));
