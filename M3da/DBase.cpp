@@ -6228,7 +6228,7 @@ while (dM>dTol);
 return (P2);
 }
 
-C3dVector DBase::NLnInt(NCurve* L1,NCurve* L2)
+C3dVector DBase::NLnInt(NCurve* L1,NCurve* L2, C3dVector* pNear)
 {
 int i=0;
 double MinDist = 10000000;
@@ -6250,6 +6250,34 @@ do
 while ((dDist>dTol) && (iMaxIt<100));
 return (P2);
 }
+
+//RBLows 23042023
+//This version finds intersection near pNear
+//this should probably superceed NLnInt above
+C3dVector DBase::NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear)
+{
+	int i = 0;
+	double MinDist = 10000000;
+	double dDist = 0;
+	double dDistB = 0;
+	const double dTol = 0.00001;
+	C3dVector P1;
+	C3dVector P2;
+	P1.Set(pNear->x,pNear->y,pNear->z);
+	P2.Set(pNear->x, pNear->y, pNear->z);
+	int iMaxIt = 0;
+	//P1 = L1->GetPt(0);
+
+	do
+	{
+		P2 = L2->MinPt(P1);
+		P1 = L1->MinPt(P2);
+		dDist = P2.Dist(P1);
+		iMaxIt++;
+	} while ((dDist > dTol) && (iMaxIt < 100));
+	return (P2);
+}
+
 
 C3dVector DBase::LnInt2(Line_Object* L1,G_Object* L2)
 {
@@ -13877,7 +13905,10 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 				dTmp = knots[i] / knots[k+r];
 				knotsSeg[i] = dTmp;
 			}
-			pNewC = new NCurve();
+			if (pC->iType==1)
+			  pNewC = new NCurve();
+			else
+			  pNewC = new NLine();
 			pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
 			pNewC->iLabel = pC->iLabel;
 			AddObj(pNewC);
@@ -13894,7 +13925,10 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 				dTmp = (knots[i]- knots[k+1])/(knots[cPts.n + r-1]- knots[k+1]);
 				knotsSeg[i-(k+1)] = dTmp;
 			}
-			pNewC = new NCurve();
+			if (pC->iType == 1)
+				pNewC = new NCurve();
+			else
+				pNewC = new NLine();
 			pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
 			pNewC->iLabel = iCVLabCnt;
 			iCVLabCnt++;
@@ -13927,11 +13961,13 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 	}
 }
 
-C3dVector DBase::Intersect(BOOL &bErr)
+C3dVector DBase::Intersect(BOOL &bErr, CPoint nPt)
 {
 C3dVector vRet;
 NCurve* Ln=NULL;
 NCurve* Ln1=NULL;
+C3dVector pN1;
+pN1 = PickPointToGlobal(nPt);
 bErr=FALSE;
 if (S_Count>1)
 {
@@ -13954,7 +13990,7 @@ if (S_Count>1)
   }
   if (!bErr)
   {
-    vRet=NLnInt(Ln,Ln1);
+    vRet=NLnInt2(Ln,Ln1,&pN1);
     S_Count--;
     S_Count--;
     ReDraw();
@@ -14021,7 +14057,7 @@ C3dVector v2;
 C3dVector v3;
 
 // The intersection of the lines
-p2=NLnInt(Ln,Ln1);
+p2=NLnInt(Ln,Ln1,NULL);
 //choose the other ends of lines to keep
 //choose the ones with longest distance
 pT=Ln->cPts[0]->Pt_Point;
@@ -14155,7 +14191,7 @@ C3dVector v2;
 C3dVector v3;
 
 // The intersection of the lines
-p2=NLnInt(Ln,Ln1);
+p2=NLnInt(Ln,Ln1,NULL);
 //choose the other ends of lines to keep
 //choose the ones with longest distance
 pT=Ln->cPts[0]->Pt_Point;
@@ -14259,7 +14295,7 @@ Ln2->Create(p1o,p2o,1,NULL);
 NLine* Ln3 = new NLine;
 Ln3->Create(p3o,p4o,1,NULL);
 C3dVector IntPt;
-IntPt=NLnInt(Ln2,Ln3);
+IntPt=NLnInt(Ln2,Ln3,NULL);
 NCircle* cCir = new NCircle();
 cCir->Create(vn,IntPt,R,-1,NULL);
 
@@ -14342,7 +14378,7 @@ if (dDot<0.9999)
   NLine* Ln2 = new NLine;
   Ln2->Create(vMid2,v2D,1,NULL);
   C3dVector IntPt;
-  IntPt=NLnInt(Ln1,Ln2);
+  IntPt=NLnInt(Ln1,Ln2,NULL);
   C3dVector vRef;
   vRef=p1;
   vRef-=IntPt;
@@ -14416,7 +14452,7 @@ if (dDot<0.9999)
   NLine* Ln2 = new NLine;
   Ln2->Create(vMid2,v2D,1,NULL);
   C3dVector IntPt;
-  IntPt=NLnInt(Ln1,Ln2);
+  IntPt=NLnInt(Ln1,Ln2,NULL);
   C3dVector vRef;
   vRef=p1;
   vRef-=IntPt;

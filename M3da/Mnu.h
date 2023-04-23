@@ -209,6 +209,7 @@ virtual	int DoMenu(CString CInMsg,CPoint Pt);
 class zINT_Mnu: public zMnu
 {
 public:
+CPoint PNear1;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 

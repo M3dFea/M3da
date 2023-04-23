@@ -7675,13 +7675,14 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("//PICK LINES TO INTERCECT");
+  outtext2("//PICK LINES TO INTERCECT");
   iStat=1;
 }
 if (iStat == 1)
 {
   if (cDBase->S_Count==S_initCnt+2)
   {
+	PNear1 = Pt;
     iStat=2;
   }
 }
@@ -7689,7 +7690,7 @@ if (iStat == 2)
 {
     C3dVector p2;
     BOOL bErr;
-    p2= cDBase->Intersect(bErr);
+    p2= cDBase->Intersect(bErr, PNear1);
     if (bErr==FALSE)
     {
       cDBase->DB_AddPtBuff(p2);
