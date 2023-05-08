@@ -359,6 +359,8 @@ ON_COMMAND(ID_EXPORT_INCLUDEFILE, &CM3daDoc::OnExportIncludefile)
 ON_COMMAND(ID_GROUP_GROUPFROMINCLUDEFILE, &CM3daDoc::OnGroupGroupfromincludefile)
 ON_COMMAND(ID_MESHMANAGEMENT_SETINCLUDEFILENO, &CM3daDoc::OnMeshmanagementSetincludefileno)
 ON_COMMAND(ID_ELEMENTMODIFIY_COLOURBYINCLUDEFILE, &CM3daDoc::OnElementmodifiyColourbyincludefile)
+ON_COMMAND(ID_CURVETOOLS_ORTHOSNAP, &CM3daDoc::OnCurvetoolsOrthosnap)
+ON_COMMAND(ID_CURVEMODIFY_TRIM, &CM3daDoc::OnCurvemodifyTrim)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6029,6 +6031,47 @@ void CM3daDoc::OnElementmodifiyColourbyincludefile()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("COLINC");
 		sLastcmd = "COLINC";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnCurvetoolsOrthosnap()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("ORTHO");
+		sLastcmd = "ORTHO";
+		if (bOrtho == FALSE)
+		{
+			bOrtho = TRUE;
+			outtext1("Orthogonal Drawing Mode ON.");
+		}
+		else
+		{
+			bOrtho = TRUE;
+			outtext1("Orthogonal Drawing Mode OFF.");
+		}
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnCurvemodifyTrim()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("TRIM");
+		sLastcmd = "TRIM";
 	}
 	else
 	{

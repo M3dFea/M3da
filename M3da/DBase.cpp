@@ -1710,6 +1710,20 @@ InvalidateOGL();
 ReDraw();
 }
 
+void DBase::Ortho()
+{
+	
+	if (bOrtho == FALSE)
+	{
+		bOrtho = TRUE;
+	}
+	else
+	{
+		bOrtho = TRUE;
+	}
+}
+
+
 void DBase::CreateWP(double dWPSize)
 {
 WP_Object* TheWP= new WP_Object;
@@ -6260,7 +6274,7 @@ C3dVector DBase::NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear)
 	double MinDist = 10000000;
 	double dDist = 0;
 	double dDistB = 0;
-	const double dTol = 0.00001;
+	const double dTol = 0.0000001;
 	C3dVector P1;
 	C3dVector P2;
 	P1.Set(pNear->x,pNear->y,pNear->z);
@@ -6274,10 +6288,123 @@ C3dVector DBase::NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear)
 		P1 = L1->MinPt(P2);
 		dDist = P2.Dist(P1);
 		iMaxIt++;
-	} while ((dDist > dTol) && (iMaxIt < 100));
+	} while ((dDist > dTol) && (iMaxIt<100));
+	char S1[200];
+	CString OutT;
+	sprintf_s(S1, " TOL INT: ,%i %f", iMaxIt, dDist);
+	outtext1(S1);
+
 	return (P2);
 }
 
+
+
+
+BOOL DBase::IsIntersection(C3dVector C1S, C3dVector C1E, C3dVector C2S, C3dVector C2E)
+{
+	C3dVector vD1,v1,v2,vN1, vN2;
+	double dd1, dd2;
+	//Test 1
+	vD1 = C1E - C1S;
+	v1 = C2S - C1S;
+	v2 = C2E - C1S;
+	vD1.Normalize(); v1.Normalize(); v2.Normalize();
+	vN1 = vD1.Cross(v1);
+	vN2 = vD1.Cross(v2);
+	dd1 = vN1.Dot(vN2);
+	//Test 2
+	vD1 = C2E - C2S;
+	v1 = C1S - C2S;
+	v2 = C1E - C2S;
+	vD1.Normalize(); v1.Normalize(); v2.Normalize();
+	vN1 = vD1.Cross(v1);
+	vN2 = vD1.Cross(v2);
+	dd2 = vN1.Dot(vN2);
+
+	if ((dd1<0) && (dd2<0))
+	  return TRUE;
+	else
+	  return FALSE;
+}
+
+
+//Find possible approximate multiple intersection between two curves
+//First draft of proc
+int DBase::TentativeInt(NCurve* C1, NCurve* C2, C3dVector vInts[10],double uInts[10])
+{
+	double dDot;
+	char S1[200];
+	int iDiv = 100;
+	int i;
+	int j;
+	int iRet = 0;
+	double dU1=0;
+	double dU2 = 0;
+	BOOL bErr;
+	C3dVector vInt;
+	C3dVector vP1,vP2, vP3, vP4, PC3,vN,vD1,vD2,vt1,vt2;
+
+	for (i = 0; i <= iDiv-1; i++)
+	{
+		dU1 = i*0.01;
+		vP1 = C1->GetPt(i * 0.01);
+		vP2 = C1->GetPt((i + 1) * 0.01);
+		for (j = 0; j <= iDiv; j++)
+		{
+			vP3 = C2->GetPt(j * 0.01);
+			vP4 = C2->GetPt((j + 1) * 0.01);
+			bErr = IsIntersection(vP1, vP2, vP3, vP4);
+			if (bErr)
+			{
+				C3dVector vRet = NLnInt2(C1, C2, &vP1);
+				vInts[iRet] = vP1;
+				uInts[iRet] = i * 0.01;
+				iRet++;
+				AddPt(vRet, -1, TRUE);
+			}
+			  //outtext1("Inter");
+		}
+	}
+
+	return (iRet);
+}
+
+//find span u lies between
+int DBase::FindNearest(int iNo,double uInts[10], double u)
+{
+	int iRC = -1;
+	int i;
+	if (iNo == 1)
+	{
+		iRC = 0;
+	}
+	else
+	{
+		//if (u < uInts[0])
+		//	iRC = 0;
+		//else if (u > uInts[iNo - 1])
+		//	iRC = iNo - 1;
+		//else
+		{
+			double ddist = 0;
+			ddist = abs(u - uInts[0]);
+			iRC = 0;
+			for (i = 0; i < iNo; i++)
+			{
+				if (abs(u - uInts[i]) < ddist)
+				{
+					ddist = abs(u - uInts[i]);
+					iRC = i;
+				}
+				//if ((u >= uInts[i]) && (u < uInts[i + 1]))
+				//{
+
+				//}
+			}
+		}
+	}
+	return (iRC);
+}
 
 C3dVector DBase::LnInt2(Line_Object* L1,G_Object* L2)
 {
@@ -7409,11 +7536,37 @@ int j;
 double dInc;
 for (i=0;i<S_Count;i++)
 {
-  if ((S_Buff[i]->iType == 1) ||
-      (S_Buff[i]->iType == 2))
-  {
-     Curves->Add(S_Buff[i]->Copy(NULL));
-  }
+	if (S_Buff[i]->iType == 1)
+	{
+		//NEEDS UPDATING TO CURVE SPLIT FOR WS & WE <> 0 & 1
+		//Curves->Add(S_Buff[i]->Copy(NULL));
+		NCurve* pC = (NCurve*)S_Buff[i];
+		if ((pC->we == 1.0) && (pC->ws == 0.0))
+		{
+			Curves->Add(S_Buff[i]->Copy(NULL));
+		}
+		else
+		{
+			dInc = (pC->we - pC->ws) / 36;
+			NCurve* pPC = new NCurve();
+			for (j = 0; j <= 36; j++)
+			{
+				pt = pC->GetPt(pC->ws + j * dInc);
+				pPC->AddVert(pt, 1);
+			}
+			pPC->Generate(1);
+			Curves->Add(pPC);
+		}
+	}
+	else if (S_Buff[i]->iType == 2)
+	{
+		C3dVector p1, p2;
+		NCurve* C1 = (NCurve*)S_Buff[i];
+		p1 = C1->GetPt(C1->ws);
+		p2 = C1->GetPt(C1->we);
+		Curves->Add(AddLN(p1, p2, C1->iLabel, TRUE));
+		// Curves->Add(S_Buff[i]->Copy(NULL));
+	}
   else if (S_Buff[i]->iObjType == 13)
   {  
      NCurveOnSurf* pSS;
@@ -14041,6 +14194,93 @@ if (S_Count>1)
   }
 }
 }
+
+void DBase::Trim(CPoint PNear1, CPoint PNear2)
+{
+	char S1[200];
+	CString OutT;
+	double dU;
+	double dUse, dUse2;
+	NLine* Ln = NULL;
+	NLine* Ln1 = NULL;
+	NCurve* Cv = NULL;
+	NCurve* Cv1 = NULL;
+	BOOL bErr = FALSE;
+	NCircle* cCir;
+	cCir = NULL;
+	C3dVector pN1, pN2, vRet;
+	pN1 = PickPointToGlobal(PNear1);
+	pN2 = PickPointToGlobal(PNear2);
+	if (S_Count > 1)
+	{   //Check to see if both selected items are curves
+		if ((S_Buff[S_Count - 1]->iObjType == 7) &&
+			(S_Buff[S_Count - 2]->iObjType == 7))
+		{
+			if ((S_Buff[S_Count - 1]->iType == 2) &&
+				(S_Buff[S_Count - 2]->iType == 2))    //Two line only 1 possible int
+			{
+				Ln = (NLine*)S_Buff[S_Count - 2];
+				Ln1 = (NLine*)S_Buff[S_Count - 1];
+				vRet = NLnInt2(Ln, Ln1, &pN1);
+				dU = Ln->MinWPt(vRet);                //U at intersect
+				dUse= Ln->MinWPt(pN1);
+				sprintf_s(S1, " Debug W: ,%f,%f", dU,dUse);
+				if (dUse < dU)
+					Ln->ws = dU;
+				else
+					Ln->we = dU;
+				S_Count--;
+				S_Count--;
+				ReDraw();
+			}
+			else //Two curves possible multiple intersections
+			{
+				int iNoInts = 0;
+				C3dVector vInts[10];
+				double uInts[10];
+				outtext1("Search for multiple ints.");
+				Cv = (NCurve*)S_Buff[S_Count - 2];
+				Cv1 = (NCurve*)S_Buff[S_Count - 1];
+				iNoInts = TentativeInt(Cv, Cv1, vInts, uInts);
+				//This is updayeing
+				//in vInts find nearest int to pick point
+				dUse = Cv->MinWPt(pN1);
+				dUse2 = Cv->MinWPt(pN2);
+				int pNr = FindNearest(iNoInts, uInts, dUse2);
+
+				dU = uInts[pNr];
+				C3dVector pNr2;
+				pNr2 = Cv->GetPt(dU);
+				vRet = NLnInt2(Cv, Cv1, &pNr2);
+				dU = Cv->MinWPt(vRet);                //U at intersect
+
+				sprintf_s(S1, " Debug W: ,%f,%f", dU, dUse);
+				if (dUse <= dU)
+					Cv->ws = dU;
+				else
+					Cv->we = dU;
+				S_Count--;
+				S_Count--;
+				InvalidateOGL();
+				ReDraw();
+				
+			}
+		}
+		else
+		{
+			outtext1("ERROR: Two curves must be selected.");
+			S_Count--;
+			S_Count--;
+			ReDraw();
+		}
+	}
+	else
+	{
+		outtext1("ERROR: .");
+
+	}
+}
+
 
 void DBase::Corner(NLine* Ln,NLine* Ln1, C3dVector PNear1,C3dVector PNear2)
 {

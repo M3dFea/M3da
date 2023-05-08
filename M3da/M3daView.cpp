@@ -414,8 +414,8 @@ else if(GetDocument()->isLineDragging())
 		CDC* pDC = this->GetDC();
 		GetDocument()->SetView(this);
 		GetDocument()->Draw(tOrient.RetrieveMat(), pDC, 3);
-		GetDocument()->SetLineEnd(point);
-		GetDocument()->LineDrag(pDC, m_PointDown, point);
+		GetDocument()->SetLineEnd(m_PointNew);
+		GetDocument()->LineDrag(pDC, m_PointDown, m_PointNew);
 		ReleaseDC(pDC);
 	}
 }

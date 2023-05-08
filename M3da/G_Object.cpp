@@ -43771,7 +43771,7 @@ if ((iDspFlgs & DSP_POINTS) > 0)
 {
   Selectable=1;
   glColor3fv(cols[GetCol()]);
-  glPointSize(8.0f);
+  glPointSize(12.0f);
   glBegin(GL_POINTS);
   glVertex3f((float) Pt_Point->x,(float) Pt_Point->y,(float) Pt_Point->z);
   glEnd();
@@ -45007,9 +45007,12 @@ do
   }
   i++;
 }
-while  ((dWStp>0.00001)&&(i<100));
+while  ((dWStp>dTol)&&(i<100));
 vRet=GetPt(dW);
-
+//char S1[200];
+//CString OutT;
+//sprintf_s(S1, "MIN PT INT: ,%i %f", i, dWStp);
+//outtext1(S1);
 return (vRet);
 }
 
@@ -45167,6 +45170,10 @@ int NCurve::GetVarHeaders(CString sVar[])
 
 	sVar[iNo] = "KNOT Vector";
 	iNo++;
+	sVar[iNo] = "U Start";
+	iNo++;
+	sVar[iNo] = "U End";
+	iNo++;
 	return(iNo);
 }
 
@@ -45186,6 +45193,12 @@ int NCurve::GetVarValues(CString sVar[])
 	sKnots += S1;
 	//CString str = str(3.1);
 	sVar[iNo] = sKnots;
+	iNo++;
+	sprintf_s(S1, "%g", ws);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", we);
+	sVar[iNo] = S1;
 	iNo++;
 	return (iNo);
 }
@@ -45210,6 +45223,14 @@ void NCurve::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 			knots[i] = atof(v[i]);
 		}
 	}
+	double uS, uE;
+	uS= atof(sVar[1]);
+	uE= atof(sVar[2]);
+	if ((uS>=0.0) && (uS <= 1.0) && (uS<uE))
+	  ws = uS;
+	if ((uE >= 0.0) && (uE <= 1.0) && (uE > uS))
+	  we = uE;
+
 }
 
 NCurveOnSurf* NCurve::GetSurfaceCV(NSurf* pSurf)

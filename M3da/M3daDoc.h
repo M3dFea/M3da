@@ -14,6 +14,7 @@ protected: // create from serialization only
 
 // Attributes
 public:
+BOOL bOrtho = FALSE;
 BOOL bUndo = TRUE;
 BOOL bFinalChkPt = FALSE;
 BOOL bOnFirst=TRUE;
@@ -506,6 +507,8 @@ public:
   afx_msg void OnGroupGroupfromincludefile();
   afx_msg void OnMeshmanagementSetincludefileno();
   afx_msg void OnElementmodifiyColourbyincludefile();
+  afx_msg void OnCurvetoolsOrthosnap();
+  afx_msg void OnCurvemodifyTrim();
 };
 
 

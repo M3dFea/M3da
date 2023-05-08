@@ -71,6 +71,11 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zORTHO_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
 
 
 class zKEY_Mnu: public zMnu
@@ -204,6 +209,14 @@ CPoint PNear1;
 CPoint PNear2;
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zTRIM_Mnu : public zMnu
+{
+	CPoint PNear1;
+	CPoint PNear2;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
 class zINT_Mnu: public zMnu

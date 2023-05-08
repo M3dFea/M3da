@@ -26,6 +26,8 @@ public:
     void ExporttoNAS(int iFileNo);
     void ModIncludeNo(int iF);
 
+    BOOL bOrtho = FALSE;
+    void Ortho();
 
 HGLRC		hrc;
 BOOL bLineDrag;
@@ -324,10 +326,14 @@ NCircle* Circ3Pts(C3dVector p1,C3dVector p2,C3dVector p3);
 NCircle* Arc3Pts(C3dVector p1,C3dVector p2,C3dVector p3);
 void Corner(NLine* L1,NLine* L2,C3dVector PNear1,C3dVector PNear2);
 void Corner2(CPoint PNear1,CPoint PNear2);
+void Trim(CPoint PNear1, CPoint PNear2);
 C3dVector LnInt(Line_Object* L1,G_Object* L2);
 C3dVector LnInt2(Line_Object* L1,G_Object* L2);
 C3dVector NLnInt(NCurve* L1,NCurve* L2,C3dVector* pNear);
 C3dVector NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear);
+BOOL IsIntersection(C3dVector C1S, C3dVector C1E, C3dVector C2S, C3dVector C2E);
+int TentativeInt(NCurve* C1, NCurve* C2, C3dVector vInts[10],double uInts[10]);
+int FindNearest(int iNo,double uInts[10], double u);
 void ModNodeX(ObjList* Nodes, double dX);
 void ModNodeY(ObjList* Nodes, double dX);
 void ModNodeZ(ObjList* Nodes, double dX);

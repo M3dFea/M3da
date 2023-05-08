@@ -2455,6 +2455,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "TRIM")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zTRIM_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "NDEQLAB")
 	  {
 		  iResumePos = 0;
@@ -2622,6 +2632,16 @@ if (iStat == 0)
 	  cDBase->DB_ActiveBuffSet(2);
 	  cDBase->DB_ClearBuff();
 	  pNext = new zELSWEEPNDB_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "ORTHO")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zORTHO_Mnu();
 	  pNext->Init(cDBase, -1);
 	  this->DoMenu(CInMsg, Pt);
 	  }
@@ -3466,7 +3486,6 @@ else if (iStat == 2)
 {
   C3dVector p2;
   p2=cDBase->DB_PopBuff();
-
   cDBase->AddLN(p1,p2,-1,TRUE);
   outtext1("1 Line Created.");
   iStat=0;  
@@ -7404,6 +7423,60 @@ if (iStat == 100)
 MenuEnd:
 return RetVal;
 }
+
+int zTRIM_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("//PICK CURVE TO TRIM ");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				PNear1 = Pt;
+				outtext2("//PICK TRIM CURVE ");
+			}
+			if (cDBase->S_Count == S_initCnt + 2)
+			{
+				PNear2 = Pt;
+				iStat = 2;
+			}
+		}
+		if (iStat == 2)
+		{
+			C3dVector P;
+			P = cDBase->DB_PopBuff();
+			cDBase->Trim(PNear1, PNear2);
+			iStat = 0;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 
 int zPROJ_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -14567,6 +14640,34 @@ if (iStat == 100)
 MenuEnd:
 return RetVal;
 }   
+
+int zORTHO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->Ortho();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 
 int zNDBET_Mnu::DoMenu(CString CInMsg,CPoint Pt)

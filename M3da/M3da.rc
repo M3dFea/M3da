@@ -191,6 +191,7 @@ BEGIN
     BEGIN
         POPUP "Curve Tools"
         BEGIN
+            MENUITEM "Ortho Snap",                  ID_CURVETOOLS_ORTHOSNAP, INACTIVE
             MENUITEM "Text",                        ID_CURVETOOLS_TEXT
             MENUITEM "Point",                       ID_CREATE_POINT
             MENUITEM "Rectangle",                   ID_CREATE_RECTANGLE
@@ -365,6 +366,7 @@ BEGIN
             MENUITEM "Centre",                      ID_CURVEMODIFY_CENTRE
             MENUITEM "Insert Knot",                 ID_CURVEMODIFY_INSERTKNOT
             MENUITEM "Split at Point",              ID_CURVEMODIFY_SPLITATPOINT
+            MENUITEM "Trim",                        ID_CURVEMODIFY_TRIM
         END
         POPUP "Part Modify"
         BEGIN
@@ -1272,6 +1274,8 @@ BEGIN
     ID_MESHMANAGEMENT_SETINCLUDEFILENO 
                             "Set the include file no for selected items."
     ID_ELEMENTMODIFIY_COLOURBYINCLUDEFILE "Colour Elements by Include File"
+    ID_CURVETOOLS_ORTHOSNAP "Toggle orthogonal drawing snap."
+    ID_CURVEMODIFY_TRIM     "Trim a curve to another curve."
 END
 
 #endif    // English (United States) resources
