@@ -45007,7 +45007,7 @@ do
   }
   i++;
 }
-while  ((dWStp>dTol)&&(i<100));
+while  ((dWStp>dTol) && (i<100));
 vRet=GetPt(dW);
 //char S1[200];
 //CString OutT;
