@@ -8,6 +8,8 @@
 #include "afxwin.h"
 #include "afxcmn.h"
 #include <vector>
+#include<algorithm>
+
 using namespace std;
 
 #define DBL_MAX 1.7976931348623158e+308 /* max value */
@@ -3605,6 +3607,7 @@ public:
    int iNoBCs;
    int iCurTSet;
    int iNoTSets;
+   void LabGaps(int iGap);
    cLinkedList* LCS[MAX_SETS];
    cLinkedListB* BCS[MAX_SETS];
    cLinkedListT* TSETS[MAX_SETS];

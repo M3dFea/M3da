@@ -28,7 +28,7 @@ public:
 
     BOOL bOrtho = FALSE;
     void Ortho();
-
+    void LabGaps(int iGap);
 HGLRC		hrc;
 BOOL bLineDrag;
 //int iSelLabType;

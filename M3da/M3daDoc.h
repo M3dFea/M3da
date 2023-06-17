@@ -509,6 +509,7 @@ public:
   afx_msg void OnElementmodifiyColourbyincludefile();
   afx_msg void OnCurvetoolsOrthosnap();
   afx_msg void OnCurvemodifyTrim();
+  afx_msg void OnListGapsbetweenlabels();
 };
 
 

@@ -1083,6 +1083,13 @@ public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zLABGAP_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+
 class zMSHVIS_Mnu : public zMnu
 {
 public:

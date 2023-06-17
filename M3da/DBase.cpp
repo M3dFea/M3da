@@ -297,6 +297,12 @@ DBase::~DBase()
 	DB_ObjectCount = 0;
 }
 
+
+void DBase::LabGaps(int iGap)
+{
+	if (pCurrentMesh != NULL)
+		pCurrentMesh->LabGaps(iGap);
+}
 //***************************************************************************
 // PRE: TRUE
 // POST: ALL DELETED
@@ -6268,6 +6274,8 @@ return (P2);
 //RBLows 23042023
 //This version finds intersection near pNear
 //this should probably superceed NLnInt above
+//THIS VERSION FAILS TO BE ACCURATE WHEN CURVES ARW PARALE//
+
 C3dVector DBase::NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear)
 {
 	int i = 0;
@@ -6294,7 +6302,7 @@ C3dVector DBase::NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear)
 	sprintf_s(S1, " TOL INT: ,%i %f", iMaxIt, dDist);
 	outtext1(S1);
 
-	return (P2);
+	return (P1);
 }
 
 
@@ -6321,7 +6329,7 @@ BOOL DBase::IsIntersection(C3dVector C1S, C3dVector C1E, C3dVector C2S, C3dVecto
 	vN2 = vD1.Cross(v2);
 	dd2 = vN1.Dot(vN2);
 
-	if ((dd1<0) && (dd2<0))
+	if ((dd1<=0.0) && (dd2<=0.0))
 	  return TRUE;
 	else
 	  return FALSE;

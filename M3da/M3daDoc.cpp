@@ -361,6 +361,7 @@ ON_COMMAND(ID_MESHMANAGEMENT_SETINCLUDEFILENO, &CM3daDoc::OnMeshmanagementSetinc
 ON_COMMAND(ID_ELEMENTMODIFIY_COLOURBYINCLUDEFILE, &CM3daDoc::OnElementmodifiyColourbyincludefile)
 ON_COMMAND(ID_CURVETOOLS_ORTHOSNAP, &CM3daDoc::OnCurvetoolsOrthosnap)
 ON_COMMAND(ID_CURVEMODIFY_TRIM, &CM3daDoc::OnCurvemodifyTrim)
+ON_COMMAND(ID_LIST_GAPSBETWEENLABELS, &CM3daDoc::OnListGapsbetweenlabels)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6072,6 +6073,21 @@ void CM3daDoc::OnCurvemodifyTrim()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("TRIM");
 		sLastcmd = "TRIM";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnListGapsbetweenlabels()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("LABGAP");
+		sLastcmd = "LABGAP";
 	}
 	else
 	{

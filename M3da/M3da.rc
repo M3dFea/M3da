@@ -415,6 +415,7 @@ BEGIN
             MENUITEM "All Materials",               ID_LIST_ALLMATERIALS
             MENUITEM "Property",                    ID_LIST_PROPERTY
             MENUITEM "Material",                    ID_LIST_MATERIAL
+            MENUITEM "Gaps Between Labels",         ID_LIST_GAPSBETWEENLABELS
         END
         MENUITEM "Move To",                     ID_TOOLS_MOVETO
         MENUITEM "Move",                        ID_TOOLS_MOVE
@@ -1276,6 +1277,11 @@ BEGIN
     ID_ELEMENTMODIFIY_COLOURBYINCLUDEFILE "Colour Elements by Include File"
     ID_CURVETOOLS_ORTHOSNAP "Toggle orthogonal drawing snap."
     ID_CURVEMODIFY_TRIM     "Trim a curve to another curve."
+END
+
+STRINGTABLE
+BEGIN
+    ID_LIST_GAPSBETWEENLABELS "List gaps between node and element labelling"
 END
 
 #endif    // English (United States) resources
