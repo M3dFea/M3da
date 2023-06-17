@@ -362,6 +362,7 @@ ON_COMMAND(ID_ELEMENTMODIFIY_COLOURBYINCLUDEFILE, &CM3daDoc::OnElementmodifiyCol
 ON_COMMAND(ID_CURVETOOLS_ORTHOSNAP, &CM3daDoc::OnCurvetoolsOrthosnap)
 ON_COMMAND(ID_CURVEMODIFY_TRIM, &CM3daDoc::OnCurvemodifyTrim)
 ON_COMMAND(ID_LIST_GAPSBETWEENLABELS, &CM3daDoc::OnListGapsbetweenlabels)
+ON_COMMAND(ID_LIST_GAPSBETWEENMATSANDPROPSLABELS, &CM3daDoc::OnListGapsbetweenmatsandpropslabels)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6088,6 +6089,22 @@ void CM3daDoc::OnListGapsbetweenlabels()
 	{
 		outtextMSG2("LABGAP");
 		sLastcmd = "LABGAP";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnListGapsbetweenmatsandpropslabels()
+{
+	// TODO: Add your command handler code here
+		// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("LABGAPMP");
+		sLastcmd = "LABGAPMP";
 	}
 	else
 	{

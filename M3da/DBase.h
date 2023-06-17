@@ -140,6 +140,8 @@ BOOL bDispAll;
 
 PropTable* PropsT;
 MatTable* MatT;
+void LabGapsMP(int iGap);
+
 G_Object* DB_Obj[MAX_SIZE];       //all 
 G_Object* TmpOGL[MAX_TEMPGRP];
 int TmpOGLCnt;

@@ -415,7 +415,8 @@ BEGIN
             MENUITEM "All Materials",               ID_LIST_ALLMATERIALS
             MENUITEM "Property",                    ID_LIST_PROPERTY
             MENUITEM "Material",                    ID_LIST_MATERIAL
-            MENUITEM "Gaps Between Labels",         ID_LIST_GAPSBETWEENLABELS
+            MENUITEM "Gaps Between Node and Element Labels", ID_LIST_GAPSBETWEENLABELS
+            MENUITEM "Gaps Between MATS and PROPS Labels", ID_LIST_GAPSBETWEENMATSANDPROPSLABELS
         END
         MENUITEM "Move To",                     ID_TOOLS_MOVETO
         MENUITEM "Move",                        ID_TOOLS_MOVE
@@ -1282,6 +1283,8 @@ END
 STRINGTABLE
 BEGIN
     ID_LIST_GAPSBETWEENLABELS "List gaps between node and element labelling"
+    ID_LIST_GAPSBETWEENMATSANDPROPSLABELS 
+                            "Find gaps between materials and property labels"
 END
 
 #endif    // English (United States) resources

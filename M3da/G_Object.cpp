@@ -20292,7 +20292,7 @@ void ME_Object::LabGaps(int iGap)
 			iS = iLabs.at(i) - iCur ;
 			if (iS > iGap)
 			{
-				sprintf_s(buff, "%s %i upto %i size %i", "Gap Found at:  ", iCur+1, iLabs.at(i)-1,iS-1);
+				sprintf_s(buff, "%s %i to %i size %i", "Gap Found at:  ", iCur+1, iLabs.at(i)-1,iS-1);
 				outtext1(buff);
 				iCur = iLabs.at(i);
 			}
@@ -20317,7 +20317,7 @@ void ME_Object::LabGaps(int iGap)
 			iS = iLabs.at(i) - iCur;
 			if (iS > iGap)
 			{
-				sprintf_s(buff, "%s %i upto %i size %i", "Gap Found at:  ", iCur + 1, iLabs.at(i) - 1, iS-1);
+				sprintf_s(buff, "%s %i to %i size %i", "Gap Found at:  ", iCur + 1, iLabs.at(i) - 1, iS-1);
 				outtext1(buff);
 				iCur = iLabs.at(i);
 			}
@@ -20328,6 +20328,9 @@ void ME_Object::LabGaps(int iGap)
 		outtext1("ERROR: No Element Gaps Found.");
 	}
 }
+
+
+
 
 int ME_Object::GetLCID(int ind)
 {

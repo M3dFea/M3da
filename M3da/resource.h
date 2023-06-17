@@ -567,13 +567,14 @@
 #define ID_CURVETOOLS_ORTHOSNAP         33374
 #define ID_CURVEMODIFY_TRIM             33375
 #define ID_LIST_GAPSBETWEENLABELS       33376
+#define ID_LIST_GAPSBETWEENMATSANDPROPSLABELS 33377
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        363
-#define _APS_NEXT_COMMAND_VALUE         33377
+#define _APS_NEXT_COMMAND_VALUE         33378
 #define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

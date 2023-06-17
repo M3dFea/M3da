@@ -22146,6 +22146,70 @@ void DBase::GenPts(NSurf* pS, ObjList* Pts)
 	}
 }
 
+void DBase::LabGapsMP(int iGap)
+{
+	//PropTable* PropsT;
+	//MatTable* MatT;
+	char buff[200];
+	int i = 0;
+	int iCur;
+	int iS;
+	vector<int> iLabs;
+	sprintf_s(buff, "%s %i", "Finding Material Labeling Gaps > ", iGap);
+	outtext1(buff);
+	//Material label sparsity
+	if ((MatT->iNo > 2) && (iGap > 0))
+	{
+		for (i = 0; i < MatT->iNo; i++)
+			iLabs.push_back(MatT->pEnts[i]->iID);
+		sort(iLabs.begin(), iLabs.end());
+
+		for (i = 1; i < iLabs.size(); i++)
+		{
+			iCur = iLabs.at(i - 1);
+			iS = iLabs.at(i) - iCur;
+			if (iS > iGap)
+			{
+				sprintf_s(buff, "%s %i to %i size %i", "Gap Found at:  ", iCur + 1, iLabs.at(i) - 1, iS - 1);
+				outtext1(buff);
+				iCur = iLabs.at(i);
+			}
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Node Gaps Found.");
+	}
+	iLabs.clear();
+	//Property label sparsity
+	sprintf_s(buff, "%s %i", "Finding Property Labeling Gaps > ", iGap);
+	outtext1(buff);
+	if ((PropsT->iNo > 2) && (iGap > 0))
+	{
+		for (i = 0; i < PropsT->iNo; i++)
+			iLabs.push_back(PropsT->pEnts[i]->iID);
+		sort(iLabs.begin(), iLabs.end());
+
+		for (i = 1; i < iLabs.size(); i++)
+		{
+			iCur = iLabs.at(i - 1);
+			iS = iLabs.at(i) - iCur;
+			if (iS > iGap)
+			{
+				sprintf_s(buff, "%s %i to %i size %i", "Gap Found at:  ", iCur + 1, iLabs.at(i) - 1, iS - 1);
+				outtext1(buff);
+				iCur = iLabs.at(i);
+			}
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Node Gaps Found.");
+	}
+
+
+}
+
 //********************************************************************
 //****************************    End      ***************************
 //********************************************************************

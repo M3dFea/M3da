@@ -510,6 +510,7 @@ public:
   afx_msg void OnCurvetoolsOrthosnap();
   afx_msg void OnCurvemodifyTrim();
   afx_msg void OnListGapsbetweenlabels();
+  afx_msg void OnListGapsbetweenmatsandpropslabels();
 };
 
 
