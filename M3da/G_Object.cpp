@@ -20277,6 +20277,8 @@ void ME_Object::LabGaps(int iGap)
 	int iCur;
 	int iS;
 	vector<int> iLabs;
+	vector<int> iSt;
+	vector<int> iEnd;
     sprintf_s(buff, "%s %i", "Finding Node Labeling Gaps > ",iGap);
 	outtext1(buff);
 	//Node label sparsity
@@ -20285,17 +20287,26 @@ void ME_Object::LabGaps(int iGap)
 		for (i = 0; i < iNdNo; i++)
 			iLabs.push_back(pNodes[i]->iLabel);
 		sort(iLabs.begin(), iLabs.end());
-		
+		iSt.push_back(iLabs.front());
 		for (i = 1; i < iLabs.size(); i++)
 		{
 			iCur = iLabs.at(i-1);
 			iS = iLabs.at(i) - iCur ;
 			if (iS > iGap)
 			{
+				iEnd.push_back(iCur);
 				sprintf_s(buff, "%s %i to %i size %i", "Gap Found at:  ", iCur+1, iLabs.at(i)-1,iS-1);
 				outtext1(buff);
 				iCur = iLabs.at(i);
+				iSt.push_back(iCur);
 			}
+		}
+		iEnd.push_back(iLabs.back());
+		outtext1("Blocks of Nodes");
+		for (i = 0; i < iSt.size(); i++)
+		{
+			sprintf_s(buff, "%i %i",iSt.at(i),iEnd.at(i));
+			outtext1(buff);
 		}
 	}
 	else
@@ -20303,6 +20314,8 @@ void ME_Object::LabGaps(int iGap)
 	  outtext1("ERROR: No Node Gaps Found.");
 	}
 	iLabs.clear();
+	iSt.clear();
+	iEnd.clear();
 	sprintf_s(buff, "%s %i", "Finding Element Labeling Gaps > ", iGap);
 	outtext1(buff);
 	if ((iElNo > 2) && (iGap > 0))
@@ -20310,17 +20323,26 @@ void ME_Object::LabGaps(int iGap)
 		for (i = 0; i < iElNo; i++)
 			iLabs.push_back(pElems[i]->iLabel);
 		sort(iLabs.begin(), iLabs.end());
-
+		iSt.push_back(iLabs.front());
 		for (i = 1; i < iLabs.size(); i++)
 		{
 			iCur = iLabs.at(i - 1);
 			iS = iLabs.at(i) - iCur;
 			if (iS > iGap)
 			{
+				iEnd.push_back(iCur);
 				sprintf_s(buff, "%s %i to %i size %i", "Gap Found at:  ", iCur + 1, iLabs.at(i) - 1, iS-1);
 				outtext1(buff);
 				iCur = iLabs.at(i);
+				iSt.push_back(iCur);
 			}
+		}
+		iEnd.push_back(iLabs.back());
+		outtext1("Blocks of Elements");
+		for (i = 0; i < iSt.size(); i++)
+		{
+			sprintf_s(buff, "%i %i", iSt.at(i), iEnd.at(i));
+			outtext1(buff);
 		}
 	}
 	else
