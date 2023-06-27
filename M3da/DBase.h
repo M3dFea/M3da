@@ -333,6 +333,7 @@ C3dVector LnInt(Line_Object* L1,G_Object* L2);
 C3dVector LnInt2(Line_Object* L1,G_Object* L2);
 C3dVector NLnInt(NCurve* L1,NCurve* L2,C3dVector* pNear);
 C3dVector NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear);
+C3dVector NLnInt3(NCurve* L1, NCurve* L2, C3dVector* pNear);
 BOOL IsIntersection(C3dVector C1S, C3dVector C1E, C3dVector C2S, C3dVector C2E);
 int TentativeInt(NCurve* C1, NCurve* C2, C3dVector vInts[10],double uInts[10]);
 int FindNearest(int iNo,double uInts[10], double u);

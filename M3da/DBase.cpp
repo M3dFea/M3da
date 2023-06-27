@@ -6299,13 +6299,67 @@ C3dVector DBase::NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear)
 	} while ((dDist > dTol) && (iMaxIt<100));
 	char S1[200];
 	CString OutT;
-	sprintf_s(S1, " TOL INT: ,%i %f", iMaxIt, dDist);
+	sprintf_s(S1, "ITERATIONS: %i TOL: %f", iMaxIt, dDist);
 	outtext1(S1);
 
 	return (P1);
 }
 
-
+C3dVector DBase::NLnInt3(NCurve* L1, NCurve* L2, C3dVector* pNear)
+{
+	int i = 0;
+	double MinDist = 10000000;
+	double w;
+	double dw=0.01;
+	double dDist = 0;
+	double dDistF = 0;
+	double dDistB = 0;
+	const double dTol = 0.0000001;
+	C3dVector P1;
+	C3dVector P2;
+	P1.Set(pNear->x, pNear->y, pNear->z);
+	P2.Set(pNear->x, pNear->y, pNear->z);
+	int iMaxIt = 0;
+	w = L1->MinWPt(P1);
+	dDist = 1;
+	
+	do
+	{
+		P1 = L1->GetPt(w+dw);
+		P2 = L2->MinPt(P1);
+		dDistF = P2.Dist(P1);
+		if (dDistF < dDist)
+		{
+			w = w + dw;
+			dDist = dDistF;
+			if (w > 1)
+				w = 1;
+		}
+		else
+		{
+			P1 = L1->GetPt(w - dw);
+			P2 = L2->MinPt(P1);
+			dDistB = P2.Dist(P1);
+			if (dDistB < dDist)
+			{
+				w = w - dw;
+				if (w < 0)
+					w = 0;
+				dDist = dDistB;
+			}
+			else
+			{
+				dw = 0.5 * dw;
+			}
+		}
+		iMaxIt++;
+	} while ((dDist > dTol) && (iMaxIt < 100));
+	char S1[200];
+	CString OutT;
+	sprintf_s(S1, "ITERATIONS: %i TOL: %f", iMaxIt, dDist);
+	outtext1(S1);
+	return (P1);
+}
 
 
 BOOL DBase::IsIntersection(C3dVector C1S, C3dVector C1E, C3dVector C2S, C3dVector C2E)
@@ -6368,7 +6422,7 @@ int DBase::TentativeInt(NCurve* C1, NCurve* C2, C3dVector vInts[10],double uInts
 				vInts[iRet] = vP1;
 				uInts[iRet] = i * 0.01;
 				iRet++;
-				AddPt(vRet, -1, TRUE);
+				//AddPt(vRet, -1, TRUE);
 			}
 			  //outtext1("Inter");
 		}
@@ -14239,6 +14293,7 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2)
 					Ln->we = dU;
 				S_Count--;
 				S_Count--;
+				InvalidateOGL();
 				ReDraw();
 			}
 			else //Two curves possible multiple intersections
@@ -14259,7 +14314,7 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2)
 				dU = uInts[pNr];
 				C3dVector pNr2;
 				pNr2 = Cv->GetPt(dU);
-				vRet = NLnInt2(Cv, Cv1, &pNr2);
+				vRet = NLnInt3(Cv, Cv1, &pNr2);
 				dU = Cv->MinWPt(vRet);                //U at intersect
 
 				sprintf_s(S1, " Debug W: ,%f,%f", dU, dUse);
