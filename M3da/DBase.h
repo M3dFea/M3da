@@ -768,12 +768,15 @@ protected:
 
 	enum 
 	{
-		dispidGetNo = 1L
+        dispidAddNode = 2L,
+        dispidGetNo = 1L
 	};
 public:
   afx_msg void OnEditProject();
 //  afx_msg void OnMaterialIsentropic();
 //  afx_msg void OnSurfaceSweep();
+protected:
+    void API_AddNode(DOUBLE X, DOUBLE Y, DOUBLE Z, LONG ID, LONG COL);
 };
 
 

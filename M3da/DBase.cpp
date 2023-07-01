@@ -19862,6 +19862,7 @@ END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(DBase, CCmdTarget)
 	DISP_FUNCTION_ID(DBase, "GetNo", dispidGetNo, GetNo, VT_I4, VTS_NONE)
+	DISP_FUNCTION_ID(DBase, "AddNode", dispidAddNode, API_AddNode, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_I4 VTS_I4)
 END_DISPATCH_MAP()
 
 // Note: we add support for IID_IDBase to support typesafe binding
@@ -22407,3 +22408,17 @@ void DBase::LabGapsMP(int iGap)
 //Sol.DeleteAll();
 //}
 
+
+
+void DBase::API_AddNode(DOUBLE X, DOUBLE Y, DOUBLE Z, LONG ID, LONG COL)
+{
+	AFX_MANAGE_STATE(AfxGetAppModuleState());
+
+	// TODO: Add your dispatch handler code here
+	C3dVector v;
+	if (pCurrentMesh != NULL)
+	{
+		v.Set(X, Y, Z);
+		pCurrentMesh->AddNode(v, ID, -1, -1, COL, 0, 0);
+	}
+}

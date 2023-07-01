@@ -64,6 +64,7 @@ library M3da
 		properties:
 		methods:
 			[id(1), helpstring("method GetNo")] LONG GetNo(void);
+			[id(2), helpstring("Add node to current mesh")] void AddNode(DOUBLE X, DOUBLE Y, DOUBLE Z, LONG ID, LONG COL);
 	};
 
 	//  Class information for DBase
