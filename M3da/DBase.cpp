@@ -19883,7 +19883,7 @@ LONG DBase::GetNo(void)
 {
 	AFX_MANAGE_STATE(AfxGetAppModuleState());
 	// TODO: Add your dispatch handler code here
-	return 999;
+	return DB_ObjectCount;
 }
 
 

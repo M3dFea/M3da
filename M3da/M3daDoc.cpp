@@ -3219,8 +3219,8 @@ SHORT CM3daDoc::API_ExportNAS(LPCTSTR inName)
   if (pFile!=NULL)
   {
     
-	  //cDBase->ExportMeshNAS(pFile);
-	  fclose(pFile);
+	cDBase->ExportMeshNAS(pFile,-1);
+	fclose(pFile);
     outtext1("Export of Nastran deck Finished");
     bRet=0;
   } 
