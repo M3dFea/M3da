@@ -42313,7 +42313,7 @@ void Shell::RelTo(G_Object* pThis, ObjList* pList, int iType)
 	}
 	else if (pThis->iObjType == 7) //
 	{
-		pThis->iObjType == 7;
+		pThis->iObjType = 7;
 	}
 
 }
@@ -45248,6 +45248,20 @@ void NCurve::EndPtChk01(NSurf* pSurf,
 CString NCurve::GetName()
 {
 	return ("NCurve");
+}
+
+BOOL NCurve::IsClosed()
+{
+	BOOL bRet = FALSE;
+	double dDist = 0;
+	C3dVector vS;
+	C3dVector vE;
+	vS = GetPt(ws);
+	vE = GetPt(we);
+	dDist = vS.Dist(vE);
+	if (dDist < dTol)
+		bRet = TRUE;
+	return (bRet);
 }
 
 int NCurve::GetVarHeaders(CString sVar[])

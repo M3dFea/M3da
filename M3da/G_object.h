@@ -2255,6 +2255,7 @@ public:
    virtual double CorrectW(double w);
    virtual void NullPointRef();
    virtual CString GetName();
+   virtual BOOL IsClosed();
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
    virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);

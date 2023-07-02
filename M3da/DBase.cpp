@@ -6317,9 +6317,11 @@ C3dVector DBase::NLnInt3(NCurve* L1, NCurve* L2, C3dVector* pNear)
 	const double dTol = 0.0000001;
 	C3dVector P1;
 	C3dVector P2;
+	BOOL isClosed = FALSE;
 	P1.Set(pNear->x, pNear->y, pNear->z);
 	P2.Set(pNear->x, pNear->y, pNear->z);
 	int iMaxIt = 0;
+	isClosed = L1->IsClosed();
 	w = L1->MinWPt(P1);
 	dDist = 1;
 	
@@ -6353,7 +6355,7 @@ C3dVector DBase::NLnInt3(NCurve* L1, NCurve* L2, C3dVector* pNear)
 			}
 		}
 		iMaxIt++;
-	} while ((dDist > dTol) && (iMaxIt < 100));
+	} while ((dDist > dTol) && (iMaxIt < 1000));
 	char S1[200];
 	CString OutT;
 	sprintf_s(S1, "ITERATIONS: %i TOL: %f", iMaxIt, dDist);
@@ -6418,10 +6420,13 @@ int DBase::TentativeInt(NCurve* C1, NCurve* C2, C3dVector vInts[10],double uInts
 			bErr = IsIntersection(vP1, vP2, vP3, vP4);
 			if (bErr)
 			{
-				C3dVector vRet = NLnInt2(C1, C2, &vP1);
-				vInts[iRet] = vP1;
-				uInts[iRet] = i * 0.01;
-				iRet++;
+				//C3dVector vRet = NLnInt2(C1, C2, &vP1);
+				if (iRet < 10)
+				{
+					vInts[iRet] = vP1;
+					uInts[iRet] = i * 0.01;
+					iRet++;
+				}
 				//AddPt(vRet, -1, TRUE);
 			}
 			  //outtext1("Inter");
@@ -6430,6 +6435,8 @@ int DBase::TentativeInt(NCurve* C1, NCurve* C2, C3dVector vInts[10],double uInts
 
 	return (iRet);
 }
+
+
 
 //find span u lies between
 int DBase::FindNearest(int iNo,double uInts[10], double u)
@@ -10870,18 +10877,12 @@ if (iNo>0)
     if ((S_Buff[iCO]->iObjType==7) ||
 	    (S_Buff[iCO]->iObjType==13))
     {
-	  dW=0;
       pC = (NCurve*) S_Buff[iCO];
 	  dSpan = pC->we-pC->ws;
       // check ends are not coinciden
 	  C3dVector vS;
       C3dVector vE;
-      vS=pC->GetPt(pC->ws);
-      vE=pC->GetPt(pC->we);
-      vE-=vS;
-	  BOOL bEndsMeet=FALSE;
-	  if (vE.Mag()<0.01)
-         bEndsMeet=TRUE;
+	  BOOL bEndsMeet= pC->IsClosed();
       //End coincident ends check
 	  if (bEndsMeet)
 	  {
@@ -10891,6 +10892,7 @@ if (iNo>0)
 	  {
         dInc = dSpan/(iNo-1);
 	  }
+	  dW = pC->ws;
       for (i=0;i<iNo;i++)
 	  {
 	    v=pC->GetPt(dW);
@@ -10900,9 +10902,10 @@ if (iNo>0)
 		AddTempGraphics(pNode);
 		Dsp_Add(pNode);
 	    dW+=dInc;
-		  if(dW>1.0) {dW=1.0;}
-		  if (pN != NULL)
-			  pN->Add(pNode);  //Add the newly created node to linked list
+		if(dW>1.0) 
+		  dW=1.0;
+		if (pN != NULL)
+		  pN->Add(pNode);  //Add the newly created node to linked list
 	  }
     }
   }
@@ -14304,14 +14307,19 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2)
 				outtext1("Search for multiple ints.");
 				Cv = (NCurve*)S_Buff[S_Count - 2];
 				Cv1 = (NCurve*)S_Buff[S_Count - 1];
-				iNoInts = TentativeInt(Cv, Cv1, vInts, uInts);
-				//This is updayeing
-				//in vInts find nearest int to pick point
+				// iNoInts = TentativeInt(Cv, Cv1, vInts, uInts);
+
 				dUse = Cv->MinWPt(pN1);
 				dUse2 = Cv->MinWPt(pN2);
-				int pNr = FindNearest(iNoInts, uInts, dUse2);
-
-				dU = uInts[pNr];
+				if (iNoInts > 0)
+				{
+					int pNr = FindNearest(iNoInts, uInts, dUse2);
+					dU = uInts[pNr];
+				}
+				//else
+				//{
+					dU = dUse2;
+				//}
 				C3dVector pNr2;
 				pNr2 = Cv->GetPt(dU);
 				vRet = NLnInt3(Cv, Cv1, &pNr2);
