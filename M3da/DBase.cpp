@@ -14355,84 +14355,34 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2)
 
 void DBase::Corner(NLine* Ln,NLine* Ln1, C3dVector PNear1,C3dVector PNear2)
 {
+double w=0;
+double wNr = 0;
+C3dVector pt;
 
-C3dVector p1;
-C3dVector p2;
-C3dVector p3;
-C3dVector pT;
-C3dVector vL1Dir;
-C3dVector* pLT1;
-C3dVector* pLT2;
-C3dVector v1;
-C3dVector v2;
-C3dVector v3;
 
 // The intersection of the lines
-p2=NLnInt(Ln,Ln1,NULL);
-//choose the other ends of lines to keep
-//choose the ones with longest distance
-pT=Ln->cPts[0]->Pt_Point;
-v1=pT-p2;
-v2=PNear1-p2;
-pT=Ln->cPts[1]->Pt_Point;
-v3=pT-p2;
-//both point are the ame side
-if (v3.Dot(v1)>0)
+pt =NLnInt(Ln,Ln1,NULL);
+w = Ln->MinWPt(pt);
+wNr = Ln->MinWPt(PNear1);
+if ((wNr > Ln->ws) && (wNr<w))
 {
-  if (v1.Mag()<v3.Mag())
-  {
-   {p1=Ln->cPts[1]->Pt_Point;
-    pLT1=Ln->cPts[0]->Pt_Point;}
-  }
-  else
-  {
-    {p1=Ln->cPts[0]->Pt_Point;
-    pLT1=Ln->cPts[1]->Pt_Point;}
-  }
+	  Ln->we = w;
 }
 else
 {
-if (v1.Dot(v2)>0)
-  {p1=Ln->cPts[0]->Pt_Point;
-   pLT1=Ln->cPts[1]->Pt_Point;}
-else
-  {p1=Ln->cPts[1]->Pt_Point;
-   pLT1=Ln->cPts[0]->Pt_Point;}
+	  Ln->ws = w;
 }
-vL1Dir=pLT1;
-vL1Dir-=p1;
-vL1Dir.Normalize();
 
-pT=Ln1->cPts[0]->Pt_Point;
-v1=pT-p2;
-v2=PNear2-p2;
-pT=Ln1->cPts[1]->Pt_Point;
-v3=pT-p2;
-//both point are the ame side
-if (v3.Dot(v1)>0)
+w = Ln1->MinWPt(pt);
+wNr = Ln1->MinWPt(PNear2);
+if ((wNr > Ln1->ws) && (wNr < w))
 {
-  if (v1.Mag()<v3.Mag())
-  {
-   {p3=Ln1->cPts[1]->Pt_Point;
-    pLT2=Ln1->cPts[0]->Pt_Point;}
-  }
-  else
-  {
-    {p3=Ln1->cPts[0]->Pt_Point;
-    pLT2=Ln1->cPts[1]->Pt_Point;}
-  }
+	  Ln1->we = w;
 }
 else
 {
-if (v1.Dot(v2)>0)
-  {p3=Ln1->cPts[0]->Pt_Point;
-   pLT2=Ln1->cPts[1]->Pt_Point;}
-else
-  {p3=Ln1->cPts[1]->Pt_Point;
-   pLT2=Ln1->cPts[0]->Pt_Point;}
+	  Ln1->ws = w;
 }
-pLT1->Set(p2.x,p2.y,p2.z);  //trim the end point
-pLT2->Set(p2.x,p2.y,p2.z);  //trim the end point
 
 }
 

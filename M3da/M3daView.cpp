@@ -377,8 +377,8 @@ if ((m_iFuncKey != 0))
   b=iX*iX+iY*iY;
   a = sqrt(b);
   iMag = (int) a;
-    m_UpdateTriad(iMag);
-    m_PointOld = m_PointNew;
+  m_UpdateTriad(iMag);
+  m_PointOld = m_PointNew;
   CDC* pDC = this->GetDC();
   GetDocument()->SetView(this);
   GetDocument()->Draw(tOrient.RetrieveMat(),pDC,3);
