@@ -16167,6 +16167,92 @@ pS->iFile = iF;
 pM->AddItem(pS);
 
 }
+
+void NASReadPCOMPG(NasCard& oC,
+	               PropTable* pM,
+	               NEList* cPID,
+	               int iType,
+	               BOOL Relab,
+	               int iF)
+{
+	int iFT;
+	int iStop = 0;
+	int iPlyID;
+	int iM;
+	double dThk;
+	double dTh;
+	bool bOut = FALSE;
+	CString sT;
+
+	PCOMPG* pS = new PCOMPG();
+	pS->iType = 222;
+	pS->sTitle = "PCOMPG CARD";
+	pS->iID = atoi(oC.GetField(0));
+
+	pS->dNSM = atofNAS(oC.GetField(2));
+	pS->dSB = atofNAS(oC.GetField(3));
+	sT = oC.GetField(4);
+	if (sT.Find("HILL") >= 0)
+		iFT = 1;
+	else if (sT.Find("HOFF") >= 0)
+		iFT = 2;
+	else if (sT.Find("TSAI") >= 0)
+		iFT = 3;
+	else if (sT.Find("STRESS") >= 0)
+		iFT = 4;
+	else if ((sT.Find("STRAIN") >= 0) || (sT.Find("STRN") >= 0))
+		iFT = 5;
+	else if (sT.Find("LARCO2") >= 0)
+		iFT = 6;
+	else if (sT.Find("PUCK") >= 0)
+		iFT = 7;
+	else if (sT.Find("MCT") >= 0)
+		iFT = 8;
+	else
+		iFT = 0;
+	pS->FT = iFT;
+	pS->dRefT = atofNAS(oC.GetField(5));
+	pS->dGE = atofNAS(oC.GetField(6));
+	sT = oC.GetField(7);
+	if (sT.Find("SYM") >= 0)
+		pS->bLAM = TRUE;
+	else
+		pS->bLAM = FALSE;
+	int iCnt = 8;
+	do
+	{
+		iPlyID = atoi(oC.GetField(iCnt));
+		iM = atoi(oC.GetField(iCnt+1));
+		dThk = atofNAS(oC.GetField(iCnt + 2));
+		dTh = atofNAS(oC.GetField(iCnt + 3));
+		sT = oC.GetField(iCnt + 4);
+		if (sT.Find("YES") >= 0)
+			bOut = TRUE;
+		else if (sT.Find("NO") >= 0)
+			bOut = FALSE;
+		else
+			bOut = FALSE;
+		if (iM != 0)
+			pS->AddLayer(iPlyID,iM, dThk, dTh, bOut);
+		iCnt = iCnt + 8;
+	} while (iCnt < oC.iNo);
+	if (oC.isVoid(1))
+		pS->dZ0 = -pS->GetThk() / 2;
+	else
+		pS->dZ0 = atofNAS(oC.GetField(1));
+
+	int NextID;
+	if (Relab)
+		NextID = pM->NextID();
+	else
+		NextID = pS->iID;
+	cPID->Add(pS->iID, NextID);
+	pS->iID = NextID;
+	pS->iFile = iF;
+	pM->AddItem(pS);
+
+}
+
 //***************************************************
 // Pre :file pointer and name
 // Post :Nastran file read and the mesh returned
@@ -16345,6 +16431,8 @@ else if ((s8 == "PSHELL  ") || (s8 == "PSHELL* "))
   brc = TRUE;
 else if ((s8 == "PCOMP   ") || (s8 == "PCOMP*  ")) 
   brc = TRUE;
+else if ((s8 == "PCOMPG  ") || (s8 == "PCOMPG* "))
+  brc = TRUE;
 else if ((s8 == "PSOLID  ") || (s8 == "PSOLID* ")) 
   brc = TRUE;
 else if ((s8 == "PBAR    ") || (s8 == "PBAR*   ")) 
@@ -16481,6 +16569,8 @@ if (pFile!=NULL)
         {pRet = NASReadCoord(pME,oCard,3, iCurFileNo);}
       else if ((sKwrd.Find("PSHELL") == 0))
         {NASReadPSHELL(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
+	  else if ((sKwrd.Find("PCOMPG") == 0))
+	  {NASReadPCOMPG(oCard, PropsT, PIDs, 2, FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PCOMP") == 0))
         {NASReadPCOMP(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PSOLID") == 0))

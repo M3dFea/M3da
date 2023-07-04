@@ -1212,7 +1212,7 @@ public:
 	//virtual PCOMP* Copy();
 	//virtual CString ToString();
 	//virtual void ExportNAS(FILE* pFile);
-	//virtual double GetThk();
+	virtual double GetThk();
 	//virtual void UpdateMats(NEList* newMats);
 	//virtual void ChangeMat(int thisMat, int inMID);
 	virtual int GetVarHeaders(CString sVar[]);
@@ -1407,8 +1407,8 @@ public:
 	void InitOGL();
 	void AddVisLayer(double dA, double dZ, double dT, int iM);
 	void OglDraw();
-	void Build(); //build the visual layers from the PCOMP
-	void Build2();//Build from table so paint can update when pcomp changes
+	void Build(BOOL isPCOMPG); //build the visual layers from the PCOMP
+	void Build2(BOOL isPCOMPG);//Build from table so paint can update when pcomp changes
   enum {IDD = IDD_ENTEDITOR};
   virtual void DoDataExchange(CDataExchange* pDX);
   CListCtrl m_List;

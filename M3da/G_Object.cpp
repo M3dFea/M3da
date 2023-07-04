@@ -10533,7 +10533,7 @@ if (Pr!=NULL)
   }
   else if (iType == 94)
   {
-      if ((Pr->iType==1) || (Pr->iType==2))
+      if ((Pr->iType==1) || (Pr->iType==2) || (Pr->iType == 222))
       {
        PID=Pr->iID;
        bC=TRUE;
@@ -10542,7 +10542,7 @@ if (Pr!=NULL)
   }
   else if (iType == 91)
   {
-      if ((Pr->iType==1) || (Pr->iType==2))
+      if ((Pr->iType==1) || (Pr->iType==2) || (Pr->iType == 222))
       {
        PID=Pr->iID;
        bC=TRUE;
@@ -14399,6 +14399,11 @@ Selectable=1;
 			PCOMP* pPCOMP = (PCOMP*)pPr;
 			dPCompOff = pPCOMP->dZ0 + dt;
 		}
+		else if (pPr->iType == 222)
+		{
+			PCOMPG* pPCOMP = (PCOMPG*)pPr;
+			dPCompOff = pPCOMP->dZ0 + dt;
+		}
 	}
     if (((iDspFlgs & DSP_OFF)>0) && (dZOFFS!=DBL_MAX))
     {
@@ -14589,6 +14594,11 @@ if (pPr != NULL)
 	if (pPr->iType == 2)
 	{
 		PCOMP* pPCOMP = (PCOMP*)pPr;
+		dPCompOff = pPCOMP->dZ0 + dt;
+	}
+	else if (pPr->iType == 222)
+	{
+		PCOMPG* pPCOMP = (PCOMPG*)pPr;
 		dPCompOff = pPCOMP->dZ0 + dt;
 	}
 }
@@ -15682,6 +15692,37 @@ Mat E_Object3::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 		else if (pS->iType == 2)
 		{
 			PCOMP* pSh = (PCOMP*)pS;
+			dNSM = pSh->dNSM;
+			dTotthk = 0.0;
+			dRho = 0.0;
+			for (i = 0; i < pSh->iNoLays; i++)
+			{
+				dthk = pSh->T[i];
+				dTotthk += dthk;
+				dNSM = pSh->dNSM;
+				MID = pS->GetDefMatID();
+				if (MatT != NULL)
+					pM = MatT->GetItem(pSh->MID[i]);
+				if (pM != NULL)
+				{
+					dRho += pM->GetDensity() * dthk;
+					//effective density
+				}
+			}
+			if (dTotthk > 0)
+			{
+				dRho /= dTotthk;
+				dthk = dTotthk;
+			}
+			else
+			{
+				dRho = 0;
+				dthk = 0;
+			}
+		}
+		else if (pS->iType == 222)
+		{
+			PCOMPG* pSh = (PCOMPG*)pS;
 			dNSM = pSh->dNSM;
 			dTotthk = 0.0;
 			dRho = 0.0;
@@ -17475,6 +17516,11 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
         PCOMP* pPCOMP= (PCOMP*) pPr;
 		dPCompOff=pPCOMP->dZ0+dt;
 	  }
+	  else if (pPr->iType == 222)
+	  {
+		  PCOMPG* pPCOMP = (PCOMPG*)pPr;
+		  dPCompOff = pPCOMP->dZ0 + dt;
+	  }
     }
     if (((iDspFlgs & DSP_OFF)>0) && (dZOFFS!=DBL_MAX))
     {
@@ -17691,6 +17737,11 @@ if (pPr!=NULL)
   {
     PCOMP* pPCOMP= (PCOMP*) pPr;
     dPCompOff=pPCOMP->dZ0+dt;
+  }
+  else if (pPr->iType == 222)
+  {
+	  PCOMPG* pPCOMP = (PCOMPG*)pPr;
+	  dPCompOff = pPCOMP->dZ0 + dt;
   }
 }
 
@@ -18306,6 +18357,37 @@ Mat E_Object4::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 				if (pM != NULL)
 				{
 					dRho += pM->GetDensity()*dthk;
+					//effective density
+				}
+			}
+			if (dTotthk > 0)
+			{
+				dRho /= dTotthk;
+				dthk = dTotthk;
+			}
+			else
+			{
+				dRho = 0;
+				dthk = 0;
+			}
+		}
+		else if (pS->iType == 222)
+		{
+			PCOMPG* pSh = (PCOMPG*)pS;
+			dNSM = pSh->dNSM;
+			dTotthk = 0.0;
+			dRho = 0.0;
+			for (i = 0; i < pSh->iNoLays; i++)
+			{
+				dthk = pSh->T[i];
+				dTotthk += dthk;
+				dNSM = pSh->dNSM;
+				MID = pS->GetDefMatID();
+				if (MatT != NULL)
+					pM = MatT->GetItem(pSh->MID[i]);
+				if (pM != NULL)
+				{
+					dRho += pM->GetDensity() * dthk;
 					//effective density
 				}
 			}
@@ -38350,6 +38432,19 @@ void PCOMPG::AddLayer(int inPLYID, int inMID, double inT, double inThe, BOOL inS
 	}
 }
 
+double PCOMPG::GetThk()
+{
+	int i;
+	double dRet = 0;
+	for (i = 0; i < iNoLays; i++)
+	{
+		dRet += T[i];
+	}
+	if (bLAM == TRUE)
+		dRet *= 2;
+	return (dRet);
+}
+
 int PCOMPG::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
@@ -52352,8 +52447,11 @@ BOOL CEntEditDialog::OnInitDialog()
   if (pEnt != NULL)
   {
 	  Populate2();
-	  if (pEnt->iType == 2)
+	  BOOL pG = FALSE;
+	  if ((pEnt->iType == 2) || (pEnt->iType == 222))
 	  {
+		  if (pEnt->iType == 222)
+			  pG = TRUE;
 		  oSize.right = oSize.left + iW+iW;
 		  oSize.bottom = oSize.top + iH;
 		  this->MoveWindow(oSize, 0);
@@ -52361,7 +52459,7 @@ BOOL CEntEditDialog::OnInitDialog()
 		  pDrg->Create(_T("STATIC"), _T("Hi"), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
 			  CRect(iW, 0, iW+iW, iH), this, 1234);
 		  InitOGL();
-		  Build();
+		  Build(pG);
 
 	  }
 	  
@@ -52453,7 +52551,7 @@ if (pEnt->iType == 2)
 }
 }
 
-void CEntEditDialog::Build()
+void CEntEditDialog::Build(BOOL isPCOMPG)
 {
 	int i;
 	double dTheta;
@@ -52461,29 +52559,55 @@ void CEntEditDialog::Build()
 	double dT;
 	double dS;
 	int iM;
-	PCOMP* pP = (PCOMP*)pEnt;
-	vMat.Rotate(-90, 0, 5);
-	dS = 1.0 / pP->GetThk();
-	dZ = pP->dZ0;
-	dZ *= dS;
-	dTheta = pP->Theta[0];
-	iM = pP->MID[0];
-	dZ += 0.5 * dS * pP->T[0];
-	dT = dS * pP->T[0];
-	AddVisLayer(dTheta, dZ, dT, iM);
-	for (i = 1; i < pP->iNoLays; i++)
+	Property* pP;
+	if (isPCOMPG)
 	{
-		dTheta = pP->Theta[i];
-		iM = pP->MID[i];
-		dZ += 0.5 * dS * pP->T[i - 1];
-		dZ += 0.5 * dS * pP->T[i];
-		dT = dS * pP->T[i];
+		PCOMPG* pP = (PCOMPG*)pEnt;
+		vMat.Rotate(-90, 0, 5);
+		dS = 1.0 / pP->GetThk();
+		dZ = pP->dZ0;
+		dZ *= dS;
+		dTheta = pP->Theta[0];
+		iM = pP->MID[0];
+		dZ += 0.5 * dS * pP->T[0];
+		dT = dS * pP->T[0];
 		AddVisLayer(dTheta, dZ, dT, iM);
+		for (i = 1; i < pP->iNoLays; i++)
+		{
+			dTheta = pP->Theta[i];
+			iM = pP->MID[i];
+			dZ += 0.5 * dS * pP->T[i - 1];
+			dZ += 0.5 * dS * pP->T[i];
+			dT = dS * pP->T[i];
+			AddVisLayer(dTheta, dZ, dT, iM);
+		}
+	}
+	else
+	{
+		PCOMP* pP = (PCOMP*)pEnt;
+		vMat.Rotate(-90, 0, 5);
+		dS = 1.0 / pP->GetThk();
+		dZ = pP->dZ0;
+		dZ *= dS;
+		dTheta = pP->Theta[0];
+		iM = pP->MID[0];
+		dZ += 0.5 * dS * pP->T[0];
+		dT = dS * pP->T[0];
+		AddVisLayer(dTheta, dZ, dT, iM);
+		for (i = 1; i < pP->iNoLays; i++)
+		{
+			dTheta = pP->Theta[i];
+			iM = pP->MID[i];
+			dZ += 0.5 * dS * pP->T[i - 1];
+			dZ += 0.5 * dS * pP->T[i];
+			dT = dS * pP->T[i];
+			AddVisLayer(dTheta, dZ, dT, iM);
+		}
 	}
 
 }
 
-void CEntEditDialog::Build2()
+void CEntEditDialog::Build2(BOOL isPCOMPG)
 {
 	char S1[80];
 	CString sTemp = "";
@@ -52502,9 +52626,18 @@ void CEntEditDialog::Build2()
 	do
 	{
 		sTemp = m_List.GetItemText(iC, 1);
-		iM[iLC] = atoi(ExtractSubString2(1, sTemp));
-		dT[iLC] = atof(ExtractSubString2(2, sTemp));
-		dTheta[iLC] = atof(ExtractSubString2(3, sTemp));
+		if (isPCOMPG)
+		{
+			iM[iLC] = atoi(ExtractSubString2(2, sTemp));
+			dT[iLC] = atof(ExtractSubString2(3, sTemp));
+			dTheta[iLC] = atof(ExtractSubString2(4, sTemp));
+		}
+		else
+		{
+			iM[iLC] = atoi(ExtractSubString2(1, sTemp));
+			dT[iLC] = atof(ExtractSubString2(2, sTemp));
+			dTheta[iLC] = atof(ExtractSubString2(3, sTemp));
+		}
 		if (iM[iLC] < 1)
 		{
 			bExit = TRUE;
@@ -52699,7 +52832,12 @@ BOOL CEntEditDialog::PreTranslateMessage(MSG* pMsg)
 	{
 		if (pEnt->iType == 2)
 		{
-			Build2();
+			Build2(FALSE);
+			OglDraw();
+		}
+		else if (pEnt->iType == 222)
+		{
+			Build2(TRUE);
 			OglDraw();
 		}
 	}
