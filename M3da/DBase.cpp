@@ -16481,7 +16481,7 @@ if (pFile!=NULL)
         {pRet = NASReadCoord(pME,oCard,3, iCurFileNo);}
       else if ((sKwrd.Find("PSHELL") == 0))
         {NASReadPSHELL(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
-      else if ((sKwrd.Find("PCOMP ") == 0))
+      else if ((sKwrd.Find("PCOMP") == 0))
         {NASReadPCOMP(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PSOLID") == 0))
         {NASReadPSOLID(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
