@@ -20866,6 +20866,7 @@ void ME_Object::RelTo(G_Object* pThis, ObjList* pList, int iType)
 	{
 		if ((pThis->iObjType == 1) ||
 			(pThis->iObjType == 3) ||
+			(pThis->iObjType == 12) ||
 			(pThis->iObjType == 200) ||
 			(pThis->iObjType == 201) ||
 			(pThis->iObjType == 202))
@@ -20880,16 +20881,19 @@ void ME_Object::RelTo(G_Object* pThis, ObjList* pList, int iType)
 			else if ((iType == 1) && (pThis->iObjType == 3) && (pThis->pParent == this))
 			{
 				//Node related to element pThis
-				for (i = 0; i < iElNo; i++)
+				E_Object* pE = (E_Object*) pThis;
+				for (j = 0; j < pE->iNoNodes; j++)
 				{
-					if (pElems[i] == pThis)
-					{
-						for (j = 0; j < pElems[i]->iNoNodes; j++)
-						{
-							pList->AddEx(pElems[i]->GetNode(j));
-						}
-						break;
-					}
+					pList->AddEx(pE->GetNode(j));
+				}
+			}
+			else if ((iType == 1) && (pThis->iObjType == 12) && (pThis->pParent == this))
+			{
+				//Nodes related to coordsys
+				for (i = 0; i < iNdNo; i++)
+				{
+					if ((pNodes[i]->DefSys == pThis->iLabel) || (pNodes[i]->OutSys == pThis->iLabel))
+                        pList->AddEx(pNodes[i]);
 				}
 			}
 			else if ((iType == 1) && (pThis->iObjType == 321) && (pThis->pParent == this))
