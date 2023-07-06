@@ -20896,6 +20896,32 @@ void ME_Object::RelTo(G_Object* pThis, ObjList* pList, int iType)
                         pList->AddEx(pNodes[i]);
 				}
 			}
+			else if ((iType == 3) && (pThis->iObjType == 12) && (pThis->pParent == this))
+			{
+				//Elements related to coordsys
+				//iMCys need to move to E_Object as all element can have it
+				for (i = 0; i < iElNo; i++)
+				{
+					if (pElems[i]->iType == 94)
+					{
+						E_Object4* p4 = (E_Object4*) pElems[i];
+						if (p4->iMCys == pThis->iLabel)
+							pList->AddEx(pElems[i]);
+					}
+					else if (pElems[i]->iType == 91)
+					{
+						E_Object3* p3 = (E_Object3*)pElems[i];
+						if (p3->iMCys == pThis->iLabel)
+							pList->AddEx(pElems[i]);
+					}
+					else if (pElems[i]->iType == 136)
+					{
+						E_Object2* p2 = (E_Object2*)pElems[i];
+						if (p2->iCSYS == pThis->iLabel)
+							pList->AddEx(pElems[i]);
+					}
+				}
+			}
 			else if ((iType == 1) && (pThis->iObjType == 321) && (pThis->pParent == this))
 			{
 				//Node related to element pThis
