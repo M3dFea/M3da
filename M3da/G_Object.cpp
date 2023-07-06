@@ -38468,6 +38468,8 @@ int PCOMPG::GetVarHeaders(CString sVar[])
 	iNo++;
 	sVar[iNo] = "No Off Layers ";
 	iNo++;
+	sVar[iNo] = "Total Thickness ";
+	iNo++;
 	for (i = 0; i < iNoLays; i++)
 	{
 		sprintf_s(S1, "Layer %i", i + 1);
@@ -38509,6 +38511,9 @@ int PCOMPG::GetVarValues(CString sVar[])
 	sprintf_s(S1, "%i", iNoLays);
 	sVar[iNo] = S1;
 	iNo++;
+	sprintf_s(S1, "%g", GetThk());
+	sVar[iNo] = S1;
+	iNo++;
 	int i;
 	for (i = 0; i < iNoLays; i++)
 	{
@@ -38522,7 +38527,63 @@ int PCOMPG::GetVarValues(CString sVar[])
 
 void PCOMPG::PutVarValues(int iNo, CString sVar[])
 {
+	int i;
+	int iLay;
+	int iMID;
+	double dThk;
+	double dTheta;
+	int iOut;
+	CString sFT;
+	CString sSYM;
+	iFile = atoi(sVar[0]);
+	dZ0 = atof(sVar[1]);
+	dNSM = atof(sVar[2]);
+	dSB = atof(sVar[3]);
+	sFT = ExtractSubString2(1, sVar[4]);
+	FT = 0;
+	if (sFT == "HILL")
+		FT = 1;
+	else if (sFT == "HOFF")
+		FT = 2;
+	else if (sFT == "TSAI")
+		FT = 3;
+	else if (sFT == "STRESS")
+		FT = 4;
+	else if (sFT == "STRN")
+		FT = 5;
+	else if (sFT == "LARCO2")
+		FT = 6;
+	else if (sFT == "PUCK")
+		FT = 7;
+	else if (sFT == "MCT")
+		FT = 8;
+	dRefT = atof(sVar[5]);
+	dGE = atof(sVar[6]);
+	sSYM = ExtractSubString2(1, sVar[7]);
 
+	if (sSYM == "SYM")
+		bLAM = TRUE;
+	else
+		bLAM = FALSE;
+	iNoLays = atoi(sVar[8]);
+	int iP = 0;
+	for (i = 10; i < 10 + iNoLays; i++)
+	{
+		iLay = atoi(ExtractSubString2(1, sVar[i]));
+		iMID = atoi(ExtractSubString2(2, sVar[i]));
+		dThk = atof(ExtractSubString2(3, sVar[i]));
+		dTheta = atof(ExtractSubString2(4, sVar[i]));
+		iOut = atoi(ExtractSubString2(5, sVar[i]));
+		GPLYID[iP] = iLay;
+		MID[iP] = iMID;
+		T[iP] = dThk;
+		Theta[iP] = dTheta;
+		if (iOut == 0)
+			sOut[iP] = FALSE;
+		else
+			sOut[iP] = TRUE;
+		iP++;
+	}
 }
 
 
