@@ -103,7 +103,15 @@ class zELCR_Mnu: public zMnu
 public:
 E_Object* pE;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
-};
+}; 
+
+class zELINSSPG_Mnu : public zMnu
+{
+public:
+	E_Object* pE;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+}; 
+
 
 class zCVCR_Mnu: public zMnu
 {
@@ -776,6 +784,8 @@ class zNDMOLAB_Mnu: public zMnu
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
+
+
 
 class zELMOLAB_Mnu: public zMnu
 {

@@ -563,6 +563,7 @@ void CM3daView::OnMButtonUp(UINT nFlags, CPoint point)
 
   m_iFuncKey = 0;
   CView::OnMButtonUp(nFlags, point);
+  outtextMSG2("D");
   CDC* pDC = this->GetDC();
   GetDocument()->SetView(this);
   GetDocument()->Draw(tOrient.RetrieveMat(),pDC,4);

@@ -346,7 +346,8 @@ void ElsBetNodes(ObjList* Nodes,ObjList* Nodes2,int iNoOfTimes);
 void IntersectEls(ObjList* Els1);
 void ListAllProps();
 void ListAllMats();
-E_Object*  AddEl(int iPos,BOOL AddDsp);
+E_Object* AddEl(int iPos, BOOL AddDsp); 
+E_Object* InsSpringEl(int iPos, BOOL AddDsp);
 int  AddEl2(int pVnode[100], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C);
 void AddContPolyW(double dWght);
 void AddCurveFit(int p);
@@ -768,6 +769,7 @@ protected:
 
 	enum 
 	{
+        dispidReDrawWindow = 3L,
         dispidAddNode = 2L,
         dispidGetNo = 1L
 	};
@@ -777,6 +779,7 @@ public:
 //  afx_msg void OnSurfaceSweep();
 protected:
     void API_AddNode(DOUBLE X, DOUBLE Y, DOUBLE Z, LONG ID, LONG COL);
+    void ReDrawWindow();
 };
 
 

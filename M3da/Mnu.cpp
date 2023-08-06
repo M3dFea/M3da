@@ -2435,6 +2435,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "ELINSSPG")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zELINSSPG_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "LABGAP")
 	  {
 		  iResumePos = 0;
@@ -5642,6 +5652,55 @@ if (iStat == 100)
 }
 MenuEnd:
 return RetVal;
+}
+
+int zELINSSPG_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	int noNodes;
+
+	noNodes = cDBase->pCurrentMesh->GetNoNode(cDBase->iCurElemType);
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if ((CInMsg == "C"))//Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(1);
+			outtext2("//PICK NODE TO INSERT SPRING ELEMENT");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				iStat = 2;
+			}
+		}
+		if (iStat == 2)
+		{
+			pE = cDBase->InsSpringEl(S_initCnt, TRUE);
+			cDBase->S_Count = S_initCnt;
+			cDBase->ReDraw();
+			iStat = 0;
+			this->DoMenu("", Pt);
+		}
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
 }
 
 int zLMEAS_Mnu::DoMenu(CString CInMsg,CPoint Pt)

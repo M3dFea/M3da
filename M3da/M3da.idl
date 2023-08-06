@@ -65,6 +65,7 @@ library M3da
 		methods:
 			[id(1), helpstring("method GetNo")] LONG GetNo(void);
 			[id(2), helpstring("Add node to current mesh")] void AddNode(DOUBLE X, DOUBLE Y, DOUBLE Z, LONG ID, LONG COL);
+			[id(3), helpstring("Redraw graphics")] void ReDrawWindow();
 	};
 
 	//  Class information for DBase

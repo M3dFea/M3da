@@ -401,6 +401,7 @@ BEGIN
             MENUITEM "Intersect TRI Elements",      ID_ELEMENTMODIFIY_INTERSECTTRIELEMENTS
             MENUITEM "Colour byPID",                ID_ELEMENTMODIFIY_COLOURBYPID
             MENUITEM "Colour by Include File",      ID_ELEMENTMODIFIY_COLOURBYINCLUDEFILE
+            MENUITEM "Insert Spring on Rigid",      ID_ELEMENTMODIFIY_INSERTSPRINGONRIGID
         END
         POPUP "Property / Material Modify"
         BEGIN
@@ -1285,6 +1286,8 @@ BEGIN
     ID_LIST_GAPSBETWEENLABELS "List gaps between node and element labelling"
     ID_LIST_GAPSBETWEENMATSANDPROPSLABELS 
                             "Find gaps between materials and property labels"
+    ID_ELEMENTMODIFIY_INSERTSPRINGONRIGID 
+                            "Insert a spring element between rigid elements"
 END
 
 #endif    // English (United States) resources

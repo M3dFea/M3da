@@ -363,6 +363,7 @@ ON_COMMAND(ID_CURVETOOLS_ORTHOSNAP, &CM3daDoc::OnCurvetoolsOrthosnap)
 ON_COMMAND(ID_CURVEMODIFY_TRIM, &CM3daDoc::OnCurvemodifyTrim)
 ON_COMMAND(ID_LIST_GAPSBETWEENLABELS, &CM3daDoc::OnListGapsbetweenlabels)
 ON_COMMAND(ID_LIST_GAPSBETWEENMATSANDPROPSLABELS, &CM3daDoc::OnListGapsbetweenmatsandpropslabels)
+ON_COMMAND(ID_ELEMENTMODIFIY_INSERTSPRINGONRIGID, &CM3daDoc::OnElementmodifiyInsertspringonrigid)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6105,6 +6106,21 @@ void CM3daDoc::OnListGapsbetweenmatsandpropslabels()
 	{
 		outtextMSG2("LABGAPMP");
 		sLastcmd = "LABGAPMP";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnElementmodifiyInsertspringonrigid()
+{
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("ELINSSPG");
+		sLastcmd = "ELINSSPG";
 	}
 	else
 	{

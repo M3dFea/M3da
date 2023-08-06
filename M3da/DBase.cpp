@@ -9707,6 +9707,99 @@ else
 return (cAddedEl);
 }
 
+E_Object* DBase::InsSpringEl(int iPos, BOOL AddDsp)
+{
+	int iNo = pCurrentMesh->GetNoNode(iCurElemType);
+
+	E_Object* cAddedEl;
+	E_ObjectR* pELP=NULL;
+	E_Object* pOE=NULL;
+	Node* pENodes[200];
+	Node* pNP = NULL;
+	Node* pNS = NULL;
+	Node* pNewN = NULL;
+	ObjList* pList = new ObjList();
+	pList->Clear();
+	cAddedEl = NULL;
+	int i;
+	char S1[80];
+	CString OutT;
+	ME_Object* pMesh=NULL;
+
+	if (S_Buff[S_Count-1]->iObjType == 1)
+	{
+		pNP = (Node*) S_Buff[S_Count - 1];
+		pMesh = (ME_Object*)pNP->pParent;
+		pNewN = (Node*)pNP->Copy(pMesh);
+		pNewN->iLabel = pMesh->iNodeLab;
+		pMesh->iNodeLab++;
+		if (pMesh->iNdNo < MAX_FESIZE)
+		{
+			pMesh->pNodes[pMesh->iNdNo] = pNewN;
+			pMesh->iNdNo++;
+		}
+		else
+		{
+			outtext1("ERROR: Max node limit exceeded.");
+			delete(pNewN);
+			pNewN = NULL;
+		}
+		pMesh->RelTo(pNP, pList, 3);
+		if (pList->iNo == 2)
+		{
+			//Find primary element must be type 122 and with centre bide
+			if (pList->Objs[0]->iType == 122) 
+			{
+				pELP= (E_ObjectR*) pList->Objs[0];
+				if (pELP->pVertex[0] == pNP)
+				{
+					E_Object* pOE = (E_Object*)pList->Objs[1];
+					pOE->RepNodeInEl(pNP, pNewN);
+				}
+			}
+			if ((pNewN == NULL) && (pList->Objs[1]->iType == 122))
+			{
+				pELP = (E_ObjectR*)pList->Objs[1];
+				if (pELP->pVertex[0] == pNP)
+				{
+					E_Object* pOE = (E_Object*)pList->Objs[0];
+					pOE->RepNodeInEl(pNP, pNewN);
+				}
+			}
+		}
+		else
+		{
+				outtext1("ERROR: Two suitable rbes not found.");
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No mesh attached.");
+	}
+	
+
+	if ((pNP!=NULL) && (pNewN != NULL) && (pMesh != NULL))
+	{
+		pENodes[0] = pNP;
+		pENodes[1] = pNewN;
+		cAddedEl = pMesh->AddEl(pENodes, pCurrentMesh->iElementLab, 124, 136, -1, -1, 2, 1, 1, 1, AddDsp, -1, 0);
+		pCurrentMesh->iElementLab++;
+		cAddedEl->SetToScr(&pModelMat, &pScrMat);
+		AddTempGraphics(cAddedEl);
+		Dsp_Add(cAddedEl);
+		sprintf_s(S1, "Element %i Creaqted ND1 %i ND2 %i", " : ", cAddedEl->iLabel, pNP->iLabel, pNewN->iLabel);
+		outtext1(S1);
+	}
+	else
+	{
+		outtext1("ERROR: No Element Created");
+	}
+	pList->Clear();
+	delete (pList);
+	pList = NULL;
+	return (cAddedEl);
+}
+
 
 
 
@@ -19911,6 +20004,7 @@ END_MESSAGE_MAP()
 BEGIN_DISPATCH_MAP(DBase, CCmdTarget)
 	DISP_FUNCTION_ID(DBase, "GetNo", dispidGetNo, GetNo, VT_I4, VTS_NONE)
 	DISP_FUNCTION_ID(DBase, "AddNode", dispidAddNode, API_AddNode, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_I4 VTS_I4)
+	DISP_FUNCTION_ID(DBase, "ReDrawWindow", dispidReDrawWindow, ReDrawWindow, VT_EMPTY, VTS_NONE)
 END_DISPATCH_MAP()
 
 // Note: we add support for IID_IDBase to support typesafe binding
@@ -22469,4 +22563,13 @@ void DBase::API_AddNode(DOUBLE X, DOUBLE Y, DOUBLE Z, LONG ID, LONG COL)
 		v.Set(X, Y, Z);
 		pCurrentMesh->AddNode(v, ID, -1, -1, COL, 0, 0);
 	}
+}
+
+
+void DBase::ReDrawWindow()
+{
+	AFX_MANAGE_STATE(AfxGetAppModuleState());
+	InvalidateOGL();
+	ReDraw();
+	// TODO: Add your dispatch handler code here
 }
