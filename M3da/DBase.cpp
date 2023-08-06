@@ -9710,7 +9710,7 @@ return (cAddedEl);
 E_Object* DBase::InsSpringEl(int iPos, BOOL AddDsp)
 {
 	int iNo = pCurrentMesh->GetNoNode(iCurElemType);
-
+	int i;
 	E_Object* cAddedEl;
 	E_ObjectR* pELP=NULL;
 	E_Object* pOE=NULL;
@@ -9721,7 +9721,6 @@ E_Object* DBase::InsSpringEl(int iPos, BOOL AddDsp)
 	ObjList* pList = new ObjList();
 	pList->Clear();
 	cAddedEl = NULL;
-	int i;
 	char S1[80];
 	CString OutT;
 	ME_Object* pMesh=NULL;
@@ -9745,27 +9744,19 @@ E_Object* DBase::InsSpringEl(int iPos, BOOL AddDsp)
 			pNewN = NULL;
 		}
 		pMesh->RelTo(pNP, pList, 3);
-		if (pList->iNo == 2)
+		if (pList->iNo > 1)
 		{
 			//Find primary element must be type 122 and with centre bide
-			if (pList->Objs[0]->iType == 122) 
-			{
-				pELP= (E_ObjectR*) pList->Objs[0];
-				if (pELP->pVertex[0] == pNP)
+
+				for (i = 0; i < pList->iNo; i++)
 				{
-					E_Object* pOE = (E_Object*)pList->Objs[1];
-					pOE->RepNodeInEl(pNP, pNewN);
+					pELP = (E_ObjectR*)pList->Objs[i];
+					if ((pELP->iType == 122) && (pELP->pVertex[0] != pNP))
+					{
+						pELP->RepNodeInEl(pNP, pNewN);
+					}
 				}
-			}
-			if ((pNewN == NULL) && (pList->Objs[1]->iType == 122))
-			{
-				pELP = (E_ObjectR*)pList->Objs[1];
-				if (pELP->pVertex[0] == pNP)
-				{
-					E_Object* pOE = (E_Object*)pList->Objs[0];
-					pOE->RepNodeInEl(pNP, pNewN);
-				}
-			}
+			
 		}
 		else
 		{
