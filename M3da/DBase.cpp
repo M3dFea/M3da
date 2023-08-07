@@ -9758,10 +9758,6 @@ E_Object* DBase::InsSpringEl(int iPos, BOOL AddDsp)
 				}
 			
 		}
-		else
-		{
-				outtext1("ERROR: Two suitable rbes not found.");
-		}
 	}
 	else
 	{
@@ -9778,7 +9774,7 @@ E_Object* DBase::InsSpringEl(int iPos, BOOL AddDsp)
 		cAddedEl->SetToScr(&pModelMat, &pScrMat);
 		AddTempGraphics(cAddedEl);
 		Dsp_Add(cAddedEl);
-		sprintf_s(S1, "Element %i Creaqted ND1 %i ND2 %i", " : ", cAddedEl->iLabel, pNP->iLabel, pNewN->iLabel);
+		sprintf_s(S1, "Element %i created between nodes %i %i", cAddedEl->iLabel, pNP->iLabel, pNewN->iLabel);
 		outtext1(S1);
 	}
 	else
