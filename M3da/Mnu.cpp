@@ -4452,7 +4452,7 @@ if (iStat == 2)
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
     cDBase->FILTER.SetAll();
-	  outtext2("//PICK CENTRE POINT ON REFLECTION PLAIN");
+	  outtext2("//PICK CENTRE POINT ON REFLECTION PLANE");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4461,7 +4461,7 @@ if (iStat == 2)
 }
 else if (iStat == 3)
 {
-	  outtext2("//POINT ON X ON REFLECTION PLAIN");
+	  outtext2("//POINT ON X ON REFLECTION PLANE");
     iResumePos=4;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4470,7 +4470,7 @@ else if (iStat == 3)
 }
 else if (iStat == 4)
 {
-	  outtext2("//POINT ON XY ON REFLECTION PLAIN");
+	outtext2("//POINT ON XY ON REFLECTION PLANE");
     iResumePos=5;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -14203,9 +14203,10 @@ int zELSWEEPB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("//PICK BEAM ELEMENTS TO SWEEP");
+			outtext2("//PICK SHELL EDGES TO SWEEP OUT");
+			outtext2("//Note: You must do a free edge check first to make edges visable.");
 			cDBase->FILTER.Clear();
-			cDBase->FILTER.SetFilter(3);
+			cDBase->FILTER.SetFilter(8);
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -14226,7 +14227,7 @@ int zELSWEEPB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			cDBase->S_Save(cDBase->OTemp);
 			cDBase->S_Count = 0;
 			cDBase->FILTER.SetAll();
-			outtext2("//ENTER DIR 0 (-ve) 1 (+ve)");
+			outtext2("//ENTER DIR DISTANCE");
 			SetFocus();
 			iResumePos = 3;
 			iCancelPos = 100;
@@ -14236,11 +14237,21 @@ int zELSWEEPB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 3)
 		{
+			outtext2("//ENTER NO OF ELEMENT ROWS");
+			SetFocus();
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
 			C3dVector ptNo;
 			C3dVector ptVec;
 			ptNo = cDBase->DB_PopBuff();
 			ptVec = cDBase->DB_PopBuff();
-			cDBase->ElSweepB(cDBase->OTemp, (int) ptNo.x);
+			cDBase->ElSweepB(cDBase->OTemp, ptVec.x, (int) ptNo.x );
 			cDBase->S_Res();
 			RetVal = 1;
 		}

@@ -512,6 +512,7 @@ public:
   afx_msg void OnListGapsbetweenlabels();
   afx_msg void OnListGapsbetweenmatsandpropslabels();
   afx_msg void OnElementmodifiyInsertspringonrigid();
+  afx_msg void OnFemtoolsSweepedgesoutward();
 };
 
 

@@ -268,6 +268,7 @@ BEGIN
             MENUITEM "Free TRI Mesh",               ID_MESH_FREETRIMESH
             MENUITEM "Mapped QUAD Mesh",            ID_MESH_MAPPEDSURFACEMESH
             MENUITEM "Sweep Elements",              ID_MESH_SWEEPELEMENTS
+            MENUITEM "Sweep Edges Outward",         ID_FEMTOOLS_SWEEPEDGESOUTWARD
             MENUITEM "Sweep Nodes to Beams",        ID_FEMTOOLS_SWEEPNODESTOBEAMS33361
             MENUITEM "Sweep Nodes to Shells",       ID_FEMTOOLS_SWEEPNODESTOSHELLS33362
             MENUITEM "Build Assembly Mesh",         ID_MESH_BUILDASSEMBLYMESH
@@ -1288,6 +1289,8 @@ BEGIN
                             "Find gaps between materials and property labels"
     ID_ELEMENTMODIFIY_INSERTSPRINGONRIGID 
                             "Insert a spring element between rigid elements"
+    ID_FEMTOOLS_SWEEPEDGESOUTWARD 
+                            "Sweep shell edges outwards to create new rows of elements."
 END
 
 #endif    // English (United States) resources

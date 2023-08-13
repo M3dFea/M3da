@@ -364,6 +364,7 @@ ON_COMMAND(ID_CURVEMODIFY_TRIM, &CM3daDoc::OnCurvemodifyTrim)
 ON_COMMAND(ID_LIST_GAPSBETWEENLABELS, &CM3daDoc::OnListGapsbetweenlabels)
 ON_COMMAND(ID_LIST_GAPSBETWEENMATSANDPROPSLABELS, &CM3daDoc::OnListGapsbetweenmatsandpropslabels)
 ON_COMMAND(ID_ELEMENTMODIFIY_INSERTSPRINGONRIGID, &CM3daDoc::OnElementmodifiyInsertspringonrigid)
+ON_COMMAND(ID_FEMTOOLS_SWEEPEDGESOUTWARD, &CM3daDoc::OnFemtoolsSweepedgesoutward)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6121,6 +6122,22 @@ void CM3daDoc::OnElementmodifiyInsertspringonrigid()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("ELINSSPG");
 		sLastcmd = "ELINSSPG";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnFemtoolsSweepedgesoutward()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("ELSWEEPB");
+		sLastcmd = "ELSWEEPB";
 	}
 	else
 	{

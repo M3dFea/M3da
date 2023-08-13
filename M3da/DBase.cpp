@@ -8673,6 +8673,82 @@ C3dVector DBase::GetNodalNormal(Node* pN, ObjList* ELS)
 	return (vRet);
 }
 
+
+//*********************************************************************************
+// Pre: Node
+// Post: Nodal averaged normal calculated
+//*********************************************************************************
+C3dVector DBase::GetNodalNormal2(Node* pN, ObjList* ELS)
+{
+	int i;
+	double dC = 0;
+	C3dVector vRet;
+	C3dVector vZ;
+	C3dVector vDir;
+	C3dVector vN;
+	vZ.Set(0, 0, 1);
+	vRet.Set(0, 0, 0);
+	ME_Object* ME = pCurrentMesh;
+
+	eEdge* pEE1 = (eEdge*) ELS->Objs[0];
+	for (i = 0; i < ELS->iNo; i++)
+	{
+		eEdge* pEE = (eEdge*) ELS->Objs[i];
+		if ((pEE->pVertex[0] == pN) || (pEE->pVertex[1] == pN))
+		{
+			vDir.x = pEE->pVertex[1]->Pt_Point->x - pEE->pVertex[0]->Pt_Point->x;
+			vDir.y = pEE->pVertex[1]->Pt_Point->y - pEE->pVertex[0]->Pt_Point->y;
+			vDir.z = pEE->pVertex[1]->Pt_Point->z - pEE->pVertex[0]->Pt_Point->z;
+			vDir.Normalize();
+			vN = vDir.Cross(vZ);
+			vRet.x += vN.x;
+			vRet.y += vN.y;
+			vRet.z += vN.z;
+			dC += 1.0;
+		}
+
+	}
+	double dS;
+	dS = 1 / dC;
+	vRet *= dS;
+	vRet.Normalize();
+	return (vRet);
+}
+
+double DBase::DirCheck(C3dVector vN, ObjList* ELS)
+{
+	double dRet = 1;
+	double dDot;
+	C3dVector vEC;
+	C3dVector vEd;
+	C3dVector vNe;
+	C3dVector vNc;
+	ObjList* pEls = new ObjList();
+	eEdge* eE = NULL;
+	//find edge
+	eE = (eEdge*)ELS->Objs[0];
+	pCurrentMesh->RelTo(eE->pVertex[0], pEls,3);
+	if (pEls->iNo > 0)
+	{
+		vEC = pEls->Objs[0]->Get_Centroid();
+		vEC -= eE->pVertex[0]->Get_Centroid();
+		vEd = eE->pVertex[1]->Get_Centroid();
+		vEd-= eE->pVertex[0]->Get_Centroid();
+		vEC.Normalize();
+		vEd.Normalize();
+		vNc = vEd.Cross(vEC);
+		vNe = vEd.Cross(vN);
+		dDot = vNc.Dot(vNe);
+		if (dDot > 0)
+			dRet = -1;
+	}
+	else
+	{
+		outtext1("ERROR: Sweep direction could not be calculated.");
+	}
+	delete (pEls);
+	return(dRet);
+}
 //*********************************************************************************
 // Pre: Valid OML fronts=
 // Post: Angle between adjacent segements calculated and stored on the front
@@ -8706,7 +8782,77 @@ void DBase::CalcAngles(cLinkedList* NDF)
 	}
 }
 
+double DBase::CalcAngle(BOOL bL, Node* pN, ObjList* NList)
+{
+	int i;
+	int iB, iA;
+	int ind = -1;
+	double dRet = 180;
+	C3dVector vA, vB, vC;
+	C3dVector v1, v2;
+	for (i = 0; i < NList->iNo;i++)
+	{
+		if (NList->Objs[i] == pN)
+		{
+			ind = i;
+			break;
+		}
+	}
+	if (bL)
+	{
+		if ((ind > 0) && (ind < NList->iNo - 1))
+		{
+			iB = ind - 1;
+			iA = ind + 1;
+		}
+		else if (ind == 0)
+		{
+			iB = NList->iNo - 1;
+			iA = ind + 1;
+		}
+		else if (ind == NList->iNo - 1)
+		{
+			iB = ind - 1;
+			iA = 0;
+		}
+		else
+		{
+			ind = 0;
+			iA = 0;
+			iB = 0;
+		}
+		vC = NList->Objs[ind]->Get_Centroid();
+		vA = NList->Objs[iA]->Get_Centroid();
+		vB = NList->Objs[iB]->Get_Centroid();
+		v1 = vA;
+		v2 = vB;
+		v1 -= vC;
+		v2 -= vC;
+		v1.Normalize();
+		v2.Normalize();
+		dRet = acos(v1.Dot(v2)) * 57.2957795130931;
+	}
+	else
+	{
+		if ((ind > 0) && (ind < NList->iNo - 1))
+		{
+			iB = ind - 1;
+			iA = ind + 1;
+			vC = NList->Objs[ind]->Get_Centroid();
+			vA = NList->Objs[iA]->Get_Centroid();
+			vB = NList->Objs[iB]->Get_Centroid();
+			v1 = vA;
+			v2 = vB;
+			v1 -= vC;
+			v2 -= vC;
+			v1.Normalize();
+			v2.Normalize();
+			dRet = acos(v1.Dot(v2)) * 57.2957795130931;
+		}
+	}
 
+	return(dRet);
+}
 
 
 //*********************************************************************************
@@ -8905,6 +9051,49 @@ void DBase::GenElements(cLinkedList* NDF)
 }
 
 //*********************************************************************************
+// Pre: Valid fronts
+// Post: Elements generated between front
+//*********************************************************************************
+void DBase::GenElements2(BOOL bL,ObjList* NF1, ObjList* NF2)
+{
+	Node* pENodes[100];
+	int i;
+	Node* p1;
+	Node* p2;
+	Node* p3;
+	Node* p4;
+	Node* p43;
+	E_Object* pEL;
+	for (i=0;i<NF1->iNo-1;i++)
+	{
+
+		p1 = (Node*) NF1->Objs[i];
+		p2 = (Node*) NF1->Objs[i+1];
+		p3 = (Node*)NF2->Objs[i + 1];
+		p4 = (Node*)NF2->Objs[i];
+        pENodes[0] = p1;
+		pENodes[1] = p4;
+		pENodes[2] = p3;
+		pENodes[3] = p2;
+        pEL = pCurrentMesh->AddEl(pENodes, pCurrentMesh->iElementLab, 74, 94, 1, 1, 4, 0, 0, 0, 0, -1, 0);
+		pCurrentMesh->iElementLab++;
+	}
+	if (bL) //last elemen
+	{
+		p1 = (Node*)NF1->Objs[NF1->iNo - 1];
+		p2 = (Node*)NF1->Objs[0];
+		p3 = (Node*)NF2->Objs[0];
+		p4 = (Node*)NF2->Objs[NF1->iNo - 1];
+		pENodes[0] = p1;
+		pENodes[1] = p4;
+		pENodes[2] = p3;
+		pENodes[3] = p2;
+		pEL = pCurrentMesh->AddEl(pENodes, pCurrentMesh->iElementLab, 74, 94, 1, 1, 4, 0, 0, 0, 0, -1, 0);
+		pCurrentMesh->iElementLab++;
+	}
+}
+
+//*********************************************************************************
 // Pre: Valid fronts and resulting element colour
 // Post: Elements generated 
 //*********************************************************************************
@@ -8978,16 +9167,32 @@ void DBase::CreatTestPCOMPS()
 //		Test pcomp mush have aready been created by calling "TEST"
 // Post: 1d elements extruded to 2d based on attached PCOMPG
 //*********************************************************************************
-void DBase::ElSweepB(ObjList* Items, int iDir)
+void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 {
-	int i;
+
+	char S1[80];
+	double dDir = 1;
+	int i,j,k;
+	int iDir = 1;
+	C3dVector vNarray[10000];
+	double dAngarray[10000];
+	BOOL bStop = FALSE; 
+	BOOL bLoop = FALSE;
 	c2dFront* oF;
 	C3dVector vA;
-	E_Object* El;
-	ObjList* ELF = new ObjList;
-	cLinkedList* NDF = new cLinkedList();
-	NDF->DeleteAll();
-	BOOL bFirst = TRUE;
+	C3dVector vN;
+	C3dVector vNd;
+	eEdge* Ed=NULL;
+	eEdge* EC = NULL;
+	ObjList* ELF = new ObjList();
+	ObjList* EFALL = new ObjList();
+	ObjList* NDF1 = new ObjList();
+	ObjList* NDF2 = new ObjList();
+	double dCorr;
+	int iCC = 0;
+	double dA;
+	dDist /= iNo;
+	
 	// Find all nodes on the OML and store as nodal front in linked list NDF
 	// Need to items supplied to PROC are elements and are 1d should also
 	// chain the 1d element to make sure are continuous
@@ -8995,57 +9200,120 @@ void DBase::ElSweepB(ObjList* Items, int iDir)
 	{
 		for (i = 0; i < Items->iNo; i++)		//For all selected items
 		{
-			if (Items->Objs[i]->iObjType == 3)	//Check its an element
+			if (Items->Objs[i]->iObjType == 8)	//Check its an edges
 			{
-				El = (E_Object*)Items->Objs[i];
-				if ((El->iType == 21))			//Check its a line element
-				{
-					E_Object2B* pEB = (E_Object2B*)El;
-					ELF->Add(pEB);
-				}
+				Ed = (eEdge*)Items->Objs[i];
+				EFALL->Add(Ed);  //All edges stored in ELF
 			}
 		}
-		for (i = 0; i < ELF->iNo; i++)		//For all selected items
+		while (EFALL->iNo > 0)
 		{
-					E_Object2B* pEB = (E_Object2B*) ELF->Objs[i];
-					if (bFirst)					// if its the first element take node 0
-					{  
-						oF = new c2dFront();
-						NDF->Add(oF);			
-						oF->fNodes->Add(pEB->GetNode(0));
-						oF->iPID = pEB->PID;
-						oF->vN = GetNodalNormal((Node*) pEB->GetNode(0), ELF);
-						if (iDir == 0)
-							oF->vN *= -1.0;
-						oF = new c2dFront();
-						NDF->Add(oF);
-						oF->fNodes->Add(pEB->GetNode(1));
-						oF->iPID = pEB->PID;
-						oF->vN = GetNodalNormal((Node*) pEB->GetNode(1), ELF);
-						if (iDir == 0)
-							oF->vN *= -1.0;
+			BOOL bFirst = TRUE;
+			bStop = FALSE;
+			ELF->Clear();
+			Ed = (eEdge*) EFALL->Objs[0]; //The edge to chain
+			ELF->Add(Ed);
+			EFALL->Remove(Ed);
+			while (!bStop)
+			{   //Forward direction from N2
+				bStop = TRUE;
+				iCC = 0;
+				while (iCC< EFALL->iNo)
+				{
+					EC = (eEdge*) EFALL->Objs[iCC];
+					if (EC->pVertex[0] == Ed->pVertex[1])
+					{
+						ELF->Add(EC);
+						Ed = EC;
+						EFALL->Remove(EC);
+						iCC=0;
+						bStop = FALSE;
+						break;
+					}
+					else if (EC->pVertex[1] == Ed->pVertex[1])
+					{
+						EC->Reverse();
+						ELF->Add(EC);
+						Ed = EC;
+						EFALL->Remove(EC);
+						iCC = 0;
+						bStop = FALSE;
+						break;
+					}
+					iCC++;
+				}
+			}
+			//Create Node front
+			NDF1->Clear();
+			for (i = 0; i < ELF->iNo; i++)
+			{
+				Node* pN;
+				eEdge* pEdge;
+				pEdge = (eEdge*)ELF->Objs[i];
+				sprintf_s(S1, "%i %i", pEdge->pVertex[0]->iLabel, pEdge->pVertex[1]->iLabel);
+				outtext1(S1);
+				if (bFirst)
+				{
+					NDF1->Add(pEdge->pVertex[0]);
+					bFirst = FALSE;
+				}
+				NDF1->AddEx(pEdge->pVertex[1]);
+
+			}
+			NDF2->Clear();
+			bFirst = TRUE;
+			bLoop = FALSE;
+			eEdge* ES = (eEdge*) ELF->Objs[0];
+			eEdge* EE = (eEdge*) ELF->Objs[ELF->iNo-1];
+			if (ES->pVertex[0] == EE->pVertex[1])
+				bLoop = TRUE;
+			for(j = 0; j < iNo; j++)
+			{
+				for (i = 0; i < NDF1->iNo; i++)
+				{
+					Node* pN = (Node*)NDF1->Objs[i];
+					vNd = pN->Get_Centroid();
+					if (j == 0)
+					{
+						vN = GetNodalNormal2(pN, ELF);
+						vNarray[i] = vN;
+						dA = CalcAngle(bLoop, pN, NDF1);
+						dAngarray[i] = dA;
+					}
+					else
+					{
+						vN = vNarray[i];
+						dA=dAngarray[i];
+					}
+					
+					if (bFirst)
+					{
+						dDir = DirCheck(vN, ELF);
 						bFirst = FALSE;
 					}
-					else									//take node 1
-					{
-						oF = new c2dFront();
-						NDF->Add(oF);
-						oF->fNodes->Add(pEB->GetNode(1));	//AddEx
-						oF->iPID = pEB->PID;
-						oF->vN = GetNodalNormal((Node*) pEB->GetNode(1), ELF);
-						if (iDir == 0)
-							oF->vN *= -1.0;
-					}
+					dCorr = 1 / sin(0.017453 * (dA / 2));
+					vN *= dDir * dDist * dCorr;
+					vNd += vN;
+					NDF2->Add(pCurrentMesh->AddNode(vNd, pCurrentMesh->iNodeLab, -1, -1, 124, 0, 0));
+					pCurrentMesh->iNodeLab++;
+				}
+				GenElements2(bLoop, NDF1, NDF2);		//Generate elements between fronts
+				NDF1->Clear();
+				for (k=0;k<NDF2->iNo;k++)
+				   NDF1->Add(NDF2->Objs[k]);
+				NDF2->Clear();
+				
+			}
+			InvalidateOGL();		//Invalidate graphics database
+			ReDraw();				//Regen graphics database
 		}
-		CalcAngles(NDF);		//Calculate angle between segements 
-		GenFronts(NDF,iDir);	//Generate the node fronts based on PID
-		ChkIntersects(NDF);		//Sort any front intersection
-		GenElements(NDF);		//Generate elements between fronts
-		AddObj(NDF);			//Add front to database
-		InvalidateOGL();		//Invalidate graphics database
-		ReDraw();				//Regen graphics database
+	}
+	else
+	{
+		outtext1("ERROR: No edges selected.");
 	}
 	delete(ELF);
+	delete(EFALL);
 }
 
 

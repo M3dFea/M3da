@@ -1330,6 +1330,17 @@ ObjList::~ObjList()
 	//DeleteAll();
 }
 
+void ObjList::InsertAt(int iPos, G_Object* inItem)
+{
+	int i;
+	for (i = iPos;i<iNo;i++)
+	{
+		Objs[iNo - i] = Objs[iNo - i - 1];
+	}
+	iNo++;
+}
+
+
 void ObjList::Add(G_Object* inItem)
 {
 if (iNo<MAX_GP_ITEMS)
@@ -2794,6 +2805,16 @@ void eEdge::Info()
 	sprintf_s(S1, "LAB: %i X: %f Y: %f Z: %f", pVertex[1]->iLabel, pVertex[1]->Pt_Point->x, pVertex[1]->Pt_Point->y, pVertex[1]->Pt_Point->z);
 	outtext1(_T(S1));
 }
+
+void eEdge::Reverse()
+{
+	Node* pN;
+	pN = pVertex[0];
+	pVertex[0] = pVertex[1];
+	pVertex[1] = pN;
+}
+
+
 //0 not the same
 //1 the same
 //2 the same bit wrond direction

@@ -659,14 +659,18 @@ void ViewLam(int iP);
 //                  Drap Demo 22/062020 BlowsR
 //******************************************************************
 C3dVector GetNodalNormal(Node* pN, ObjList* ELS);
+C3dVector GetNodalNormal2(Node* pN, ObjList* ELS);
+double DirCheck(C3dVector vN, ObjList* ELS);
 void CalcAngles(cLinkedList* NDF);
+double CalcAngle(BOOL bL, Node* pN,ObjList* NDF);
 void GenFronts(cLinkedList* NDF,int iDir);
 BOOL MoveFront(c2dFront* pMF);
 void ChkIntersects(cLinkedList* NDF);
 void GenBEamElements(cLinkedList* NDF, int iCOl);
 void GenElements(cLinkedList* NDF);
+void GenElements2(BOOL bL,ObjList* NF1, ObjList* NF2);
 void CreatTestPCOMPS();
-void ElSweepB(ObjList* Items, int iDir);   //*** MAIN ***
+void ElSweepB(ObjList* Items,double dDist, int iNo);   //*** MAIN ***
 //******************************************************************
 void OffSet(G_Object* pOff,C3dVector vDir,double Dist);
 void MapMesh(double dU, double dV);
