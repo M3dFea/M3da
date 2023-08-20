@@ -1338,6 +1338,7 @@ void ObjList::InsertAt(int iPos, G_Object* inItem)
 		Objs[iNo - i] = Objs[iNo - i - 1];
 	}
 	iNo++;
+	Objs[iPos] = inItem;
 }
 
 

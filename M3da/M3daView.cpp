@@ -553,7 +553,7 @@ ReleaseDC(pDC);
 void CM3daView::OnMButtonDblClk(UINT nFlags, CPoint point)
 {
   // TODO: Add your message handler code here and/or call default
-  outtextMSG2("D");	
+  outtextMSG2("C");	
   CView::OnMButtonDblClk(nFlags, point);
 }
 

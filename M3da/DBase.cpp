@@ -9172,7 +9172,7 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 
 	char S1[80];
 	double dDir = 1;
-	int i,j,k;
+	int i,j,k,m;
 	int iDir = 1;
 	C3dVector vNarray[10000];
 	double dAngarray[10000];
@@ -9192,7 +9192,7 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 	int iCC = 0;
 	double dA;
 	dDist /= iNo;
-	
+
 	// Find all nodes on the OML and store as nodal front in linked list NDF
 	// Need to items supplied to PROC are elements and are 1d should also
 	// chain the 1d element to make sure are continuous
@@ -9202,7 +9202,7 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 		{
 			if (Items->Objs[i]->iObjType == 8)	//Check its an edges
 			{
-				Ed = (eEdge*)Items->Objs[i];
+				Ed = (eEdge*) Items->Objs[i];
 				EFALL->Add(Ed);  //All edges stored in ELF
 			}
 		}
@@ -9243,6 +9243,7 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 					iCC++;
 				}
 			}
+
 			//Create Node front
 			NDF1->Clear();
 			for (i = 0; i < ELF->iNo; i++)
@@ -9252,14 +9253,15 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 				pEdge = (eEdge*)ELF->Objs[i];
 				sprintf_s(S1, "%i %i", pEdge->pVertex[0]->iLabel, pEdge->pVertex[1]->iLabel);
 				outtext1(S1);
+
 				if (bFirst)
 				{
 					NDF1->Add(pEdge->pVertex[0]);
 					bFirst = FALSE;
 				}
 				NDF1->AddEx(pEdge->pVertex[1]);
-
 			}
+			outtext1("---");
 			NDF2->Clear();
 			bFirst = TRUE;
 			bLoop = FALSE;
@@ -9299,6 +9301,47 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 				}
 				GenElements2(bLoop, NDF1, NDF2);		//Generate elements between fronts
 				NDF1->Clear();
+				//Smooth
+				Node* nB;
+				Node* nA;
+				Node* nC;
+				for (m = 0; m < 3; m++)
+				{
+					for (k = 0; k < NDF2->iNo ; k++)
+					{
+						if ((dAngarray[k] > 179) && (dAngarray[k] < 181))
+						{
+							if ((bLoop) && (k == 0))
+							{
+								nB = (Node*)NDF2->Objs[NDF2->iNo-1];
+								nA = (Node*)NDF2->Objs[k + 1];
+								nC = (Node*)NDF2->Objs[k];
+								nC->Pt_Point->x = (nB->Pt_Point->x + nA->Pt_Point->x) / 2;
+								nC->Pt_Point->y = (nB->Pt_Point->y + nA->Pt_Point->y) / 2;
+								nC->Pt_Point->z = (nB->Pt_Point->z + nA->Pt_Point->z) / 2;
+							}
+							else if ((bLoop) && (k == NDF2->iNo - 1))
+							{
+								nB = (Node*)NDF2->Objs[k - 1];
+								nA = (Node*)NDF2->Objs[0];
+								nC = (Node*)NDF2->Objs[k];
+								nC->Pt_Point->x = (nB->Pt_Point->x + nA->Pt_Point->x) / 2;
+								nC->Pt_Point->y = (nB->Pt_Point->y + nA->Pt_Point->y) / 2;
+								nC->Pt_Point->z = (nB->Pt_Point->z + nA->Pt_Point->z) / 2;
+							}
+							else if ((k>0) && (k< NDF2->iNo-1))
+							{
+								nB = (Node*)NDF2->Objs[k - 1];
+								nA = (Node*)NDF2->Objs[k + 1];
+								nC = (Node*)NDF2->Objs[k];
+								nC->Pt_Point->x = (nB->Pt_Point->x + nA->Pt_Point->x) / 2;
+								nC->Pt_Point->y = (nB->Pt_Point->y + nA->Pt_Point->y) / 2;
+								nC->Pt_Point->z = (nB->Pt_Point->z + nA->Pt_Point->z) / 2;
+							}
+						}
+
+					}
+				}
 				for (k=0;k<NDF2->iNo;k++)
 				   NDF1->Add(NDF2->Objs[k]);
 				NDF2->Clear();
@@ -9314,6 +9357,8 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 	}
 	delete(ELF);
 	delete(EFALL);
+	delete(NDF1);
+	delete(NDF2);
 }
 
 
