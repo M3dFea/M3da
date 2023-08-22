@@ -9305,7 +9305,7 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 				Node* nB;
 				Node* nA;
 				Node* nC;
-				for (m = 0; m < 3; m++)
+				for (m = 0; m < 2; m++)
 				{
 					for (k = 0; k < NDF2->iNo ; k++)
 					{
