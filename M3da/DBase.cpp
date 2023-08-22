@@ -8830,7 +8830,13 @@ double DBase::CalcAngle(BOOL bL, Node* pN, ObjList* NList)
 		v2 -= vC;
 		v1.Normalize();
 		v2.Normalize();
-		dRet = acos(v1.Dot(v2)) * 57.2957795130931;
+		double dDot;
+		dDot = v1.Dot(v2);
+		if (dDot > 1) 
+			dDot = 1;
+		if (dDot<-1)
+			dDot = -1; 
+		dRet = acos(dDot) * 57.2957795130931;
 	}
 	else
 	{
