@@ -9249,6 +9249,47 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 					iCC++;
 				}
 			}
+			bLoop = FALSE;
+			eEdge* ES = (eEdge*)ELF->Objs[0];
+			eEdge* EE = (eEdge*)ELF->Objs[ELF->iNo - 1];
+			if (ES->pVertex[0] == EE->pVertex[1])
+				bLoop = TRUE;
+			if (!bLoop)  
+			{
+				Ed = (eEdge*)ELF->Objs[0]; //The edge to chain
+				bStop = FALSE;
+				while (!bStop)
+				{   //backward direction from N2
+					bStop = TRUE;
+					iCC = 0;
+					while (iCC < EFALL->iNo)
+					{
+						EC = (eEdge*)EFALL->Objs[iCC];
+						if (EC->pVertex[1] == Ed->pVertex[0])
+						{
+							ELF->InsertAt(0,EC);
+							Ed = EC;
+							EFALL->Remove(EC);
+							iCC = 0;
+							bStop = FALSE;
+							break;
+						}
+						else if (EC->pVertex[0] == Ed->pVertex[0])
+						{
+							EC->Reverse();
+							ELF->InsertAt(0,EC);
+							Ed = EC;
+							EFALL->Remove(EC);
+							iCC = 0;
+							bStop = FALSE;
+							break;
+						}
+						iCC++;
+					}
+				}
+			}
+
+
 
 			//Create Node front
 			NDF1->Clear();
@@ -9270,11 +9311,7 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 			outtext1("---");
 			NDF2->Clear();
 			bFirst = TRUE;
-			bLoop = FALSE;
-			eEdge* ES = (eEdge*) ELF->Objs[0];
-			eEdge* EE = (eEdge*) ELF->Objs[ELF->iNo-1];
-			if (ES->pVertex[0] == EE->pVertex[1])
-				bLoop = TRUE;
+
 			for(j = 0; j < iNo; j++)
 			{
 				for (i = 0; i < NDF1->iNo; i++)
