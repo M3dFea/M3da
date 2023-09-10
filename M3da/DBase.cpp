@@ -1722,10 +1722,12 @@ void DBase::Ortho()
 	if (bOrtho == FALSE)
 	{
 		bOrtho = TRUE;
+		outtext1("Orthogonal Drawing Mode ON.");
 	}
 	else
 	{
-		bOrtho = TRUE;
+		bOrtho = FALSE;
+		outtext1("Orthogonal Drawing Mode OFF.");
 	}
 }
 
@@ -5810,7 +5812,9 @@ NLine* DBase::AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw)
 //C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
 
 NLine* LnIn = new NLine();
-LnIn->Create(v1,v2,iCVLabCnt,NULL);
+
+
+LnIn->Create(v1, v2, iCVLabCnt, NULL);
 iCVLabCnt++;
 AddObj(LnIn);
 if (bRedraw)
@@ -6140,82 +6144,109 @@ ReDraw();
 return (pRet);
 }
 
+
+
 void DBase::TrimLn()
 {
+	CvPt_Object* mPt;
+	double MinDist = 10000000;
+	double dDist = 0;
+	double dU, dTU;
+	C3dVector vP;
+	CDC* pDC = pTheView->GetDC();
+	int iCnt1;
 
-CvPt_Object* mPt;
-double MinDist = 10000000;
-double dDist = 0;
-double dU,dTU;
-C3dVector vP;
-CDC* pDC = pTheView->GetDC();
-int iCnt1;
+	// Check if the last two objects in S_Buff are both of type 2 (Line_Object)
+	if ((S_Buff[S_Count - 1]->iObjType == 2) && (S_Buff[S_Count - 2]->iObjType == 2))
+	{
+		Line_Object* L2 = (Line_Object*)S_Buff[S_Count - 1];
+		Line_Object* L1 = (Line_Object*)S_Buff[S_Count - 2];
 
-if ((S_Buff[S_Count-1]->iObjType == 2) && (S_Buff[S_Count-2]->iObjType == 2))
+		// Iterate through a range of values for parameter dU
+		for (iCnt1 = 1; iCnt1 < 1000; iCnt1++)
+		{
+			dU = iCnt1 * 0.001;
+			vP = L2->GetPt(dU);
+			dDist = L1->MinDist(vP);
 
-  { 
-  Line_Object* L2 = (Line_Object*) S_Buff[S_Count-1];
-  Line_Object* L1 = (Line_Object*) S_Buff[S_Count-2];
-    for (iCnt1 = 1; iCnt1 < 1000; iCnt1++)
-     {
-	 dU = iCnt1*0.001;
-	 vP = L2->GetPt(dU);
-	 dDist = L1->MinDist(vP);
-	 if (dDist < MinDist)
-	   {
-	   MinDist = dDist;
-	   dTU = dU;
-	   }
+			// Update MinDist and dTU if a smaller distance is found
+			if (dDist < MinDist)
+			{
+				MinDist = dDist;
+				dTU = dU;
+			}
+		}
 
-	 }
+		// If the minimum distance is less than 0.1
+		if (MinDist < 0.1)
+		{
+			// Set a thicker pen for drawing
+			SetPen(pDC, 5);
+			L2->SetToScr(&pModelMat, &pScrMat);
+			L2->Draw(pDC, 4);
+			RestorePen(pDC);
 
-   if (MinDist < 0.1)
-     {
-   
-	 SetPen(pDC,5);
-	 L2->SetToScr(&pModelMat,&pScrMat);
-     L2->Draw(pDC,4);
-     RestorePen(pDC);
-     mPt = L2->GetTEnd();
-     vP = L2->GetPt(dTU);
-	 mPt->SetTo(vP);
-     SetPen(pDC,3);
-	 L2->SetToScr(&pModelMat,&pScrMat);
-     L2->Draw(pDC,4);
-     RestorePen(pDC);
-     }
-    MinDist = 10000000;
-L2 = (Line_Object*) S_Buff[S_Count-2];
-L1 = (Line_Object*) S_Buff[S_Count-1];
-    for (iCnt1 = 1; iCnt1 < 1000; iCnt1++)
-     {
-	 dU = iCnt1*0.001;
-	 vP = L2->GetPt(dU);
-	 dDist = L1->MinDist(vP);
-	 if (dDist < MinDist)
-	   {
-	   MinDist = dDist;
-	   dTU = dU;
-	   }
-	 }
+			// Move an endpoint of L2 to the calculated position
+			mPt = L2->GetTEnd();
+			vP = L2->GetPt(dTU);
+			mPt->SetTo(vP);
 
-   if (MinDist < 0.1)
-     {
-	   SetPen(pDC,5);
-	   L2->SetToScr(&pModelMat,&pScrMat);
-     L2->Draw(pDC,4);
-     RestorePen(pDC);
-     mPt = L2->GetTEnd();
-     vP = L2->GetPt(dTU);
-	   mPt->SetTo(vP);
-     SetPen(pDC,3);
-	   L2->SetToScr(&pModelMat,&pScrMat);
-     L2->Draw(pDC,4);
-     RestorePen(pDC);
-     }
-    }
-pTheView->ReleaseDC(pDC);
+			// Set a thinner pen for drawing
+			SetPen(pDC, 3);
+			L2->SetToScr(&pModelMat, &pScrMat);
+			L2->Draw(pDC, 4);
+			RestorePen(pDC);
+		}
+
+		MinDist = 10000000;
+		L2 = (Line_Object*)S_Buff[S_Count - 2];
+		L1 = (Line_Object*)S_Buff[S_Count - 1];
+
+		// Iterate through a range of values for parameter dU again
+		for (iCnt1 = 1; iCnt1 < 1000; iCnt1++)
+		{
+			dU = iCnt1 * 0.001;
+			vP = L2->GetPt(dU);
+			dDist = L1->MinDist(vP);
+
+			// Update MinDist and dTU if a smaller distance is found
+			if (dDist < MinDist)
+			{
+				MinDist = dDist;
+				dTU = dU;
+			}
+		}
+
+		// If the minimum distance is less than 0.1
+		if (MinDist < 0.1)
+		{
+			// Set a thicker pen for drawing
+			SetPen(pDC, 5);
+			L2->SetToScr(&pModelMat, &pScrMat);
+			L2->Draw(pDC, 4);
+			RestorePen(pDC);
+
+			// Move an endpoint of L2 to the calculated position
+			mPt = L2->GetTEnd();
+			vP = L2->GetPt(dTU);
+			mPt->SetTo(vP);
+
+			// Set a thinner pen for drawing
+			SetPen(pDC, 3);
+			L2->SetToScr(&pModelMat, &pScrMat);
+			L2->Draw(pDC, 4);
+			RestorePen(pDC);
+		}
+	}
+
+	// Release the device context
+	pTheView->ReleaseDC(pDC);
 }
+
+
+
+
+
 
 
 C3dVector DBase::LnInt(Line_Object* L1,G_Object* L2)
@@ -7633,7 +7664,9 @@ for (i=0;i<S_Count;i++)
 		NCurve* C1 = (NCurve*)S_Buff[i];
 		p1 = C1->GetPt(C1->ws);
 		p2 = C1->GetPt(C1->we);
-		Curves->Add(AddLN(p1, p2, C1->iLabel, TRUE));
+		NLine* oL = new NLine();
+		oL->Create(p1, p2, -1, NULL);
+		Curves->Add(oL);
 		// Curves->Add(S_Buff[i]->Copy(NULL));
 	}
   else if (S_Buff[i]->iObjType == 13)
@@ -7700,6 +7733,7 @@ if (Curves->iNo>0)
   pS->UserTrim(Curves);
   //pS->DefualtTrim();
 }
+
 delete (Curves);
 ReDraw();
 }
@@ -14708,40 +14742,46 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2)
 	CString OutT;
 	double dU;
 	double dUse, dUse2;
-	NLine* Ln = NULL;
-	NLine* Ln1 = NULL;
-	NCurve* Cv = NULL;
-	NCurve* Cv1 = NULL;
+	NLine* Ln = nullptr;
+	NLine* Ln1 = nullptr;
+	NCurve* Cv = nullptr;
+	NCurve* Cv1 = nullptr;
 	BOOL bErr = FALSE;
 	NCircle* cCir;
-	cCir = NULL;
+	cCir = nullptr;
 	C3dVector pN1, pN2, vRet;
 	pN1 = PickPointToGlobal(PNear1);
 	pN2 = PickPointToGlobal(PNear2);
+
 	if (S_Count > 1)
-	{   //Check to see if both selected items are curves
+	{
+		// Check to see if both selected items are curves
 		if ((S_Buff[S_Count - 1]->iObjType == 7) &&
 			(S_Buff[S_Count - 2]->iObjType == 7))
 		{
 			if ((S_Buff[S_Count - 1]->iType == 2) &&
-				(S_Buff[S_Count - 2]->iType == 2))    //Two line only 1 possible int
+				(S_Buff[S_Count - 2]->iType == 2)) // Two lines, only 1 possible intersection
 			{
 				Ln = (NLine*)S_Buff[S_Count - 2];
 				Ln1 = (NLine*)S_Buff[S_Count - 1];
 				vRet = NLnInt2(Ln, Ln1, &pN1);
-				dU = Ln->MinWPt(vRet);                //U at intersect
-				dUse= Ln->MinWPt(pN1);
-				sprintf_s(S1, " Debug W: ,%f,%f", dU,dUse);
-				if (dUse < dU)
+				dU = Ln->MinWPt(vRet); // U at intersect
+				dUse = Ln->MinWPt(pN1);
+				sprintf_s(S1, " Debug W: ,%f,%f", dU, dUse);
+				if ((dUse < dU) && (Ln->we > dU)) //This is trim
 					Ln->ws = dU;
-				else
+				else if ((dUse > dU) && (Ln->ws < dU))
+					Ln->we = dU;
+				else if ((dUse > dU) && (Ln->ws > dU)) //This is extend
+					Ln->ws = dU;
+				else if ((dUse < dU) && (Ln->we < dU))
 					Ln->we = dU;
 				S_Count--;
 				S_Count--;
 				InvalidateOGL();
 				ReDraw();
 			}
-			else //Two curves possible multiple intersections
+			else // Two curves, possible multiple intersections
 			{
 				int iNoInts = 0;
 				C3dVector vInts[10];
@@ -14750,7 +14790,6 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2)
 				Cv = (NCurve*)S_Buff[S_Count - 2];
 				Cv1 = (NCurve*)S_Buff[S_Count - 1];
 				// iNoInts = TentativeInt(Cv, Cv1, vInts, uInts);
-
 				dUse = Cv->MinWPt(pN1);
 				dUse2 = Cv->MinWPt(pN2);
 				if (iNoInts > 0)
@@ -14758,25 +14797,27 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2)
 					int pNr = FindNearest(iNoInts, uInts, dUse2);
 					dU = uInts[pNr];
 				}
-				//else
-				//{
-					dU = dUse2;
-				//}
+				// else
+				// {
+				dU = dUse2;
+				// }
 				C3dVector pNr2;
 				pNr2 = Cv->GetPt(dU);
 				vRet = NLnInt3(Cv, Cv1, &pNr2);
-				dU = Cv->MinWPt(vRet);                //U at intersect
-
+				dU = Cv->MinWPt(vRet); // U at intersect
 				sprintf_s(S1, " Debug W: ,%f,%f", dU, dUse);
-				if (dUse <= dU)
+				if ((dUse < dU) && (Cv->we > dU)) //This is trim
 					Cv->ws = dU;
-				else
+				else if ((dUse > dU) && (Cv->ws < dU))
+					Cv->we = dU;
+				else if ((dUse > dU) && (Cv->ws > dU)) //This is extend
+					Cv->ws = dU;
+				else if ((dUse < dU) && (Cv->we < dU))
 					Cv->we = dU;
 				S_Count--;
 				S_Count--;
 				InvalidateOGL();
 				ReDraw();
-				
 			}
 		}
 		else
@@ -14790,9 +14831,13 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2)
 	else
 	{
 		outtext1("ERROR: .");
-
 	}
 }
+
+
+
+
+
 
 
 void DBase::Corner(NLine* Ln,NLine* Ln1, C3dVector PNear1,C3dVector PNear2)
@@ -14828,211 +14873,223 @@ else
 
 }
 
-NCircle* DBase::Fillet2(double dR,CPoint PNear1,CPoint PNear2)
+NCircle* DBase::Fillet2(double dR, CPoint PNear1, CPoint PNear2)
 {
-//double R;
-//R=dR;
-NLine* Ln=NULL;
-NLine* Ln1=NULL;
-BOOL bErr=FALSE;
-NCircle* cCir;
-cCir=NULL;
-C3dVector pN1,pN2;
-pN1=PickPointToGlobal(PNear1);
-pN2=PickPointToGlobal(PNear2);
-if (dR>0)
-{
-if (S_Count>1)
-{
-  if ((S_Buff[S_Count-2]->iObjType==7) &&
-	  (S_Buff[S_Count - 2]->iType == 2))
-  {
-    Ln=(NLine*) S_Buff[S_Count-2];
-  }
-  else
-  {
-    bErr=TRUE;  
-  }
-  if ((S_Buff[S_Count-1]->iObjType==7) &&
-	  (S_Buff[S_Count - 2]->iType == 2))
-  {
-    Ln1=(NLine*) S_Buff[S_Count-1];
-  }
-  else
-  {
-    bErr=TRUE; 
-  }
-  if (!bErr)
-  {
-    cCir=Fillet(Ln,Ln1,dR,pN1,pN2);
-	cCir->iLabel= iCVLabCnt;
-    iCVLabCnt++;
-    S_Count--;
-    S_Count--;
-    AddObj(cCir);
-    InvalidateOGL();
-    ReDraw();
-  }
-}
-}
-return(cCir);
+	NLine* Ln = nullptr;
+	NLine* Ln1 = nullptr;
+	BOOL bErr = FALSE;
+	NCircle* cCir = nullptr;
+
+	C3dVector pN1 = PickPointToGlobal(PNear1);
+	C3dVector pN2 = PickPointToGlobal(PNear2);
+	if (dR > 0)
+	{
+		if (S_Count > 1)
+		{
+			if ((S_Buff[S_Count - 2]->iObjType == 7) &&
+				(S_Buff[S_Count - 2]->iType == 2))
+			{
+				Ln = (NLine*)S_Buff[S_Count - 2];
+			}
+			else
+			{
+				bErr = TRUE;
+			}
+			if ((S_Buff[S_Count - 1]->iObjType == 7) &&
+				(S_Buff[S_Count - 1]->iType == 2))
+			{
+				Ln1 = (NLine*)S_Buff[S_Count - 1];
+			}
+			else
+			{
+				bErr = TRUE;
+			}
+			if (!bErr)
+			{
+				cCir = Fillet(Ln, Ln1, dR, pN1, pN2);
+				cCir->iLabel = iCVLabCnt;
+				iCVLabCnt++;
+				S_Count--;
+				S_Count--;
+				AddObj(cCir);
+				InvalidateOGL();
+				ReDraw();
+			}
+		}
+	}
+	return cCir;
 }
 
-NCircle* DBase::Fillet(NLine* Ln,NLine* Ln1,double dR, C3dVector PNear1,C3dVector PNear2)
+NCircle* DBase::Fillet(NLine* Ln, NLine* Ln1, double dR, C3dVector PNear1, C3dVector PNear2)
 {
-double R;
-R=dR;
-C3dVector p1;
-C3dVector p2;
-C3dVector p3;
-C3dVector pT;
-C3dVector vL1Dir;
-C3dVector* pLT1;
-C3dVector* pLT2;
-C3dVector v1;
-C3dVector v2;
-C3dVector v3;
+	double R = dR;
+	BOOL LStart = TRUE;
+	BOOL L1Start = TRUE;
+	double wL = 0;
+	double wL1 = 0;
+	C3dVector p1, p2, p3, pT, vL1Dir, * pLT1, * pLT2, v1, v2, v3;
 
-// The intersection of the lines
-p2=NLnInt(Ln,Ln1,NULL);
-//choose the other ends of lines to keep
-//choose the ones with longest distance
-pT=Ln->cPts[0]->Pt_Point;
-v1=pT-p2;
-v2=PNear1-p2;
-pT=Ln->cPts[1]->Pt_Point;
-v3=pT-p2;
-//both point are the ame side
-if (v3.Dot(v1)>0)
-{
-  if (v1.Mag()<v3.Mag())
-  {
-   {p1=Ln->cPts[1]->Pt_Point;
-    pLT1=Ln->cPts[0]->Pt_Point;}
-  }
-  else
-  {
-    {p1=Ln->cPts[0]->Pt_Point;
-    pLT1=Ln->cPts[1]->Pt_Point;}
-  }
-}
-else
-{
-if (v1.Dot(v2)>0)
-  {p1=Ln->cPts[0]->Pt_Point;
-   pLT1=Ln->cPts[1]->Pt_Point;}
-else
-  {p1=Ln->cPts[1]->Pt_Point;
-   pLT1=Ln->cPts[0]->Pt_Point;}
-}
-vL1Dir=pLT1;
-vL1Dir-=p1;
-vL1Dir.Normalize();
+	// The intersection of the lines
+	p2 = NLnInt(Ln, Ln1, NULL);
 
-pT=Ln1->cPts[0]->Pt_Point;
-v1=pT-p2;
-v2=PNear2-p2;
-pT=Ln1->cPts[1]->Pt_Point;
-v3=pT-p2;
-//both point are the ame side
-if (v3.Dot(v1)>0)
-{
-  if (v1.Mag()<v3.Mag())
-  {
-   {p3=Ln1->cPts[1]->Pt_Point;
-    pLT2=Ln1->cPts[0]->Pt_Point;}
-  }
-  else
-  {
-    {p3=Ln1->cPts[0]->Pt_Point;
-    pLT2=Ln1->cPts[1]->Pt_Point;}
-  }
-}
-else
-{
-if (v1.Dot(v2)>0)
-  {p3=Ln1->cPts[0]->Pt_Point;
-   pLT2=Ln1->cPts[1]->Pt_Point;}
-else
-  {p3=Ln1->cPts[1]->Pt_Point;
-   pLT2=Ln1->cPts[0]->Pt_Point;}
-}
+	// Choose the other ends of lines to keep
+	// Choose the ones with the longest distance
+	pT = Ln->cPts[0]->Pt_Point;
+	v1 = pT - p2;
+	v2 = PNear1 - p2;
+	pT = Ln->cPts[1]->Pt_Point;
+	v3 = pT - p2;
 
-v1=p2;
-v1-=p1;
+	// Both points are on the same side
+	if (v3.Dot(v1) > 0)
+	{
+		if (v1.Mag() < v3.Mag())
+		{
+			p1 = Ln->cPts[1]->Pt_Point;
+			pLT1 = Ln->cPts[0]->Pt_Point;
+		}
+		else
+		{
+			p1 = Ln->cPts[0]->Pt_Point;
+			pLT1 = Ln->cPts[1]->Pt_Point;
+			LStart = FALSE;
+		}
+	}
+	else
+	{
+		if (v1.Dot(v2) > 0)
+		{
+			p1 = Ln->cPts[0]->Pt_Point;
+			pLT1 = Ln->cPts[1]->Pt_Point;
+			LStart = FALSE;
+		}
+		else
+		{
+			p1 = Ln->cPts[1]->Pt_Point;
+			pLT1 = Ln->cPts[0]->Pt_Point;
+		}
+	}
 
-v2=p3;
-v2-=p2;
+	vL1Dir = pLT1;
+	vL1Dir -= p1;
+	vL1Dir.Normalize();
 
-C3dVector vn;
-vn=v1.Cross(v2);
-vn.Normalize();
-C3dVector v1o;
-C3dVector v2o;
+	pT = Ln1->cPts[0]->Pt_Point;
+	v1 = pT - p2;
+	v2 = PNear2 - p2;
+	pT = Ln1->cPts[1]->Pt_Point;
+	v3 = pT - p2;
 
-v1o=v1.Cross(vn);
-v2o=v2.Cross(vn);
-v1o.Normalize();
-v2o.Normalize();
-v1o*=R;
-v2o*=R;
-if (v1o.Dot(v2)<0)
-  v1o*=-1;
-if (v2o.Dot(v1)>0)
-  v2o*=-1;
-C3dVector p1o;
-C3dVector p2o;
-C3dVector p3o;
-C3dVector p4o;
+	// Both points are on the same side
+	if (v3.Dot(v1) > 0)
+	{
+		if (v1.Mag() < v3.Mag())
+		{
+			p3 = Ln1->cPts[1]->Pt_Point;
+			pLT2 = Ln1->cPts[0]->Pt_Point;
+		}
+		else
+		{
+			p3 = Ln1->cPts[0]->Pt_Point;
+			pLT2 = Ln1->cPts[1]->Pt_Point;
+			L1Start = FALSE;
+		}
+	}
+	else
+	{
+		if (v1.Dot(v2) > 0)
+		{
+			p3 = Ln1->cPts[0]->Pt_Point;
+			pLT2 = Ln1->cPts[1]->Pt_Point;
+			L1Start = FALSE;
+		}
+		else
+		{
+			p3 = Ln1->cPts[1]->Pt_Point;
+			pLT2 = Ln1->cPts[0]->Pt_Point;
+		}
+	}
 
-p1o=p1;
-p1o+=v1o;
-p2o=p2;
-p2o+=v1o;
-p3o=p2;
-p3o+=v2o;
-p4o=p3;
-p4o+=v2o;
-NLine* Ln2 = new NLine;
-Ln2->Create(p1o,p2o,1,NULL);
-NLine* Ln3 = new NLine;
-Ln3->Create(p3o,p4o,1,NULL);
-C3dVector IntPt;
-IntPt=NLnInt(Ln2,Ln3,NULL);
-NCircle* cCir = new NCircle();
-cCir->Create(vn,IntPt,R,-1,NULL);
+	v1 = p2;
+	v1 -= p1;
+	v2 = p3;
+	v2 -= p2;
 
-C3dVector IntPt1;
-IntPt1=Ln->MinPt(IntPt);
-pLT1->Set(IntPt1.x,IntPt1.y,IntPt1.z);  //trim the end point
-C3dVector IntPt2;
-IntPt2=Ln1->MinPt(IntPt);
-pLT2->Set(IntPt2.x,IntPt2.y,IntPt2.z);  //trim the end point
-double d1q;
-d1q=cCir->MinWPt(IntPt1);
-C3dVector vRef;
-C3dVector vDir;
-vRef=IntPt1;
-vDir=cCir->GetDir(d1q);
-vDir.Normalize();
-vRef-=cCir->vCent;
-vRef.Normalize();
-if (vDir.Dot(vL1Dir)<0)
-{
-  vn*=-1;
-}
-delete (cCir);
-cCir = new NCircle();
-cCir->Create2(vn,IntPt,vRef,R,-1,NULL);
-//d1q=cCir->MinWPt(IntPt1);
-double d2q;
-d2q=cCir->MinWPt(IntPt2);
-cCir->we=d2q;
+	C3dVector vn = v1.Cross(v2);
+	vn.Normalize();
+	C3dVector v1o, v2o;
+	v1o = v1.Cross(vn);
+	v2o = v2.Cross(vn);
+	v1o.Normalize();
+	v2o.Normalize();
+	v1o *= R;
+	v2o *= R;
 
-delete (Ln2);
-delete (Ln3);
+	if (v1o.Dot(v2) < 0)
+		v1o *= -1;
+	if (v2o.Dot(v1) > 0)
+		v2o *= -1;
 
-return(cCir);
+	C3dVector p1o, p2o, p3o, p4o;
+	p1o = p1;
+	p1o += v1o;
+	p2o = p2;
+	p2o += v1o;
+	p3o = p2;
+	p3o += v2o;
+	p4o = p3;
+	p4o += v2o;
+
+	NLine* Ln2 = new NLine;
+	Ln2->Create(p1o, p2o, 1, NULL);
+	NLine* Ln3 = new NLine;
+	Ln3->Create(p3o, p4o, 1, NULL);
+
+	C3dVector IntPt;
+	IntPt = NLnInt(Ln2, Ln3, NULL);
+	NCircle* cCir = new NCircle();
+	cCir->Create(vn, IntPt, R, -1, NULL);
+
+	C3dVector IntPt1;
+	IntPt1 = Ln->MinPt(IntPt);
+	//pLT1->Set(IntPt1.x, IntPt1.y, IntPt1.z);  // Trim the end point
+	wL= Ln->MinWPt(IntPt);
+	if (LStart)
+		Ln->ws = wL;
+	else
+		Ln->we = wL;
+		
+	C3dVector IntPt2;
+	IntPt2 = Ln1->MinPt(IntPt);
+	//pLT2->Set(IntPt2.x, IntPt2.y, IntPt2.z);  // Trim the end point
+	wL1 = Ln1->MinWPt(IntPt2);
+	if (L1Start)
+		Ln1->ws = wL1;
+	else
+		Ln1->we = wL1;
+	double d1q;
+	d1q = cCir->MinWPt(IntPt1);
+	C3dVector vRef;
+	C3dVector vDir;
+	vRef = IntPt1;
+	vDir = cCir->GetDir(d1q);
+	vDir.Normalize();
+	vRef -= cCir->vCent;
+	vRef.Normalize();
+	if (vDir.Dot(vL1Dir) < 0)
+	{
+		vn *= -1;
+	}
+	delete (cCir);
+	cCir = new NCircle();
+	cCir->Create2(vn, IntPt, vRef, R, -1, NULL);
+	double d2q;
+	d2q = cCir->MinWPt(IntPt2);
+	cCir->we = d2q;
+	delete (Ln2);
+	delete (Ln3);
+
+	return cCir;
 }
 
 

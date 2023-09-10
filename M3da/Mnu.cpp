@@ -3516,6 +3516,17 @@ else if (iStat == 2)
 {
   C3dVector p2;
   p2=cDBase->DB_PopBuff();
+  if (cDBase->bOrtho)
+  {
+	  if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
+	  {
+		  p2.y = p1.y;
+	  }
+	  else
+	  {
+		  p2.x = p1.x;
+	  }
+  }
   cDBase->AddLN(p1,p2,-1,TRUE);
   outtext1("1 Line Created.");
   iStat=0;  
@@ -3578,7 +3589,19 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			C3dVector p2;
 			p2 = cDBase->DB_PopBuff();
 			p1 = pLast;
+			if (cDBase->bOrtho)
+			{
+				if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
+				{
+					p2.y = p1.y;
+				}
+				else
+				{
+					p2.x = p1.x;
+				}
+			}
 			pLast = p2;
+
 			cDBase->AddLN(p1, p2, -1,TRUE);
 			outtext1("1 Line Created.");
 			iStat = 1;
@@ -7376,78 +7399,84 @@ return RetVal;
 
 
 
-int zFIL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+int zFIL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
+	DoNext(&CInMsg, Pt);
 
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  cDBase->FILTER.SetAll();
-  goto MenuEnd;
-}
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") // Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
 
-if (iStat == 0)
-{
-  cDBase->FILTER.Clear();
-  cDBase->FILTER.SetFilter(7);
-  iStat=1;
-}
-if (iStat == 1)
-{
-  outtext2("//ENTER RADIUS");
-  SetFocus();
-  iResumePos=2;
-  iCancelPos=100;
-  pNext = new zKEY_Mnu();
-  pNext->Init(cDBase,-1);
-  DoNext(&CInMsg,Pt);
-}
-if (iStat == 2)
-{
-  vR=cDBase->DB_PopBuff();
-  iStat=3;
-}
-if (iStat == 3)
-{
-  outtext2("//PICK TWO LINES");
-  iStat=4;
-}
-if (iStat == 4)
-{
-  
-  if (cDBase->S_Count==S_initCnt+1)
-  {
-     PNear1=Pt;
-  }
-  if (cDBase->S_Count==S_initCnt+2)
-  {
-     PNear2=Pt;
-     iStat = 5;
-  }
-}
-if (iStat == 5)
-{
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			iStat = 1;
+		}
 
-  cDBase->Fillet2(vR.x,PNear1,PNear2);
-  iStat = 4;
-  cDBase->S_Count=S_initCnt;
-  outtext2("//PICK TWO LINES");
-}
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  cDBase->FILTER.SetAll();
-  RetVal = 1;
-}
-}
+		if (iStat == 1)
+		{
+			outtext2("// ENTER RADIUS");
+			SetFocus();
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+
+		if (iStat == 2)
+		{
+			vR = cDBase->DB_PopBuff();
+			iStat = 3;
+		}
+
+		if (iStat == 3)
+		{
+			outtext2("// PICK TWO LINES");
+			iStat = 4;
+		}
+
+		if (iStat == 4)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				PNear1 = Pt;
+			}
+
+			if (cDBase->S_Count == S_initCnt + 2)
+			{
+				PNear2 = Pt;
+				iStat = 5;
+			}
+		}
+
+		if (iStat == 5)
+		{
+			cDBase->Fillet2(vR.x, PNear1, PNear2);
+			iStat = 4;
+			cDBase->S_Count = S_initCnt;
+			outtext2("// PICK TWO LINES");
+		}
+
+		// Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+
 MenuEnd:
 
-return RetVal;
+	return RetVal;
 }
 
 int zCORNER_Mnu::DoMenu(CString CInMsg,CPoint Pt)

@@ -6046,25 +6046,17 @@ void CM3daDoc::OnElementmodifiyColourbyincludefile()
 void CM3daDoc::OnCurvetoolsOrthosnap()
 {
 	// TODO: Add your command handler code here
-	if (pMnu->isNULL())
-	{
-		outtextMSG2("ORTHO");
-		sLastcmd = "ORTHO";
-		if (bOrtho == FALSE)
+
+		if (cDBase->bOrtho == FALSE)
 		{
-			bOrtho = TRUE;
+			cDBase->bOrtho = TRUE;
 			outtext1("Orthogonal Drawing Mode ON.");
 		}
 		else
 		{
-			bOrtho = TRUE;
+			cDBase->bOrtho = FALSE;
 			outtext1("Orthogonal Drawing Mode OFF.");
 		}
-	}
-	else
-	{
-		outtext1("Finish Current Operation.");
-	}
 }
 
 

@@ -14,7 +14,7 @@ protected: // create from serialization only
 
 // Attributes
 public:
-BOOL bOrtho = FALSE;
+
 BOOL bUndo = TRUE;
 BOOL bFinalChkPt = FALSE;
 BOOL bOnFirst=TRUE;

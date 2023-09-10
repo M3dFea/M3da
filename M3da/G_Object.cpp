@@ -1989,7 +1989,7 @@ if ((SelPt.x > P1.x) &&
     (SelPt.y > P1.y) &&
     (SelPt.y < P2.y))
 {
-	pSel->Add(this);
+	pSel->AddEx(this);
 }
 }
 
@@ -8205,7 +8205,7 @@ S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(1.0);
+glLineWidth(2.0);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
