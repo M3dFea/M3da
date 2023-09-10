@@ -5813,7 +5813,6 @@ NLine* DBase::AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw)
 
 NLine* LnIn = new NLine();
 
-
 LnIn->Create(v1, v2, iCVLabCnt, NULL);
 iCVLabCnt++;
 AddObj(LnIn);

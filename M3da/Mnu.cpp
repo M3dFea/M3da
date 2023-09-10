@@ -3518,6 +3518,9 @@ else if (iStat == 2)
   p2=cDBase->DB_PopBuff();
   if (cDBase->bOrtho)
   {
+	  //Need to transform to workplane
+	  p1 = cDBase->GlobaltoWP(p1);
+	  p2 = cDBase->GlobaltoWP(p2);
 	  if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
 	  {
 		  p2.y = p1.y;
@@ -3526,6 +3529,8 @@ else if (iStat == 2)
 	  {
 		  p2.x = p1.x;
 	  }
+	  p1 = cDBase->WPtoGlobal(p1);
+	  p2 = cDBase->WPtoGlobal(p2);
   }
   cDBase->AddLN(p1,p2,-1,TRUE);
   outtext1("1 Line Created.");
@@ -3591,6 +3596,9 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			p1 = pLast;
 			if (cDBase->bOrtho)
 			{
+				//Need to transform to workplane
+				p1 = cDBase->GlobaltoWP(p1);
+				p2 = cDBase->GlobaltoWP(p2);
 				if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
 				{
 					p2.y = p1.y;
@@ -3599,6 +3607,8 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 				{
 					p2.x = p1.x;
 				}
+				p1 = cDBase->WPtoGlobal(p1);
+				p2 = cDBase->WPtoGlobal(p2);
 			}
 			pLast = p2;
 
