@@ -365,6 +365,9 @@ ON_COMMAND(ID_LIST_GAPSBETWEENLABELS, &CM3daDoc::OnListGapsbetweenlabels)
 ON_COMMAND(ID_LIST_GAPSBETWEENMATSANDPROPSLABELS, &CM3daDoc::OnListGapsbetweenmatsandpropslabels)
 ON_COMMAND(ID_ELEMENTMODIFIY_INSERTSPRINGONRIGID, &CM3daDoc::OnElementmodifiyInsertspringonrigid)
 ON_COMMAND(ID_FEMTOOLS_SWEEPEDGESOUTWARD, &CM3daDoc::OnFemtoolsSweepedgesoutward)
+ON_COMMAND(ID_OBJECTSIZE_POINT, &CM3daDoc::OnObjectsizePoint)
+ON_COMMAND(ID_OBJECTSIZE_NODE, &CM3daDoc::OnObjectsizeNode)
+ON_COMMAND(ID_OBJECTSIZE_LUMPMASS, &CM3daDoc::OnObjectsizeLumpmass)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6130,6 +6133,51 @@ void CM3daDoc::OnFemtoolsSweepedgesoutward()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("ELSWEEPB");
 		sLastcmd = "ELSWEEPB";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnObjectsizePoint()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("PTSIZE");
+		sLastcmd = "PTSIZE";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnObjectsizeNode()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("NDSIZE");
+		sLastcmd = "NDSIZE";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnObjectsizeLumpmass()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("LMSIZE");
+		sLastcmd = "LMSIZE";
 	}
 	else
 	{

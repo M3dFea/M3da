@@ -2,6 +2,7 @@
 #include "M3Da.h"
 #include "math.h"
 #include "Parser.h"
+#include "GLOBAL_VARS.h"
 // constructor sets where to out text
 const double Pi = 3.1415926535;
 	
@@ -2745,6 +2746,36 @@ if (iStat == 0)
 	  pNext->Init(cDBase, -1);
 	  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "PTSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zPTSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "NDSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zNDSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "LMSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zLMSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "GPBYINC")
 	  {
 	  iResumePos = 0;
@@ -2802,7 +2833,7 @@ int iLen = mCInMsg.GetLength();
  
  for (iC=0; iC<= iLen-1; iC++)
    {
-   if (mCInMsg[iC] == ',' || mCInMsg[iC] == ' ')  
+   if (mCInMsg[iC] == ',' || mCInMsg[iC] == ' ' || mCInMsg[iC] == '\t')
      {
      iComPos[iCommaNo] = iC;
      iCommaNo++;
@@ -18815,6 +18846,127 @@ if (pNext==NULL)
 }
 MenuEnd:
 return RetVal;
+}
+
+int zPTSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("//ENTER POINT SIZE (Def 12))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 12;
+			gPT_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+
+int zNDSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("//ENTER NODE SIZE (Def 10))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 10;
+			gND_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zLMSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("//ENTER LUMP MASS SIZE (Def 20))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 20;
+			gLM_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
 }
 
 int zGPLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)

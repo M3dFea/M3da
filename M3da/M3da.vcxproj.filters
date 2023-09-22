@@ -116,6 +116,9 @@
     <ClInclude Include="SymTable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GLOBAL_VARS.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="M3da.idl">

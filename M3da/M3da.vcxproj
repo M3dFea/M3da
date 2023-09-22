@@ -210,11 +210,11 @@
     <Link>
       <RegisterOutput>true</RegisterOutput>
       <AdditionalDependencies>opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <Version>65</Version>
     </Link>
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
@@ -248,6 +248,7 @@
     <ClInclude Include="EditBasic.h" />
     <ClInclude Include="EEdit.h" />
     <ClInclude Include="FONT_DEF.h" />
+    <ClInclude Include="GLOBAL_VARS.h" />
     <ClInclude Include="G_object.h" />
     <ClInclude Include="InputPane.h" />
     <ClInclude Include="M3da.h" />

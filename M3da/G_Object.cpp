@@ -1,5 +1,11 @@
 #include "G_Object.h"
 #include "M3Da.h"
+#include "GLOBAL_VARS.h"
+//START OF GLOBAL VARIABLES - TRYING THIS OUT 22/09/2023
+double gPT_SIZE = 12;
+double gND_SIZE = 10;
+double gLM_SIZE = 20;
+//END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
 const double Pi = 3.1415926535;
@@ -7,7 +13,9 @@ const double dTol = 0.00000001;  //unsed for Surface tolerance
 //Constant Related to Auto-Meshing
 CONST double PARA_NEAR_ZERO = 0.000001;
 CONST double PARA_MAX_ERROR = 0.0001;
-const int ISO_TEST_INC = 10;								 
+const int ISO_TEST_INC = 10;	
+
+
 //#include "math.h"
 #include <cmath>
 
@@ -2436,7 +2444,7 @@ if ((iDspFlgs & DSP_NODES)>0)
 
 	Selectable=1;
 	glColor3fv(cols[GetCol()]);
-    glPointSize(10.0f); 
+    glPointSize(gND_SIZE);
 	if ((iDspFlgs & DSP_NODES_ASK)>0)
 	{
 	glBegin(GL_POINTS);
@@ -16180,7 +16188,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
 	}
 	Selectable=1;
 	glColor3fv(cols[GetCol()]);
-    glPointSize(16.0f); 
+    glPointSize(gLM_SIZE); 
 	glBegin(GL_POINTS);
     glVertex3f((float) vCent.x+d.x,(float) vCent.y+d.y,(float) vCent.z+d.z);
     glEnd();
@@ -44065,7 +44073,7 @@ if ((iDspFlgs & DSP_POINTS) > 0)
 {
   Selectable=1;
   glColor3fv(cols[GetCol()]);
-  glPointSize(12.0f);
+  glPointSize(gPT_SIZE);
   glBegin(GL_POINTS);
   glVertex3f((float) Pt_Point->x,(float) Pt_Point->y,(float) Pt_Point->z);
   glEnd();
@@ -44390,7 +44398,7 @@ outtext1(sO);
 
 C3dVector NCurve::Get_Centroid()
 {
-return (GetPt(0.5));
+return (GetPt((ws+we)/2));
 }
 
 void NCurve::Serialize(CArchive& ar,int iV)

@@ -14,6 +14,7 @@ protected: // create from serialization only
 
 // Attributes
 public:
+//
 
 BOOL bUndo = TRUE;
 BOOL bFinalChkPt = FALSE;
@@ -513,6 +514,9 @@ public:
   afx_msg void OnListGapsbetweenmatsandpropslabels();
   afx_msg void OnElementmodifiyInsertspringonrigid();
   afx_msg void OnFemtoolsSweepedgesoutward();
+  afx_msg void OnObjectsizePoint();
+  afx_msg void OnObjectsizeNode();
+  afx_msg void OnObjectsizeLumpmass();
 };
 
 

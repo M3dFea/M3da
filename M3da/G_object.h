@@ -1,3 +1,4 @@
+
 #include "stdafx.h"
 
 
@@ -13,6 +14,8 @@
 using namespace std;
 
 #define DBL_MAX 1.7976931348623158e+308 /* max value */
+//Graphics size vars
+
 //Arrow head definition
 const double AHead [7][3] =
 {{2.000000, 0.000000, 0.000000},

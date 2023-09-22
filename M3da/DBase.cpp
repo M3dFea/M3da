@@ -4,6 +4,7 @@
 #include "gl\glu.h"
 #include "M3Da.h"
 #include "SymTable.h"
+#include "GLOBAL_VARS.h"
 #pragma warning(disable:4477)
 
 const double Pi = 3.1415926535;
@@ -458,6 +459,9 @@ pWorldBMP = NULL;
 ResFrameDelay = 200;
 NoResFrame = 5;
 iHLimit =-1;
+gPT_SIZE = 12;
+gND_SIZE = 10;
+gLM_SIZE = 20;
 }
 
 //********************************************************
@@ -1168,6 +1172,9 @@ void DBase::Serialize(CArchive& ar)
 	{
 	  // TODO: add storing code here
 		ar<<VERSION_NO;
+		ar << gPT_SIZE;
+		ar << gND_SIZE;
+		ar << gLM_SIZE;
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
 		ar<<DB_ObjectCount;
@@ -1194,6 +1201,12 @@ void DBase::Serialize(CArchive& ar)
 	else
 	{
 		ar>>iVER;
+		if (iVER <= -65)
+		{
+			ar >> gPT_SIZE;
+			ar >> gND_SIZE;
+			ar >> gLM_SIZE;
+		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);
 		ar>>DB_ObjectCount; //Change here
