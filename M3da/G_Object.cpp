@@ -10,6 +10,7 @@ double gED_SIZE = 5;
 double gFC_SIZE = 3;
 double gWP_SIZE = 12;
 double gBM_SIZE = 2;
+double gTXT_SIZE = 2;
 //END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -41976,7 +41977,7 @@ if ((iDspFlgs & DSP_CURVES)>0)
       glColor3fv(cols[iColour]);
   C3dVector vPt;
   C3dVector vPt2;
-  glLineWidth(4);
+  glLineWidth(gTXT_SIZE);
   glBegin(GL_LINES);
   pCL=pL;
     while (pCL!=NULL)
@@ -41986,7 +41987,6 @@ if ((iDspFlgs & DSP_CURVES)>0)
 	  pCL=pCL->pNext;
     }
   glEnd();
-  glLineWidth(2.0);
   glDisable(GL_LINE_STIPPLE);
   C3dVector vCent=Get_Centroid();
   if (bDrawLab==TRUE)

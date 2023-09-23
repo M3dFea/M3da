@@ -373,6 +373,7 @@ ON_COMMAND(ID_OBJECTSIZE_ELEMENTFREEEDGE, &CM3daDoc::OnObjectsizeElementfreeedge
 ON_COMMAND(ID_OBJECTSIZE_ELEMENTFREEFACE, &CM3daDoc::OnObjectsizeElementfreeface)
 ON_COMMAND(ID_OBJECTSIZE_WORKPLANELINES, &CM3daDoc::OnObjectsizeWorkplanelines)
 ON_COMMAND(ID_OBJECTSIZE_BEAMS, &CM3daDoc::OnObjectsizeBeams)
+ON_COMMAND(ID_OBJECTSIZE_TEXT, &CM3daDoc::OnObjectsizeText)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6258,6 +6259,21 @@ void CM3daDoc::OnObjectsizeBeams()
 	{
 		outtextMSG2("BMSIZE");
 		sLastcmd = "BMSIZE";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnObjectsizeText()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("TXTSIZE");
+		sLastcmd = "TXTSIZE";
 	}
 	else
 	{

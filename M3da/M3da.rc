@@ -177,6 +177,7 @@ BEGIN
             MENUITEM "Element Free Face",           ID_OBJECTSIZE_ELEMENTFREEFACE
             MENUITEM "Workplane Lines",             ID_OBJECTSIZE_WORKPLANELINES
             MENUITEM "Beam Section",                ID_OBJECTSIZE_BEAMS
+            MENUITEM "Text",                        ID_OBJECTSIZE_TEXT
         END
         POPUP "Visability"
         BEGIN
