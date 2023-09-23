@@ -517,6 +517,9 @@ public:
   afx_msg void OnObjectsizePoint();
   afx_msg void OnObjectsizeNode();
   afx_msg void OnObjectsizeLumpmass();
+  afx_msg void OnObjectsizeElementedge();
+  afx_msg void OnObjectsizeElementfreeedge();
+  afx_msg void OnObjectsizeElementfreeface();
 };
 
 

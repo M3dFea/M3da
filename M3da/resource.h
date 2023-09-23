@@ -574,13 +574,16 @@
 #define ID_OBJECTSIZE_NODE              33381
 #define ID_OBJECTSIZE_POINT             33382
 #define ID_OBJECTSIZE_LUMPMASS          33383
+#define ID_OBJECTSIZE_ELEMENTEDGE       33384
+#define ID_OBJECTSIZE_ELEMENTFREEEDGE   33385
+#define ID_OBJECTSIZE_ELEMENTFREEFACE   33386
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        363
-#define _APS_NEXT_COMMAND_VALUE         33384
+#define _APS_NEXT_COMMAND_VALUE         33387
 #define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

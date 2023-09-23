@@ -448,7 +448,25 @@ public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zEDSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zFCSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zNDSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zELSIZE_Mnu : public zMnu
 {
 public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);

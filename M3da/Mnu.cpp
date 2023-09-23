@@ -2766,6 +2766,36 @@ if (iStat == 0)
 	  pNext->Init(cDBase, -1);
 	  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "ELSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zELSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "EDSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zEDSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "FCSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zFCSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "LMSIZE")
 	  {
 	  iResumePos = 0;
@@ -18888,6 +18918,86 @@ MenuEnd:
 	return RetVal;
 }
 
+int zEDSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("//ENTER ELEMENT FREE EDGE SIZE (Def 5))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 5;
+			gED_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zFCSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("//ENTER ELEMENT FREE FACE SIZE (Def 2))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 2;
+			gFC_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 
 int zNDSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
@@ -18916,6 +19026,46 @@ int zNDSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			if (ptNo.x < 1)
 				ptNo.x = 10;
 			gND_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zELSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("//ENTER ELEMENT EDGE SIZE (Def 2))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 2;
+			gEL_SIZE = ptNo.x;
 			cDBase->InvalidateOGL();
 			cDBase->ReGen();
 			RetVal = 1;

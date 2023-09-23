@@ -368,6 +368,9 @@ ON_COMMAND(ID_FEMTOOLS_SWEEPEDGESOUTWARD, &CM3daDoc::OnFemtoolsSweepedgesoutward
 ON_COMMAND(ID_OBJECTSIZE_POINT, &CM3daDoc::OnObjectsizePoint)
 ON_COMMAND(ID_OBJECTSIZE_NODE, &CM3daDoc::OnObjectsizeNode)
 ON_COMMAND(ID_OBJECTSIZE_LUMPMASS, &CM3daDoc::OnObjectsizeLumpmass)
+ON_COMMAND(ID_OBJECTSIZE_ELEMENTEDGE, &CM3daDoc::OnObjectsizeElementedge)
+ON_COMMAND(ID_OBJECTSIZE_ELEMENTFREEEDGE, &CM3daDoc::OnObjectsizeElementfreeedge)
+ON_COMMAND(ID_OBJECTSIZE_ELEMENTFREEFACE, &CM3daDoc::OnObjectsizeElementfreeface)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6178,6 +6181,51 @@ void CM3daDoc::OnObjectsizeLumpmass()
 	{
 		outtextMSG2("LMSIZE");
 		sLastcmd = "LMSIZE";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnObjectsizeElementedge()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("ELSIZE");
+		sLastcmd = "ELSIZE";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnObjectsizeElementfreeedge()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("EDSIZE");
+		sLastcmd = "EDSIZE";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnObjectsizeElementfreeface()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("FCSIZE");
+		sLastcmd = "FCSIZE";
 	}
 	else
 	{

@@ -1175,6 +1175,9 @@ void DBase::Serialize(CArchive& ar)
 		ar << gPT_SIZE;
 		ar << gND_SIZE;
 		ar << gLM_SIZE;
+		ar << gEL_SIZE;
+		ar << gED_SIZE;
+		ar << gFC_SIZE;
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
 		ar<<DB_ObjectCount;
@@ -1206,6 +1209,9 @@ void DBase::Serialize(CArchive& ar)
 			ar >> gPT_SIZE;
 			ar >> gND_SIZE;
 			ar >> gLM_SIZE;
+			ar >> gEL_SIZE;
+			ar >> gED_SIZE;
+			ar >> gFC_SIZE;
 		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);

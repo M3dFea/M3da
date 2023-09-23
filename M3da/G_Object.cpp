@@ -5,6 +5,9 @@
 double gPT_SIZE = 12;
 double gND_SIZE = 10;
 double gLM_SIZE = 20;
+double gEL_SIZE = 2;
+double gED_SIZE = 5;
+double gFC_SIZE = 3;
 //END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -2655,7 +2658,7 @@ void eFace::OglDrawW(int iDspFlgs,double dS1,double dS2)
 C3dVector v1;
 C3dVector v2;
 C3dVector Vn;
-glLineWidth(3.0);
+glLineWidth(gFC_SIZE);
 glColor3fv(cols[124]);
 if (NoVert==3)
 {
@@ -2846,7 +2849,7 @@ int eEdge::isSameWithDir(eEdge* inLink)
 
 void eEdge::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
-glLineWidth(5.0);
+glLineWidth(gED_SIZE);
 glColor3fv(cols[iColour]);
 glBegin(GL_LINES);
 glVertex3f((float) pVertex[0]->Pt_Point->x,(float) pVertex[0]->Pt_Point->y,(float) pVertex[0]->Pt_Point->z);
@@ -5705,7 +5708,7 @@ S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(1.0);
+glLineWidth(gEL_SIZE);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
@@ -7141,7 +7144,7 @@ S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(1.0);
+glLineWidth(gEL_SIZE);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
@@ -8213,7 +8216,7 @@ S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(2.0);
+glLineWidth(gEL_SIZE);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
@@ -9467,7 +9470,7 @@ void E_Object310::OglDrawW(int iDspFlgs, double dS1, double dS2)
 	double dFS;
 	dFS = ME->dResFactor;
 	ind = ME->iCVar;
-	glLineWidth(1.0);
+	glLineWidth(gEL_SIZE);
 	if ((iDspFlgs & DSP_ELEMENTS) > 0)
 	{
 		if ((iDspFlgs & DSP_RESDEF) == 0)
@@ -11997,7 +12000,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
 	{
 	  glColor3fv(cols[124]);
       glEnable(GL_TEXTURE_1D);
-      glLineWidth(2.0);
+      glLineWidth(gEL_SIZE);
       glBegin(GL_LINES);
       glTexCoord1f(fCols[0]);
       glVertex3f((float) (pVertex[0]->Pt_Point->x+d[0].x),(float) (pVertex[0]->Pt_Point->y+d[0].y),(float) (pVertex[0]->Pt_Point->z+d[0].z));
@@ -12011,7 +12014,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
 	else
 	{
 	  glColor3fv(cols[iColour]);
-      glLineWidth(2.0);
+      glLineWidth(gEL_SIZE);
 	  glBegin(GL_LINES);
       glVertex3f((float) (pVertex[0]->Pt_Point->x+d[0].x),(float) (pVertex[0]->Pt_Point->y+d[0].y),(float) (pVertex[0]->Pt_Point->z+d[0].z));
       glVertex3f((float) (pVertex[1]->Pt_Point->x+d[1].x),(float) (pVertex[1]->Pt_Point->y+d[1].y),(float) (pVertex[1]->Pt_Point->z+d[1].z));
@@ -14387,7 +14390,7 @@ S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(1.0);
+glLineWidth(gEL_SIZE);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
@@ -14585,7 +14588,7 @@ double S;
 S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
-glLineWidth(2.0);
+glLineWidth(gEL_SIZE);
       BOOL bD=FALSE;
       float fCols[3]={0,0,0};
       int iVar;
@@ -17505,7 +17508,7 @@ double S;
 S=ME->dScale;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(1.0);
+glLineWidth(gEL_SIZE);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
@@ -17731,7 +17734,7 @@ BOOL bD=FALSE;
 int iVar;
 iVar=ME->iCVar;
 //Nodal data
-glLineWidth(2.0);
+glLineWidth(gEL_SIZE);
 if ((pVertex[0]->pResV != NULL) &&
     (pVertex[1]->pResV != NULL) &&
     (pVertex[2]->pResV != NULL) &&
@@ -18864,7 +18867,7 @@ if ((iDspFlgs & DSP_ELEMENTS) > 0)
 			}
 		}
 	}
-	glLineWidth(2.0);
+	glLineWidth(gEL_SIZE);
 	glBegin(GL_LINES);
 	for (i=1;i<iNoNodes;i++)
 	{
@@ -19080,6 +19083,7 @@ C3dVector vCent;
 if ((iDspFlgs & DSP_ELEMENTS) > 0)
 {
 	Selectable = 1;
+	glLineWidth(gEL_SIZE);
 	glColor3fv(cols[iColour]);
 	glBegin(GL_LINES);
 	  glVertex3f((float)pVertex[0]->Pt_Point->x, (float)pVertex[0]->Pt_Point->y, (float)pVertex[0]->Pt_Point->z);
@@ -53168,7 +53172,7 @@ void Lamina::OglDraw()
 	glVertex3f((float)(p4.x), (float)(p4.y), (float)(p4.z));
   glEnd();
   glColor3fv(cols[0]);
-  glLineWidth(2.0);
+  glLineWidth(gEL_SIZE);
   glBegin(GL_LINES);
     glVertex3f((float)(p1.x), (float)(p1.y), (float)(p1.z));
     glVertex3f((float)(p2.x), (float)(p2.y), (float)(p2.z));

@@ -172,6 +172,9 @@ BEGIN
             MENUITEM "Node",                        ID_OBJECTSIZE_NODE
             MENUITEM "Point",                       ID_OBJECTSIZE_POINT
             MENUITEM "Lump Mass",                   ID_OBJECTSIZE_LUMPMASS
+            MENUITEM "Element Edge",                ID_OBJECTSIZE_ELEMENTEDGE
+            MENUITEM "Element Free Edge",           ID_OBJECTSIZE_ELEMENTFREEEDGE
+            MENUITEM "Element Free Face",           ID_OBJECTSIZE_ELEMENTFREEFACE
         END
         POPUP "Visability"
         BEGIN
