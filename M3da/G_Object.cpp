@@ -9,6 +9,7 @@ double gEL_SIZE = 2;
 double gED_SIZE = 5;
 double gFC_SIZE = 3;
 double gWP_SIZE = 12;
+double gBM_SIZE = 2;
 //END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -12741,6 +12742,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
   {
     glColor3fv(cols[0]);
   }
+  glLineWidth(gEL_SIZE);
   glBegin(GL_LINES);
     glVertex3f((float) (pVertex[0]->Pt_Point->x+OffA.x+d[0].x),(float) (pVertex[0]->Pt_Point->y+OffA.y+d[0].y),(float) (pVertex[0]->Pt_Point->z+OffA.z+d[0].z));
     glVertex3f((float) (pVertex[1]->Pt_Point->x+OffB.x+d[1].x),(float) (pVertex[1]->Pt_Point->y+OffB.y+d[1].y),(float) (pVertex[1]->Pt_Point->z+OffB.z+d[1].z));
@@ -50925,6 +50927,7 @@ vOf=d0;
 vOf+=d1;
 vOf*=0.5;
 int j=0;
+glLineWidth(gBM_SIZE);
 if (iLnCnt1 > 1)
 {
   for (j=0;j<iLnCnt1-1;j++)

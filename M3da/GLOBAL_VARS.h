@@ -6,3 +6,4 @@ extern double gEL_SIZE;
 extern double gED_SIZE;
 extern double gFC_SIZE;
 extern double gWP_SIZE;
+extern double gBM_SIZE;
