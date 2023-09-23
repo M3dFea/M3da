@@ -1170,6 +1170,26 @@ void DBase::Serialize(CArchive& ar)
 	{
 	  // TODO: add storing code here
 		ar<<VERSION_NO;
+		//View Matrix
+		ar << tOrient.vAxisPts[0].x;
+		ar << tOrient.vAxisPts[0].y;
+		ar << tOrient.vAxisPts[0].z;
+		ar << tOrient.vAxisPts[1].x;
+		ar << tOrient.vAxisPts[1].y;
+		ar << tOrient.vAxisPts[1].z;
+		ar << tOrient.vAxisPts[2].x;
+		ar << tOrient.vAxisPts[2].y;
+		ar << tOrient.vAxisPts[2].z;
+		ar << tOrient.vAxisPts[3].x;
+		ar << tOrient.vAxisPts[3].y;
+		ar << tOrient.vAxisPts[3].z;
+		ar << tOrient.vEyePt.x;
+		ar << tOrient.vEyePt.y;
+		ar << tOrient.vEyePt.z;
+		ar << tOrient.ds;
+		ar << tOrient.dSclFact;
+
+		//global vars
 		ar << WPSize;
 		ar << gPT_SIZE;
 		ar << gND_SIZE;
@@ -1208,6 +1228,27 @@ void DBase::Serialize(CArchive& ar)
 	else
 	{
 		ar>>iVER;
+		if (iVER <= -66)
+		{
+			ar >> tOrient.vAxisPts[0].x;
+			ar >> tOrient.vAxisPts[0].y;
+			ar >> tOrient.vAxisPts[0].z;
+			ar >> tOrient.vAxisPts[1].x;
+			ar >> tOrient.vAxisPts[1].y;
+			ar >> tOrient.vAxisPts[1].z;
+			ar >> tOrient.vAxisPts[2].x;
+			ar >> tOrient.vAxisPts[2].y;
+			ar >> tOrient.vAxisPts[2].z;
+			ar >> tOrient.vAxisPts[3].x;
+			ar >> tOrient.vAxisPts[3].y;
+			ar >> tOrient.vAxisPts[3].z;
+			ar >> tOrient.vEyePt.x;
+			ar >> tOrient.vEyePt.y;
+			ar >> tOrient.vEyePt.z;
+			ar >> tOrient.ds;
+			ar >> tOrient.dSclFact;
+		}
+
 		if (iVER <= -65)
 		{
 			ar >> WPSize;

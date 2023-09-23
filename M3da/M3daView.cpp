@@ -8,6 +8,8 @@
 #include "M3daView.h"
 #include "resource.h"
 #include "math.h"
+#include "GLOBAL_VARS.h"
+DSP_Triad tOrient;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

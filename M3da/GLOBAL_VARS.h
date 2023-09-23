@@ -8,3 +8,4 @@ extern double gFC_SIZE;
 extern double gWP_SIZE;
 extern double gBM_SIZE;
 extern double gTXT_SIZE;
+extern DSP_Triad tOrient;

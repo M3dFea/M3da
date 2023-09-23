@@ -738,11 +738,11 @@ class DSP_Triad
 public:
      C3dVector vAxisPts[4];
      C3dVector vEyePt;
-	   C3dMatrix mOrientMat;
+	 C3dMatrix mOrientMat;
      double ds;
-	   double dSclFact;
+	 double dSclFact;
      void Create(double WPS);
-	   void ReSet();
+	 void ReSet();
      void SetTopView();
      void SetLeftView();
      void SetFrontView();

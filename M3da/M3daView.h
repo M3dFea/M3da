@@ -29,7 +29,7 @@ public:
 	int m_iFuncKey;
     void ClearScr();
 	BOOL bF;
-	DSP_Triad tOrient;
+
 	void m_UpdateTriad(int iMag);
 // Overrides
 public:
