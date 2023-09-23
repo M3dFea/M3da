@@ -175,6 +175,7 @@ BEGIN
             MENUITEM "Element Edge",                ID_OBJECTSIZE_ELEMENTEDGE
             MENUITEM "Element Free Edge",           ID_OBJECTSIZE_ELEMENTFREEEDGE
             MENUITEM "Element Free Face",           ID_OBJECTSIZE_ELEMENTFREEFACE
+            MENUITEM "Workplane Lines",             ID_OBJECTSIZE_WORKPLANELINES
         END
         POPUP "Visability"
         BEGIN

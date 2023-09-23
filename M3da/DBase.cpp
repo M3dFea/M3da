@@ -459,9 +459,7 @@ pWorldBMP = NULL;
 ResFrameDelay = 200;
 NoResFrame = 5;
 iHLimit =-1;
-gPT_SIZE = 12;
-gND_SIZE = 10;
-gLM_SIZE = 20;
+
 }
 
 //********************************************************
@@ -1172,12 +1170,14 @@ void DBase::Serialize(CArchive& ar)
 	{
 	  // TODO: add storing code here
 		ar<<VERSION_NO;
+		ar << WPSize;
 		ar << gPT_SIZE;
 		ar << gND_SIZE;
 		ar << gLM_SIZE;
 		ar << gEL_SIZE;
 		ar << gED_SIZE;
 		ar << gFC_SIZE;
+		ar << gWP_SIZE;
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
 		ar<<DB_ObjectCount;
@@ -1193,6 +1193,8 @@ void DBase::Serialize(CArchive& ar)
 			ar << pCurrentPart->iLabel;
 		else
 			ar << -1;
+		//Workplane 
+		DB_Obj[0]->Serialize(ar, iVER);
 		for (i=1;i<DB_ObjectCount;i++)
 		{
 			ar << DB_Obj[i]->iObjType;
@@ -1206,12 +1208,14 @@ void DBase::Serialize(CArchive& ar)
 		ar>>iVER;
 		if (iVER <= -65)
 		{
+			ar >> WPSize;
 			ar >> gPT_SIZE;
 			ar >> gND_SIZE;
 			ar >> gLM_SIZE;
 			ar >> gEL_SIZE;
 			ar >> gED_SIZE;
 			ar >> gFC_SIZE;
+			ar >> gWP_SIZE;
 		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);
@@ -1230,6 +1234,13 @@ void DBase::Serialize(CArchive& ar)
 		{
 			ar >> iCurMesh;
 			ar >> iCurPart;
+		}
+		//Workplane 
+		if (iVER <= -65)
+		{
+			WP_Object* pWP = (WP_Object*)DB_Obj[0];
+			pWP->Serialize(ar, iVER);
+			pWP->ReSize(WPSize);
 		}
 		for (i=1;i<DB_ObjectCount;i++)
 		{

@@ -1872,6 +1872,7 @@ public:
 	virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 	virtual void SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran);
 	virtual void HighLight(CDC* pDC);
+	virtual void Serialize(CArchive& ar, int iV);
 	virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);  
 	virtual void Translate(C3dVector vIn);
     virtual void Transform(C3dMatrix TMat);

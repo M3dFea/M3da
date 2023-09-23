@@ -520,6 +520,7 @@ public:
   afx_msg void OnObjectsizeElementedge();
   afx_msg void OnObjectsizeElementfreeedge();
   afx_msg void OnObjectsizeElementfreeface();
+  afx_msg void OnObjectsizeWorkplanelines();
 };
 
 

@@ -31,6 +31,9 @@ public:
     void LabGaps(int iGap);
 HGLRC		hrc;
 BOOL bLineDrag;
+double WPSize;
+double gdSize;
+double gdASize;
 //int iSelLabType;
 C3dVector vLS; //Line Start
 C3dVector vLE; //Line End
@@ -130,9 +133,7 @@ C3dMatrix pScrInvMat;
 C3dMatrix pModelMat;
 int dWidth,dHeight;
 OglMat mOGLmat;
-double WPSize;
-double gdSize;
-double gdASize;
+
 int iOGLInit;
 int iCurElemType;
 int iEdges;

@@ -371,6 +371,7 @@ ON_COMMAND(ID_OBJECTSIZE_LUMPMASS, &CM3daDoc::OnObjectsizeLumpmass)
 ON_COMMAND(ID_OBJECTSIZE_ELEMENTEDGE, &CM3daDoc::OnObjectsizeElementedge)
 ON_COMMAND(ID_OBJECTSIZE_ELEMENTFREEEDGE, &CM3daDoc::OnObjectsizeElementfreeedge)
 ON_COMMAND(ID_OBJECTSIZE_ELEMENTFREEFACE, &CM3daDoc::OnObjectsizeElementfreeface)
+ON_COMMAND(ID_OBJECTSIZE_WORKPLANELINES, &CM3daDoc::OnObjectsizeWorkplanelines)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6226,6 +6227,21 @@ void CM3daDoc::OnObjectsizeElementfreeface()
 	{
 		outtextMSG2("FCSIZE");
 		sLastcmd = "FCSIZE";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnObjectsizeWorkplanelines()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("WPLSIZE");
+		sLastcmd = "WPLSIZE";
 	}
 	else
 	{

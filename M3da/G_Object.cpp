@@ -8,6 +8,7 @@ double gLM_SIZE = 20;
 double gEL_SIZE = 2;
 double gED_SIZE = 5;
 double gFC_SIZE = 3;
+double gWP_SIZE = 12;
 //END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -19434,7 +19435,7 @@ if ((iDspFlgs & DSP_WP) > 0)
 		T_Point[i] = mWPTransform * V;
 	}
 	glColor3fv(cols[GetCol()]);
-	glLineWidth(12.0);
+	glLineWidth(gWP_SIZE);
 	glBegin(GL_LINE_LOOP);
 	glVertex3f((float)T_Point[0].x, (float)T_Point[0].y, (float)T_Point[0].z);
 	glVertex3f((float)T_Point[1].x, (float)T_Point[1].y, (float)T_Point[1].z);
@@ -19661,6 +19662,50 @@ void WP_Object::HighLight(CDC* pDC)
 Draw(pDC,4);
 }
 
+void WP_Object::Serialize(CArchive& ar, int iV)
+{
+	G_Object::Serialize(ar, iV);
+	if (ar.IsStoring())
+	{
+		ar << mWPTransform.m_00;
+		ar << mWPTransform.m_01;
+		ar << mWPTransform.m_02;
+		ar << mWPTransform.m_03;
+		ar << mWPTransform.m_10;
+		ar << mWPTransform.m_11;
+		ar << mWPTransform.m_12;
+		ar << mWPTransform.m_13;
+		ar << mWPTransform.m_20;
+		ar << mWPTransform.m_21;
+		ar << mWPTransform.m_22;
+		ar << mWPTransform.m_23;
+		ar << mWPTransform.m_30;
+		ar << mWPTransform.m_31;;
+		ar << mWPTransform.m_32;
+		ar << mWPTransform.m_33;
+		ar << iWPMode; 
+	}
+	else
+	{
+		ar >> mWPTransform.m_00;
+		ar >> mWPTransform.m_01;
+		ar >> mWPTransform.m_02;
+		ar >> mWPTransform.m_03;
+		ar >> mWPTransform.m_10;
+		ar >> mWPTransform.m_11;
+		ar >> mWPTransform.m_12;
+		ar >> mWPTransform.m_13;
+		ar >> mWPTransform.m_20;
+		ar >> mWPTransform.m_21;
+		ar >> mWPTransform.m_22;
+		ar >> mWPTransform.m_23;
+		ar >> mWPTransform.m_30;
+		ar >> mWPTransform.m_31;;
+		ar >> mWPTransform.m_32;
+		ar >> mWPTransform.m_33;
+		ar >> iWPMode;
+	}
+}
 
 G_ObjectD WP_Object::SelDist(CPoint InPT,Filter FIL)
 {
