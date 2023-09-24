@@ -1170,25 +1170,22 @@ void DBase::Serialize(CArchive& ar)
 	{
 	  // TODO: add storing code here
 		ar<<VERSION_NO;
-		//View Matrix
-		ar << tOrient.vAxisPts[0].x;
-		ar << tOrient.vAxisPts[0].y;
-		ar << tOrient.vAxisPts[0].z;
-		ar << tOrient.vAxisPts[1].x;
-		ar << tOrient.vAxisPts[1].y;
-		ar << tOrient.vAxisPts[1].z;
-		ar << tOrient.vAxisPts[2].x;
-		ar << tOrient.vAxisPts[2].y;
-		ar << tOrient.vAxisPts[2].z;
-		ar << tOrient.vAxisPts[3].x;
-		ar << tOrient.vAxisPts[3].y;
-		ar << tOrient.vAxisPts[3].z;
-		ar << tOrient.vEyePt.x;
-		ar << tOrient.vEyePt.y;
-		ar << tOrient.vEyePt.z;
-		ar << tOrient.ds;
-		ar << tOrient.dSclFact;
-
+		ar << tOrient.mOrientMat.m_00;
+		ar << tOrient.mOrientMat.m_01;
+		ar << tOrient.mOrientMat.m_02;
+		ar << tOrient.mOrientMat.m_03;
+		ar << tOrient.mOrientMat.m_10;
+		ar << tOrient.mOrientMat.m_11;
+		ar << tOrient.mOrientMat.m_12;
+		ar << tOrient.mOrientMat.m_13;
+		ar << tOrient.mOrientMat.m_20;
+		ar << tOrient.mOrientMat.m_21;
+		ar << tOrient.mOrientMat.m_22;
+		ar << tOrient.mOrientMat.m_23;
+		ar << tOrient.mOrientMat.m_30;
+		ar << tOrient.mOrientMat.m_31;
+		ar << tOrient.mOrientMat.m_32;
+		ar << tOrient.mOrientMat.m_33;
 		//global vars
 		ar << WPSize;
 		ar << gPT_SIZE;
@@ -1230,23 +1227,24 @@ void DBase::Serialize(CArchive& ar)
 		ar>>iVER;
 		if (iVER <= -66)
 		{
-			ar >> tOrient.vAxisPts[0].x;
-			ar >> tOrient.vAxisPts[0].y;
-			ar >> tOrient.vAxisPts[0].z;
-			ar >> tOrient.vAxisPts[1].x;
-			ar >> tOrient.vAxisPts[1].y;
-			ar >> tOrient.vAxisPts[1].z;
-			ar >> tOrient.vAxisPts[2].x;
-			ar >> tOrient.vAxisPts[2].y;
-			ar >> tOrient.vAxisPts[2].z;
-			ar >> tOrient.vAxisPts[3].x;
-			ar >> tOrient.vAxisPts[3].y;
-			ar >> tOrient.vAxisPts[3].z;
-			ar >> tOrient.vEyePt.x;
-			ar >> tOrient.vEyePt.y;
-			ar >> tOrient.vEyePt.z;
-			ar >> tOrient.ds;
-			ar >> tOrient.dSclFact;
+			C3dMatrix mT;
+			ar >> mT.m_00;
+			ar >> mT.m_01;
+			ar >> mT.m_02;
+			ar >> mT.m_03;
+			ar >> mT.m_10;
+			ar >> mT.m_11;
+			ar >> mT.m_12;
+			ar >> mT.m_13;
+			ar >> mT.m_20;
+			ar >> mT.m_21;
+			ar >> mT.m_22;
+			ar >> mT.m_23;
+			ar >> mT.m_30;
+			ar >> mT.m_31;
+			ar >> mT.m_32;
+			ar >> mT.m_33;
+			tOrient.PushMat(mT);
 		}
 
 		if (iVER <= -65)
@@ -14496,6 +14494,75 @@ if (this->pCurrentMesh!=NULL)
 }
 fclose(pFile2);
 }
+
+void DBase::ExportViewMat(FILE* pFile2)
+{
+  
+
+  if (pFile2 != nullptr)
+  {
+	  fprintf(pFile2, "%s\n", "MAT");
+	  fprintf(pFile2, "%lf %lf %lf %lf\n", pModelMat.m_00, pModelMat.m_01, pModelMat.m_02, pModelMat.m_03);
+	  fprintf(pFile2, "%lf %lf %lf %lf\n", pModelMat.m_10, pModelMat.m_11, pModelMat.m_12, pModelMat.m_13);
+	  fprintf(pFile2, "%lf %lf %lf %lf\n", pModelMat.m_20, pModelMat.m_21, pModelMat.m_22, pModelMat.m_23);
+	  fprintf(pFile2, "%lf %lf %lf %lf\n", pModelMat.m_30, pModelMat.m_31, pModelMat.m_32, pModelMat.m_33);
+	  fclose(pFile2);
+	  outtext1("View Matrix saved.");
+  }
+  else 
+  {
+	  outtext1("ERROR: Unable to save View Matrix.");
+  }
+}
+
+void DBase::ImportViewMat(FILE* pFile)
+{
+
+	char s1[200];
+	C3dMatrix mT;
+	int irc;
+	BOOL bErr = FALSE;
+
+	if (pFile != nullptr)
+	{
+		irc = fscanf(pFile, "%s", &s1);
+		if (irc != 1)
+			bErr = TRUE;
+		irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_00, &mT.m_01, &mT.m_02, &mT.m_03);
+		if (irc != 4)
+			bErr = TRUE;
+		irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_10, &mT.m_11, &mT.m_12, &mT.m_13);
+		if (irc != 4)
+			bErr = TRUE;
+		irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_20, &mT.m_21, &mT.m_22, &mT.m_23);
+		if (irc != 4)
+			bErr = TRUE;
+		irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_30, &mT.m_31, &mT.m_32, &mT.m_33);
+		if (irc != 4)
+			bErr = TRUE;
+		if (!bErr)
+		{
+			outtext1("View Matrix loaded.");
+			tOrient.PushMat(mT);
+			pModelMat = mT;
+			InvalidateOGL();
+			ReDraw();
+		}
+		else
+		{
+			outtext1("ERROR: Invalid Matrix Format.");
+		}
+	}
+	else 
+	{
+		outtext1("ERROR: Unable to load View Matrix.");
+
+	}
+
+
+}
+
+
 void DBase::BuildAssembly(CString sModName)
 {
 int iCO;

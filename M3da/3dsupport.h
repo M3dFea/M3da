@@ -759,6 +759,7 @@ public:
 	   void Scl(double dSfactInc);
 	   double GetScl();
 	   C3dMatrix RetrieveMat();
+	   void PushMat(C3dMatrix mT);
 };
 
 

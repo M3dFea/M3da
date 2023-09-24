@@ -1753,10 +1753,48 @@ mOrientMat.m_22 = vAxisPts[3].z;
 ReSet();
 ApplyTransform(mOrientMat);
 mOrientMat.Scale(dSclFact,dSclFact,dSclFact);
+
 return (mOrientMat);
 }
 
+void DSP_Triad::PushMat(C3dMatrix mT)
+{
+	C3dVector vS;
+	double dS;
+	double dS2;
+	vS.x = mT.m_00;
+	vS.y = mT.m_10;
+	vS.z = mT.m_20;
+	dS = vS.Mag();
+	vS.x = mT.m_01;
+	vS.y = mT.m_11;
+	vS.z = mT.m_21;
+	dS2 = vS.Mag();
 
+	//dSclFact = mT.m_00;
+	dSclFact = dS;
+	mT.Scale(1 / dSclFact, 1 / dSclFact, 1 / dSclFact);
+
+	vAxisPts[0].x = mT.m_30;
+	vAxisPts[0].y = mT.m_31;
+	vAxisPts[0].z = mT.m_32;
+
+	vAxisPts[1].x= mT.m_00;
+	vAxisPts[1].y= mT.m_10;
+	vAxisPts[1].z= mT.m_20;
+	vAxisPts[1] += vAxisPts[0];
+
+	vAxisPts[2].x = mT.m_01;
+	vAxisPts[2].y = mT.m_11;
+	vAxisPts[2].z = mT.m_21;
+	vAxisPts[2] += vAxisPts[0];
+
+	vAxisPts[3].x = mT.m_02;
+	vAxisPts[3].y = mT.m_12;
+	vAxisPts[3].z = mT.m_22;
+	vAxisPts[3] += vAxisPts[0];
+
+}
 
 
 Mat::Mat()

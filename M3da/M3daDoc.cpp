@@ -374,6 +374,8 @@ ON_COMMAND(ID_OBJECTSIZE_ELEMENTFREEFACE, &CM3daDoc::OnObjectsizeElementfreeface
 ON_COMMAND(ID_OBJECTSIZE_WORKPLANELINES, &CM3daDoc::OnObjectsizeWorkplanelines)
 ON_COMMAND(ID_OBJECTSIZE_BEAMS, &CM3daDoc::OnObjectsizeBeams)
 ON_COMMAND(ID_OBJECTSIZE_TEXT, &CM3daDoc::OnObjectsizeText)
+ON_COMMAND(ID_EXPORT_EXPORTVIEWMATRIX, &CM3daDoc::OnExportExportviewmatrix)
+ON_COMMAND(ID_IMPORT_IMPORTVIEWMATRIX, &CM3daDoc::OnImportImportviewmatrix)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6278,5 +6280,48 @@ void CM3daDoc::OnObjectsizeText()
 	else
 	{
 		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnExportExportviewmatrix()
+{
+	// TODO: Add your command handler code here
+	outtext1("EXPORTING CURRENT VIEW MATRIX");
+	FILE* pFile;
+	CFileDialog FDia(FALSE, "MTX", "*.MTX", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
+	FDia.DoModal();
+	CString sPath = FDia.GetPathName();
+	CString sFile = FDia.GetFileName();
+	if (sFile != "")
+	{
+		pFile = fopen(sPath, "w");
+		if (pFile != NULL)
+		{
+			cDBase->ExportViewMat(pFile);
+			fclose(pFile);
+		}
+	}
+}
+
+
+void CM3daDoc::OnImportImportviewmatrix()
+{
+	// TODO: Add your command handler code here
+	outtext1("IMPORT VIEW MATRIX");
+	FILE* pFile;
+	//TODO: Add your command handler code here
+	CFileDialog FDia(TRUE, "VIEW MATRIX", "*.MTX", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
+	FDia.DoModal();
+	CString sPath = FDia.GetPathName();
+	CString sFile = FDia.GetFileName();
+	if (sFile != "")
+	{
+		pFile = fopen(sPath, "r");
+		if (pFile != NULL)
+		{
+			cDBase->ImportViewMat(pFile);
+		}
+		fclose(pFile);
 	}
 }

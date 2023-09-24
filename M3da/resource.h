@@ -580,13 +580,15 @@
 #define ID_OBJECTSIZE_WORKPLANELINES    33387
 #define ID_OBJECTSIZE_BEAMS             33388
 #define ID_OBJECTSIZE_TEXT              33389
+#define ID_EXPORT_EXPORTVIEWMATRIX      33390
+#define ID_IMPORT_IMPORTVIEWMATRIX      33391
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        363
-#define _APS_NEXT_COMMAND_VALUE         33390
+#define _APS_NEXT_COMMAND_VALUE         33392
 #define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
