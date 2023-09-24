@@ -14531,13 +14531,16 @@ void DBase::ImportViewMat(FILE* pFile)
 		irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_00, &mT.m_01, &mT.m_02, &mT.m_03);
 		if (irc != 4)
 			bErr = TRUE;
-		irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_10, &mT.m_11, &mT.m_12, &mT.m_13);
+		if (!bErr)
+		    irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_10, &mT.m_11, &mT.m_12, &mT.m_13);
 		if (irc != 4)
 			bErr = TRUE;
-		irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_20, &mT.m_21, &mT.m_22, &mT.m_23);
+		if (!bErr)
+		    irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_20, &mT.m_21, &mT.m_22, &mT.m_23);
 		if (irc != 4)
 			bErr = TRUE;
-		irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_30, &mT.m_31, &mT.m_32, &mT.m_33);
+		if (!bErr)
+		    irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_30, &mT.m_31, &mT.m_32, &mT.m_33);
 		if (irc != 4)
 			bErr = TRUE;
 		if (!bErr)
@@ -14556,10 +14559,7 @@ void DBase::ImportViewMat(FILE* pFile)
 	else 
 	{
 		outtext1("ERROR: Unable to load View Matrix.");
-
 	}
-
-
 }
 
 
