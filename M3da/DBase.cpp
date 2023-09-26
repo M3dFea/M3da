@@ -1170,22 +1170,22 @@ void DBase::Serialize(CArchive& ar)
 	{
 	  // TODO: add storing code here
 		ar<<VERSION_NO;
-		ar << tOrient.mOrientMat.m_00;
-		ar << tOrient.mOrientMat.m_01;
-		ar << tOrient.mOrientMat.m_02;
-		ar << tOrient.mOrientMat.m_03;
-		ar << tOrient.mOrientMat.m_10;
-		ar << tOrient.mOrientMat.m_11;
-		ar << tOrient.mOrientMat.m_12;
-		ar << tOrient.mOrientMat.m_13;
-		ar << tOrient.mOrientMat.m_20;
-		ar << tOrient.mOrientMat.m_21;
-		ar << tOrient.mOrientMat.m_22;
-		ar << tOrient.mOrientMat.m_23;
-		ar << tOrient.mOrientMat.m_30;
-		ar << tOrient.mOrientMat.m_31;
-		ar << tOrient.mOrientMat.m_32;
-		ar << tOrient.mOrientMat.m_33;
+		ar << pModelMat.m_00;
+		ar << pModelMat.m_01;
+		ar << pModelMat.m_02;
+		ar << pModelMat.m_03;
+		ar << pModelMat.m_10;
+		ar << pModelMat.m_11;
+		ar << pModelMat.m_12;
+		ar << pModelMat.m_13;
+		ar << pModelMat.m_20;
+		ar << pModelMat.m_21;
+		ar << pModelMat.m_22;
+		ar << pModelMat.m_23;
+		ar << pModelMat.m_30;
+		ar << pModelMat.m_31;
+		ar << pModelMat.m_32;
+		ar << pModelMat.m_33;
 		//global vars
 		ar << WPSize;
 		ar << gPT_SIZE;
@@ -1245,6 +1245,7 @@ void DBase::Serialize(CArchive& ar)
 			ar >> mT.m_32;
 			ar >> mT.m_33;
 			tOrient.PushMat(mT);
+			pModelMat = mT;
 		}
 
 		if (iVER <= -65)

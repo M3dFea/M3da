@@ -1,6 +1,7 @@
 #include "G_Object.h"
 #include "M3Da.h"
 #include "GLOBAL_VARS.h"
+
 //START OF GLOBAL VARIABLES - TRYING THIS OUT 22/09/2023
 double gPT_SIZE = 12;
 double gND_SIZE = 10;
@@ -16356,7 +16357,7 @@ void E_Object1::Info()
 {
 	char S1[200];
 	G_Object::Info();
-	sprintf_s(S1, "%s,EID,%i,COL,%i,GRID,%i,MASS,%f,XYZ, %f,%f,%f ",sLab.GetString(), iLabel,iColour, pVertex->iLabel, dM, pVertex->Pt_Point->x, pVertex->Pt_Point->y, pVertex->Pt_Point->z);
+	sprintf_s(S1, "%sEID,%i,COL,%i,GRID,%i,MASS,%f,XYZ, %f,%f,%f ",sLab.GetString(), iLabel,iColour, pVertex->iLabel, dM, pVertex->Pt_Point->x, pVertex->Pt_Point->y, pVertex->Pt_Point->z);
 	outtext1(S1);
 }
 
@@ -41888,8 +41889,16 @@ int Text::GetVarValues(CString sVar[])
 
 void Text::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
-	//iMCys = atoi(sVar[1]);
-	//sText = sVar[0];
+	sText = sVar[0];
+	dTextHeight = atof(sVar[1]);
+}
+
+void Text::Info()
+{
+	char S1[200];
+	G_Object::Info();
+	sprintf_s(S1, "Text:- %s ", sText);
+	outtext1(S1);
 }
 
 
