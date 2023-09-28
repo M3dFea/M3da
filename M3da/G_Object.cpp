@@ -41597,7 +41597,7 @@ Text::Text()
 	vNorm.Set(0,0,1);
 }
 
-Text::Text(int iLab,CString sT, double dH)
+Text::Text(C3dVector vN,int iLab,CString sT, double dH)
 {
 	C3dVector inP;
 	inP.Set(0, 0, 0);
@@ -41618,7 +41618,7 @@ Text::Text(int iLab,CString sT, double dH)
 	}
 	inPt = new CvPt_Object;
 	inPt->Create(inP, 0, -1, 0, 0, 20, this);
-	vNorm.Set(0, 0, 1);
+	vNorm=vN;
 }
 
 Text::~Text()

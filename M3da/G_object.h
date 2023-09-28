@@ -2100,7 +2100,7 @@ public:
 	cLinkedList* pSyms;				//Sybols list forming text
 	CString sText;
 	Text();
-	Text(int iLab, CString sT,double dH);
+	Text(C3dVector vN,int iLab, CString sT,double dH);
 	~Text();
 	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);

@@ -70,6 +70,7 @@ void LoadSymbols(FILE* pFile);
 void LoadSymbolsInterbal();
 void SymTableCalcMetrics();
 void AddText(C3dVector vN, C3dVector vInPt, CString inText,double dH);
+void RebuildText(Text* pText);
 //debug only
 void displaySymTable();
 //****************************     End 28/09/2016    ****************************
