@@ -18883,8 +18883,13 @@ if ((iDspFlgs & DSP_ELEMENTS) > 0)
 	vCent=Get_Centroid();
 	if (bDrawLab==TRUE)
 	{
-	  sprintf_s(sLab,"E%i",iLabel);
+	  sprintf_s(sLab," R%i",iLabel);
 	  OglString(iDspFlgs,vCent.x,vCent.y,vCent.z,&sLab[0]);
+	}
+	else
+	{
+		sprintf_s(sLab, "%s", " R");
+		OglString(iDspFlgs, vCent.x, vCent.y, vCent.z, &sLab[0]);
 	}
 }
 else
