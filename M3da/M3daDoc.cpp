@@ -612,6 +612,12 @@ D_ClientDC = pCView;
 cDBase->Draw(pM,pCView,iMode);
 }
 
+void CM3daDoc::DragUpdate(CPoint m_PointNew)
+{
+	cDBase->DragUpdate(m_PointNew);
+}
+
+
 BOOL CM3daDoc::isBlackDisp()
 {
 	return (cDBase->isBlackDisp());
@@ -626,10 +632,10 @@ void CM3daDoc::DrawDrag(CDC* pCView,CPoint P1,CPoint P2)
 cDBase->DrawDrag(pCView,P1,P2);
 }
 
-BOOL CM3daDoc::isLineDragging()
+BOOL CM3daDoc::isDragging()
 {
 	if (cDBase != NULL)
-		return(cDBase->bLineDrag);
+		return(cDBase->bIsDrag);
 	else
 		return(FALSE);
 }

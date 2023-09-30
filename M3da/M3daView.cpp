@@ -403,7 +403,7 @@ else if (m_iMouseButStat == 1)
     ReleaseDC(pDC);
   }
 }
-else if(GetDocument()->isLineDragging())
+else if(GetDocument()->isDragging())
 {
 	iX = m_PointNew.x - m_PointDown.x;
 	iY = m_PointNew.y - m_PointDown.y;
@@ -415,9 +415,10 @@ else if(GetDocument()->isLineDragging())
 	{
 		CDC* pDC = this->GetDC();
 		GetDocument()->SetView(this);
+		GetDocument()->DragUpdate(m_PointNew);
 		GetDocument()->Draw(tOrient.RetrieveMat(), pDC, 3);
-		GetDocument()->SetLineEnd(m_PointNew);
-		GetDocument()->LineDrag(pDC, m_PointDown, m_PointNew);
+		//GetDocument()->SetLineEnd(m_PointNew);
+		//GetDocument()->LineDrag(pDC, m_PointDown, m_PointNew);
 		ReleaseDC(pDC);
 	}
 }

@@ -3593,8 +3593,9 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-	cDBase->bLineDrag = TRUE;
+	cDBase->bIsDrag = TRUE;
 	p1 = cDBase->DB_PopBuff();
+	cDBase->AddDragLN(p1);
 	cDBase->vLS = p1;
 	outtext2("//ENTER PT2");
     iResumePos=2;
@@ -3626,13 +3627,14 @@ else if (iStat == 2)
   cDBase->AddLN(p1,p2,-1,TRUE);
   outtext1("1 Line Created.");
   iStat=0;  
-  cDBase->bLineDrag = FALSE;
+  cDBase->bIsDrag = FALSE;
   this->DoMenu(CInMsg,Pt);
 }
 //Escape clause
 if (iStat == 100)
 {
-  cDBase->bLineDrag = FALSE;
+  cDBase->bIsDrag = FALSE;
+  cDBase->ReDraw();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3665,12 +3667,13 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 1)
 		{
-			cDBase->bLineDrag = TRUE;
+			cDBase->bIsDrag = TRUE;
 			if (bF)
 			{
 				pLast = cDBase->DB_PopBuff();
 				bF = FALSE;
 			}
+			cDBase->AddDragLN(pLast);
 			cDBase->vLS = pLast;
 			outtext2("//ENTER PT2");
 			iResumePos = 2;
@@ -3711,7 +3714,8 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		//Escape clause
 		if (iStat == 100)
 		{
-			cDBase->bLineDrag = FALSE;
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
 			cDBase->DB_BuffCount = initCnt;
 			cDBase->S_Count = S_initCnt;
 			RetVal = 1;
@@ -3727,6 +3731,9 @@ int zCIRCPT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
 {
+	C3dVector vN;
+	vN.Set(0, 0, 1);
+	vN = cDBase->GlobaltoWP3(vN);
 if (CInMsg == "C") //Common Options
 {
   RetVal = 2;
@@ -3744,8 +3751,9 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-	cDBase->bLineDrag = TRUE;
+	cDBase->bIsDrag = TRUE;
 	p1 = cDBase->DB_PopBuff();
+	cDBase->AddDragCIR(vN,p1);
 	cDBase->vLS = p1;
 	outtext2("//ENTER POINT ON RADIUS");
     iResumePos=2;
@@ -3756,11 +3764,9 @@ if (iStat == 1)
 }
 else if (iStat == 2)
 {
-  cDBase->bLineDrag = FALSE;
+  cDBase->bIsDrag = FALSE;
   C3dVector p2;
-  C3dVector vN;
-  vN.Set(0,0,1);
-  vN=cDBase->GlobaltoWP3(vN);
+
   p2=cDBase->DB_PopBuff();
 
   cDBase->AddCirCentPt(vN,p1,p2);
@@ -3770,7 +3776,8 @@ else if (iStat == 2)
 //Escape clause
 if (iStat == 100)
 {
-  cDBase->bLineDrag = FALSE;
+  cDBase->bIsDrag = FALSE;
+  cDBase->ReDraw();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3830,7 +3837,7 @@ else if (iStat == 3)
 //Escape clause
 if (iStat == 100)
 {
-  cDBase->bLineDrag = FALSE;
+  cDBase->bIsDrag = FALSE;
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3985,8 +3992,9 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-	cDBase->bLineDrag = TRUE;
+	cDBase->bIsDrag = TRUE;
 	p1 = cDBase->DB_PopBuff();
+	cDBase->AddDragLN(p1);
 	cDBase->vLS = p1;
 	outtext2("//ENTER PT2");
     iResumePos=2;
@@ -3997,7 +4005,7 @@ if (iStat == 1)
 }
 else if (iStat == 2)
 {
-  cDBase->bLineDrag = FALSE;
+  cDBase->bIsDrag = FALSE;
   C3dVector p2;
   p2=cDBase->DB_PopBuff();
 
@@ -4008,7 +4016,8 @@ else if (iStat == 2)
 //Escape clause
 if (iStat == 100)
 {
-  cDBase->bLineDrag = FALSE;
+  cDBase->bIsDrag = FALSE;
+  cDBase->ReDraw();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -6222,8 +6231,9 @@ int zSURRV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 3)
 		{
-			cDBase->bLineDrag = TRUE;
+			cDBase->bIsDrag = TRUE;
 			p1 = cDBase->DB_PopBuff();
+			cDBase->AddDragLN(p1);
 			cDBase->vLS = p1;
 			outtext2("//ENTER AXIS PT2");
 			iResumePos = 4;
@@ -6234,7 +6244,7 @@ int zSURRV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 4)
 		{
-			cDBase->bLineDrag = FALSE;
+			cDBase->bIsDrag = FALSE;
 			outtext2("//ENTER ROTATION ANG (Def: 360)");
 			iStat = 5;
 			SetFocus();
@@ -6269,7 +6279,8 @@ int zSURRV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 	//Escape clause
 	if (iStat == 100)
 	{
-		cDBase->bLineDrag = FALSE;
+		cDBase->bIsDrag = FALSE;
+		cDBase->ReDraw();
 		cDBase->DB_BuffCount=initCnt;
 		cDBase->S_Count=S_initCnt;
 		cDBase->FILTER.SetAll();

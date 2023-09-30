@@ -1647,6 +1647,7 @@ public:
   G_Object();
   virtual ~G_Object();
   virtual void Create();
+  virtual void DragUpdate(C3dVector inPt);
   virtual void Info();
   virtual CString ToString();
   virtual C3dVector MinPt(C3dVector inPt);
@@ -2122,6 +2123,50 @@ public:
 
 };
 
+class DIM : public G_Object
+{
+	DECLARE_DYNAMIC(DIM)
+public:
+	//pObjext* 
+	C3dVector inPt;         //Insertion Point
+	C3dMatrix vOMatWP;		//WP alignement matrix
+	double dScl = 1;        //Text Height
+	CString sText;          //The text on the dim
+	BOOL bArrowsIn = TRUE;  //arrow point in from leaders
+	//The object that where dimentsioned  eg Circle Line Points ->Get_Centroid values
+	//use Clear to remove in cLinkedList
+	cLinkedList* pRefObjs = NULL;
+	//The dim draw grachics objects
+	//use DeleteAll to delete in cLinkedList before regenerating
+	cLinkedList* pDimObjs= NULL;             
+	//0 N/A 
+    //1 Aligned Linear
+    //2 H/V Linear
+    //3 Dia
+    //4 Rad
+
+	DIM();
+	DIM(C3dVector vInPt, C3dMatrix inMat, int iLab, double dScl, CString isText);
+	~DIM();
+	//virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	//virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	//virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
+	//virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
+	//virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
+	//virtual void HighLight(CDC* pDC);
+	//virtual void Transform(C3dMatrix TMAt);
+	//virtual void Translate(C3dVector vIn);
+	//virtual void Move(C3dVector vM);
+	//virtual void Serialize(CArchive& ar, int iV);
+	//virtual C3dVector Get_Centroid();
+	//virtual G_Object* Copy(G_Object* Parrent);
+	//virtual CString GetName();
+	//virtual int GetVarHeaders(CString sVar[]);
+	//virtual int GetVarValues(CString sVar[]);
+	//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+	//virtual void Info();
+};
+
 
 //26/09/2016
 //symbol class used for compounds of lines
@@ -2200,6 +2245,7 @@ public:
    BOOL DrawCPts;
    BOOL DrawNoCvs;
    virtual void Create(int iLab,G_Object* Parrent);
+   virtual void DragUpdate(C3dVector inPt);
    virtual void Clean();
    virtual void Info();
    virtual CString GetKnotString();
@@ -2428,6 +2474,7 @@ public:
    NCircle();
    virtual void Create(C3dVector vN,C3dVector vC,double dRad,int iLab,G_Object* Parrent);
    virtual void Create2(C3dVector vN,C3dVector vC,C3dVector vR,double dRad,int iLab,G_Object* Parrent);
+   virtual void DragUpdate(C3dVector inPt);
    virtual void Serialize(CArchive& ar,int iV);
    virtual void Info();
    virtual G_Object* Copy(G_Object* Parrent);
@@ -2446,6 +2493,7 @@ DECLARE_DYNAMIC(NLine)
 public:
    NLine();
    virtual void Create(C3dVector vP1,C3dVector vP2,int iLab,G_Object* Parrent);
+   virtual void DragUpdate(C3dVector inPt);
    virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
    virtual void HighLight(CDC* pDC);
    virtual C3dVector MinPt(C3dVector inPt);

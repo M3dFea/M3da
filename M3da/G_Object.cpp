@@ -1816,6 +1816,11 @@ pParent=NULL;
 bDrawLab = FALSE;
 }
 
+//For Dynamic dragging update
+void G_Object::DragUpdate(C3dVector inPt)
+{
+
+}
 
 C3dVector G_Object::MinPt(C3dVector inPt)
 {
@@ -41907,6 +41912,72 @@ void Text::Info()
 }
 
 
+
+//*****************************************************************
+// BlowsR 14/07/2020
+// Text Object added
+// linked list of symbols
+//*****************************************************************
+IMPLEMENT_DYNAMIC(DIM, CObject)
+//DIM();
+//DIM(C3dVector vInPt, C3dVector vN, int iLab, double dScl);
+//~DIM();
+
+DIM::DIM()
+{
+	G_Object::G_Object();
+	pParent = NULL;
+	Drawn = 0;
+	Selectable = 1;
+	Visable = 1;
+	iObjType = 10;
+	iLabel = -1;
+	iColour = 100;
+	sText = "";
+	inPt.Set(0, 0, 1);
+	vOMatWP.MakeUnit();
+	dScl = 1;
+	//0 N/A 
+    //1 Aligned Linear
+    //2 H/V Linear
+    //3 Dia
+    //4 Rad
+	iType = 0;
+	pRefObjs = nullptr;
+	pDimObjs = nullptr;
+	sText = "";;
+}
+
+DIM::DIM(C3dVector invInPt, C3dMatrix inMat, int iniLab, double indScl, CString isText)
+{
+	G_Object::G_Object();
+	pParent = NULL;
+	Drawn = 0;
+	Selectable = 1;
+	Visable = 1;
+	iObjType = 10;
+	iLabel = iniLab;
+	iColour = 100;
+	sText = isText;
+	inPt = invInPt;
+	vOMatWP = inMat;
+	dScl = indScl;
+	//0 N/A 
+    //1 Aligned Linear
+    //2 H/V Linear
+    //3 Dia
+    //4 Rad
+	iType = 0;
+	pRefObjs = nullptr;
+	pDimObjs = nullptr;
+	sText = "";;
+}
+
+DIM::~DIM()
+{
+}
+
+
 //26/09/2016
 //symbol class used for compounds of lines
 // fonts, hatches etc
@@ -44414,6 +44485,11 @@ pS=NULL;
 pE=NULL;
 iInc = -1;
 dLSize = 1;
+
+}
+
+void NCurve::DragUpdate(C3dVector inPt)
+{
 
 }
 
@@ -47040,6 +47116,32 @@ vNorm=vN;
 vCent=vC;
 }
 
+void NCircle::DragUpdate(C3dVector inPt)
+{
+	double r2 = 0.70710678118654752440084436210485;
+	C3dVector a;
+	a = vCent;
+	a -= inPt;
+	dRadius = a.Mag();
+	cPts[0]->Pt_Point->Set(dRadius, 0, 0);
+	cPts[1]->Pt_Point->Set(dRadius,dRadius, 0);
+	cPts[2]->Pt_Point->Set(0,dRadius,0);
+	cPts[3]->Pt_Point->Set(-dRadius,dRadius, 0);
+	cPts[4]->Pt_Point->Set(-dRadius,0,0);
+	cPts[5]->Pt_Point->Set(-dRadius,-dRadius,0);
+	cPts[6]->Pt_Point->Set(0,-dRadius,0);
+	cPts[7]->Pt_Point->Set(dRadius,-dRadius,0);
+	cPts[8]->Pt_Point->Set(dRadius,0,0);
+
+	C3dMatrix RMat;
+	RMat = RMat.CalcTran(vNorm);
+
+	C3dMatrix TMat;
+	this->NCurve::Transform(RMat);
+	TMat.Translate(vCent.x, vCent.y, vCent.z);
+	this->NCurve::Transform(TMat);
+}
+
 void NCircle::Serialize(CArchive& ar,int iV)
 {
 NCurve::Serialize(ar,iV);
@@ -47176,7 +47278,7 @@ void NCircle::Transform(C3dMatrix TMat)
   TMat.m_30=0;
   TMat.m_31=0;
   TMat.m_32=0;
-  vNorm=TMat.Mult(vNorm);
+  //vNorm=TMat.Mult(vNorm);
 }
 
 
@@ -47244,7 +47346,10 @@ knots[2]=1.0;
 knots[3]=1.0;
 }
 
-
+void NLine::DragUpdate(C3dVector inPt)
+{
+	cPts[1]->Pt_Point->Set(inPt.x, inPt.y, inPt.z);
+}
 
 
 void NLine::OglDrawW(int iDspFlgs,double dS1,double dS2)

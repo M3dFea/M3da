@@ -30,7 +30,10 @@ public:
     void Ortho();
     void LabGaps(int iGap);
 HGLRC		hrc;
-BOOL bLineDrag;
+//Dynamic draging object 
+BOOL bIsDrag;
+G_Object* pDragObj = nullptr;
+void DragUpdate(CPoint inPt);
 double WPSize;
 double gdSize;
 double gdASize;
@@ -300,6 +303,7 @@ void AddNode(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut);
 void AddCoordSys(C3dVector p1,C3dVector p2,C3dVector p3,int Lab,int Typ,int iRID);
 CvPt_Object* AddPt(C3dVector InPt, int iLab,BOOL bRedraw);
 void AddPt2(double x,double y,double z, int iLab);
+void AddDragLN(C3dVector v1);
 NLine* AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw);
 NLine* AddLNbyXYZ(double x1,double y1, double z1, double x2, double y2, double z2,int iCol);
 void AddRect(C3dVector v1,C3dVector v2, int ilab);
@@ -323,6 +327,7 @@ void AddSurfBoundIGES2(G_Object* pS, ObjList* pCur);
 void AddSurfBoundTrimLoopIGES(G_Object* pS,ObjList* pCur);
 NCircle* AddCirCentPt(C3dVector vNorm,C3dVector vCent,C3dVector vR);
 NCircle* AddCirCR(C3dVector vNorm,C3dVector vCent,double dR,int ilab);
+void AddDragCIR(C3dVector vN, C3dVector v1);
 void TrimLn();
 NCircle* Fillet(NLine* L1,NLine* L2,double dR,C3dVector PNear1,C3dVector PNear2);
 NCircle* Fillet2(double dR,CPoint PNear1,CPoint PNear2);

@@ -282,8 +282,9 @@ DBase::DBase()
 {
 	EnableAutomation();
     pWorldBMP=NULL;
-	bLineDrag = FALSE;
+	bIsDrag = FALSE;
 	iHLimit = -1;
+	G_Object* pDragObj = nullptr;
 }
 
 DBase::~DBase()
@@ -296,6 +297,8 @@ DBase::~DBase()
 		DB_Obj[i] = NULL;
 	}
 	DB_ObjectCount = 0;
+	if (pDragObj != nullptr);
+	delete (pDragObj);
 }
 
 
@@ -376,6 +379,14 @@ int DBase::GetFileByNo(CString sF)
 	return(irc);
 }
 
+void DBase::DragUpdate(CPoint inPt)
+{
+	C3dVector vG;
+	vG = PickPointToGlobal2(inPt);
+	if (pDragObj != nullptr)
+		pDragObj->DragUpdate(vG);
+}
+
 void DBase::SetLineStart(CPoint pS)
 {
 	vLS = PickPointToGlobal2(pS);
@@ -401,7 +412,7 @@ void DBase::OnFinalRelease()
 DBase::DBase(double WPS)
 {
 EnableAutomation();
-bLineDrag = FALSE;
+bIsDrag = FALSE;
 TmpOGLCnt=0;
 DB_ObjectCount = 0;
 DB_ActiveBuff = 1;
@@ -459,7 +470,7 @@ pWorldBMP = NULL;
 ResFrameDelay = 200;
 NoResFrame = 5;
 iHLimit =-1;
-
+G_Object* pDragObj = nullptr;
 }
 
 //********************************************************
@@ -5880,6 +5891,16 @@ NLine* DBase::AddLNbyXYZ(double x1, double y1, double z1, double x2, double y2, 
 	return (LnIn);
 }
 
+void DBase::AddDragLN(C3dVector v1)
+{
+	NLine* LnIn = new NLine();
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	LnIn->Create(v1, v1, -1, NULL);
+	pDragObj = (NLine*)LnIn;
+}
+
 NLine* DBase::AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw)
 {
 
@@ -6619,6 +6640,16 @@ iCVLabCnt++;
 AddObj(cCir);
 ReDraw();
 return (cCir);
+}
+
+void DBase::AddDragCIR(C3dVector vN,C3dVector v1)
+{
+	NCircle* pCir = new NCircle();
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pCir->Create(vN, v1, 0, -1,NULL);
+	pDragObj = (NCircle*) pCir;
 }
 
 NCircle* DBase::AddCirCentPt(C3dVector vNorm,C3dVector vCent,C3dVector vR)
@@ -10759,6 +10790,9 @@ for (i=0;i<TmpOGLCnt;i++)
 {
   TmpOGL[i]->OglDrawW(iDspFlgs,dMFullScl,0);
 }
+//Draw the dragging update
+if ((pDragObj!=nullptr) && (bIsDrag==TRUE))
+   pDragObj->OglDrawW(iDspFlgs, dMFullScl, 0);
  if ((DspFlags & DSP_GRAD) != 0)
   {
     glMatrixMode(GL_MODELVIEW);
