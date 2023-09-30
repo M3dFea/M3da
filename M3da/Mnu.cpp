@@ -3244,8 +3244,21 @@ if (iStat == 3)
   C3dVector p2;
   p2=cDBase->DB_PopBuff();
   p1=cDBase->DB_PopBuff();
+
   p2=cDBase->GlobaltoWP(p2);
   p1=cDBase->GlobaltoWP(p1);
+  if (cDBase->bOrtho)
+  {
+	  //Need to transform to workplane
+	  if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
+	  {
+		  p2.y = p1.y;
+	  }
+	  else
+	  {
+		  p2.x = p1.x;
+	  }
+  }
   p2-=p1;
   cDBase->DB_AddPtBuff(p2);
 }
@@ -3628,6 +3641,7 @@ else if (iStat == 2)
   outtext1("1 Line Created.");
   iStat=0;  
   cDBase->bIsDrag = FALSE;
+  cDBase->ReDraw();
   this->DoMenu(CInMsg,Pt);
 }
 //Escape clause
@@ -3705,8 +3719,8 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 				p2 = cDBase->WPtoGlobal(p2);
 			}
 			pLast = p2;
-
 			cDBase->AddLN(p1, p2, -1,TRUE);
+			cDBase->ReDraw();
 			outtext1("1 Line Created.");
 			iStat = 1;
 			this->DoMenu(CInMsg, Pt);

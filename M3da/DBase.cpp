@@ -10933,7 +10933,9 @@ for (i=0;i<TmpOGLCnt;i++)
     TmpOGL[i]->OglDrawW(iDspFlgs,dMFullScl,0);
   }
 }
-
+//Draw the dragging update
+if ((pDragObj != nullptr) && (bIsDrag == TRUE))
+pDragObj->OglDrawW(iDspFlgs, dMFullScl, 0);
 glLoadIdentity();
 if (pCurrentMesh!=NULL)
 {
