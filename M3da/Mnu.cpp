@@ -5,7 +5,10 @@
 #include "GLOBAL_VARS.h"
 // constructor sets where to out text
 const double Pi = 3.1415926535;
-	
+double gDIM_FILSZ = 0.1;
+double gDIM_OFFSZ = 0.1;
+//GLOBAL DEFUALT VALUES ENTERED
+
 void zMnu::Init(DBase* TheDBase,int iType)
 {
 cDBase = TheDBase;	
@@ -2446,6 +2449,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "LNTANCIR")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zLNTANCIR_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "LABGAP")
 	  {
 		  iResumePos = 0;
@@ -3748,11 +3761,11 @@ if (pNext==NULL)
 	C3dVector vN;
 	vN.Set(0, 0, 1);
 	vN = cDBase->GlobaltoWP3(vN);
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  goto MenuEnd;
-}
+    if (CInMsg == "C") //Common Options
+    {
+       RetVal = 2;
+       goto MenuEnd;
+    }
 
 if (iStat == 0)
 {
@@ -3799,6 +3812,74 @@ if (iStat == 100)
 }
 MenuEnd:
 return RetVal;
+}
+
+int zLNTANCIR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		C3dVector vN;
+		vN.Set(0, 0, 1);
+		vN = cDBase->GlobaltoWP3(vN);
+		if (CInMsg == "C") //Common Options
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("//PICK POINT");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			p1 = cDBase->DB_PopBuff();
+			cDBase->bIsDrag = TRUE;
+			cDBase->AddDragLN(p1);
+			cDBase->vLS = p1;
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("//PICK CIRCLE ");
+			iStat = 2;
+		}
+		if (iStat == 2)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				PNear1 = Pt;
+				iStat = 3;
+
+			}
+		}
+		if (iStat == 3)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->AddCirTanPt(vN, p1, Pt);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+
 }
 
 int zTEXTCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
@@ -7547,7 +7628,9 @@ int zFIL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 1)
 		{
-			outtext2("// ENTER RADIUS");
+			char OutT[80];
+			sprintf_s(OutT, "%s %g)","ENTER RADIUS (",gDIM_FILSZ);
+			outtext2(OutT);
 			SetFocus();
 			iResumePos = 2;
 			iCancelPos = 100;
@@ -7584,7 +7667,13 @@ int zFIL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 5)
 		{
-			cDBase->Fillet2(vR.x, PNear1, PNear2);
+			double dRad;
+			dRad = vR.x;
+			if (dRad == 0)
+				dRad = gDIM_FILSZ;
+			else
+				gDIM_FILSZ = dRad;
+			cDBase->Fillet2(dRad, PNear1, PNear2);
 			iStat = 4;
 			cDBase->S_Count = S_initCnt;
 			outtext2("// PICK TWO LINES");
@@ -7643,7 +7732,8 @@ if (iStat == 2)
   P=cDBase->DB_PopBuff();
   cDBase->Corner2(PNear1,PNear2);
   cDBase->FILTER.SetAll();
-  RetVal = 1;
+  iStat = 0;
+  this->DoMenu(CInMsg, Pt);
 }
 //Escape clause
 if (iStat == 100)
@@ -7651,7 +7741,8 @@ if (iStat == 100)
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   cDBase->FILTER.SetAll();
-  RetVal = 1;
+  //RetVal = 1;
+  iStat = 0;
 }
 }
 MenuEnd:
@@ -14583,7 +14674,10 @@ if ((CInMsg == "C") || (CInMsg == "D") || (CInMsg == "")) //Common Options
 }
 if (iStat == 0)
 {
-  outtext2("//ENTER OFFSET DISTANCE");
+
+  char OutT[80];
+  sprintf_s(OutT, "%s%g)", "ENTER OFFSET DISTANCE (", gDIM_OFFSZ);
+  outtext2(OutT);
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -14625,7 +14719,14 @@ if (iStat == 5)
 {
   C3dVector ptVec;
   ptVec=cDBase->DB_PopBuff();
-  cDBase->OffSet(pO,ptVec,dDist.x);
+  double dOffDist;
+  dOffDist = dDist.x;
+  if (dOffDist == 0)
+	  dOffDist = gDIM_OFFSZ;
+  else
+	  gDIM_OFFSZ = dOffDist;
+
+  cDBase->OffSet(pO,ptVec, dOffDist);
   iStat = 2;
   this->DoMenu(CInMsg,Pt);
 }

@@ -906,6 +906,14 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zLNTANCIR_Mnu : public zMnu
+{
+	CPoint PNear1;
+	C3dVector p1;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zLN_Mnu: public zMnu
 {
 C3dVector p1;

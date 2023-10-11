@@ -47578,6 +47578,8 @@ if (v1o.Dot(v2)<0)
 
 NLine* Ln2 = new NLine;
 Ln2->Create(p1+v1o,p2+v1o,1,NULL);
+Ln2->we = this->we;
+Ln2->ws = this->ws;
 return (Ln2);
 }
 

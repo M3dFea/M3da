@@ -8,5 +8,7 @@ extern double gFC_SIZE;
 extern double gWP_SIZE;
 extern double gBM_SIZE;
 extern double gTXT_SIZE;
+extern double gDIM_FILSZ;
+extern double gDIM_OFFSZ;
 extern DSP_Triad tOrient;
 

@@ -326,6 +326,7 @@ void AddSurfBoundIGES(G_Object* pS,ObjList* pCur);
 void AddSurfBoundIGES2(G_Object* pS, ObjList* pCur);
 void AddSurfBoundTrimLoopIGES(G_Object* pS,ObjList* pCur);
 NCircle* AddCirCentPt(C3dVector vNorm,C3dVector vCent,C3dVector vR);
+NLine* AddCirTanPt(C3dVector vNorm, C3dVector vPt, CPoint PNear1);
 NCircle* AddCirCR(C3dVector vNorm,C3dVector vCent,double dR,int ilab);
 void AddDragCIR(C3dVector vN, C3dVector v1);
 void TrimLn();

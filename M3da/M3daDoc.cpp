@@ -376,6 +376,7 @@ ON_COMMAND(ID_OBJECTSIZE_BEAMS, &CM3daDoc::OnObjectsizeBeams)
 ON_COMMAND(ID_OBJECTSIZE_TEXT, &CM3daDoc::OnObjectsizeText)
 ON_COMMAND(ID_EXPORT_EXPORTVIEWMATRIX, &CM3daDoc::OnExportExportviewmatrix)
 ON_COMMAND(ID_IMPORT_IMPORTVIEWMATRIX, &CM3daDoc::OnImportImportviewmatrix)
+ON_COMMAND(ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE, &CM3daDoc::OnCurvetoolsLinethrouptandtangenttocircle)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6329,5 +6330,21 @@ void CM3daDoc::OnImportImportviewmatrix()
 			cDBase->ImportViewMat(pFile);
 		}
 		fclose(pFile);
+	}
+}
+
+
+void CM3daDoc::OnCurvetoolsLinethrouptandtangenttocircle()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("LNTANCIR");
+		sLastcmd = "LNTANCIR";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
 	}
 }

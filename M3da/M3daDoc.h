@@ -526,6 +526,7 @@ public:
   afx_msg void OnObjectsizeText();
   afx_msg void OnExportExportviewmatrix();
   afx_msg void OnImportImportviewmatrix();
+  afx_msg void OnCurvetoolsLinethrouptandtangenttocircle();
 };
 
 

@@ -222,6 +222,7 @@ BEGIN
             MENUITEM "Line Y",                      ID_LINE_LINEY
             MENUITEM "Line Z",                      ID_LINE_LINEZ
             MENUITEM "Line Angle",                  ID_LINE_LINEANGLE
+            MENUITEM "Line Throu Pt and Tangent to Circle", ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE
             MENUITEM "Curve",                       ID_CREATE_CURVE
             MENUITEM "Curve Throu Points",          ID_CREATE_FITTEDCURVE
             MENUITEM "Fillet",                      ID_CREATE_FILLET
@@ -1305,6 +1306,12 @@ BEGIN
                             "Insert a spring element between rigid elements"
     ID_FEMTOOLS_SWEEPEDGESOUTWARD 
                             "Sweep shell edges outwards to create new rows of elements."
+END
+
+STRINGTABLE
+BEGIN
+    ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE 
+                            "Line Throu Pt and Tangent to Circle"
 END
 
 #endif    // English (United States) resources

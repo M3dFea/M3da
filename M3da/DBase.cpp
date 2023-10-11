@@ -1,5 +1,6 @@
 ﻿#include "DBase.h"
 #include <cmath>
+#include <iostream>
 #include "gl\gl.h"
 #include "gl\glu.h"
 #include "M3Da.h"
@@ -6650,6 +6651,99 @@ void DBase::AddDragCIR(C3dVector vN,C3dVector v1)
 		delete(pDragObj);
 	pCir->Create(vN, v1, 0, -1,NULL);
 	pDragObj = (NCircle*) pCir;
+}
+
+int calculateTangents(double Cx, double Cy, double r, double Px, double Py, C3dVector &t1, C3dVector &t2)
+{
+	int irc=0;
+	double dx = Px - Cx;
+	double dy = Py - Cy;
+	double dxr = -dy;
+	double dyr = dx;
+	double d = std::sqrt(dx * dx + dy * dy);
+
+	if (d >= r) {
+		double rho = r / d;
+		double ad = rho * rho;
+		double bd = rho * std::sqrt(1 - rho * rho);
+		double T1x = Cx + ad * dx + bd * dxr;
+		double T1y = Cy + ad * dy + bd * dyr;
+		double T2x = Cx + ad * dx - bd * dxr;
+		double T2y = Cy + ad * dy - bd * dyr;
+		t1.Set(T1x, T1y, 0);
+		t2.Set(T2x, T2y, 0);
+		irc = 1; //ok
+	}
+
+	return (irc);
+}
+
+//Create a line from a point tangent to a circle
+NLine* DBase::AddCirTanPt(C3dVector vNorm, C3dVector vPt, CPoint PNear1)
+{
+	//https://math.stackexchange.com/questions/543496/how-to-find-the-equation-of-a-line-tangent-to-a-circle-that-passes-through-a-g
+	double dR;
+	int iErr;
+	C3dVector vC;
+	NCircle* pC;
+	C3dVector pN1;
+	C3dVector t1;
+	C3dVector t2;
+	C3dVector vD;
+	double d1, d2;
+
+	pN1 = PickPointToGlobal(PNear1);
+	pN1 = GlobaltoWP(pN1);
+	if (S_Count > 0)
+	{
+		// Check to see is item is circle
+		if ((S_Buff[S_Count - 1]->iObjType == 7) &&
+			(S_Buff[S_Count - 1]->iType == 3))
+		{
+			pC = (NCircle*) S_Buff[S_Count - 1];
+			S_Des();
+			double Cx, Cy;
+			vC = pC->vCent;
+			vC = GlobaltoWP(vC);
+			Cx = vC.x;
+			Cy = vC.y;
+			double r = 5;
+			r = pC->dRadius;
+			double Px , Py;
+			vPt = GlobaltoWP(vPt);
+			Px = vPt.x;
+			Py = vPt.y;
+			iErr = calculateTangents(Cx, Cy, r, Px, Py, t1, t2);
+			if (iErr == 1)
+			{
+				vD = pN1 - t1;
+				d1 = vD.Mag();
+				vD = pN1 - t2;
+				d2 = vD.Mag();
+				vPt = WPtoGlobal(vPt);
+				if (d1 < d2)
+				{
+					t1 = WPtoGlobal(t1);
+					AddLN(vPt, t1, -1, TRUE);
+				}
+				else
+				{
+					t2 = WPtoGlobal(t2);
+					AddLN(vPt, t2, -1, TRUE);
+				}
+			}
+			else
+			{
+				outtext1("ERROR: Calculating tangents.");
+			}
+		}
+		else
+		{
+			outtext1("ERROR: No Circle Selected.");
+		}
+	}
+
+	return(nullptr);
 }
 
 NCircle* DBase::AddCirCentPt(C3dVector vNorm,C3dVector vCent,C3dVector vR)
@@ -15023,30 +15117,48 @@ void DBase::Corner(NLine* Ln,NLine* Ln1, C3dVector PNear1,C3dVector PNear2)
 double w=0;
 double wNr = 0;
 C3dVector pt;
-
+double d1, d2;
+C3dVector vE1, vE2,vV;
 
 // The intersection of the lines
 pt =NLnInt(Ln,Ln1,NULL);
-w = Ln->MinWPt(pt);
-wNr = Ln->MinWPt(PNear1);
-if ((wNr > Ln->ws) && (wNr<w))
+//Find line end nearest to pt LINE 1
+vE1 = Ln->cPts[0]->Get_Centroid();
+vE2 = Ln->cPts[1]->Get_Centroid();
+vV = vE1;
+vV -= PNear1;
+d1 = vV.Mag();
+vV = vE2;
+vV -= PNear1;
+d2 = vV.Mag();
+if (d1 < d2)
 {
-	  Ln->we = w;
+	Ln->cPts[0]->Pt_Point->Set(pt.x, pt.y, pt.z);
+	Ln->ws = 0;
 }
 else
 {
-	  Ln->ws = w;
+	Ln->cPts[1]->Pt_Point->Set(pt.x, pt.y, pt.z);
+	Ln->we = 1;
 }
-
-w = Ln1->MinWPt(pt);
-wNr = Ln1->MinWPt(PNear2);
-if ((wNr > Ln1->ws) && (wNr < w))
+//Find line end nearest to pt LINE 2
+vE1 = Ln1->cPts[0]->Get_Centroid();
+vE2 = Ln1->cPts[1]->Get_Centroid();
+vV = vE1;
+vV -= PNear2;
+d1 = vV.Mag();
+vV = vE2;
+vV -= PNear2;
+d2 = vV.Mag();
+if (d1 < d2)
 {
-	  Ln1->we = w;
+	Ln1->cPts[0]->Pt_Point->Set(pt.x, pt.y, pt.z);
+	Ln1->ws = 0;
 }
 else
 {
-	  Ln1->ws = w;
+	Ln1->cPts[1]->Pt_Point->Set(pt.x, pt.y, pt.z);
+	Ln1->we = 1;
 }
 
 }
