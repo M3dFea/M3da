@@ -11,7 +11,7 @@
 const double Pi = 3.1415926535;
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
-
+BOOL gORTHO = FALSE;
 
 
 float CPal[12][3] ={{0.00f, 0.00f, 1.00f},    //151 Blue
@@ -1813,14 +1813,14 @@ ReDraw();
 void DBase::Ortho()
 {
 	
-	if (bOrtho == FALSE)
+	if (gORTHO == FALSE)
 	{
-		bOrtho = TRUE;
+		gORTHO = TRUE;
 		outtext1("Orthogonal Drawing Mode ON.");
 	}
 	else
 	{
-		bOrtho = FALSE;
+		gORTHO = FALSE;
 		outtext1("Orthogonal Drawing Mode OFF.");
 	}
 }
@@ -6754,8 +6754,8 @@ NLine* DBase::AddCirTanPt(C3dVector vNorm, C3dVector vPt, CPoint PNear1)
 	return(nullptr);
 }
 
-int CalcTan2Circles(C3dVector vC1, double dR1, C3dVector vNr1,
-	                C3dVector vC2, double dR2, C3dVector vNr2,
+int CalcTan2Circles(C3dVector vC1a, double dR1a, C3dVector vNr1a,
+	                C3dVector vC2a, double dR2a, C3dVector vNr2a,
 	                C3dVector& t1, C3dVector& t2)
 {
 	//https://math.stackexchange.com/questions/719758/inner-tangent-between-two-circles-formula#:~:text=Treating%20the%20bigger%20circle%20as,us%20calculate%20the%20two%20outer
@@ -6769,6 +6769,34 @@ int CalcTan2Circles(C3dVector vC1, double dR1, C3dVector vNr1,
 	C3dVector vTT;
 	double dDist;
 	C3dVector vP1, vP2;
+	C3dVector vC1;
+	double dR1;
+	C3dVector vNr1;
+	C3dVector vC2;
+	double dR2;
+	C3dVector vNr2;
+
+	//Find biggest circle first
+	if (dR1a >= dR2a)
+	{
+		vC1 = vC1a;
+		dR1 = dR1a;
+		vNr1 = vNr1a;
+		vC2 = vC2a;
+		dR2 = dR2a;
+		vNr2 = vNr2a;
+	}
+	else
+	{
+		vC1 = vC2a;
+		dR1 = dR2a;
+		vNr1 = vNr2a;
+		vC2 = vC1a;
+		dR2 = dR1a;
+		vNr2 = vNr1a;
+	}
+
+
 	//Error circles are concentric
 	if (vC1 == vC2)
 	{
@@ -6782,10 +6810,7 @@ int CalcTan2Circles(C3dVector vC1, double dR1, C3dVector vNr1,
 	if (dDot > 0)
 	{
 		outtext1("INFO: External Tangent.");
-		if (dR1 > dR2)
-			dR3 = dR1 - dR2;
-		else
-			dR3 = dR2 - dR1;
+		dR3 = dR1 - dR2;
 		vTT = vC2 - vC1;
 		dDist = vTT.Mag();
 		vTT.Normalize();

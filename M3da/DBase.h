@@ -26,7 +26,7 @@ public:
     void ExporttoNAS(int iFileNo);
     void ModIncludeNo(int iF);
 
-    BOOL bOrtho = FALSE;
+   
     void Ortho();
     void LabGaps(int iGap);
 HGLRC		hrc;

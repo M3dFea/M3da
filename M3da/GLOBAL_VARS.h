@@ -11,4 +11,4 @@ extern double gTXT_SIZE;
 extern double gDIM_FILSZ;
 extern double gDIM_OFFSZ;
 extern DSP_Triad tOrient;
-
+extern BOOL gORTHO;

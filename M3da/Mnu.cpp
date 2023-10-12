@@ -3270,7 +3270,7 @@ if (iStat == 3)
 
   p2=cDBase->GlobaltoWP(p2);
   p1=cDBase->GlobaltoWP(p1);
-  if (cDBase->bOrtho)
+  if (gORTHO)
   {
 	  //Need to transform to workplane
 	  if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
@@ -3644,7 +3644,7 @@ else if (iStat == 2)
 {
   C3dVector p2;
   p2=cDBase->DB_PopBuff();
-  if (cDBase->bOrtho)
+  if (gORTHO)
   {
 	  //Need to transform to workplane
 	  p1 = cDBase->GlobaltoWP(p1);
@@ -3725,7 +3725,7 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			C3dVector p2;
 			p2 = cDBase->DB_PopBuff();
 			p1 = pLast;
-			if (cDBase->bOrtho)
+			if (gORTHO)
 			{
 				//Need to transform to workplane
 				p1 = cDBase->GlobaltoWP(p1);
