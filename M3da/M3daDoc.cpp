@@ -377,6 +377,7 @@ ON_COMMAND(ID_OBJECTSIZE_TEXT, &CM3daDoc::OnObjectsizeText)
 ON_COMMAND(ID_EXPORT_EXPORTVIEWMATRIX, &CM3daDoc::OnExportExportviewmatrix)
 ON_COMMAND(ID_IMPORT_IMPORTVIEWMATRIX, &CM3daDoc::OnImportImportviewmatrix)
 ON_COMMAND(ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE, &CM3daDoc::OnCurvetoolsLinethrouptandtangenttocircle)
+ON_COMMAND(ID_CURVETOOLS_LINETANGENTTO2CIRCLES, &CM3daDoc::OnCurvetoolsLinetangentto2circles)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6342,6 +6343,22 @@ void CM3daDoc::OnCurvetoolsLinethrouptandtangenttocircle()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("LNTANCIR");
 		sLastcmd = "LNTANCIR";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnCurvetoolsLinetangentto2circles()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("LNTAN2CIR");
+		sLastcmd = "LNTAN2CIR";
 	}
 	else
 	{

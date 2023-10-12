@@ -223,6 +223,7 @@ BEGIN
             MENUITEM "Line Z",                      ID_LINE_LINEZ
             MENUITEM "Line Angle",                  ID_LINE_LINEANGLE
             MENUITEM "Line Throu Pt and Tangent to Circle", ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE
+            MENUITEM "Line Tangent to 2 Circles",   ID_CURVETOOLS_LINETANGENTTO2CIRCLES
             MENUITEM "Curve",                       ID_CREATE_CURVE
             MENUITEM "Curve Throu Points",          ID_CREATE_FITTEDCURVE
             MENUITEM "Fillet",                      ID_CREATE_FILLET
@@ -602,7 +603,7 @@ CAPTION "About M3da"
 FONT 12, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
-    LTEXT           "M3d, Version 6.6 23/08/2023 64BIT WIN10",IDC_STATIC,43,14,247,8,SS_NOPREFIX
+    LTEXT           "M3d, Version 6.7 11/09/2023 64BIT WIN10",IDC_STATIC,43,14,247,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010",IDC_STATIC,43,26,114,8
     DEFPUSHBUTTON   "OK",IDOK,261,123,50,14,WS_GROUP
     LTEXT           "THE AUTHOR SHALL IN NO EVENT BE LIABLE TO THE USER",IDC_STATIC,42,52,235,8
@@ -1312,6 +1313,7 @@ STRINGTABLE
 BEGIN
     ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE 
                             "Line Throu Pt and Tangent to Circle"
+    ID_CURVETOOLS_LINETANGENTTO2CIRCLES "Create a Line Tangent to 2 Circles"
 END
 
 #endif    // English (United States) resources

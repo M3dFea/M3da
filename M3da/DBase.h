@@ -7,7 +7,7 @@
 
 //Note the version number has to be negative
 //so we can maintain compatability with older files
-const int VERSION_NO=-66;
+const int VERSION_NO=-67;
 const int MAX_GPS = 1000;
 const int MAX_TEMPGRP = 10000;
 const int MAX_SYMBOLS = 10000;
@@ -327,6 +327,7 @@ void AddSurfBoundIGES2(G_Object* pS, ObjList* pCur);
 void AddSurfBoundTrimLoopIGES(G_Object* pS,ObjList* pCur);
 NCircle* AddCirCentPt(C3dVector vNorm,C3dVector vCent,C3dVector vR);
 NLine* AddCirTanPt(C3dVector vNorm, C3dVector vPt, CPoint PNear1);
+NLine* AddLinTan2Cir(CPoint PNear1, CPoint PNear2);
 NCircle* AddCirCR(C3dVector vNorm,C3dVector vCent,double dR,int ilab);
 void AddDragCIR(C3dVector vN, C3dVector v1);
 void TrimLn();

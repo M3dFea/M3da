@@ -9,7 +9,8 @@
 #pragma warning(disable:4477)
 
 const double Pi = 3.1415926535;
-
+#define D2R  0.01745329251994
+#define R2D  57.2957795130931
 
 
 
@@ -1209,6 +1210,8 @@ void DBase::Serialize(CArchive& ar)
 		ar << gWP_SIZE;
 		ar << gBM_SIZE;
 		ar << gTXT_SIZE;
+		ar << gDIM_FILSZ;
+		ar << gDIM_OFFSZ;
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
 		ar<<DB_ObjectCount;
@@ -1272,6 +1275,11 @@ void DBase::Serialize(CArchive& ar)
 			ar >> gWP_SIZE;
 			ar >> gBM_SIZE;
 			ar >> gTXT_SIZE;
+		}
+		if (iVER <= -67)
+		{
+			ar >> gDIM_FILSZ;
+			ar >> gDIM_OFFSZ;
 		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);
@@ -2892,21 +2900,21 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		pCandidateNodes->Clear();
 		GetCandiatesNode(pE, pFrontNodes, vC, 1.0*dC, pCandidateNodes);
 		GetAdjFaces(pCandidateFaces, pE, pAdjFaces, &dAdjAng, pAdjEl);
-		//if (pAdjFaces->iNo > 0)	  //070122 SEEMS TO WORK BETTER WITH OUT THIS
-		//{
-		//	if (dAdjAng < 100)
-		//	{
-		//		nNodeTry = GetOtherNode(pAdjEl, pE);
-		//		CreateTET(eTET, pE, nNodeTry);
-		//		bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
-		//		pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);
-		//		if ((pIntFace == NULL) && (bV))
-		//		{
-		//			nNode = nNodeTry;
-		//			bIsTet = TRUE;
-		//		}
-		//	}
-		//}
+		if (pAdjFaces->iNo > 0)	  //070122 SEEMS TO WORK BETTER WITH OUT THIS
+		{
+			if (dAdjAng < 45)
+			{
+				nNodeTry = GetOtherNode(pAdjEl, pE);
+				CreateTET(eTET, pE, nNodeTry);
+				bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
+				pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);
+				if ((pIntFace == NULL) && (bV))
+				{
+					nNode = nNodeTry;
+					bIsTet = TRUE;
+				}
+			}
+		}
 
 		if (!bIsTet)
 		{
@@ -6744,6 +6752,156 @@ NLine* DBase::AddCirTanPt(C3dVector vNorm, C3dVector vPt, CPoint PNear1)
 	}
 
 	return(nullptr);
+}
+
+int CalcTan2Circles(C3dVector vC1, double dR1, C3dVector vNr1,
+	                C3dVector vC2, double dR2, C3dVector vNr2,
+	                C3dVector& t1, C3dVector& t2)
+{
+	//https://math.stackexchange.com/questions/719758/inner-tangent-between-two-circles-formula#:~:text=Treating%20the%20bigger%20circle%20as,us%20calculate%20the%20two%20outer
+	int irc = 0;
+	double dDot;
+	double dT;
+	double dR3;
+	double dPhi;
+	C3dMatrix mT;
+	C3dVector vCC;
+	C3dVector vTT;
+	double dDist;
+	C3dVector vP1, vP2;
+	//Error circles are concentric
+	if (vC1 == vC2)
+	{
+		return (1);
+	}
+	vP1 = vNr1 - vC1;
+	vP1.Normalize();
+	vP2 = vNr2 - vC2;
+	vP2.Normalize();
+	dDot = vP1.Dot(vP2);
+	if (dDot > 0)
+	{
+		outtext1("INFO: External Tangent.");
+		if (dR1 > dR2)
+			dR3 = dR1 - dR2;
+		else
+			dR3 = dR2 - dR1;
+		vTT = vC2 - vC1;
+		dDist = vTT.Mag();
+		vTT.Normalize();
+		vCC = vTT;
+		dPhi = std::acos(dR3 / dDist);
+		mT.MakeUnit();
+		mT.Rotate(0, 0, dPhi*R2D);
+		vTT = mT*vTT; 
+		vTT.Normalize();
+		if (vTT.Dot(vP1) < 0) //change offset dir
+		{
+			mT.MakeUnit();
+			mT.Rotate(0, 0, -dPhi * R2D);
+			vTT = vCC;
+			vTT = mT * vTT;
+			vTT.Normalize();
+		}
+		t1 = vTT; t1 *= dR1; dT = t1.Mag(); t1 += vC1;
+		vTT.Normalize();
+		t2 = vTT; t2 *= dR2; dT = t2.Mag(); t2 += vC2;
+	}
+	else
+	{
+		outtext1("INFO: Internal Tangent.");
+        dR3 = dR1 + dR2;
+		vTT = vC2 - vC1;
+		dDist = vTT.Mag();
+		if (dDist <= dR1 + dR2)
+			return (2);
+		vTT.Normalize();
+		vCC = vTT;
+		//Case 1
+		dPhi = std::asin(dR3 / dDist) - Pi/2;
+		mT.MakeUnit();
+		mT.Rotate(0, 0, dPhi * R2D);
+		vTT = mT * vCC;
+		vTT.Normalize();
+		if (vTT.Dot(vP1) < 0) //change offset dir
+		{
+			mT.MakeUnit();
+			mT.Rotate(0, 0, -dPhi * R2D);
+			vTT = mT * vCC;
+			t1 = vTT; t1 *= dR1; dT = t1.Mag(); t1 += vC1;
+			mT.Rotate(0, 0, -180);
+			vTT = mT * vCC;
+			t2 = vTT; t2 *= dR2; dT = t2.Mag(); t2 += vC2;
+		}
+		else
+		{
+			t1 = vTT; t1 *= dR1; dT = t1.Mag(); t1 += vC1;
+			mT.Rotate(0, 0, -180);
+			vTT = mT * vCC;
+			t2 = vTT; t2 *= dR2; dT = t2.Mag(); t2 += vC2;
+		}
+	}
+
+	return (irc);
+}
+
+NLine* DBase::AddLinTan2Cir(CPoint PNear1, CPoint PNear2)
+{
+	int iErr = 0;
+	C3dVector vNr1, vNr2;
+	C3dVector vC1, vC2;
+	C3dVector vt1, vt2;
+	double dR1, dR2;
+	NCircle* pC1 = nullptr;
+	NCircle* pC2 = nullptr;
+	//Pick near points in WP coords
+	vNr1 = PickPointToGlobal(PNear1);
+	vNr1 = GlobaltoWP(vNr1);
+	vNr2 = PickPointToGlobal(PNear2);
+	vNr2 = GlobaltoWP(vNr2);
+
+	if (S_Count > 1) //We have two objects is buffer
+	{
+		// Check to see is item is circle
+		if ((S_Buff[S_Count - 2]->iObjType == 7) &&
+			(S_Buff[S_Count - 2]->iType == 3) &&
+			(S_Buff[S_Count - 1]->iObjType == 7) &&
+			(S_Buff[S_Count - 1]->iType == 3))
+		{
+			pC1 = (NCircle*)S_Buff[S_Count - 2];
+			pC2 = (NCircle*)S_Buff[S_Count - 1];
+			//All circle centres to workplaing
+			vC1 = pC1->vCent;
+			vC1 = GlobaltoWP(vC1);
+			dR1 = pC1->dRadius;
+			vC2 = pC2->vCent;
+			vC2 = GlobaltoWP(vC2);
+			dR2 = pC2->dRadius;
+			iErr = CalcTan2Circles(vC1, dR1, vNr1,
+				                   vC2, dR2, vNr2,
+				                   vt1, vt2);
+			if (iErr == 1)
+			{
+				outtext1("ERROR: Circles are Concentric.");
+			}
+			else if (iErr == 2)
+			{
+				outtext1("ERROR: Circles Must be Distinct for Internal Tangent.");
+			}
+			else
+			{
+				vt1 = WPtoGlobal(vt1);
+				vt2 = WPtoGlobal(vt2);
+				AddLN(vt1, vt2, -1, TRUE);
+			}
+		}
+		else
+		{
+			outtext1("ERROR: No Circles Selected.");
+		}
+	}
+	S_Des();
+	return (nullptr);
 }
 
 NCircle* DBase::AddCirCentPt(C3dVector vNorm,C3dVector vCent,C3dVector vR)
@@ -15112,56 +15270,69 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2)
 
 
 
-void DBase::Corner(NLine* Ln,NLine* Ln1, C3dVector PNear1,C3dVector PNear2)
-{
-double w=0;
-double wNr = 0;
-C3dVector pt;
-double d1, d2;
-C3dVector vE1, vE2,vV;
+void DBase::Corner(NLine* Ln, NLine* Ln1, C3dVector PNear1, C3dVector PNear2) {
+	double w = 0;
+	double wNr = 0;
+	C3dVector pt;
+	double d1, d2;
+	C3dVector vE1, vE2, vV;
 
-// The intersection of the lines
-pt =NLnInt(Ln,Ln1,NULL);
-//Find line end nearest to pt LINE 1
-vE1 = Ln->cPts[0]->Get_Centroid();
-vE2 = Ln->cPts[1]->Get_Centroid();
-vV = vE1;
-vV -= PNear1;
-d1 = vV.Mag();
-vV = vE2;
-vV -= PNear1;
-d2 = vV.Mag();
-if (d1 < d2)
-{
-	Ln->cPts[0]->Pt_Point->Set(pt.x, pt.y, pt.z);
-	Ln->ws = 0;
-}
-else
-{
-	Ln->cPts[1]->Pt_Point->Set(pt.x, pt.y, pt.z);
-	Ln->we = 1;
-}
-//Find line end nearest to pt LINE 2
-vE1 = Ln1->cPts[0]->Get_Centroid();
-vE2 = Ln1->cPts[1]->Get_Centroid();
-vV = vE1;
-vV -= PNear2;
-d1 = vV.Mag();
-vV = vE2;
-vV -= PNear2;
-d2 = vV.Mag();
-if (d1 < d2)
-{
-	Ln1->cPts[0]->Pt_Point->Set(pt.x, pt.y, pt.z);
-	Ln1->ws = 0;
-}
-else
-{
-	Ln1->cPts[1]->Pt_Point->Set(pt.x, pt.y, pt.z);
-	Ln1->we = 1;
+	// The intersection of the lines
+	pt = NLnInt(Ln, Ln1, NULL);
+
+	// Find line end nearest to pt LINE 1
+	vE1 = Ln->cPts[0]->Get_Centroid();
+	vE2 = Ln->cPts[1]->Get_Centroid();
+	vV = vE1;
+	vV -= PNear1;
+	d1 = vV.Mag();
+	vV = vE2;
+	vV -= PNear1;
+	d2 = vV.Mag();
+	if (d1 < d2) 
+	{
+		d1 = Ln->getLen();
+		Ln->cPts[0]->Pt_Point->Set(pt.x, pt.y, pt.z);
+		d2 = Ln->getLen();
+		Ln->ws = 0;
+		Ln->we = 1 - (1 - Ln->we) * d1 / d2;
+	}
+	else 
+	{
+		d1 = Ln->getLen();
+		Ln->cPts[1]->Pt_Point->Set(pt.x, pt.y, pt.z);
+		d2 = Ln->getLen();
+		Ln->we = 1;
+		Ln->ws = Ln->ws * d1 / d2;
+	}
+
+	// Find line end nearest to pt LINE 2
+	vE1 = Ln1->cPts[0]->Get_Centroid();
+	vE2 = Ln1->cPts[1]->Get_Centroid();
+	vV = vE1;
+	vV -= PNear2;
+	d1 = vV.Mag();
+	vV = vE2;
+	vV -= PNear2;
+	d2 = vV.Mag();
+	if (d1 < d2) 
+	{
+		d1 = Ln1->getLen();
+		Ln1->cPts[0]->Pt_Point->Set(pt.x, pt.y, pt.z);
+		d2 = Ln1->getLen();
+		Ln1->ws = 0;
+		Ln1->we = 1 - (1 - Ln1->we) * d1 / d2;
+	}
+	else 
+	{
+		d1 = Ln1->getLen();
+		Ln1->cPts[1]->Pt_Point->Set(pt.x, pt.y, pt.z);
+		d2 = Ln1->getLen();
+		Ln1->we = 1;
+		Ln1->ws = Ln1->ws * d1 / d2;
+	}
 }
 
-}
 
 NCircle* DBase::Fillet2(double dR, CPoint PNear1, CPoint PNear2)
 {

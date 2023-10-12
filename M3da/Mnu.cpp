@@ -2459,6 +2459,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "LNTAN2CIR")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zLNTAN2CIR_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "LABGAP")
 	  {
 		  iResumePos = 0;
@@ -3881,6 +3891,59 @@ MenuEnd:
 	return RetVal;
 
 }
+
+int zLNTAN2CIR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("//PICK 2 CIRCLES");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				PNear1 = Pt;
+			}
+			else if (cDBase->S_Count == S_initCnt + 2)
+			{
+				PNear2 = Pt;
+				iStat = 2;
+			}
+		}
+		if (iStat == 2)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->AddLinTan2Cir(PNear1, PNear2);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+
+}
+
 
 int zTEXTCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
