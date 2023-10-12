@@ -7,7 +7,7 @@
 #include "SymTable.h"
 #include "GLOBAL_VARS.h"
 #pragma warning(disable:4477)
-
+BOOL gORTHO;
 const double Pi = 3.1415926535;
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -1212,6 +1212,8 @@ void DBase::Serialize(CArchive& ar)
 		ar << gTXT_SIZE;
 		ar << gDIM_FILSZ;
 		ar << gDIM_OFFSZ;
+		ar << gTXT_HEIGHT;
+		ar << gDIM_RADSZ;
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
 		ar<<DB_ObjectCount;
@@ -1280,6 +1282,8 @@ void DBase::Serialize(CArchive& ar)
 		{
 			ar >> gDIM_FILSZ;
 			ar >> gDIM_OFFSZ;
+			ar >> gTXT_HEIGHT;
+			ar >> gDIM_RADSZ;
 		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);
@@ -1813,14 +1817,14 @@ ReDraw();
 void DBase::Ortho()
 {
 	
-	if (bOrtho == FALSE)
+	if (gORTHO)
 	{
-		bOrtho = TRUE;
+		gORTHO = TRUE;
 		outtext1("Orthogonal Drawing Mode ON.");
 	}
 	else
 	{
-		bOrtho = FALSE;
+		gORTHO = FALSE;
 		outtext1("Orthogonal Drawing Mode OFF.");
 	}
 }

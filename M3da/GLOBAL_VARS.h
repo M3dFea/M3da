@@ -10,5 +10,8 @@ extern double gBM_SIZE;
 extern double gTXT_SIZE;
 extern double gDIM_FILSZ;
 extern double gDIM_OFFSZ;
+extern double gTXT_HEIGHT;
+extern double gDIM_RADSZ;
+extern BOOL gORTHO;
 extern DSP_Triad tOrient;
 

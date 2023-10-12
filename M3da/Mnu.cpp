@@ -7,6 +7,8 @@
 const double Pi = 3.1415926535;
 double gDIM_FILSZ = 0.1;
 double gDIM_OFFSZ = 0.1;
+double gTXT_HEIGHT = 0.5;
+double gDIM_RADSZ = 0.5;
 //GLOBAL DEFUALT VALUES ENTERED
 
 void zMnu::Init(DBase* TheDBase,int iType)
@@ -3270,7 +3272,7 @@ if (iStat == 3)
 
   p2=cDBase->GlobaltoWP(p2);
   p1=cDBase->GlobaltoWP(p1);
-  if (cDBase->bOrtho)
+  if (gORTHO)
   {
 	  //Need to transform to workplane
 	  if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
@@ -3644,7 +3646,7 @@ else if (iStat == 2)
 {
   C3dVector p2;
   p2=cDBase->DB_PopBuff();
-  if (cDBase->bOrtho)
+  if (gORTHO)
   {
 	  //Need to transform to workplane
 	  p1 = cDBase->GlobaltoWP(p1);
@@ -3725,7 +3727,7 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			C3dVector p2;
 			p2 = cDBase->DB_PopBuff();
 			p1 = pLast;
-			if (cDBase->bOrtho)
+			if (gORTHO)
 			{
 				//Need to transform to workplane
 				p1 = cDBase->GlobaltoWP(p1);
@@ -3975,16 +3977,20 @@ else if (iStat == 1)
 else if (iStat == 2)
 {
 	sText = CInMsg;
-	outtext2("//ENTER TEXT HEIGHT (1)");
+	char OutT[80];
+	sprintf_s(OutT, "%s %g)", "ENTER TEXT HEIGHT (", gTXT_HEIGHT);
+	outtext2(OutT);
 	SetFocus();
-	iStat = 3;
+	iStat = 3; 
 }
 else if (iStat == 3)
 {
   double dH;
   dH = atof(CInMsg);
   if (dH <= 0)
-	  dH = 1;
+	  dH = gTXT_HEIGHT;
+  else
+	  gTXT_HEIGHT = dH;
   C3dVector vN;
   vN.Set(0, 0, 1);
   vN = cDBase->GlobaltoWP3(vN);
@@ -5439,7 +5445,9 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-  outtext2("//ENTER RADIUS");
+	char OutT[80];
+	sprintf_s(OutT, "%s %g)", "ENTER RADIUS (", gDIM_RADSZ);
+	outtext2(OutT);
   iResumePos=1;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -5449,6 +5457,12 @@ if (iStat == 0)
 if (iStat == 1)
 {
   vR=cDBase->DB_PopBuff();
+  
+  dRad = vR.x;
+  if (dRad == 0)
+	  dRad = gDIM_RADSZ;
+  else
+	  gDIM_RADSZ = dRad;
   iStat=2;
 }
 if (iStat == 2)
@@ -5467,7 +5481,7 @@ if (iStat == 3)
   p1=cDBase->DB_PopBuff();
   vN.Set(0,0,1);
   vN=cDBase->GlobaltoWP3(vN);
-  cDBase->AddCirCR(vN,p1,vR.x,-1);
+  cDBase->AddCirCR(vN,p1, dRad,-1);
   outtext1("1 Circle Created.");
   iStat = 2;
   this->DoMenu(CInMsg,Pt);

@@ -888,6 +888,7 @@ class zCIRCR_Mnu: public zMnu
 {
 public:
 C3dVector vR;
+double dRad;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
