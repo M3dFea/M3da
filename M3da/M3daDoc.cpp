@@ -5,7 +5,6 @@
 #include "stdafx.h"
 #include "M3da.h"
 #include "M3daDoc.h"
-#include "GLOBAL_VARS.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -6067,14 +6066,14 @@ void CM3daDoc::OnCurvetoolsOrthosnap()
 {
 	// TODO: Add your command handler code here
 
-		if (gORTHO == FALSE)
+		if (cDBase->bOrtho == FALSE)
 		{
-			gORTHO = TRUE;
+			cDBase->bOrtho = TRUE;
 			outtext1("Orthogonal Drawing Mode ON.");
 		}
 		else
 		{
-			gORTHO = FALSE;
+			cDBase->bOrtho = FALSE;
 			outtext1("Orthogonal Drawing Mode OFF.");
 		}
 }
