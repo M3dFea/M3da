@@ -6783,10 +6783,16 @@ int CalcTan2Circles(C3dVector vC1, double dR1, C3dVector vNr1,
 	{
 		outtext1("INFO: External Tangent.");
 		if (dR1 > dR2)
+		{
 			dR3 = dR1 - dR2;
+			vTT = vC2 - vC1;
+		}
 		else
+		{
 			dR3 = dR2 - dR1;
-		vTT = vC2 - vC1;
+			vTT = vC1 - vC2;
+		}
+		
 		dDist = vTT.Mag();
 		vTT.Normalize();
 		vCC = vTT;
