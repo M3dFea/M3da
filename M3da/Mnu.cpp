@@ -2451,6 +2451,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "PTSONCIR")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zPTSONCIR_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "LNTANCIR")
 	  {
 		  iResumePos = 0;
@@ -5554,6 +5564,64 @@ if (iStat == 100)
 MenuEnd:
 return RetVal;
 }   
+
+
+int zPTSONCIR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
+			outtext2("//PICK CIRCLES");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if (CInMsg == "D")
+			{
+				iStat = 2;
+			}
+		}
+		if (iStat == 2)
+		{
+			outtext2("//ENTER NO OF POINTS");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			C3dVector p1;
+			p1 = cDBase->DB_PopBuff();
+			cDBase->GenPointsOnCircle((int)p1.x);
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zTEST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {

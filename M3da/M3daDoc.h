@@ -528,6 +528,7 @@ public:
   afx_msg void OnImportImportviewmatrix();
   afx_msg void OnCurvetoolsLinethrouptandtangenttocircle();
   afx_msg void OnCurvetoolsLinetangentto2circles();
+  afx_msg void OnCurvetoolsPointsoncircle();
 };
 
 

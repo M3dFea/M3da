@@ -299,8 +299,8 @@ DBase::~DBase()
 		DB_Obj[i] = NULL;
 	}
 	DB_ObjectCount = 0;
-	if (pDragObj != nullptr);
-	delete (pDragObj);
+	if (pDragObj != nullptr)
+	   delete (pDragObj);
 }
 
 
@@ -6534,8 +6534,6 @@ BOOL DBase::IsIntersection(C3dVector C1S, C3dVector C1E, C3dVector C2S, C3dVecto
 //First draft of proc
 int DBase::TentativeInt(NCurve* C1, NCurve* C2, C3dVector vInts[10],double uInts[10])
 {
-	double dDot;
-	char S1[200];
 	int iDiv = 100;
 	int i;
 	int j;
@@ -6694,7 +6692,7 @@ int calculateTangents(double Cx, double Cy, double r, double Px, double Py, C3dV
 NLine* DBase::AddCirTanPt(C3dVector vNorm, C3dVector vPt, CPoint PNear1)
 {
 	//https://math.stackexchange.com/questions/543496/how-to-find-the-equation-of-a-line-tangent-to-a-circle-that-passes-through-a-g
-	double dR;
+
 	int iErr;
 	C3dVector vC;
 	NCircle* pC;
@@ -9474,7 +9472,6 @@ void DBase::GenElements2(BOOL bL,ObjList* NF1, ObjList* NF2)
 	Node* p2;
 	Node* p3;
 	Node* p4;
-	Node* p43;
 	E_Object* pEL;
 	for (i=0;i<NF1->iNo-1;i++)
 	{
@@ -9590,7 +9587,6 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 	double dAngarray[10000];
 	BOOL bStop = FALSE; 
 	BOOL bLoop = FALSE;
-	c2dFront* oF;
 	C3dVector vA;
 	C3dVector vN;
 	C3dVector vNd;
@@ -9701,7 +9697,6 @@ void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 			NDF1->Clear();
 			for (i = 0; i < ELF->iNo; i++)
 			{
-				Node* pN;
 				eEdge* pEdge;
 				pEdge = (eEdge*)ELF->Objs[i];
 				sprintf_s(S1, "%i %i", pEdge->pVertex[0]->iLabel, pEdge->pVertex[1]->iLabel);
@@ -11708,6 +11703,144 @@ void DBase::NodesOnCurve(NCurve* pC,int iNo, cLinkedList* pN)
 	}
 }
 
+void DBase::GenNodesOnCircle(NCircle* pCir, int iNo, cLinkedList* pN)
+{
+	Node* pNode;
+	double dRad, dA1, dA2;
+	double dSpan, dInc, dAng;
+	int i;
+	int iDiv;
+	C3dMatrix mT;
+	C3dVector vTmp;
+	C3dVector vCent;
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vN;
+	C3dVector vS;
+	C3dVector vE;
+	C3dVector vNode;
+	//Calculate circle cys and radius
+	//calulating explicitly as circle may not have come from M3d
+	vTmp.x = 0.5 * (pCir->cPts[4]->Pt_Point->x - pCir->cPts[0]->Pt_Point->x);
+	vTmp.y = 0.5 * (pCir->cPts[4]->Pt_Point->y - pCir->cPts[0]->Pt_Point->y);
+	vTmp.z = 0.5 * (pCir->cPts[4]->Pt_Point->z - pCir->cPts[0]->Pt_Point->z);
+	dRad = vTmp.Mag();
+	vCent.x = vTmp.x + pCir->cPts[0]->Pt_Point->x;
+	vCent.y = vTmp.y + pCir->cPts[0]->Pt_Point->y;
+	vCent.z = vTmp.z + pCir->cPts[0]->Pt_Point->z;
+	vX.x = pCir->cPts[0]->Pt_Point->x - vCent.x;
+	vX.y = pCir->cPts[0]->Pt_Point->y - vCent.y;
+	vX.z = pCir->cPts[0]->Pt_Point->z - vCent.z;
+	vY.x = pCir->cPts[2]->Pt_Point->x - vCent.x;
+	vY.y = pCir->cPts[2]->Pt_Point->y - vCent.y;
+	vY.z = pCir->cPts[2]->Pt_Point->z - vCent.z;
+	vN = vX.Cross(vY);
+	vX.Normalize(); vY.Normalize(); vN.Normalize();
+	mT.SetColVec(1, vX);
+	mT.SetColVec(2, vY);
+	mT.SetColVec(3, vN);
+	mT.m_30 = vCent.x;
+	mT.m_31 = vCent.y;
+	mT.m_32 = vCent.z;
+	vS = pCir->GetPt(pCir->ws);
+	vE = pCir->GetPt(pCir->we);
+	vS -= vCent; vS.Normalize();
+	vE -= vCent; vE.Normalize();
+	dA1 = vX.AngSigned(vS, vN);
+	dA2 = vX.AngSigned(vE, vN);
+	iDiv = iNo;
+	if (dA1 != dA2)
+		iDiv -= 1;
+	if (dA2 == 0)
+		dA2 = 360;
+	dSpan = dA2 - dA1;
+    dInc = dSpan / iDiv;
+	//Generate the nodes
+	dAng = dA1;
+	for (i = 0; i < iNo; i++)
+	{
+		vNode.x = dRad * cos(dAng * D2R);
+		vNode.y = dRad * sin(dAng * D2R);
+		vNode.z = 0;
+		pNode = pCurrentMesh->AddNode(vNode, pCurrentMesh->iNodeLab, 1, 1, 100, 0, 0);
+		pNode->Transform(mT);
+		if (pN != NULL)
+			pN->Add(pNode);  //Add the newly created node to linked list
+		pCurrentMesh->iNodeLab++;
+		AddTempGraphics(pNode);
+		Dsp_Add(pNode);
+		dAng += dInc;
+	}
+}
+
+void DBase::GenPoinsOnCir(NCircle* pCir, int iNo)
+{
+	CvPt_Object* pPt;
+	double dRad, dA1, dA2;
+	double dSpan, dInc, dAng;
+	int i;
+	int iDiv;
+	C3dMatrix mT;
+	C3dVector vTmp;
+	C3dVector vCent;
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vN;
+	C3dVector vS;
+	C3dVector vE;
+	C3dVector vNode;
+	//Calculate circle cys and radius
+	//calulating explicitly as circle may not have come from M3d
+	vTmp.x = 0.5 * (pCir->cPts[4]->Pt_Point->x - pCir->cPts[0]->Pt_Point->x);
+	vTmp.y = 0.5 * (pCir->cPts[4]->Pt_Point->y - pCir->cPts[0]->Pt_Point->y);
+	vTmp.z = 0.5 * (pCir->cPts[4]->Pt_Point->z - pCir->cPts[0]->Pt_Point->z);
+	dRad = vTmp.Mag();
+	vCent.x = vTmp.x + pCir->cPts[0]->Pt_Point->x;
+	vCent.y = vTmp.y + pCir->cPts[0]->Pt_Point->y;
+	vCent.z = vTmp.z + pCir->cPts[0]->Pt_Point->z;
+	vX.x = pCir->cPts[0]->Pt_Point->x - vCent.x;
+	vX.y = pCir->cPts[0]->Pt_Point->y - vCent.y;
+	vX.z = pCir->cPts[0]->Pt_Point->z - vCent.z;
+	vY.x = pCir->cPts[2]->Pt_Point->x - vCent.x;
+	vY.y = pCir->cPts[2]->Pt_Point->y - vCent.y;
+	vY.z = pCir->cPts[2]->Pt_Point->z - vCent.z;
+	vN = vX.Cross(vY);
+	vX.Normalize(); vY.Normalize(); vN.Normalize();
+	mT.SetColVec(1, vX);
+	mT.SetColVec(2, vY);
+	mT.SetColVec(3, vN);
+	mT.m_30 = vCent.x;
+	mT.m_31 = vCent.y;
+	mT.m_32 = vCent.z;
+	vS = pCir->GetPt(pCir->ws);
+	vE = pCir->GetPt(pCir->we);
+	vS -= vCent; vS.Normalize();
+	vE -= vCent; vE.Normalize();
+	dA1 = vX.AngSigned(vS, vN);
+	dA2 = vX.AngSigned(vE, vN);
+	iDiv = iNo;
+	if (dA1 != dA2)
+		iDiv -= 1;
+	if (dA2 == 0)
+		dA2 = 360;
+	dSpan = dA2 - dA1;
+	dInc = dSpan / iDiv;
+	//Generate the nodes
+	dAng = dA1;
+	for (i = 0; i < iNo; i++)
+	{
+		vNode.x = dRad * cos(dAng * D2R);
+		vNode.y = dRad * sin(dAng * D2R);
+		vNode.z = 0;
+		pPt = AddPt(vNode, -1, TRUE);
+		pPt->Transform(mT);
+		AddTempGraphics(pPt);
+		Dsp_Add(pPt);
+		dAng += dInc;
+	}
+}
+
+
 void DBase::GenNodesOnCurve(int iNo,cLinkedList* pN)
 {
 C3dVector v;
@@ -11717,11 +11850,20 @@ double dW=0;
 double dInc;
 double dSpan;
 NCurve* pC;
+NCircle* pCir;
 if (iNo>0)
 {
   for (iCO=0;iCO<S_Count;iCO++)
   {
-    if ((S_Buff[iCO]->iObjType==7) ||
+	//Deal with circles which don't give equal spacings
+	//due to parametric nature
+	if ((S_Buff[iCO]->iObjType == 7) ||
+		(S_Buff[iCO]->iType == 3))
+	{
+		pCir = (NCircle*) S_Buff[iCO];
+		GenNodesOnCircle(pCir, iNo, pN);
+	}
+    else if ((S_Buff[iCO]->iObjType==7) ||
 	    (S_Buff[iCO]->iObjType==13))
     {
       pC = (NCurve*) S_Buff[iCO];
@@ -11759,6 +11901,35 @@ if (iNo>0)
 }
 ReDraw();
 }
+
+void DBase::GenPointsOnCircle(int iNo)
+{
+	C3dVector v;
+	Node* pNode;
+	int i, iCO;
+	double dW = 0;
+	double dInc;
+	double dSpan;
+	NCurve* pC;
+	NCircle* pCir;
+	if (iNo > 0)
+	{
+		for (iCO = 0; iCO < S_Count; iCO++)
+		{
+			//Deal with circles which don't give equal spacings
+			//due to parametric nature
+			if ((S_Buff[iCO]->iObjType == 7) ||
+				(S_Buff[iCO]->iType == 3))
+			{
+				pCir = (NCircle*)S_Buff[iCO];
+				GenPoinsOnCir(pCir, iNo);
+			}
+			
+		}
+	}
+	ReDraw();
+}
+
 
 void DBase::MapMesh(double dU, double dV)
 {

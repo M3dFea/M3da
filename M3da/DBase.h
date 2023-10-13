@@ -624,6 +624,9 @@ void SelWGName(CString inName);
 void SelAllWGs();
 void NodesOnCurve(NCurve* pC, int iNo, cLinkedList* pN);
 void GenNodesOnCurve(int iNo, cLinkedList* pN);
+void GenPointsOnCircle(int iNo);
+void GenNodesOnCircle(NCircle* pCir,int iNo, cLinkedList* pN);
+void GenPoinsOnCir(NCircle* pCir, int iNo);
 void Test2();
 void TestMPM2();
 void TestFL();     //Test Face list display
