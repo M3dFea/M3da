@@ -379,6 +379,7 @@ ON_COMMAND(ID_IMPORT_IMPORTVIEWMATRIX, &CM3daDoc::OnImportImportviewmatrix)
 ON_COMMAND(ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE, &CM3daDoc::OnCurvetoolsLinethrouptandtangenttocircle)
 ON_COMMAND(ID_CURVETOOLS_LINETANGENTTO2CIRCLES, &CM3daDoc::OnCurvetoolsLinetangentto2circles)
 ON_COMMAND(ID_CURVETOOLS_POINTSONCIRCLE, &CM3daDoc::OnCurvetoolsPointsoncircle)
+ON_COMMAND(ID_EDIT_POLARTRANSLATEDFROM, &CM3daDoc::OnEditPolartranslatedfrom)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6381,4 +6382,11 @@ void CM3daDoc::OnCurvetoolsPointsoncircle()
 	{
 		outtext1("Finish Current Operation.");
 	}
+}
+
+
+void CM3daDoc::OnEditPolartranslatedfrom()
+{
+	// TODO: Add your command handler code here
+	outtextMSG2("PTRAN");
 }

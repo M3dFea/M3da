@@ -5,6 +5,9 @@
 #include "GLOBAL_VARS.h"
 // constructor sets where to out text
 const double Pi = 3.1415926535;
+#define D2R  0.01745329251994
+#define R2D  57.2957795130931
+
 double gDIM_FILSZ = 0.1;
 double gDIM_OFFSZ = 0.1;
 double gTXT_HEIGHT = 0.5;
@@ -3026,6 +3029,14 @@ if (iStat == 1)
     pNext->Init(cDBase,-1);
     DoNext(&CInMsg,Pt);
   }
+  else if (CInMsg == "PTRAN")
+  {
+	  iResumePos = 2;
+	  iCancelPos = 0;
+	  pNext = new zPTRAN_Mnu();
+	  pNext->Init(cDBase, -1);
+	  DoNext(&CInMsg, Pt);
+  }
   else if (CInMsg == "ONSCR")
   {
 	  iResumePos = 2;
@@ -3353,7 +3364,7 @@ if (iStat == 0)
 }
 else if (iStat == 1)
 {
-   outtext2("//SPECIFY TRANSLATION");
+  outtext2("//SPECIFY TRANSLATION");
   iResumePos=2;
   iCancelPos=100;
   pNext = new zTVEC_Mnu();
@@ -3383,6 +3394,62 @@ if (iStat == 100)
 MenuEnd:
 return RetVal;
 }    
+
+int zPTRAN_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("//ENTER OR PICK BASE LOCATION");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat ==1)
+		{
+			outtext2("//ENTER PLOAR TRANSLATION (r,theta,z)");
+			SetFocus();
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			C3dVector p1;
+			C3dVector p2;
+			p2 = cDBase->DB_PopBuff();
+			p1 = cDBase->DB_PopBuff();
+			p1 = cDBase->GlobaltoWP(p1);
+			p1.x += p2.x * cos(p2.y * D2R);
+			p1.y += p2.x * sin(p2.y * D2R);
+			p1.z += p2.z;
+			p1 = cDBase->WPtoGlobal(p1);
+			cDBase->DB_AddPtBuff(p1);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zONSCR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
