@@ -562,7 +562,7 @@ BEGIN
         MENUITEM "Translated From",             ID_EDIT_TRANSLATEDFROM
         MENUITEM "Intersection",                ID_EDIT_IITERSECTION
         MENUITEM "Project",                     ID_EDIT_PROJECT
-        MENUITEM "On Screen Location",          ID_EDIT_ONSCREENLOCATION
+        MENUITEM "Projected to Workplane",      ID_EDIT_ONSCREENLOCATION
         MENUITEM "Cancel",                      ID_EDIT_CANCEL
         MENUITEM "Done",                        ID_EDIT_DONE
     END

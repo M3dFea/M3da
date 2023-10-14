@@ -385,8 +385,11 @@ void DBase::DragUpdate(CPoint inPt)
 {
 	C3dVector vG;
 	vG = PickPointToGlobal2(inPt);
+	C3dMatrix mTran;
+	WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+	mTran = pWPlane->mWPTransform;
 	if (pDragObj != nullptr)
-		pDragObj->DragUpdate(vG);
+		pDragObj->DragUpdate(vG, mTran);
 }
 
 void DBase::SetLineStart(CPoint pS)
@@ -15347,8 +15350,7 @@ if (S_Count>1)
 }
 }
 
-void DBase::Trim(CPoint PNear1, CPoint PNear2)
-{
+void DBase::Trim(CPoint PNear1, CPoint PNear2) {
 	char S1[200];
 	CString OutT;
 	double dU;
@@ -15364,83 +15366,70 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2)
 	pN1 = PickPointToGlobal(PNear1);
 	pN2 = PickPointToGlobal(PNear2);
 
-	if (S_Count > 1)
-	{
-		// Check to see if both selected items are curves
-		if ((S_Buff[S_Count - 1]->iObjType == 7) &&
-			(S_Buff[S_Count - 2]->iObjType == 7))
-		{
-			if ((S_Buff[S_Count - 1]->iType == 2) &&
-				(S_Buff[S_Count - 2]->iType == 2)) // Two lines, only 1 possible intersection
-			{
+	if (S_Count > 1) {
+		// Check if both selected items are curves
+		if ((S_Buff[S_Count - 1]->iObjType == 7) && (S_Buff[S_Count - 2]->iObjType == 7)) {
+			if ((S_Buff[S_Count - 1]->iType == 2) && (S_Buff[S_Count - 2]->iType == 2)) { // Two lines, only 1 possible intersection
 				Ln = (NLine*)S_Buff[S_Count - 2];
 				Ln1 = (NLine*)S_Buff[S_Count - 1];
 				vRet = NLnInt2(Ln, Ln1, &pN1);
 				dU = Ln->MinWPt(vRet); // U at intersect
 				dUse = Ln->MinWPt(pN1);
 				sprintf_s(S1, " Debug W: ,%f,%f", dU, dUse);
-				if ((dUse < dU) && (Ln->we > dU)) //This is trim
+				if ((dUse < dU) && (Ln->we > dU)) // This is trim
 					Ln->ws = dU;
 				else if ((dUse > dU) && (Ln->ws < dU))
 					Ln->we = dU;
-				else if ((dUse > dU) && (Ln->ws > dU)) //This is extend
+				else if ((dUse > dU) && (Ln->ws > dU)) // This is extend
 					Ln->ws = dU;
 				else if ((dUse < dU) && (Ln->we < dU))
 					Ln->we = dU;
-				S_Count--;
-				S_Count--;
+				S_Count -= 2;
 				InvalidateOGL();
 				ReDraw();
 			}
-			else // Two curves, possible multiple intersections
-			{
+			else { // Two curves, possible multiple intersections
 				int iNoInts = 0;
 				C3dVector vInts[10];
 				double uInts[10];
-				outtext1("Search for multiple ints.");
+				outtext1("Search for multiple intersections.");
 				Cv = (NCurve*)S_Buff[S_Count - 2];
 				Cv1 = (NCurve*)S_Buff[S_Count - 1];
 				// iNoInts = TentativeInt(Cv, Cv1, vInts, uInts);
 				dUse = Cv->MinWPt(pN1);
 				dUse2 = Cv->MinWPt(pN2);
-				if (iNoInts > 0)
-				{
+				if (iNoInts > 0) {
 					int pNr = FindNearest(iNoInts, uInts, dUse2);
 					dU = uInts[pNr];
 				}
-				// else
-				// {
-				dU = dUse2;
-				// }
+				else {
+					dU = dUse2;
+				}
 				C3dVector pNr2;
 				pNr2 = Cv->GetPt(dU);
 				vRet = NLnInt3(Cv, Cv1, &pNr2);
 				dU = Cv->MinWPt(vRet); // U at intersect
 				sprintf_s(S1, " Debug W: ,%f,%f", dU, dUse);
-				if ((dUse < dU) && (Cv->we > dU)) //This is trim
+				if ((dUse < dU) && (Cv->we > dU)) // This is trim
 					Cv->ws = dU;
 				else if ((dUse > dU) && (Cv->ws < dU))
 					Cv->we = dU;
-				else if ((dUse > dU) && (Cv->ws > dU)) //This is extend
+				else if ((dUse > dU) && (Cv->ws > dU)) // This is extend
 					Cv->ws = dU;
 				else if ((dUse < dU) && (Cv->we < dU))
 					Cv->we = dU;
-				S_Count--;
-				S_Count--;
+				S_Count -= 2;
 				InvalidateOGL();
 				ReDraw();
 			}
 		}
-		else
-		{
+		else {
 			outtext1("ERROR: Two curves must be selected.");
-			S_Count--;
-			S_Count--;
+			S_Count -= 2;
 			ReDraw();
 		}
 	}
-	else
-	{
+	else {
 		outtext1("ERROR: .");
 	}
 }

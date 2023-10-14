@@ -1647,7 +1647,7 @@ public:
   G_Object();
   virtual ~G_Object();
   virtual void Create();
-  virtual void DragUpdate(C3dVector inPt);
+  virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
   virtual void Info();
   virtual CString ToString();
   virtual C3dVector MinPt(C3dVector inPt);
@@ -2245,7 +2245,7 @@ public:
    BOOL DrawCPts;
    BOOL DrawNoCvs;
    virtual void Create(int iLab,G_Object* Parrent);
-   virtual void DragUpdate(C3dVector inPt);
+   virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
    virtual void Clean();
    virtual void Info();
    virtual CString GetKnotString();
@@ -2474,7 +2474,7 @@ public:
    NCircle();
    virtual void Create(C3dVector vN,C3dVector vC,double dRad,int iLab,G_Object* Parrent);
    virtual void Create2(C3dVector vN,C3dVector vC,C3dVector vR,double dRad,int iLab,G_Object* Parrent);
-   virtual void DragUpdate(C3dVector inPt);
+   virtual void DragUpdate(C3dVector inPt,C3dMatrix mWP);
    virtual void Serialize(CArchive& ar,int iV);
    virtual void Info();
    virtual G_Object* Copy(G_Object* Parrent);
@@ -2493,7 +2493,7 @@ DECLARE_DYNAMIC(NLine)
 public:
    NLine();
    virtual void Create(C3dVector vP1,C3dVector vP2,int iLab,G_Object* Parrent);
-   virtual void DragUpdate(C3dVector inPt);
+   virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
    virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
    virtual void HighLight(CDC* pDC);
    virtual C3dVector MinPt(C3dVector inPt);

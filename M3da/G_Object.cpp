@@ -1817,7 +1817,7 @@ bDrawLab = FALSE;
 }
 
 //For Dynamic dragging update
-void G_Object::DragUpdate(C3dVector inPt)
+void G_Object::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
 
 }
@@ -44488,7 +44488,7 @@ dLSize = 1;
 
 }
 
-void NCurve::DragUpdate(C3dVector inPt)
+void NCurve::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
 
 }
@@ -47116,7 +47116,7 @@ vNorm=vN;
 vCent=vC;
 }
 
-void NCircle::DragUpdate(C3dVector inPt)
+void NCircle::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
 	double r2 = 0.70710678118654752440084436210485;
 	C3dVector a;
@@ -47346,9 +47346,42 @@ knots[2]=1.0;
 knots[3]=1.0;
 }
 
-void NLine::DragUpdate(C3dVector inPt)
+void NLine::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
-	cPts[1]->Pt_Point->Set(inPt.x, inPt.y, inPt.z);
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector vTrans;
+	C3dMatrix mInv;
+	vTrans.x = mWP.m_30;
+	vTrans.y = mWP.m_31;
+	vTrans.z = mWP.m_32;
+	mWP.m_30 = 0;
+	mWP.m_31 = 0;
+	mWP.m_32 = 0;
+	p1 = cPts[0]->Pt_Point;
+	p2 = inPt;
+	mInv = mWP.Inv();
+	if (gORTHO)
+	{
+		//Pt to workplane
+		p1 -= vTrans;
+		p1 = mInv * p1;
+		p2 = mInv * p2;
+		p2 -= vTrans;
+		p2 = mInv * p2;
+		//Pt to global
+		if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
+		{
+			p2.y = p1.y;
+		}
+		else
+		{
+			p2.x = p1.x;
+		}
+		p2 = mWP * p2;
+		p2 += vTrans;
+	}
+	cPts[1]->Pt_Point->Set(p2.x, p2.y, p2.z);
 }
 
 

@@ -3026,6 +3026,14 @@ if (iStat == 1)
     pNext->Init(cDBase,-1);
     DoNext(&CInMsg,Pt);
   }
+  else if (CInMsg == "ONSCR")
+  {
+	  iResumePos = 2;
+	  iCancelPos = 0;
+	  pNext = new zONSCR_Mnu();
+	  pNext->Init(cDBase, -1);
+	  DoNext(&CInMsg, Pt);
+  }
   else if (CInMsg == "INT")
   {
     iResumePos=2;
@@ -3376,49 +3384,47 @@ MenuEnd:
 return RetVal;
 }    
 
-int zONSCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+int zONSCR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
 
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  cDBase->bPICK=TRUE;
-  goto MenuEnd;
-}
-
-if (iStat == 0)
-{
-	outtext2("//PICK SCREEN LOCATION");
-  cDBase->bPICK=FALSE;
-  iStat=1;
-}
-else if (iStat == 1)
-{
-  if (CInMsg == "MouseInp")
-  {
-    C3dVector p2;
-    p2= cDBase->PickPointToGlobal(Pt);
-    cDBase->DB_AddPtBuff(p2);
-    cDBase->bPICK=TRUE;
-    RetVal = 1;
-  }
-}
-
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  cDBase->bPICK=TRUE;
-  RetVal = 1;
-}
-}
+		if (iStat == 0)
+		{
+			outtext2("//ENTER OR PICK BASE LOCATION");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		else if (iStat == 1)
+		{
+			C3dVector p1;
+			p1 = cDBase->DB_PopBuff();
+			p1 = cDBase->GlobaltoWP(p1);
+			p1.z = 0;
+			p1 = cDBase->WPtoGlobal(p1);
+			cDBase->DB_AddPtBuff(p1);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
 MenuEnd:
-return RetVal;
-}    
+	return RetVal;
+}
 
 int zPTCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
