@@ -205,7 +205,7 @@ BEGIN
     BEGIN
         POPUP "Curve Tools"
         BEGIN
-            MENUITEM "Ortho Snap",                  ID_CURVETOOLS_ORTHOSNAP, INACTIVE
+            MENUITEM "Ortho Snap",                  ID_CURVETOOLS_ORTHOSNAP
             MENUITEM "Text",                        ID_CURVETOOLS_TEXT
             MENUITEM "Point",                       ID_CREATE_POINT
             MENUITEM "Points on Circle",            ID_CURVETOOLS_POINTSONCIRCLE
@@ -1296,7 +1296,7 @@ BEGIN
     ID_MESHMANAGEMENT_SETINCLUDEFILENO 
                             "Set the include file no for selected items."
     ID_ELEMENTMODIFIY_COLOURBYINCLUDEFILE "Colour Elements by Include File"
-    ID_CURVETOOLS_ORTHOSNAP "Toggle orthogonal drawing snap."
+    ID_CURVETOOLS_ORTHOSNAP "Toggle Orthogonal Line Drawing Mode."
     ID_CURVEMODIFY_TRIM     "Trim a curve to another curve."
 END
 
@@ -1386,6 +1386,7 @@ END
 
 IDR_CREATE TOOLBAR 24, 24
 BEGIN
+    BUTTON      ID_CURVETOOLS_ORTHOSNAP
     BUTTON      ID_CURVETOOLS_TEXT
     BUTTON      ID_CREATE_POINT
     BUTTON      ID_LINE_MULTILINE
@@ -1394,8 +1395,8 @@ BEGIN
     BUTTON      ID_LINE_LINEX
     BUTTON      ID_LINE_LINEY
     BUTTON      ID_LINE_LINEANGLE
-    BUTTON      ID_CURVETOOLS_LINETANGENTTO2CIRCLES
     BUTTON      ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE
+    BUTTON      ID_CURVETOOLS_LINETANGENTTO2CIRCLES
     BUTTON      ID_CREATE_RECTANGLE
     BUTTON      ID_CIRCLE_CIRCLECENTREPOINT
     BUTTON      ID_CIRCLE_CIRCLECENRERADIUS
@@ -1432,6 +1433,8 @@ BEGIN
     BUTTON      ID_TOOLS_ALIGN
     BUTTON      ID_TOOLS_REFLECT
     BUTTON      ID_TOOLS_SCALE
+    BUTTON      ID_CURVEMODIFY_SPLITATPOINT
+    BUTTON      ID_CURVEMODIFY_TRIM
     BUTTON      ID_CREATE_OFFSET
     BUTTON      ID_CREATE_FILLET
     BUTTON      ID_CREATE_MAKECORNER
@@ -1440,7 +1443,6 @@ BEGIN
     BUTTON      ID_TOOLS_MEASURE
     BUTTON      ID_TOOLS_DELETE
     BUTTON      ID_TOOLS_MEASUREANGLE
-    BUTTON      ID_CURVEMODIFY_TRIM
 END
 
 IDR_FE TOOLBAR 24, 24
@@ -2253,7 +2255,17 @@ END
 
 STRINGTABLE
 BEGIN
+    ID_CURVEMODIFY_SPLITATPOINT "Split a Curve at a Point"
+    ID_CURVETOOLS_ORTHOSNAP "Toggle Orthogonal Line Drawing Mode."
     ID_CURVEMODIFY_TRIM     "Trim Curves to Other Curves"
+END
+
+STRINGTABLE
+BEGIN
+    ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE 
+                            "Line Throu Pt and Tangent to Circle"
+    ID_CURVETOOLS_LINETANGENTTO2CIRCLES "Create a Line Tangent to 2 Circles"
+    ID_ORTHO                "Ortgogonal Line Drawing Mode"
 END
 
 #endif    // English (United Kingdom) resources

@@ -3417,7 +3417,7 @@ int zPTRAN_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat ==1)
 		{
-			outtext2("//ENTER PLOAR TRANSLATION (r,theta,z)");
+			outtext2("//ENTER POLAR TRANSLATION (r,theta,z)");
 			SetFocus();
 			iResumePos = 2;
 			iCancelPos = 100;
