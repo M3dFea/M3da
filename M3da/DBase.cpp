@@ -5932,6 +5932,27 @@ if (bRedraw)
 return (LnIn);
 }
 
+
+NLine* DBase::AddLNfromDrag()
+{
+	//Get The Points from the tempoary drag line
+	C3dVector v1, v2;
+	NLine* pDLn = nullptr;
+	NLine* LnIn = nullptr;
+	if (pDragObj != nullptr)
+	{
+		pDLn = (NLine*)pDragObj;
+		v1 = pDLn->cPts[0]->Pt_Point;
+		v2 = pDLn->cPts[1]->Pt_Point;
+		LnIn = new NLine();
+		LnIn->Create(v1, v2, iCVLabCnt, NULL);
+		iCVLabCnt++;
+		AddObj(LnIn);
+		ReDraw();
+	}
+	return (LnIn);
+}
+
 void DBase::AddRect(C3dVector v1,C3dVector v2, int ilab)
 {
 

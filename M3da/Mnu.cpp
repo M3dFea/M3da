@@ -3692,78 +3692,61 @@ return RetVal;
 }
 
 
-int zLN_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+int zLN_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  goto MenuEnd;
-}
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
 
-if (iStat == 0)
-{
-	outtext2("//ENTER PT1");
-    iResumePos=1;
-    iCancelPos=100;
-    pNext = new zPT_Mnu();
-    pNext->Init(cDBase,-1);
-    DoNext(&CInMsg,Pt);
-}
-if (iStat == 1)
-{
-	cDBase->bIsDrag = TRUE;
-	p1 = cDBase->DB_PopBuff();
-	cDBase->AddDragLN(p1);
-	cDBase->vLS = p1;
-	outtext2("//ENTER PT2");
-    iResumePos=2;
-    iCancelPos=100;
-    pNext = new zPT_Mnu();
-    pNext->Init(cDBase,-1);
-    DoNext(&CInMsg,Pt);
-}
-else if (iStat == 2)
-{
-  C3dVector p2;
-  p2=cDBase->DB_PopBuff();
-  if (gORTHO)
-  {
-	  //Need to transform to workplane
-	  p1 = cDBase->GlobaltoWP(p1);
-	  p2 = cDBase->GlobaltoWP(p2);
-	  if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
-	  {
-		  p2.y = p1.y;
-	  }
-	  else
-	  {
-		  p2.x = p1.x;
-	  }
-	  p1 = cDBase->WPtoGlobal(p1);
-	  p2 = cDBase->WPtoGlobal(p2);
-  }
-  cDBase->AddLN(p1,p2,-1,TRUE);
-  outtext1("1 Line Created.");
-  iStat=0;  
-  cDBase->bIsDrag = FALSE;
-  cDBase->ReDraw();
-  this->DoMenu(CInMsg,Pt);
-}
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->bIsDrag = FALSE;
-  cDBase->ReDraw();
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  RetVal = 1;
-}
-}
+		if (iStat == 0)
+		{
+			outtext2("//ENTER PT1");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			cDBase->bIsDrag = TRUE;
+			p1 = cDBase->DB_PopBuff();
+			cDBase->AddDragLN(p1);
+			cDBase->vLS = p1;
+			outtext2("//ENTER PT2");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		else if (iStat == 2)
+		{
+
+			cDBase->AddLNfromDrag();
+			outtext1("1 Line Created.");
+			iStat = 0;
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			this->DoMenu(CInMsg, Pt);
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
 MenuEnd:
-return RetVal;
+	return RetVal;
 }
 
 int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
@@ -3806,28 +3789,13 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		else if (iStat == 2)
 		{
-			C3dVector p1;
-			C3dVector p2;
-			p2 = cDBase->DB_PopBuff();
-			p1 = pLast;
-			if (gORTHO)
+			if (cDBase->pDragObj != nullptr)
 			{
-				//Need to transform to workplane
-				p1 = cDBase->GlobaltoWP(p1);
-				p2 = cDBase->GlobaltoWP(p2);
-				if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
-				{
-					p2.y = p1.y;
-				}
-				else
-				{
-					p2.x = p1.x;
-				}
-				p1 = cDBase->WPtoGlobal(p1);
-				p2 = cDBase->WPtoGlobal(p2);
-			}
-			pLast = p2;
-			cDBase->AddLN(p1, p2, -1,TRUE);
+			   NLine* pline = (NLine*) cDBase->pDragObj;
+			   pLast = pline->cPts[1]->Pt_Point ;
+            }
+			
+			cDBase->AddLNfromDrag();
 			cDBase->ReDraw();
 			outtext1("1 Line Created.");
 			iStat = 1;

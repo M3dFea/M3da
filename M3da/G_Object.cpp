@@ -47348,10 +47348,17 @@ knots[3]=1.0;
 
 void NLine::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
+	double dAng;
+	double dR;
 	C3dVector p1;
 	C3dVector p2;
+	C3dVector vX;
+	C3dVector vD;
+	C3dVector vN;
 	C3dVector vTrans;
 	C3dMatrix mInv;
+	vX.Set(1, 0, 0);
+	vN.Set(0, 0, 1);
 	vTrans.x = mWP.m_30;
 	vTrans.y = mWP.m_31;
 	vTrans.z = mWP.m_32;
@@ -47369,15 +47376,70 @@ void NLine::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 		p2 = mInv * p2;
 		p2 -= vTrans;
 		p2 = mInv * p2;
-		//Pt to global
-		if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
-		{
-			p2.y = p1.y;
-		}
+		vD = p2 - p1;
+		dR = vD.Mag();
+		vD.Normalize();
+		dAng = vX.AngSigned(vD,vN);
+		//Snap angle to nearest sensible increment
+		//if ((dAng >= 315) && (dAng <= 45))
+		//	dAng = 0;
+		//else if ((dAng >= 45) && (dAng <= 135))
+		//	dAng = 90;
+		//else if ((dAng >= 135) && (dAng <= 225))
+		//	dAng = 180;
+		//else if ((dAng >= 225) && (dAng <= 315))
+		//	dAng = 270;
+		//else
+		//	dAng = 0;
+		if ((dAng >= 345) && (dAng <= 15))
+			dAng = 0;
+		else if ((dAng >= 15) && (dAng <= 37.5))
+			dAng = 30;
+		else if ((dAng >= 37.5) && (dAng <= 52.5))
+			dAng = 45;
+		else if ((dAng >= 52.5) && (dAng <= 75))
+			dAng = 60;
+		else if ((dAng >= 75) && (dAng <= 105))
+			dAng = 90;
+		else if ((dAng >= 105) && (dAng <= 127.5))
+			dAng = 120;
+		else if ((dAng >= 127.5) && (dAng <= 142.5))
+			dAng = 135;
+		else if ((dAng >= 142.5) && (dAng <= 165))
+			dAng = 150;
+		else if ((dAng >= 165) && (dAng <= 195))
+			dAng = 180;
+		else if ((dAng >= 195) && (dAng <= 217.5))
+			dAng = 210;
+		else if ((dAng >= 217.5) && (dAng <= 232.5))
+			dAng = 225;
+		else if ((dAng >= 232.5) && (dAng <= 255))
+			dAng = 240;
+		else if ((dAng >= 255) && (dAng <= 285))
+			dAng = 270;
+		else if ((dAng >= 285) && (dAng <= 307.5))
+			dAng = 300;
+		else if ((dAng >= 307.5) && (dAng <= 322.5))
+			dAng = 315;
+		else if ((dAng >= 322.5) && (dAng <= 345))
+			dAng = 330;
 		else
-		{
-			p2.x = p1.x;
-		}
+			dAng = 0;
+		p2.x = p1.x + dR * cos(dAng * D2R);
+		p2.y = p1.y + dR * sin(dAng * D2R);
+		p2.z = p1.z;
+
+
+
+		//Pt to global
+		//if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
+		//{
+		//	p2.y = p1.y;
+		//}
+		//else
+		//{
+		//	p2.x = p1.x;
+		//}
 		p2 = mWP * p2;
 		p2 += vTrans;
 	}
