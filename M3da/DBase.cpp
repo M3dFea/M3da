@@ -5917,6 +5917,33 @@ void DBase::AddDragLN(C3dVector v1)
 	pDragObj = (NLine*)LnIn;
 }
 
+
+
+NLine* DBase::AddLNfromDrag(C3dVector v2)
+{
+
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	NLine* LnIn = nullptr;
+	C3dMatrix mTran;
+	C3dVector vn1, vn2;
+	WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+	mTran = pWPlane->mWPTransform;
+	if (pDragObj != nullptr)
+	{
+		pDragObj->DragUpdate(v2, mTran);
+		NLine* pL = (NLine*)pDragObj;
+		vn1 = pL->cPts[0]->Pt_Point;
+		vn2 = pL->cPts[1]->Pt_Point;
+		LnIn = new NLine();
+		LnIn->Create(vn1, vn2, iCVLabCnt, NULL);
+		iCVLabCnt++;
+		AddObj(LnIn);
+		ReDraw();
+	}
+	return (LnIn);
+}
+
+
 NLine* DBase::AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw)
 {
 

@@ -303,6 +303,7 @@ CvPt_Object* AddPt(C3dVector InPt, int iLab,BOOL bRedraw);
 void AddPt2(double x,double y,double z, int iLab);
 void AddDragLN(C3dVector v1);
 NLine* AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw);
+NLine* AddLNfromDrag(C3dVector v2);
 NLine* AddLNbyXYZ(double x1,double y1, double z1, double x2, double y2, double z2,int iCol);
 void AddRect(C3dVector v1,C3dVector v2, int ilab);
 Line_Object* AddLN2(double x1,double y1,double z1,double x2,double y2,double z2, int ilab);

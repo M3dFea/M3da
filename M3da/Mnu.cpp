@@ -3729,23 +3729,62 @@ else if (iStat == 2)
 {
   C3dVector p2;
   p2=cDBase->DB_PopBuff();
-  if (gORTHO)
-  {
-	  //Need to transform to workplane
-	  p1 = cDBase->GlobaltoWP(p1);
-	  p2 = cDBase->GlobaltoWP(p2);
-	  if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
-	  {
-		  p2.y = p1.y;
-	  }
-	  else
-	  {
-		  p2.x = p1.x;
-	  }
-	  p1 = cDBase->WPtoGlobal(p1);
-	  p2 = cDBase->WPtoGlobal(p2);
-  }
-  cDBase->AddLN(p1,p2,-1,TRUE);
+  cDBase->AddLNfromDrag(p2);
+  //C3dVector vD, vN, vX;
+  //double dR;
+  //double dAng;
+  //vX.Set(1, 0, 0);
+  //vN.Set(0, 0, 1);
+  //if (gORTHO)
+  //{
+	 // //Need to transform to workplane
+	 // p1 = cDBase->GlobaltoWP(p1);
+	 // p2 = cDBase->GlobaltoWP(p2);
+	 // vD = p2 - p1;
+	 // dR = vD.Mag();
+	 // vD.Normalize();
+	 // dAng = vX.AngSigned(vD, vN);
+	 // if ((dAng >= 345) && (dAng <= 15))
+		//  dAng = 0;
+	 // else if ((dAng >= 15) && (dAng <= 37.5))
+		//  dAng = 30;
+	 // else if ((dAng >= 37.5) && (dAng <= 52.5))
+		//  dAng = 45;
+	 // else if ((dAng >= 52.5) && (dAng <= 75))
+		//  dAng = 60;
+	 // else if ((dAng >= 75) && (dAng <= 105))
+		//  dAng = 90;
+	 // else if ((dAng >= 105) && (dAng <= 127.5))
+		//  dAng = 120;
+	 // else if ((dAng >= 127.5) && (dAng <= 142.5))
+		//  dAng = 135;
+	 // else if ((dAng >= 142.5) && (dAng <= 165))
+		//  dAng = 150;
+	 // else if ((dAng >= 165) && (dAng <= 195))
+		//  dAng = 180;
+	 // else if ((dAng >= 195) && (dAng <= 217.5))
+		//  dAng = 210;
+	 // else if ((dAng >= 217.5) && (dAng <= 232.5))
+		//  dAng = 225;
+	 // else if ((dAng >= 232.5) && (dAng <= 255))
+		//  dAng = 240;
+	 // else if ((dAng >= 255) && (dAng <= 285))
+		//  dAng = 270;
+	 // else if ((dAng >= 285) && (dAng <= 307.5))
+		//  dAng = 300;
+	 // else if ((dAng >= 307.5) && (dAng <= 322.5))
+		//  dAng = 315;
+	 // else if ((dAng >= 322.5) && (dAng <= 345))
+		//  dAng = 330;
+	 // else
+		//  dAng = 0;
+	 // p2.x = p1.x + dR * cos(dAng * D2R);
+	 // p2.y = p1.y + dR * sin(dAng * D2R);
+	 // p2.z = p1.z;
+	 // p1 = cDBase->WPtoGlobal(p1);
+	 // p2 = cDBase->WPtoGlobal(p2);
+  //}
+  //cDBase->AddLN(p1,p2,-1,TRUE);
   outtext1("1 Line Created.");
   iStat=0;  
   cDBase->bIsDrag = FALSE;
@@ -3809,25 +3848,13 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			C3dVector p1;
 			C3dVector p2;
 			p2 = cDBase->DB_PopBuff();
-			p1 = pLast;
-			if (gORTHO)
-			{
-				//Need to transform to workplane
-				p1 = cDBase->GlobaltoWP(p1);
-				p2 = cDBase->GlobaltoWP(p2);
-				if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
-				{
-					p2.y = p1.y;
-				}
-				else
-				{
-					p2.x = p1.x;
-				}
-				p1 = cDBase->WPtoGlobal(p1);
-				p2 = cDBase->WPtoGlobal(p2);
-			}
+			cDBase->AddLNfromDrag(p2);
 			pLast = p2;
-			cDBase->AddLN(p1, p2, -1,TRUE);
+			if (cDBase->pDragObj != nullptr)
+			{
+				NLine* pL = (NLine*) cDBase->pDragObj;
+				pLast = pL->cPts[1]->Pt_Point;
+			}
 			cDBase->ReDraw();
 			outtext1("1 Line Created.");
 			iStat = 1;
