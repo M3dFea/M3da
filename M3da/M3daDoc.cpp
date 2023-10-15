@@ -2243,9 +2243,22 @@ void CM3daDoc::OnEditProject()
 void CM3daDoc::OnToolsDelete()
 {
 	// TODO: Add your command handler code here
-  SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-  cDBase->DeleteObj();
+	DeleteObjs();
 }
+
+void CM3daDoc::DeleteObjs()
+{
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("DEL");
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
 
 IDispatch* CM3daDoc::APIGetModel(void)
 {

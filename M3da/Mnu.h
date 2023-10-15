@@ -1110,6 +1110,12 @@ public:
   virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zDEL_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 
 class zTRAN_Mnu: public zMnu
 {

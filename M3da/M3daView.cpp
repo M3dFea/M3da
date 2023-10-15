@@ -260,6 +260,8 @@ void CM3daView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	{m_iFuncKey = 4;}
 	else if (nChar == 27)
 	{m_iFuncKey = 5;}
+	else if (nChar == 46)
+	{m_iFuncKey = 6;}
 	else
 	{m_iFuncKey = 0;}
 	m_iMouseButStat=0;
@@ -285,6 +287,10 @@ else if (m_iFuncKey==4)
 else if (m_iFuncKey==5)
 {
   outtextMSG2("C");
+}
+else if (m_iFuncKey == 6)
+{
+	GetDocument()->DeleteObjs();
 }
 else
 {

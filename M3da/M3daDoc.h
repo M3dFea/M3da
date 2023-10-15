@@ -530,6 +530,7 @@ public:
   afx_msg void OnCurvetoolsLinetangentto2circles();
   afx_msg void OnCurvetoolsPointsoncircle();
   afx_msg void OnEditPolartranslatedfrom();
+  void DeleteObjs();
 };
 
 

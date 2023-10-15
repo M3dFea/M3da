@@ -2444,6 +2444,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "DEL")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDEL_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "ELINSSPG")
 	  {
 		  iResumePos = 0;
@@ -5541,6 +5551,13 @@ int zSOLVE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
   cDBase->SolveStress();
   RetVal = 1;
   return RetVal;
+}
+
+int zDEL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	cDBase->DeleteObj();
+	RetVal = 1;
+	return RetVal;
 }
 
 int zCIRCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
