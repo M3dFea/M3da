@@ -5040,7 +5040,7 @@ void Surf_Ex1::HighLight(CClientDC* pDC)
 {
 Draw(pDC,4);
 }
-
+//
 G_ObjectD Surf_Ex1::SelDist(CPoint InPT,Filter FIL)
 {
 double dSelD;
