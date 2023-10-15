@@ -3692,16 +3692,16 @@ return RetVal;
 }
 
 
-int zLN_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+int zLN_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  goto MenuEnd;
-}
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
 
 if (iStat == 0)
 {
@@ -3802,7 +3802,7 @@ if (iStat == 100)
 }
 }
 MenuEnd:
-return RetVal;
+	return RetVal;
 }
 
 int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
