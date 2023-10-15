@@ -47348,7 +47348,7 @@ knots[3]=1.0;
 
 void NLine::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
-	C3dVector vD,vN,vX;
+	C3dVector vD2,vD,vN,vX,vDir;
 	double dR;
 	double dAng;
 	vX.Set(1, 0, 0);
@@ -47374,6 +47374,7 @@ void NLine::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 		p2 -= vTrans;
 		p2 = mInv * p2;
 		vD = p2 - p1;
+		vD2 = vD;
 		dR = vD.Mag();
 		vD.Normalize();
 		dAng = vX.AngSigned(vD, vN);
@@ -47411,6 +47412,11 @@ void NLine::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 			dAng = 330;
 		else
 			dAng = 0;
+
+		vDir.x = cos(dAng * D2R);
+		vDir.y = sin(dAng * D2R);
+		vDir.z = p1.z;
+		dR = vDir.Dot(vD2);
 		p2.x = p1.x + dR * cos(dAng * D2R);
 		p2.y = p1.y + dR * sin(dAng * D2R);
 		p2.z = p1.z;
