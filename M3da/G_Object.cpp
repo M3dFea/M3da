@@ -45993,79 +45993,73 @@ for (i = 0; i < iNoCPts; i++)
 glEnd();
 }
 
-void NCurve::OglDrawW(int iDspFlgs,double dS1,double dS2)
-{
-char sLab[80];
-if ((iDspFlgs & DSP_CURVES)>0)
-{
-Selectable=1;
-int i;
-glColor3fv(cols[iColour]);
-if (DrawCPts || gDSP_CPTS)
-{
-  OglDrawCtrlPts();
-}
-C3dVector vPt;
-C3dVector vPt2;
-double dw=0;
-double dSpan;
-double dInc=0.005;
-int iNo;
-
-dSpan = we-ws;
-if (p>0)
-{
-  double dt;
-  dt= dSpan/dInc;
-  iNo = (int) dt;
-}
-//else
-//{
-//  iNo = 2;
-//  dInc = dSpan;
-//}
-  
-vPt=GetPt(ws);
-dw=ws;
-glLineWidth(iLnThk);
-// for dotted
-if (iLnType==2)
-{
-  glEnable(GL_LINE_STIPPLE);
-  glLineStipple(1,0x0101);
-}
-else if (iLnType==3)
-{
-  glEnable(GL_LINE_STIPPLE);
-  glLineStipple(1,0x00FF);
-}
-//
-glBegin(GL_LINES);
-for (i = 0; i < iNo; i++)
-{
-  dw=dw+dInc;
-  if (dw>1.0){dw=1;}
-  vPt2=GetPt(dw);
-  glVertex3f((float) vPt.x,(float) vPt.y,(float) vPt.z);
-  glVertex3f((float) vPt2.x,(float) vPt2.y,(float) vPt2.z);
-  vPt=vPt2;
-}
-glEnd();
-glLineWidth(2.0);
-glDisable(GL_LINE_STIPPLE);
-  C3dVector vCent;
-  vCent=Get_Centroid();
-  if (bDrawLab==TRUE)
+void NCurve::OglDrawW(int iDspFlgs, double dS1, double dS2) {
+	char sLab[80];
+	int i = 0;
+	double dt;
+	if ((iDspFlgs & DSP_CURVES) > 0) 
 	{
-	  sprintf_s(sLab,"C%i",iLabel);
-	  OglString(iDspFlgs,vCent.x,vCent.y,vCent.z,&sLab[0]);
+		Selectable = 1;
+		glColor3fv(cols[iColour]);
+		if (DrawCPts || gDSP_CPTS) 
+		{
+			OglDrawCtrlPts();
+		}
+		C3dVector vPt;
+		C3dVector vPt2;
+		double dw = 0;
+		double dSpan;
+		double dInc = 0.005;
+		int iNo;
+		dSpan = we - ws;
+		if (p > 0) 
+		{
+			dt = dSpan / dInc;
+			iNo = static_cast<int>(dt);
+			dt = dSpan / iNo;
+		}
+		vPt = GetPt(ws);
+		dw = ws;
+		glLineWidth(iLnThk);
+		// for dotted
+		if (iLnType == 2) 
+		{
+			glEnable(GL_LINE_STIPPLE);
+			glLineStipple(1, 0x0101);
+		}
+		else if (iLnType == 3) 
+		{
+			glEnable(GL_LINE_STIPPLE);
+			glLineStipple(1, 0x00FF);
+		}
+		glBegin(GL_LINES);
+		for (i = 0; i < iNo; i++) 
+		{
+			dw += dt;
+			if (dw > 1.0) 
+			{
+				dw = 1;
+			}
+			vPt2 = GetPt(dw);
+			glVertex3f((float)vPt.x, (float)vPt.y, (float)vPt.z);
+			glVertex3f((float)vPt2.x, (float)vPt2.y, (float)vPt2.z);
+			vPt = vPt2;
+		}
+		glEnd();
+		glLineWidth(2.0);
+		glDisable(GL_LINE_STIPPLE);
+		C3dVector vCent;
+		vCent = Get_Centroid();
+		if (bDrawLab == TRUE) {
+			sprintf_s(sLab, "C%i", iLabel);
+			OglString(iDspFlgs, vCent.x, vCent.y, vCent.z, &sLab[0]);
+		}
+	}
+	else {
+		Selectable = 0;
 	}
 }
-else
-{
-  Selectable=0;
-}
-}
+
 
 double NCurve::CorrectW(double w)
 {
@@ -46151,7 +46145,7 @@ void NCurve::HighLight(CDC* pDC)
 {
 double dw=0;
 double dSpan;
-double dInc=0.02;
+double dInc=0.01;
 C3dVector vPt;
 int iNo;
 int i;
@@ -46160,15 +46154,16 @@ dSpan = we-ws;
 double dt;
 dt=dSpan/dInc;
 iNo = (int) dt;
+dt = dSpan / iNo;
 dw=ws;
 vPt=GetPt(dw);
 Node* ThePoint = new Node;
 ThePoint->Create(vPt,1,0,0,11,0,0,NULL);
 ThePoint->SetToScr(pModZ,pScrZ);
 pDC->MoveTo((int) ThePoint->DSP_Point->x,(int)ThePoint->DSP_Point->y);
-for (i=0;i<iNo-1;i++)
+for (i=0;i<iNo;i++)
 {
-  dw=dw+dInc;
+  dw=dw+ dt;
   vPt=GetPt(dw);
   ThePoint->Pt_Point->x = vPt.x; 
   ThePoint->Pt_Point->y = vPt.y;

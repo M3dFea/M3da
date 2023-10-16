@@ -8244,6 +8244,7 @@ int zCVSPLIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			C3dVector p2;
 			p2 = cDBase->DB_PopBuff();
 			cDBase->CurveSplit(pC, p2);
+			cDBase->FILTER.SetAll();
 			RetVal = 1;
 		}
 		//Escape clause

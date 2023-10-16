@@ -15220,84 +15220,108 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 	int k = 0;
 	double dU;
 	NCurve* pNewC = NULL;
-
+	NCircle* pCir = NULL;
 	if (pC != NULL)
 	{
-		outtext1("Curve found for knot insertion.");
-		p = pC->p;
-		dU = pC->MinWPt(vPt);
-		if ((dU > 0) && (dU < 1))
+		if (pC->iType == 3)
 		{
-			r = pC->knotInsertion(dU, pC->p + 1,k, cPts, knots);
-			//Whole curve with added knots
-			//pNewC = new NCurve();
-			//pNewC->GenerateExp(p, cPts, knots);
-			//pNewC->iLabel = pC->iLabel;
-			//AddObj(pNewC);
-			//First segment curve
-			cPtsSeg.Size(k+1);
-			knotsSeg.Size(k+r+1);
-			for (i = 0; i < k + 1; i++)
-				cPtsSeg[i] = cPts[i];
-			for (i = 0; i < k + r + 1; i++)
+			outtext1("Circle Split.");
+			dU = pC->MinWPt(vPt);
+			if ((dU > 0) && (dU < 1))
 			{
-				dTmp = knots[i] / knots[k+r];
-				knotsSeg[i] = dTmp;
+				pCir = (NCircle *) pC->Copy(pC->pParent);
+				pCir->iLabel = iCVLabCnt;
+				iCVLabCnt++;
+				AddObj(pCir);
+				pCir->ws = dU;
+				pCir->we = pC->we;
+				pC->we = dU;
 			}
-			if (pC->iType==1)
-			  pNewC = new NCurve();
 			else
-			  pNewC = new NLine();
-			pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
-			pNewC->iLabel = pC->iLabel;
-			AddObj(pNewC);
-			cPtsSeg.DeleteAll();
-			knotsSeg.DeleteAll();
-			//Second segment curve
-			int iSS;
-			cPtsSeg.Size(cPts.n-(k + 1));
-			knotsSeg.Size(cPtsSeg.n+r);
-			for (i = (k + 1); i < cPts.n; i++)
-				cPtsSeg[i- (k + 1)] = cPts[i];
-			for (i = k+1; i < cPts.n + r ; i++)
-			{	
-				dTmp = (knots[i]- knots[k+1])/(knots[cPts.n + r-1]- knots[k+1]);
-				knotsSeg[i-(k+1)] = dTmp;
-			}
-			if (pC->iType == 1)
-				pNewC = new NCurve();
-			else
-				pNewC = new NLine();
-			pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
-			pNewC->iLabel = iCVLabCnt;
-			iCVLabCnt++;
-			AddObj(pNewC);
-			cPtsSeg.DeleteAll();
-			knotsSeg.DeleteAll();
-
-			//Remove original
-			if (pC->pParent == NULL)
 			{
-				RemObj(pC);
-				Dsp_Rem(pC);
-				Dsp_RemGP(pC);
+				outtext1("ERROR: No Projection onto Circle.");
 			}
-			
-			InvalidateOGL();
-			S_Des();
-
-			cPts.DeleteAll();
-			knots.DeleteAll();
 		}
 		else
 		{
-			outtext1("ERROR: No Projection onto Curve.");
+			outtext1("Curve found for knot insertion.");
+			p = pC->p;
+			dU = pC->MinWPt(vPt);
+			if ((dU > 0) && (dU < 1))
+			{
+				r = pC->knotInsertion(dU, pC->p + 1, k, cPts, knots);
+				//Whole curve with added knots
+				//pNewC = new NCurve();
+				//pNewC->GenerateExp(p, cPts, knots);
+				//pNewC->iLabel = pC->iLabel;
+				//AddObj(pNewC);
+				//First segment curve
+				cPtsSeg.Size(k + 1);
+				knotsSeg.Size(k + r + 1);
+				for (i = 0; i < k + 1; i++)
+					cPtsSeg[i] = cPts[i];
+				for (i = 0; i < k + r + 1; i++)
+				{
+					dTmp = knots[i] / knots[k + r];
+					knotsSeg[i] = dTmp;
+				}
+				if (pC->iType == 1)
+					pNewC = new NCurve();
+				else
+					pNewC = new NLine();
+				pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
+				pNewC->iLabel = pC->iLabel;
+				AddObj(pNewC);
+				cPtsSeg.DeleteAll();
+				knotsSeg.DeleteAll();
+				//Second segment curve
+				int iSS;
+				cPtsSeg.Size(cPts.n - (k + 1));
+				knotsSeg.Size(cPtsSeg.n + r);
+				for (i = (k + 1); i < cPts.n; i++)
+					cPtsSeg[i - (k + 1)] = cPts[i];
+				for (i = k + 1; i < cPts.n + r; i++)
+				{
+					dTmp = (knots[i] - knots[k + 1]) / (knots[cPts.n + r - 1] - knots[k + 1]);
+					knotsSeg[i - (k + 1)] = dTmp;
+				}
+				if (pC->iType == 1)
+					pNewC = new NCurve();
+				else
+					pNewC = new NLine();
+				pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
+				pNewC->iLabel = iCVLabCnt;
+				iCVLabCnt++;
+				AddObj(pNewC);
+				cPtsSeg.DeleteAll();
+				knotsSeg.DeleteAll();
+
+				//Remove original
+				if (pC->pParent == NULL)
+				{
+					RemObj(pC);
+					Dsp_Rem(pC);
+					Dsp_RemGP(pC);
+				}
+
+				InvalidateOGL();
+				S_Des();
+
+				cPts.DeleteAll();
+				knots.DeleteAll();
+			}
+			else
+			{
+				outtext1("ERROR: No Projection onto Curve.");
+			}
 		}
 	}
 	else
 	{
 		outtext1("ERROR: No Curve Selected.");
 	}
+	S_Des();
+
 }
 
 C3dVector DBase::Intersect(BOOL &bErr, CPoint nPt)
