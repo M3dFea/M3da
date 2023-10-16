@@ -5040,7 +5040,7 @@ void Surf_Ex1::HighLight(CClientDC* pDC)
 {
 Draw(pDC,4);
 }
-//
+
 G_ObjectD Surf_Ex1::SelDist(CPoint InPT,Filter FIL)
 {
 double dSelD;
@@ -46001,7 +46001,7 @@ if ((iDspFlgs & DSP_CURVES)>0)
 Selectable=1;
 int i;
 glColor3fv(cols[iColour]);
-if (DrawCPts==TRUE)
+if (DrawCPts || gDSP_CPTS)
 {
   OglDrawCtrlPts();
 }
@@ -46331,7 +46331,7 @@ void NCurve::S_Box(CPoint P1, CPoint P2, ObjList* pSel)
 {
 	int i;
 	
-	if (DrawCPts == TRUE)
+	if (DrawCPts || gDSP_CPTS)
 	{
 		for (i = 0; i < iNoCPts; i++)
 		{
@@ -46548,7 +46548,7 @@ double dt;
 int iNo;
 if (pParent!=NULL)
 {
-if (DrawCPts==TRUE)
+if (DrawCPts || gDSP_CPTS)
 {
   
   OglDrawCtrlPts();
@@ -47445,7 +47445,7 @@ C3dVector vC;
 
 if ((iDspFlgs & DSP_CURVES)>0)
 {
-	if (DrawCPts == TRUE)
+	if (DrawCPts || gDSP_CPTS)
 	{
 		OglDrawCtrlPts();
 	}
@@ -48424,7 +48424,7 @@ if ((iDspFlgs & DSP_SURFACES)>0)
 	glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPZ);
   }
 
-  if (DrawCPts==TRUE)
+  if (DrawCPts || gDSP_CPTS)
   {
     for (i = 0; i < iNoCvs; i++)
     {
@@ -48676,7 +48676,7 @@ int j;
 //CALL SURFACE S_BOX METHOD
 G_Object::S_Box(P1,P2,pSel);
 
-if (DrawCPts == TRUE)
+if (DrawCPts || gDSP_CPTS)
 {
 	for (i = 0; i < iNoCvs; i++)
 	{
@@ -48851,7 +48851,7 @@ if (iNoExtCvs==0)
 // Check the control points
 if (FIL.isFilter(0))
 {
-  if (DrawCPts==TRUE)
+  if (DrawCPts || gDSP_CPTS)
   {
     for (i = 0; i < iNoCvs; i++)
     {

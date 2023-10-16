@@ -8,6 +8,7 @@
 #include "GLOBAL_VARS.h"
 #pragma warning(disable:4477)
 BOOL gORTHO;
+BOOL gDSP_CPTS = FALSE;
 const double Pi = 3.1415926535;
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931

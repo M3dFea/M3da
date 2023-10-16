@@ -167,7 +167,8 @@ BEGIN
         MENUITEM "Display Element Offsets",     ID_VIEW_DISPLAYELEMENTOFFSETS
         MENUITEM "Display Element Coord Sys",   ID_VIEW_DISPLAYELEMENTCOORDSYS
         MENUITEM "Display Material Direction",  ID_VIEW_DISPLAYMATERIALDURECTION
-        MENUITEM "Control Point On/Off",        ID_VIEW_CONTROLPOINT
+        MENUITEM "Toggle Control Point Visability", ID_VIEW_TOGGLECONTROLPOINTVISABILITY
+        MENUITEM "Object Control Point On/Off", ID_VIEW_CONTROLPOINT
         MENUITEM "Surface Direction Markers On/Off", ID_VIEW_SURFACEDIRECTIONMARKERS
         POPUP "Object Size"
         BEGIN
@@ -1316,6 +1317,8 @@ BEGIN
     ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE 
                             "Line Throu Pt and Tangent to Circle"
     ID_CURVETOOLS_LINETANGENTTO2CIRCLES "Create a Line Tangent to 2 Circles"
+    ID_VIEW_TOGGLECONTROLPOINTVISABILITY 
+                            "Toggle On and Off All Objects Control Points"
 END
 
 #endif    // English (United States) resources
@@ -1372,6 +1375,7 @@ BEGIN
     BUTTON      ID_VIEW_LOCATEEYE
     BUTTON      ID_VIEW_LABELENTITIES
     BUTTON      ID_VISABILITY_WORKPLANE
+    BUTTON      ID_VIEW_TOGGLECONTROLPOINTVISABILITY
     BUTTON      ID_VISABILITY_CURVESON
     BUTTON      ID_SURFACES_SURFACESON
     BUTTON      ID_VISABILITY_ALLVISABLE
@@ -2268,6 +2272,8 @@ BEGIN
                             "Line Throu Pt and Tangent to Circle"
     ID_CURVETOOLS_LINETANGENTTO2CIRCLES "Create a Line Tangent to 2 Circles"
     ID_ORTHO                "Ortgogonal Line Drawing Mode"
+    ID_VIEW_TOGGLECONTROLPOINTVISABILITY "Toggle Control Point Visability"
+    ID_BUTTON33403          "Toggle Control Point Visability"
 END
 
 #endif    // English (United Kingdom) resources

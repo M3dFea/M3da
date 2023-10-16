@@ -380,6 +380,7 @@ ON_COMMAND(ID_CURVETOOLS_LINETHROUPTANDTANGENTTOCIRCLE, &CM3daDoc::OnCurvetoolsL
 ON_COMMAND(ID_CURVETOOLS_LINETANGENTTO2CIRCLES, &CM3daDoc::OnCurvetoolsLinetangentto2circles)
 ON_COMMAND(ID_CURVETOOLS_POINTSONCIRCLE, &CM3daDoc::OnCurvetoolsPointsoncircle)
 ON_COMMAND(ID_EDIT_POLARTRANSLATEDFROM, &CM3daDoc::OnEditPolartranslatedfrom)
+ON_COMMAND(ID_VIEW_TOGGLECONTROLPOINTVISABILITY, &CM3daDoc::OnViewTogglecontrolpointvisability)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6402,4 +6403,22 @@ void CM3daDoc::OnEditPolartranslatedfrom()
 {
 	// TODO: Add your command handler code here
 	outtextMSG2("PTRAN");
+}
+
+
+void CM3daDoc::OnViewTogglecontrolpointvisability()
+{
+	// TODO: Add your command handler code here
+	if (gDSP_CPTS == FALSE)
+	{
+		gDSP_CPTS = TRUE;
+		outtext1("All Control Points ON.");
+	}
+	else
+	{
+		gDSP_CPTS = FALSE;
+		outtext1("All Control Points OFF.");
+	}
+	cDBase->InvalidateOGL();
+	cDBase->ReDraw();
 }
