@@ -3294,6 +3294,12 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
+	//*********************************
+	cDBase->bIsDrag = TRUE;
+	p1 = cDBase->DB_PopBuff();
+	cDBase->AddDragLN(p1);
+	cDBase->vLS = p1;
+	//*********************************
 	outtext2("//PICK SECOND LOCATION");
     iResumePos=3;
     iCancelPos=100;
@@ -3304,24 +3310,12 @@ if (iStat == 2)
 if (iStat == 3)
 {
   iStat = 5;
-  C3dVector p1;
-  C3dVector p2;
-  p2=cDBase->DB_PopBuff();
-  p1=cDBase->DB_PopBuff();
 
-  p2=cDBase->GlobaltoWP(p2);
-  p1=cDBase->GlobaltoWP(p1);
-  if (gORTHO)
+  p2=cDBase->DB_PopBuff();
+  if (cDBase->pDragObj != nullptr)
   {
-	  //Need to transform to workplane
-	  if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
-	  {
-		  p2.y = p1.y;
-	  }
-	  else
-	  {
-		  p2.x = p1.x;
-	  }
+	  NLine* pL = (NLine*)cDBase->pDragObj;
+	  p2 = pL->cPts[1]->Pt_Point;
   }
   p2-=p1;
   cDBase->DB_AddPtBuff(p2);
@@ -3337,11 +3331,15 @@ if (iStat == 4)
 }
 if (iStat == 5)
 {
+  cDBase->bIsDrag = FALSE;
+  cDBase->ReDraw();
   RetVal = 1;
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->bIsDrag = FALSE;
+  cDBase->ReDraw();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3740,61 +3738,6 @@ else if (iStat == 2)
   C3dVector p2;
   p2=cDBase->DB_PopBuff();
   cDBase->AddLNfromDrag(p2);
-  //C3dVector vD, vN, vX;
-  //double dR;
-  //double dAng;
-  //vX.Set(1, 0, 0);
-  //vN.Set(0, 0, 1);
-  //if (gORTHO)
-  //{
-	 // //Need to transform to workplane
-	 // p1 = cDBase->GlobaltoWP(p1);
-	 // p2 = cDBase->GlobaltoWP(p2);
-	 // vD = p2 - p1;
-	 // dR = vD.Mag();
-	 // vD.Normalize();
-	 // dAng = vX.AngSigned(vD, vN);
-	 // if ((dAng >= 345) && (dAng <= 15))
-		//  dAng = 0;
-	 // else if ((dAng >= 15) && (dAng <= 37.5))
-		//  dAng = 30;
-	 // else if ((dAng >= 37.5) && (dAng <= 52.5))
-		//  dAng = 45;
-	 // else if ((dAng >= 52.5) && (dAng <= 75))
-		//  dAng = 60;
-	 // else if ((dAng >= 75) && (dAng <= 105))
-		//  dAng = 90;
-	 // else if ((dAng >= 105) && (dAng <= 127.5))
-		//  dAng = 120;
-	 // else if ((dAng >= 127.5) && (dAng <= 142.5))
-		//  dAng = 135;
-	 // else if ((dAng >= 142.5) && (dAng <= 165))
-		//  dAng = 150;
-	 // else if ((dAng >= 165) && (dAng <= 195))
-		//  dAng = 180;
-	 // else if ((dAng >= 195) && (dAng <= 217.5))
-		//  dAng = 210;
-	 // else if ((dAng >= 217.5) && (dAng <= 232.5))
-		//  dAng = 225;
-	 // else if ((dAng >= 232.5) && (dAng <= 255))
-		//  dAng = 240;
-	 // else if ((dAng >= 255) && (dAng <= 285))
-		//  dAng = 270;
-	 // else if ((dAng >= 285) && (dAng <= 307.5))
-		//  dAng = 300;
-	 // else if ((dAng >= 307.5) && (dAng <= 322.5))
-		//  dAng = 315;
-	 // else if ((dAng >= 322.5) && (dAng <= 345))
-		//  dAng = 330;
-	 // else
-		//  dAng = 0;
-	 // p2.x = p1.x + dR * cos(dAng * D2R);
-	 // p2.y = p1.y + dR * sin(dAng * D2R);
-	 // p2.z = p1.z;
-	 // p1 = cDBase->WPtoGlobal(p1);
-	 // p2 = cDBase->WPtoGlobal(p2);
-  //}
-  //cDBase->AddLN(p1,p2,-1,TRUE);
   outtext1("1 Line Created.");
   iStat=0;  
   cDBase->bIsDrag = FALSE;

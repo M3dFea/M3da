@@ -926,6 +926,7 @@ public:
 class zLN_Mnu: public zMnu
 {
 C3dVector p1;
+C3dVector p2;
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
@@ -989,6 +990,8 @@ virtual	int DoMenu(CString CInMsg,CPoint Pt);
 
 class zTVEC_Mnu: public zMnu
 {
+C3dVector p1;
+C3dVector p2;
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
