@@ -47415,15 +47415,6 @@ void NLine::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 		p2.x = p1.x + dR * cos(dAng * D2R);
 		p2.y = p1.y + dR * sin(dAng * D2R);
 		p2.z = p1.z;
-
-		//if (abs(p1.x - p2.x) > abs(p1.y - p2.y)) //line in x
-		//{
-		//	p2.y = p1.y;
-		//}
-		//else
-		//{
-		//	p2.x = p1.x;
-		//}
 		p2 = mWP * p2;
 		p2 += vTrans;
 	}

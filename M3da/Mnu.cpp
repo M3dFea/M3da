@@ -3602,6 +3602,12 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
 	outtext2("//ENTER LOCATION");
     iResumePos=1;
     iCancelPos=100;
@@ -3637,10 +3643,12 @@ else if (iStat == 2)
   p2+=ExtGlob;
   cDBase->AddLN(p1,p2,-1,TRUE);
   RetVal = 1;
+  cDBase->FILTER.SetAll();
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3663,7 +3671,13 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	  outtext2("//ENTER LOCATION");
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
+	outtext2("//ENTER LOCATION");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3690,6 +3704,7 @@ else if (iStat == 1)
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3713,6 +3728,12 @@ int zLN_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 if (iStat == 0)
 {
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
 	outtext2("//ENTER PT1");
     iResumePos=1;
     iCancelPos=100;
@@ -3747,6 +3768,7 @@ else if (iStat == 2)
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->bIsDrag = FALSE;
   cDBase->ReDraw();
   cDBase->DB_BuffCount=initCnt;
@@ -3771,6 +3793,12 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
 			bF = TRUE; //First time in we need 2 points
 			outtext2("//ENTER PT1");
 			iResumePos = 1;
@@ -3816,6 +3844,7 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		//Escape clause
 		if (iStat == 100)
 		{
+			cDBase->FILTER.SetAll();
 			cDBase->bIsDrag = FALSE;
 			cDBase->ReDraw();
 			cDBase->DB_BuffCount = initCnt;
@@ -3841,9 +3870,14 @@ if (pNext==NULL)
        RetVal = 2;
        goto MenuEnd;
     }
-
 if (iStat == 0)
 {
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
 	outtext2("//CIRCLE CENTRE");
     iResumePos=1;
     iCancelPos=100;
@@ -3868,16 +3902,16 @@ else if (iStat == 2)
 {
   cDBase->bIsDrag = FALSE;
   C3dVector p2;
-
   p2=cDBase->DB_PopBuff();
-
   cDBase->AddCirCentPt(vN,p1,p2);
   outtext1("1 Circle Created.");
   RetVal = 1;
+  cDBase->FILTER.SetAll();
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->bIsDrag = FALSE;
   cDBase->ReDraw();
   cDBase->DB_BuffCount=initCnt;
@@ -3908,6 +3942,12 @@ int zLNTANCIR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
 			outtext2("//PICK POINT");
 			iResumePos = 1;
 			iCancelPos = 100;
@@ -3940,11 +3980,13 @@ int zLNTANCIR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			cDBase->FILTER.SetAll();
 			cDBase->bIsDrag = FALSE;
 			cDBase->AddCirTanPt(vN, p1, Pt);
+			cDBase->FILTER.SetAll();
 			RetVal = 1;
 		}
 		//Escape clause
 		if (iStat == 100)
 		{
+			cDBase->FILTER.SetAll();
 			cDBase->bIsDrag = FALSE;
 			cDBase->ReDraw();
 			cDBase->DB_BuffCount = initCnt;
@@ -4087,7 +4129,13 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	  outtext2("//ENTER PT1");
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
+	outtext2("//ENTER PT1");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4096,7 +4144,7 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-	  outtext2("//ENTER PT2");
+	outtext2("//ENTER PT2");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4105,7 +4153,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-	  outtext2("//ENTER PT3");
+	outtext2("//ENTER PT3");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4122,10 +4170,12 @@ else if (iStat == 3)
   p1=cDBase->DB_PopBuff();
   cDBase->Circ3Pts(p1,p2,p3);
   RetVal = 1;
+  cDBase->FILTER.SetAll();
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -4148,6 +4198,12 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
 	outtext2("//ENTER PT1");
     iResumePos=1;
     iCancelPos=100;
@@ -4182,11 +4238,13 @@ else if (iStat == 3)
   p2=cDBase->DB_PopBuff();
   p1=cDBase->DB_PopBuff();
   cDBase->Arc3Pts(p1,p2,p3);
+  cDBase->FILTER.SetAll();
   RetVal = 1;
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -4210,6 +4268,12 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
 	outtext2("//ENTER PT1");
     iResumePos=1;
     iCancelPos=100;
@@ -4235,7 +4299,6 @@ else if (iStat == 2)
   cDBase->bIsDrag = FALSE;
   C3dVector p2;
   p2=cDBase->DB_PopBuff();
-
   cDBase->AddRect(p1,p2,-1);
   outtext1("1 Rectange Created.");
   RetVal = 1;
@@ -4243,6 +4306,7 @@ else if (iStat == 2)
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->bIsDrag = FALSE;
   cDBase->ReDraw();
   cDBase->DB_BuffCount=initCnt;
@@ -4268,6 +4332,12 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
 	outtext2("//ENTER LOCATION");
     iResumePos=1;
     iCancelPos=100;
@@ -4295,6 +4365,7 @@ if (iStat == 1)
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -4317,7 +4388,12 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
 	outtext2("//ENTER LOCATION");
     iResumePos=1;
     iCancelPos=100;
@@ -4345,6 +4421,7 @@ if (iStat == 1)
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -5527,7 +5604,6 @@ if (iStat == 0)
 if (iStat == 1)
 {
   vR=cDBase->DB_PopBuff();
-  
   dRad = vR.x;
   if (dRad == 0)
 	  dRad = gDIM_RADSZ;
@@ -5537,6 +5613,12 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
   outtext2("//ENTER CIRCLE CENTRE");
   iResumePos=3;
   iCancelPos=100;
@@ -5559,6 +5641,7 @@ if (iStat == 3)
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -6326,6 +6409,12 @@ int zCVCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 0)
 		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
 			outtext2("//ENTER LOCATION OR PICK FROM SCREEN");
 			iStat = 1;
 		}
@@ -6372,6 +6461,12 @@ int zCVFIT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 0)
 		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
 			outtext2("//ENTER LOCATION OR PICK FROM SCREEN");
 			iStat = 1;
 		}
