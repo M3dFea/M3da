@@ -3261,93 +3261,82 @@ MenuEnd:
 return RetVal;
 }
 
-int zTVEC_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+int zTVEC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  goto MenuEnd;
-}
-if (CInMsg == "KEY") //Common Options
-{
-  iStat =4;
-}
-else if (CInMsg == "PICK")
-{
-  iStat =1;
-}
-else if (iStat==0)
-{
-  outtext2("//ENTER TRANSLATION METHOD (PICK or KEY)");
-}
-if (iStat == 1)
-{
-	outtext2("//PICK FIRST LOCATION");
-    iResumePos=2;
-    iCancelPos=100;
-    pNext = new zPT_Mnu();
-    pNext->Init(cDBase,-1);
-    DoNext(&CInMsg,Pt);
-}
-if (iStat == 2)
-{
-	//*********************************
-	cDBase->bIsDrag = TRUE;
-	p1 = cDBase->DB_PopBuff();
-	cDBase->AddDragLN(p1);
-	cDBase->vLS = p1;
-	//*********************************
-	outtext2("//PICK SECOND LOCATION");
-    iResumePos=3;
-    iCancelPos=100;
-    pNext = new zPT_Mnu();
-    pNext->Init(cDBase,-1);
-    DoNext(&CInMsg,Pt);
-}
-if (iStat == 3)
-{
-  iStat = 5;
-
-  p2=cDBase->DB_PopBuff();
-  if (cDBase->pDragObj != nullptr)
-  {
-	  NLine* pL = (NLine*)cDBase->pDragObj;
-	  p2 = pL->cPts[1]->Pt_Point;
-  }
-  p2-=p1;
-  cDBase->DB_AddPtBuff(p2);
-}
-if (iStat == 4)
-{
-  outtext2("//ENTER TRANSLATION");
-  iResumePos=5;
-  iCancelPos=100;
-  pNext = new zKEY_Mnu();
-  pNext->Init(cDBase,-1);
-  DoNext(&CInMsg,Pt);
-}
-if (iStat == 5)
-{
-  cDBase->bIsDrag = FALSE;
-  cDBase->ReDraw();
-  RetVal = 1;
-}
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->bIsDrag = FALSE;
-  cDBase->ReDraw();
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  RetVal = 1;
-}
-}
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (CInMsg == "KEY") //Common Options
+		{
+			iStat = 4;
+		}
+		else if (CInMsg == "PICK")
+		{
+			iStat = 1;
+		}
+		else if (iStat == 0)
+		{
+			outtext2("/ENTER TRANSLATION METHOD (PICK or KEY)");
+		}
+		if (iStat == 1)
+		{
+			outtext2("/PICK FIRST LOCATION");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			outtext2("/PICK SECOND LOCATION");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			iStat = 5;
+			C3dVector p1;
+			C3dVector p2;
+			p2 = cDBase->DB_PopBuff();
+			p1 = cDBase->DB_PopBuff();
+			p2 = cDBase->GlobaltoWP(p2);
+			p1 = cDBase->GlobaltoWP(p1);
+			p2 -= p1;
+			cDBase->DB_AddPtBuff(p2);
+		}
+		if (iStat == 4)
+		{
+			outtext2("/ENTER TRANSLATION");
+			iResumePos = 5;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 5)
+		{
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
 MenuEnd:
-return RetVal;
-} 
+	return RetVal;
+}
 
 
 int zTRAN_Mnu::DoMenu(CString CInMsg,CPoint Pt)

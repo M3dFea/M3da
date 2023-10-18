@@ -10071,7 +10071,6 @@ double dStep;
 int iSteps=10;
 
 span=pP->we-pP->ws;
-span=pP->we-pP->ws;
 dStep=span/iSteps;
 if (pP->iType==1)  //General curve cant deal with exactly
 {
@@ -10120,7 +10119,7 @@ else if (pP->iType==2)  //Straigt line
      pPE->Create(pCn,pCn2,vT,iSFLabCnt,NULL);
      iSFLabCnt++;
      pPE->iColour=pC->iColour;
-     pPE->Generate(1,pP->ws,pP->we);
+     pPE->Generate(1,0,1);
      AddObj(pPE);
 }
 else if (pP->iType==3)  //Circle  can deal with exactly

@@ -47360,6 +47360,7 @@ void NLine::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 	mWP.m_32 = 0;
 	p1 = cPts[0]->Pt_Point;
 	p2 = inPt;
+
 	mInv = mWP.Inv();
 	if (gORTHO)
 	{
@@ -47368,6 +47369,7 @@ void NLine::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 		p1 = mInv * p1;
 		p2 -= vTrans;
 		p2 = mInv * p2;
+		p2.z = p1.z;
 		vD = p2 - p1;
 		vD2 = vD;
 		dR = vD.Mag();
