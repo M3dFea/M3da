@@ -2484,6 +2484,11 @@ public:
    virtual void Transform(C3dMatrix TMat);
    virtual void Reverse();
    virtual double CorrectW(double w);
+   //Rotate the circle definition (ctpoints) so point 0 aligns
+   //with U and set ws=0
+   //also update we to give same position
+   //USED FOR TRIM
+   void RotateToUS(double U);
 };
 
 

@@ -47203,6 +47203,78 @@ dX=vA.Dot(vX);
 return(w);
 }
 
+void NCircle::RotateToUS(double U)
+{
+	double dRad, dA1, dA2;
+	double dSpan, dInc, dAng;
+	int i;
+	int iDiv;
+	C3dMatrix mT;
+	C3dVector vTmp;
+	C3dVector vCent;
+	C3dVector vCentN;
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vN;
+	C3dVector vS;
+	C3dVector vE;
+	C3dVector vNode;
+	//Calculate circle cys and radius
+	//calulating explicitly as circle may not have come from M3d
+	vTmp.x = 0.5 * (cPts[4]->Pt_Point->x - cPts[0]->Pt_Point->x);
+	vTmp.y = 0.5 * (cPts[4]->Pt_Point->y - cPts[0]->Pt_Point->y);
+	vTmp.z = 0.5 * (cPts[4]->Pt_Point->z - cPts[0]->Pt_Point->z);
+	dRad = vTmp.Mag();
+	vCent.x = vTmp.x + cPts[0]->Pt_Point->x;
+	vCent.y = vTmp.y + cPts[0]->Pt_Point->y;
+	vCent.z = vTmp.z + cPts[0]->Pt_Point->z;
+	vX.x = cPts[0]->Pt_Point->x - vCent.x;
+	vX.y = cPts[0]->Pt_Point->y - vCent.y;
+	vX.z = cPts[0]->Pt_Point->z - vCent.z;
+	vY.x = cPts[2]->Pt_Point->x - vCent.x;
+	vY.y = cPts[2]->Pt_Point->y - vCent.y;
+	vY.z = cPts[2]->Pt_Point->z - vCent.z;
+	vN = vX.Cross(vY);
+	vX.Normalize(); vY.Normalize(); vN.Normalize();
+	mT.MakeUnit();
+	mT.SetColVec(1, vX);
+	mT.SetColVec(2, vY);
+	mT.SetColVec(3, vN);
+	mT.Transpose();
+	vCentN.x = -vCent.x;
+	vCentN.y = -vCent.y;
+	vCentN.z = -vCent.z;
+
+	vS = GetPt(U);
+	vS -= vCent; vS.Normalize();
+	dA1 = vX.AngSigned(vS, vN);
+	C3dMatrix mRot;
+	mRot.Rotate(0, 0, dA1);
+
+	//Transform ctrl point to XY then rotate and transform back
+	vE = GetPt(we);
+	for (i = 0; i < iNoCPts; i++)
+	{
+		cPts[i]->Translate(vCentN);
+		cPts[i]->Transform(mT);
+		cPts[i]->Transform(mRot);
+	}
+	 //need to maintain this
+	mT.Transpose();
+	for (i = 0; i < iNoCPts; i++)
+	{
+		cPts[i]->Transform(mT);
+		cPts[i]->Translate(vCent);
+	}
+	ws = 0;
+	we = MinWPt(vE);
+	if (we <= 0)
+	{
+		we = 1;
+	}
+
+
+}
 
 void NCircle::Reverse()
 {

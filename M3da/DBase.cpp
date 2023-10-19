@@ -6511,7 +6511,11 @@ C3dVector DBase::NLnInt3(NCurve* L1, NCurve* L2, C3dVector* pNear)
 		}
 		else
 		{
-			P1 = L1->GetPt(w - dw);
+			double dAA;
+			dAA = (w - dw);
+			if (dAA < 0)
+			  dAA = 0;
+			P1 = L1->GetPt(dAA);
 			P2 = L2->MinPt(P1);
 			dDistB = P2.Dist(P1);
 			if (dDistB < dDist)
@@ -15449,6 +15453,8 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2) {
 				outtext1("Search for multiple intersections.");
 				Cv = (NCurve*)S_Buff[S_Count - 2];
 				Cv1 = (NCurve*)S_Buff[S_Count - 1];
+				if (Cv->iType == 3)
+					cCir = (NCircle*)Cv;
 				// iNoInts = TentativeInt(Cv, Cv1, vInts, uInts);
 				dUse = Cv->MinWPt(pN1);
 				dUse2 = Cv->MinWPt(pN2);
@@ -15464,14 +15470,35 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2) {
 				vRet = NLnInt3(Cv, Cv1, &pNr2);
 				dU = Cv->MinWPt(vRet); // U at intersect
 				sprintf_s(S1, " Debug W: ,%f,%f", dU, dUse);
-				if ((dUse < dU) && (Cv->we > dU)) // This is trim
-					Cv->ws = dU;
-				else if ((dUse > dU) && (Cv->ws < dU))
-					Cv->we = dU;
-				else if ((dUse > dU) && (Cv->ws > dU)) // This is extend
-					Cv->ws = dU;
-				else if ((dUse < dU) && (Cv->we < dU))
-					Cv->we = dU;
+				if (cCir != nullptr)
+				{
+					//if ((dUse < dU) && (Cv->we > dU)) // This is trim
+					if (dUse < abs(Cv->we-dUse))
+					    cCir->RotateToUS(dU);
+					else if ((dUse > dU) && (Cv->ws < dU))
+						Cv->we = dU;
+					// else if ((dUse > dU) && (Cv->ws > dU)) // This is extend
+					//	cCir->RotateToUS(dU);
+					else if ((dUse < dU) && (Cv->we < dU))
+						Cv->we = dU;
+					if (Cv->we - Cv->ws < 0)
+					{
+
+						Cv->ws = 0;
+						Cv->we = 1;
+					}
+				}
+				else
+				{
+					if ((dUse < dU) && (Cv->we > dU)) // This is trim
+						Cv->ws = dU;
+					else if ((dUse > dU) && (Cv->ws < dU))
+						Cv->we = dU;
+					else if ((dUse > dU) && (Cv->ws > dU)) // This is extend
+						Cv->ws = dU;
+					else if ((dUse < dU) && (Cv->we < dU))
+						Cv->we = dU;
+				}
 				S_Count -= 2;
 				InvalidateOGL();
 				ReDraw();

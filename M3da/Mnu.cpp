@@ -14558,12 +14558,14 @@ if (iStat == 4)
   ptNo=cDBase->DB_PopBuff();
   ptVec=cDBase->DB_PopBuff();
   cDBase->ElSweep(cDBase->OTemp,ptVec,(int) ptNo.x);
+  cDBase->FILTER.SetAll();
   cDBase->S_Res();
   RetVal = 1;
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=0;
   cDBase->S_Count=0;
   RetVal = 1;
