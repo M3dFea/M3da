@@ -8363,6 +8363,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
+  cDBase->FILTER.Save();
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
   outtext2("//PICK LINES TO INTERCECT");
@@ -8385,13 +8386,13 @@ if (iStat == 2)
     {
       cDBase->DB_AddPtBuff(p2);
     }
-	cDBase->FILTER.SetAll();
+	cDBase->FILTER.Restore();
     RetVal = 1;
 }
 //Escape clause
 if (iStat == 100)
 {
-  cDBase->FILTER.SetAll();
+  cDBase->FILTER.Restore();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;

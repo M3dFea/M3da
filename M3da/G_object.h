@@ -1231,8 +1231,10 @@ class Filter
 public:
 int Filt[100];
 int iType[100];
+int iSave[100];
 CString sType[100];
 int iNo;
+int iSaveNo;
 int iNoOfType;
 Filter();
 void SetAll();
@@ -1241,6 +1243,8 @@ BOOL isFilter(int iThisType);
 void SetFilter(int iThisType);
 void RemFilter(int iThisType);
 void Clear();
+void Save();
+void Restore();
 };
 
 class CSETSDialog : public CDialog

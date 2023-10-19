@@ -1155,6 +1155,22 @@ void Filter::Clear()
 iNo=0;
 }
 
+void Filter::Save()
+{
+	int i;
+	iSaveNo = iNo;
+	for (i=0;i<iNo;i++)
+		iSave[i]= Filt[i];
+}
+
+void Filter::Restore()
+{
+	int i;
+	iNo = iSaveNo;
+	for (i = 0; i < iNo; i++)
+		Filt[i] = iSave[i];
+}
+
 int Filter::isIn(int iThisType)
 {
 int iRC=-1;
