@@ -532,6 +532,7 @@ public:
   afx_msg void OnEditPolartranslatedfrom();
   void DeleteObjs();
   afx_msg void OnViewTogglecontrolpointvisability();
+  afx_msg void OnExportExportdxf();
 };
 
 

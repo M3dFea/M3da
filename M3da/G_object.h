@@ -1681,6 +1681,7 @@ public:
   virtual double GetCharSize();
   virtual void GetBoundingBox(C3dVector& vll,C3dVector& vur);
   virtual CString GetName();
+  virtual void ExportDXF(FILE* pFile);
   virtual int GetVarHeaders(CString sVar[]);
   virtual int GetVarValues(CString sVar[]);
   virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
@@ -2493,6 +2494,7 @@ public:
    //also update we to give same position
    //USED FOR TRIM
    void RotateToUS(double U);
+   virtual void ExportDXF(FILE* pFile);
 };
 
 
@@ -2511,7 +2513,7 @@ public:
    virtual double MinDist(C3dVector inPt);
    virtual G_Object* Copy(G_Object* Parrent);
    virtual void Info();
-
+   virtual void ExportDXF(FILE* pFile);
 };
 
 class Surf_Ex1 : public G_Object

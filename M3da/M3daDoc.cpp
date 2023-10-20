@@ -381,6 +381,7 @@ ON_COMMAND(ID_CURVETOOLS_LINETANGENTTO2CIRCLES, &CM3daDoc::OnCurvetoolsLinetange
 ON_COMMAND(ID_CURVETOOLS_POINTSONCIRCLE, &CM3daDoc::OnCurvetoolsPointsoncircle)
 ON_COMMAND(ID_EDIT_POLARTRANSLATEDFROM, &CM3daDoc::OnEditPolartranslatedfrom)
 ON_COMMAND(ID_VIEW_TOGGLECONTROLPOINTVISABILITY, &CM3daDoc::OnViewTogglecontrolpointvisability)
+ON_COMMAND(ID_EXPORT_EXPORTDXF, &CM3daDoc::OnExportExportdxf)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6421,4 +6422,25 @@ void CM3daDoc::OnViewTogglecontrolpointvisability()
 	}
 	cDBase->InvalidateOGL();
 	cDBase->ReDraw();
+}
+
+
+void CM3daDoc::OnExportExportdxf()
+{
+	// TODO: Add your command handler code here
+	outtext1("EXPORTING 2D DXF FILE");
+	FILE* pFile;
+	CFileDialog FDia(FALSE, "dxf", "*.dxf", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
+	FDia.DoModal();
+	CString sPath = FDia.GetPathName();
+	CString sFile = FDia.GetFileName();
+	if (sFile != "")
+	{
+		pFile = fopen(sPath, "w");
+		if (pFile != NULL)
+		{
+			cDBase->ExportDXF(pFile);
+			fclose(pFile);
+		}
+	}
 }

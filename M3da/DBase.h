@@ -592,6 +592,7 @@ void UserCalc();
 void UserCalc2();
 void TestTrans();
 void ExportMesh(FILE* pFile2);
+void ExportDXF(FILE* pFile2);
 void ExportRes(FILE* pFile2);
 void ExportMeshNAS(FILE* pFile2,int iFile); //iFile is include file no or -1 all
 void ExportToText(FILE* pFile2);

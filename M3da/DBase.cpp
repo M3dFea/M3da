@@ -14856,6 +14856,25 @@ if (this->pCurrentMesh!=NULL)
 fclose(pFile2);
 }
 
+void DBase::ExportDXF(FILE* pFile2)
+{
+	outtext1("WARNING: DXF Output in Developement.");
+	int iCO;
+	fprintf(pFile2, "0\n");				// write a line with value 0
+	fprintf(pFile2, "SECTION\n");		// write the SECTION header
+	fprintf(pFile2, "2\n");				// write a line with value 2
+	fprintf(pFile2, "ENTITIES\n");		// write the ENTITIES header
+	fprintf(pFile2, "0\n");				// write a line with value 0
+	for (iCO = 0; iCO < DB_ObjectCount; iCO++)
+	{ 
+		if (DB_Obj[iCO]->iObjType == 7) //for all curves (on line implemebt)
+			DB_Obj[iCO]->ExportDXF(pFile2);
+	}
+	fprintf(pFile2, "ENDSEC\n");			// end the section
+	fprintf(pFile2, "0\n");				// write a line with value 0
+	fprintf(pFile2, "EOF\n");			// end the file
+	fclose(pFile2);
+}
 
 void DBase::ExportPermGroupsTXT(FILE* pFile2)
 {

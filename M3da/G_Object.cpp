@@ -1788,6 +1788,11 @@ double G_Object::GetCharSize()
 return (1.0);
 }
 
+void G_Object::ExportDXF(FILE* pFile)
+{
+
+}
+
 CString G_Object::GetName()
 {
 	return("Base Object");
@@ -47299,6 +47304,65 @@ void NCircle::RotateToUS(double U)
 
 }
 
+void NCircle::ExportDXF(FILE* pFile)
+{
+//FULL CIRCLE
+	double startAngle = 10;
+	double endAngle = 90;
+	double dTemp=0;
+	C3dVector vX, vS, vE , vN;
+	if ((ws == 0) && (we == 1))
+	{
+		fprintf(pFile, "CIRCLE\n");
+		fprintf(pFile, "8\n");
+		fprintf(pFile, "0\n");
+		fprintf(pFile, "10\n");
+		fprintf(pFile, "%g\n", vCent.x);
+		fprintf(pFile, "20\n");
+		fprintf(pFile, "%g\n", vCent.y);
+		fprintf(pFile, "40\n");
+		fprintf(pFile, "%g\n", dRadius);
+		fprintf(pFile, "0\n");
+	}
+	else
+	{
+		//ARC Calc start ane end angle rel to x
+		vN.Set(0, 0, 1);
+		vX.Set(1, 0, 0);
+		vS = GetPt(ws);
+		vE = GetPt(we);
+		vS -= vCent; vS.Normalize();
+		vE -= vCent; vE.Normalize();
+		//The arc - curve goes always from dxf.start_angle to dxf.end_angle 
+		//in counter - clockwise orientation around the dxf.extrusion vector, 
+		//which is(0, 0, 1) by defaultand the usual case for 2D arcs
+
+		startAngle = vX.AngSigned(vS, vN);
+		endAngle = vX.AngSigned(vE, vN);
+		if (vNorm.Dot(vN) < 0)
+		{
+			dTemp = startAngle;
+			startAngle = endAngle;
+			endAngle = dTemp;
+		}
+		fprintf(pFile, "ARC\n");
+		fprintf(pFile, "8\n");
+		fprintf(pFile, "0\n");
+		fprintf(pFile, "10\n");
+		fprintf(pFile, "%g\n", vCent.x);
+		fprintf(pFile, "20\n");
+		fprintf(pFile, "%g\n", vCent.y);
+		fprintf(pFile, "40\n");
+		fprintf(pFile, "%g\n", dRadius);
+		fprintf(pFile, "50\n");
+		fprintf(pFile, "%g\n", startAngle);
+		fprintf(pFile, "51\n");
+		fprintf(pFile, "%g\n", endAngle);
+		fprintf(pFile, "0\n");
+	}
+}
+
+
 void NCircle::Reverse()
 {
 int i;
@@ -47647,6 +47711,27 @@ sprintf_s(S1,"Pt1: %f %f %f",cPts[0]->Pt_Point->x,cPts[0]->Pt_Point->y,cPts[0]->
 outtext1(S1); 
 sprintf_s(S1,"Pt2: %f %f %f",cPts[1]->Pt_Point->x,cPts[1]->Pt_Point->y,cPts[1]->Pt_Point->z);
 outtext1(S1); 
+
+}
+
+void NLine::ExportDXF(FILE* pFile)
+{
+	//fprintf(pFile, "%8i", pVertex[0]->iLabel);
+	C3dVector vS, vE;
+	vS = GetPt(ws);
+	vE = GetPt(we);
+	fprintf(pFile, "LINE\n");			// write the LINE entity
+	fprintf(pFile, "8\n");				// write a line with value 8
+	fprintf(pFile, "0\n");				// write the layer number
+	fprintf(pFile, "10\n");				// write a line with value 10
+	fprintf(pFile, "%g\n", vS.x);			// write the x-coordinate of the first point
+	fprintf(pFile, "20\n");				// write a line with value 20
+	fprintf(pFile, "%g\n", vS.y);		// write the y-coordinate of the first point
+	fprintf(pFile, "11\n");				// write a line with value 11
+	fprintf(pFile, "%g\n", vE.x); // write the x-coordinate of the second point
+	fprintf(pFile, "21\n");				// write a line with value 21
+	fprintf(pFile, "%g\n", vE.y); // write the y-coordinate of the second point
+	fprintf(pFile, "0\n");				// write a line with value 0
 
 }
 
