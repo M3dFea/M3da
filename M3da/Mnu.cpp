@@ -12,6 +12,7 @@ double gDIM_FILSZ = 0.1;
 double gDIM_OFFSZ = 0.1;
 double gTXT_HEIGHT = 0.5;
 double gDIM_RADSZ = 0.5;
+double gDIM_CVORD = 2;
 //GLOBAL DEFUALT VALUES ENTERED
 
 void zMnu::Init(DBase* TheDBase,int iType)
@@ -6380,21 +6381,17 @@ MenuEnd:
 return RetVal;
 }
 
-int zCVCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+int zCVCR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	CString CInMsg2;
 	CInMsg2 = CInMsg;
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
 	{
-		if (CInMsg2 == "C") //Common Options
+		if (CInMsg == "C") // Common Options
 		{
 			RetVal = 2;
 			goto MenuEnd;
-		}
-		else if (CInMsg == "D")
-		{
-			RetVal = 1;
 		}
 		if (iStat == 0)
 		{
@@ -6404,7 +6401,7 @@ int zCVCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 			cDBase->FILTER.SetFilter(6);
 			cDBase->FILTER.SetFilter(7);
 			cDBase->FILTER.SetFilter(13);
-			outtext2("//ENTER LOCATION OR PICK FROM SCREEN");
+			outtext2("// ENTER LOCATION OR PICK FROM SCREEN");
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -6417,12 +6414,31 @@ int zCVCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 2)
 		{
-			cDBase->AddContPolyW(1);
+			char OutT[80];
+			sprintf_s(OutT, "%s %g)", "// ENTER ORDER (", gDIM_CVORD);
+			outtext2(OutT);
+			SetFocus();
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			C3dVector P;
+			P = cDBase->DB_PopBuff();
+			if (P.x < 1)
+				P.x = gDIM_CVORD;
+			if (P.x != gDIM_CVORD)
+				gDIM_CVORD = P.x;
+
+			cDBase->AddContPolyW(1, P.x);
 			outtext1("1 Curve Created.");
 			cDBase->FILTER.SetAll();
 			iStat = 100;
 		}
-		//ESCAPE CLAUSE
+		// ESCAPE CLAUSE
 		if (iStat == 100)
 		{
 			cDBase->DB_BuffCount = initCnt;
@@ -6430,11 +6446,11 @@ int zCVCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 			cDBase->FILTER.SetAll();
 			RetVal = 1;
 		}
-
 	}
 MenuEnd:
 	return RetVal;
 }
+
 
 int zCVFIT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -6469,7 +6485,9 @@ int zCVFIT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 2)
 		{
-			outtext2("//ENTER ORDER");
+			char OutT[80];
+			sprintf_s(OutT, "%s %g)", "//ENTER ORDER (", gDIM_CVORD);
+			outtext2(OutT);
 			SetFocus();
 			iResumePos = 3;
 			iCancelPos = 100;
@@ -6481,6 +6499,11 @@ int zCVFIT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		{
 			C3dVector P;
 			P = cDBase->DB_PopBuff();
+			if (P.x < 1)
+				P.x = gDIM_CVORD;
+			if (P.x != gDIM_CVORD)
+				gDIM_CVORD = P.x;
+
 			cDBase->AddCurveFit((int)P.x);
 			outtext1("1 Curve Created.");
 			cDBase->FILTER.SetAll();

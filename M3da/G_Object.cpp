@@ -47127,6 +47127,10 @@ vNorm=vN;
 vCent=vC;
 }
 
+
+
+
+
 void NCircle::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
 	double r2 = 0.70710678118654752440084436210485;
@@ -47152,6 +47156,9 @@ void NCircle::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 	TMat.Translate(vCent.x, vCent.y, vCent.z);
 	this->NCurve::Transform(TMat);
 }
+
+
+
 
 void NCircle::Serialize(CArchive& ar,int iV)
 {

@@ -6679,16 +6679,21 @@ while (dM>dTol);
 return (P2);
 }
 
-NCircle* DBase::AddCirCR(C3dVector vNorm,C3dVector vCent,double dR,int ilab)
+NCircle* DBase::AddCirCR(C3dVector vNorm, C3dVector vCent, double dR, int ilab)
 {
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	C3dVector vRDir, vX;
+	C3dMatrix mTran;
+	WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+	mTran = pWPlane->mWPTransform;
+	vX.Set(mTran.m_00, mTran.m_10, mTran.m_20);
 
-//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
-NCircle* cCir = new NCircle();
-cCir->Create(vNorm,vCent,dR,iCVLabCnt,NULL);
-iCVLabCnt++;
-AddObj(cCir);
-ReDraw();
-return (cCir);
+	NCircle* cCir = new NCircle();
+	cCir->Create2(vNorm, vCent, vX, dR, iCVLabCnt, NULL);
+	iCVLabCnt++;
+	AddObj(cCir);
+	ReDraw();
+	return cCir;
 }
 
 void DBase::AddDragCIR(C3dVector vN,C3dVector v1)
@@ -6953,11 +6958,17 @@ NLine* DBase::AddLinTan2Cir(CPoint PNear1, CPoint PNear2)
 NCircle* DBase::AddCirCentPt(C3dVector vNorm,C3dVector vCent,C3dVector vR)
 {
 
-//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat()
+C3dVector vRDir,vX;
+C3dMatrix mTran;
 vR-=vCent;
 
+double dR = vR.Mag();
+WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+mTran = pWPlane->mWPTransform;
+vX.Set(mTran.m_00, mTran.m_10, mTran.m_20);
 NCircle* cCir = new NCircle();
-cCir->Create(vNorm,vCent,vR.Mag(),iCVLabCnt,NULL);
+
+cCir->Create2(vNorm,vCent, vX,vR.Mag(),iCVLabCnt,NULL);
 iCVLabCnt++;
 AddObj(cCir);
 ReDraw();
@@ -7161,7 +7172,7 @@ AddTempGraphics(pRet);
 ReDraw();
 }
 
-void DBase::AddContPolyW(double dWght)
+void DBase::AddContPolyW(double dWght, double deg)
 {
 	int iCnt;
 	C3dVector pT;
@@ -7175,7 +7186,7 @@ void DBase::AddContPolyW(double dWght)
 			pT = DB_GetBuffbyInd(iCnt);
 			cPolyW->AddVert(pT,dWght);
 		}
-		cPolyW->Generate(2);
+		cPolyW->Generate(deg);
 		C3dVector a = cPolyW->GetPt(0.5);
 		DB_Obj[DB_ObjectCount]=cPolyW;
 		DB_Obj[DB_ObjectCount]->SetToScr(&pModelMat,&pScrMat);
@@ -15473,7 +15484,7 @@ void DBase::Trim(CPoint PNear1, CPoint PNear2) {
 				if (cCir != nullptr)
 				{
 					//if ((dUse < dU) && (Cv->we > dU)) // This is trim
-					if (dUse < abs(Cv->we-dUse))
+					if (abs(Cv->ws - dUse) < abs(Cv->we-dUse))
 					    cCir->RotateToUS(dU);
 					else if ((dUse > dU) && (Cv->ws < dU))
 						Cv->we = dU;

@@ -357,7 +357,7 @@ void ListAllMats();
 E_Object* AddEl(int iPos, BOOL AddDsp); 
 E_Object* InsSpringEl(int iPos, BOOL AddDsp);
 int  AddEl2(int pVnode[100], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C);
-void AddContPolyW(double dWght);
+void AddContPolyW(double dWght, double deg);
 void AddCurveFit(int p);
 void AddSurfE(C3dVector vTr);
 NSurf* AddPlainSurf(C3dVector vC,C3dVector vN,C3dVector vR, int ilab,BOOL bRedraw);
