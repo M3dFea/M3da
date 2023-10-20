@@ -44328,6 +44328,23 @@ Pt_Point->y = cInVect.y;
 Pt_Point->z = cInVect.z;
 }
 
+void CvPt_Object::ExportDXF(FILE* pFile)
+{
+	//fprintf(pFile, "%8i", pVertex[0]->iLabel);
+
+	// Writing point entity
+	fprintf(pFile, "POINT\n");					// write the LINE entity
+	fprintf(pFile, "8\n");						// write a line with value 8
+	fprintf(pFile, "0\n");						// write the layer number
+	fprintf(pFile, "10\n");						// write a line with value 10
+	fprintf(pFile, "%g\n", Pt_Point->x);	    // write the x-coordinate of the point
+	fprintf(pFile, "20\n");						// write a line with value 20
+	fprintf(pFile, "%g\n", Pt_Point->y);		// write the y-coordinate of the point
+	fprintf(pFile, "0\n");
+}
+
+
+
 CString CvPt_Object::GetName()
 {
 	return ("Point");

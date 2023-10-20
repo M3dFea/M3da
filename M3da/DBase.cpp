@@ -14867,8 +14867,10 @@ void DBase::ExportDXF(FILE* pFile2)
 	fprintf(pFile2, "0\n");				// write a line with value 0
 	for (iCO = 0; iCO < DB_ObjectCount; iCO++)
 	{ 
-		if (DB_Obj[iCO]->iObjType == 7) //for all curves (on line implemebt)
+		//Curves and Point so far
+		if ((DB_Obj[iCO]->iObjType == 0) || (DB_Obj[iCO]->iObjType == 7)) 
 			DB_Obj[iCO]->ExportDXF(pFile2);
+
 	}
 	fprintf(pFile2, "ENDSEC\n");			// end the section
 	fprintf(pFile2, "0\n");				// write a line with value 0

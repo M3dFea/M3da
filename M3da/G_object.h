@@ -1984,6 +1984,7 @@ public:
    virtual C3dVector Get_Centroid();
    virtual void S_Box(CPoint P1,CPoint P2,ObjList* pSel);
    virtual CString GetName();
+   virtual void ExportDXF(FILE* pFile);
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
    virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
