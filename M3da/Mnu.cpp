@@ -2445,6 +2445,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "SELCURLAY")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zSELCURLAY_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "DEL")
 	  {
 		  iResumePos = 0;
@@ -2462,6 +2472,16 @@ if (iStat == 0)
 		  cDBase->DB_ActiveBuffSet(2);
 		  cDBase->DB_ClearBuff();
 		  pNext = new zELINSSPG_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "MODINCNO")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zMODINCNO_Mnu();
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
@@ -3705,70 +3725,75 @@ return RetVal;
 }
 
 
-int zLN_Mnu::DoMenu(CString CInMsg, CPoint Pt)
-{
+int zLN_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 	DoNext(&CInMsg, Pt);
-	if (pNext == NULL)
+	if (pNext == NULL) 
 	{
-		if (CInMsg == "C") //Common Options
-		{
+		if (CInMsg == "C") { //Common Options
 			RetVal = 2;
 			goto MenuEnd;
 		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
+			iStat = 1;
+		}
+		if (iStat == 1) 
+		{
+			outtext2("//ENTER PT1");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2) 
+		{
+			cDBase->FILTER.Save();
+			cDBase->bIsDrag = TRUE;
+			p1 = cDBase->DB_PopBuff();
+			cDBase->AddDragLN(p1);
+			cDBase->vLS = p1;
+			outtext2("//ENTER PT2");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		else if (iStat == 3) 
+		{
+			C3dVector p2;
+			p2 = cDBase->DB_PopBuff();
+			cDBase->AddLNfromDrag(p2);
+			outtext1("1 Line Created.");
+			iStat = 1;
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			this->DoMenu(CInMsg, Pt);
+		}
 
-if (iStat == 0)
-{
-	cDBase->FILTER.Clear();
-	cDBase->FILTER.SetFilter(0);
-	cDBase->FILTER.SetFilter(5);
-	cDBase->FILTER.SetFilter(6);
-	cDBase->FILTER.SetFilter(7);
-	cDBase->FILTER.SetFilter(13);
-	outtext2("//ENTER PT1");
-    iResumePos=1;
-    iCancelPos=100;
-    pNext = new zPT_Mnu();
-    pNext->Init(cDBase,-1);
-    DoNext(&CInMsg,Pt);
-}
-if (iStat == 1)
-{
-	cDBase->bIsDrag = TRUE;
-	p1 = cDBase->DB_PopBuff();
-	cDBase->AddDragLN(p1);
-	cDBase->vLS = p1;
-	outtext2("//ENTER PT2");
-    iResumePos=2;
-    iCancelPos=100;
-    pNext = new zPT_Mnu();
-    pNext->Init(cDBase,-1);
-    DoNext(&CInMsg,Pt);
-}
-else if (iStat == 2)
-{
-  C3dVector p2;
-  p2=cDBase->DB_PopBuff();
-  cDBase->AddLNfromDrag(p2);
-  outtext1("1 Line Created.");
-  iStat=0;  
-  cDBase->bIsDrag = FALSE;
-  cDBase->ReDraw();
-  this->DoMenu(CInMsg,Pt);
-}
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->FILTER.SetAll();
-  cDBase->bIsDrag = FALSE;
-  cDBase->ReDraw();
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  RetVal = 1;
-}
-}
+		// Escape clause
+		if (iStat == 100) 
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
 MenuEnd:
 	return RetVal;
 }
+
 
 int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
@@ -17344,6 +17369,65 @@ MenuEnd:
 return RetVal;
 }
 
+int zSELCURLAY_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Save();
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(7);
+			outtext2("//ENTER LAYER OR PICK CURVE/POINT");
+			CInMsg = "NULL";
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg != "MouseInp") && (CInMsg != "D") && (CInMsg != "NULL"))
+			{
+				C3dVector GetPt;
+				int iPt = ExtractPt(CInMsg, &GetPt);
+				cDBase->SelCursbyLAY((int)GetPt.x);
+				RetVal = 1;
+			}
+			else if (CInMsg == "MouseInp")
+			{
+				if (cDBase->S_Count == S_initCnt + 1)
+				{
+					if ((cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 0) ||
+						(cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7))
+					{
+						Node* pE = (Node*)cDBase->S_Buff[cDBase->S_Count - 1];
+						cDBase->SelCursbyLAY(pE->iFile);
+						cDBase->FILTER.Restore();
+					}
+					RetVal = 1;
+				}
+			}
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.Restore();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+
 int zSELBYCOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
@@ -19936,6 +20020,64 @@ int zMODINCNO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			C3dVector ptVec;
 			ptVec = cDBase->DB_PopBuff();
 			cDBase->ModIncludeNo((int)ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zMODLAYNO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("//PICK CURVES / POINTS TO SET LAYER");
+			iStat = 1;
+
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			outtext2("//ENTER LAYER NO");
+			SetFocus();
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->ModLayerNo((int)ptVec.x);
 			RetVal = 1;
 		}
 		//Escape clause

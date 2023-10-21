@@ -44123,7 +44123,7 @@ void CvPt_Object::Info()
 {
   char S1[80];
   G_Object::Info();
-  sprintf_s(S1,"LAB: %i X: %f Y: %f Z: %f W: %f",iLabel,Pt_Point->x,Pt_Point->y,Pt_Point->z,w);
+  sprintf_s(S1,"LAB: %i X: %f Y: %f Z: %f W: %f LAYER: %i",iLabel,Pt_Point->x,Pt_Point->y,Pt_Point->z,w,iFile);
   outtext1(_T(S1));
   
 }
@@ -44331,11 +44331,14 @@ Pt_Point->z = cInVect.z;
 void CvPt_Object::ExportDXF(FILE* pFile)
 {
 	//fprintf(pFile, "%8i", pVertex[0]->iLabel);
-
+	int iL;
+	iL = iFile;
+	if (iL < 0)
+		iL = 0;
 	// Writing point entity
 	fprintf(pFile, "POINT\n");					// write the LINE entity
 	fprintf(pFile, "8\n");						// write a line with value 8
-	fprintf(pFile, "0\n");						// write the layer number
+	fprintf(pFile, "%i\n",iL);					// write the layer number
 	fprintf(pFile, "10\n");						// write a line with value 10
 	fprintf(pFile, "%g\n", Pt_Point->x);	    // write the x-coordinate of the point
 	fprintf(pFile, "20\n");						// write a line with value 20
@@ -44552,7 +44555,7 @@ char S1[80];
 sprintf_s(S1, "%s", "CURVE OBJECT");
 outtext1(S1);
 G_Object::Info();
-sprintf_s(S1, "%s%i", "Curve Type : ", iType);
+sprintf_s(S1, "Curve Type: %i LAYER:: %i", iType, iFile);
 outtext1(S1);
 sprintf_s(S1, "%s%i", "Curve Mesh Increment : ", iInc);
 outtext1(S1);
@@ -47324,6 +47327,10 @@ void NCircle::RotateToUS(double U)
 void NCircle::ExportDXF(FILE* pFile)
 {
 //FULL CIRCLE
+	int iL;
+	iL = iFile;
+	if (iL < 0)
+		iL = 0;
 	double startAngle = 10;
 	double endAngle = 90;
 	double dTemp=0;
@@ -47332,7 +47339,7 @@ void NCircle::ExportDXF(FILE* pFile)
 	{
 		fprintf(pFile, "CIRCLE\n");
 		fprintf(pFile, "8\n");
-		fprintf(pFile, "0\n");
+		fprintf(pFile, "%i\n",iL);
 		fprintf(pFile, "10\n");
 		fprintf(pFile, "%g\n", vCent.x);
 		fprintf(pFile, "20\n");
@@ -47364,7 +47371,7 @@ void NCircle::ExportDXF(FILE* pFile)
 		}
 		fprintf(pFile, "ARC\n");
 		fprintf(pFile, "8\n");
-		fprintf(pFile, "0\n");
+		fprintf(pFile, "%i\n",iL);
 		fprintf(pFile, "10\n");
 		fprintf(pFile, "%g\n", vCent.x);
 		fprintf(pFile, "20\n");
@@ -47459,7 +47466,7 @@ void NCircle::Info()
   sprintf_s(S1, "%s", "CIRCLE OBJECT");
   outtext1(S1);
   G_Object::Info();
-  sprintf_s(S1, "%s%i", "Curve Type : ", iType);
+  sprintf_s(S1, "Curve Type: %i LAYER:: %i", iType ,iFile);
   outtext1(S1);
   sprintf_s(S1,"%s%f","Radius : ",dRadius);
   outtext1(S1); 
@@ -47721,7 +47728,7 @@ char S1[80];
 sprintf_s(S1, "%s", "LINE OBJECT");
 outtext1(S1);
 G_Object::Info();
-sprintf_s(S1, "%s%i", "Curve Type : ", iType);
+sprintf_s(S1, "Curve Type: %i LAYER:: %i", iType, iFile);
 outtext1(S1);
 //Set like this temporaly for generating symbols table
 sprintf_s(S1,"Pt1: %f %f %f",cPts[0]->Pt_Point->x,cPts[0]->Pt_Point->y,cPts[0]->Pt_Point->z);
@@ -47737,17 +47744,21 @@ void NLine::ExportDXF(FILE* pFile)
 	C3dVector vS, vE;
 	vS = GetPt(ws);
 	vE = GetPt(we);
+	int iL;
+	iL = iFile;
+	if (iL < 0)
+		iL = 0;
 	fprintf(pFile, "LINE\n");			// write the LINE entity
 	fprintf(pFile, "8\n");				// write a line with value 8
-	fprintf(pFile, "0\n");				// write the layer number
+	fprintf(pFile, "%i\n",iL);			// write the layer number
 	fprintf(pFile, "10\n");				// write a line with value 10
-	fprintf(pFile, "%g\n", vS.x);			// write the x-coordinate of the first point
+	fprintf(pFile, "%g\n", vS.x);		// write the x-coordinate of the first point
 	fprintf(pFile, "20\n");				// write a line with value 20
 	fprintf(pFile, "%g\n", vS.y);		// write the y-coordinate of the first point
 	fprintf(pFile, "11\n");				// write a line with value 11
-	fprintf(pFile, "%g\n", vE.x); // write the x-coordinate of the second point
+	fprintf(pFile, "%g\n", vE.x);		// write the x-coordinate of the second point
 	fprintf(pFile, "21\n");				// write a line with value 21
-	fprintf(pFile, "%g\n", vE.y); // write the y-coordinate of the second point
+	fprintf(pFile, "%g\n", vE.y);		// write the y-coordinate of the second point
 	fprintf(pFile, "0\n");				// write a line with value 0
 
 }

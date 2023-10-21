@@ -315,6 +315,7 @@ BEGIN
     BEGIN
         MENUITEM "Points by Colour",            ID_SELECTION_POINTSBYCOLOUR
         MENUITEM "Curves by Colour",            ID_SELECTION_CURVESBYCOLOUR
+        MENUITEM "Curve/Points by Layer ID",    ID_SELECTION_SELECTCURVE
         MENUITEM "Surfaces by Colour",          ID_SELECTION_SURFACESBYCOLOUR
         MENUITEM "Elements by PID",             ID_SELECTION_ELEMENTSBYPID
         MENUITEM "Elements by Colour",          ID_SELECTION_ELEMENTSBYCOLOUR
@@ -387,6 +388,7 @@ BEGIN
             MENUITEM "Insert Knot",                 ID_CURVEMODIFY_INSERTKNOT
             MENUITEM "Split at Point",              ID_CURVEMODIFY_SPLITATPOINT
             MENUITEM "Trim",                        ID_CURVEMODIFY_TRIM
+            MENUITEM "Layer Number",                ID_CURVEMODIFY_LAYERNUMBER
         END
         POPUP "Part Modify"
         BEGIN
@@ -1320,6 +1322,8 @@ BEGIN
     ID_CURVETOOLS_LINETANGENTTO2CIRCLES "Create a Line Tangent to 2 Circles"
     ID_VIEW_TOGGLECONTROLPOINTVISABILITY 
                             "Toggle On and Off All Objects Control Points"
+    ID_CURVEMODIFY_LAYERNUMBER "Set the Curve / Point Layer Number"
+    ID_SELECTION_SELECTCURVE "Select Curves/Points by Layer ID"
 END
 
 #endif    // English (United States) resources

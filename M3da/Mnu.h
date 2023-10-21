@@ -1737,6 +1737,13 @@ class zSELCURCOL_Mnu: public zMnu
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 }; 
+
+class zSELCURLAY_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zGPBYCOL_Mnu: public zMnu
 {
 public:
@@ -2051,6 +2058,12 @@ public:
 };
 
 class zMODINCNO_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zMODLAYNO_Mnu : public zMnu
 {
 public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);

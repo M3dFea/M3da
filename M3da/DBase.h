@@ -25,6 +25,7 @@ public:
     int GetFileByNo(CString sF);
     void ExporttoNAS(int iFileNo);
     void ModIncludeNo(int iF);
+    void ModLayerNo(int iF);
     void Ortho();
     void LabGaps(int iGap);
 HGLRC		hrc;
@@ -242,6 +243,7 @@ void SetResDispOff(Node* pN);
 void SelSurfsbyCOL (int iCol);
 void SelPtsbyCOL(int iCOl);
 void SelCursbyCOL(int iCOl);
+void SelCursbyLAY(int iLAY);
 void AddToGroupbyCol(int PID);
 void GPByInclude(int iFile);
 void AddToGroupbyNDCol(int PID);

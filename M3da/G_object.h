@@ -1632,7 +1632,7 @@ public:
   G_Object* next;
   G_Object* before;
   C3dVector SelPt;
-  int iFile;
+  int iFile; //Include File No for FE - Layer No for lines
   int iObjType;
   int iType; //Secondary type specifier
   int iLabel;

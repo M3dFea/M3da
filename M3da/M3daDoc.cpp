@@ -382,6 +382,8 @@ ON_COMMAND(ID_CURVETOOLS_POINTSONCIRCLE, &CM3daDoc::OnCurvetoolsPointsoncircle)
 ON_COMMAND(ID_EDIT_POLARTRANSLATEDFROM, &CM3daDoc::OnEditPolartranslatedfrom)
 ON_COMMAND(ID_VIEW_TOGGLECONTROLPOINTVISABILITY, &CM3daDoc::OnViewTogglecontrolpointvisability)
 ON_COMMAND(ID_EXPORT_EXPORTDXF, &CM3daDoc::OnExportExportdxf)
+ON_COMMAND(ID_CURVEMODIFY_LAYERNUMBER, &CM3daDoc::OnCurvemodifyLayernumber)
+ON_COMMAND(ID_SELECTION_SELECTCURVE, &CM3daDoc::OnSelectionSelectcurve)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6442,5 +6444,36 @@ void CM3daDoc::OnExportExportdxf()
 			cDBase->ExportDXF(pFile);
 			fclose(pFile);
 		}
+	}
+}
+
+
+void CM3daDoc::OnCurvemodifyLayernumber()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("MODINCNO");
+		sLastcmd = "MODINCNO";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnSelectionSelectcurve()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("SELCURLAY");
+		sLastcmd = "SELCURLAY";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
 	}
 }

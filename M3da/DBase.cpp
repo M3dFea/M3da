@@ -18922,6 +18922,24 @@ for (iCO = 0; iCO < iDspLstCount; iCO++)
 ReDraw();
 }
 
+void DBase::SelCursbyLAY(int iLAY)
+{
+
+	int iCO;
+	for (iCO = 0; iCO < iDspLstCount; iCO++)
+	{
+		if ((Dsp_List[iCO]->iObjType == 0) || (Dsp_List[iCO]->iObjType == 7))
+		{
+			if (Dsp_List[iCO]->iFile == iLAY)
+			{
+				S_Buff[S_Count] = Dsp_List[iCO];
+				S_Count++;
+			}
+		}
+	}
+	ReDraw();
+}
+
 void DBase::EditMat(int MID,BOOL bPID)
 {
   Property* P = NULL;
@@ -19687,6 +19705,24 @@ void DBase::ModIncludeNo(int iF)
     for (iCO = 0; iCO < S_Count; iCO++)
 	{
 		S_Buff[iCO]->iFile = iF;
+		iNoC++;
+	}
+	sprintf_s(s1, "%s%i", "Number of Entities Modified : ", iNoC);
+	outtext1(_T(s1));
+
+}
+
+void DBase::ModLayerNo(int iF)
+{
+	int iNoC = 0;
+	char s1[200];
+	int iCO;
+	for (iCO = 0; iCO < S_Count; iCO++)
+	{
+		if ((S_Buff[iCO]->iObjType == 0) || (S_Buff[iCO]->iObjType == 7))
+		{
+			S_Buff[iCO]->iFile = iF; //iFile is used as layer for point and curves
+		}
 		iNoC++;
 	}
 	sprintf_s(s1, "%s%i", "Number of Entities Modified : ", iNoC);
