@@ -19704,8 +19704,15 @@ void DBase::ModIncludeNo(int iF)
 	int iCO;
     for (iCO = 0; iCO < S_Count; iCO++)
 	{
-		S_Buff[iCO]->iFile = iF;
-		iNoC++;
+		if ((S_Buff[iCO]->iObjType == 0) || (S_Buff[iCO]->iObjType == 7))
+		{
+			//IGNORE AS ARE USED FOR DXF LAY NO
+		}
+		else
+		{
+			S_Buff[iCO]->iFile = iF;
+			iNoC++;
+		}
 	}
 	sprintf_s(s1, "%s%i", "Number of Entities Modified : ", iNoC);
 	outtext1(_T(s1));
@@ -19716,14 +19723,14 @@ void DBase::ModLayerNo(int iF)
 {
 	int iNoC = 0;
 	char s1[200];
-	int iCO;
+	int iCO = 0;
 	for (iCO = 0; iCO < S_Count; iCO++)
 	{
 		if ((S_Buff[iCO]->iObjType == 0) || (S_Buff[iCO]->iObjType == 7))
 		{
 			S_Buff[iCO]->iFile = iF; //iFile is used as layer for point and curves
+			iNoC++;
 		}
-		iNoC++;
 	}
 	sprintf_s(s1, "%s%i", "Number of Entities Modified : ", iNoC);
 	outtext1(_T(s1));
