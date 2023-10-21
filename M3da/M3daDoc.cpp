@@ -6454,8 +6454,8 @@ void CM3daDoc::OnCurvemodifyLayernumber()
 	if (pMnu->isNULL())
 	{
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
-		outtextMSG2("MODINCNO");
-		sLastcmd = "MODINCNO";
+		outtextMSG2("MODLAYNO");
+		sLastcmd = "MODLAYNO";
 	}
 	else
 	{

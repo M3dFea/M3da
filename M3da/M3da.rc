@@ -315,7 +315,7 @@ BEGIN
     BEGIN
         MENUITEM "Points by Colour",            ID_SELECTION_POINTSBYCOLOUR
         MENUITEM "Curves by Colour",            ID_SELECTION_CURVESBYCOLOUR
-        MENUITEM "Curve/Points by Layer ID",    ID_SELECTION_SELECTCURVE
+        MENUITEM "Curves/Points by Layer ID",   ID_SELECTION_SELECTCURVE
         MENUITEM "Surfaces by Colour",          ID_SELECTION_SURFACESBYCOLOUR
         MENUITEM "Elements by PID",             ID_SELECTION_ELEMENTSBYPID
         MENUITEM "Elements by Colour",          ID_SELECTION_ELEMENTSBYCOLOUR
