@@ -45731,6 +45731,53 @@ void NCurve::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 }
 
+
+void NCurve::ExportDXF(FILE* pFile)
+{
+	// Write the spline
+	int iL;
+	int i;
+	iL = iFile;
+	if (iL < 0)
+		iL = 0;
+
+	fprintf(pFile, "SPLINE\n");
+	fprintf(pFile, "8\n");
+	fprintf(pFile, "%i\n", iL); //Layer number
+	fprintf(pFile, "70\n");
+	fprintf(pFile, "4\n"); //rational b spline
+	fprintf(pFile, "71\n");
+	fprintf(pFile, "%i\n", p); //write the degree of the NURBS spline
+	fprintf(pFile, "72\n");
+	fprintf(pFile, "%i\n", iNoCPts+p+1); //no of knots
+	fprintf(pFile, "73\n");
+	fprintf(pFile, "%i\n", iNoCPts); //no of control point
+	//Write the knots
+	for (int i = 0; i < iNoCPts+p+1; ++i)
+	{
+		fprintf(pFile, "40\n");						// write a line with value 10
+		fprintf(pFile, "%g\n", knots[i]);
+	}
+	// Write the control points for the spline
+	for (int i = 0; i < iNoCPts; ++i) 
+	{
+		fprintf(pFile, "10\n");						// write a line with value 10
+		fprintf(pFile, "%g\n", cPts[i]->Pt_Point->x);			// write the x-coordinate of the control point
+		fprintf(pFile, "20\n");						// write a line with value 20
+		fprintf(pFile, "%g\n", cPts[i]->Pt_Point->y);	// write the y-coordinate of the control point
+		fprintf(pFile, "30\n");						// write a line with value 30
+		fprintf(pFile, "%g\n", cPts[i]->Pt_Point->z);	// write the z-coordinate of the control point
+		fprintf(pFile, "42\n");
+		fprintf(pFile, "%g\n", cPts[i]->w);
+	}
+
+	// Write the spline properties
+	fprintf(pFile, "0\n"); // write a line with value 0
+
+
+}
+
+
 NCurveOnSurf* NCurve::GetSurfaceCV(NSurf* pSurf)
 {
 int i;
@@ -47326,7 +47373,15 @@ void NCircle::RotateToUS(double U)
 
 void NCircle::ExportDXF(FILE* pFile)
 {
-//FULL CIRCLE
+	C3dVector vTmp;
+	double dRad;
+	vTmp.x = 0.5 * (cPts[4]->Pt_Point->x - cPts[0]->Pt_Point->x);
+	vTmp.y = 0.5 * (cPts[4]->Pt_Point->y - cPts[0]->Pt_Point->y);
+	vTmp.z = 0.5 * (cPts[4]->Pt_Point->z - cPts[0]->Pt_Point->z);
+	dRad = vTmp.Mag();
+	vCent.x = vTmp.x + cPts[0]->Pt_Point->x;
+	vCent.y = vTmp.y + cPts[0]->Pt_Point->y;
+	vCent.z = vTmp.z + cPts[0]->Pt_Point->z;
 	int iL;
 	iL = iFile;
 	if (iL < 0)
@@ -47345,7 +47400,7 @@ void NCircle::ExportDXF(FILE* pFile)
 		fprintf(pFile, "20\n");
 		fprintf(pFile, "%g\n", vCent.y);
 		fprintf(pFile, "40\n");
-		fprintf(pFile, "%g\n", dRadius);
+		fprintf(pFile, "%g\n", dRad);
 		fprintf(pFile, "0\n");
 	}
 	else
@@ -47377,7 +47432,7 @@ void NCircle::ExportDXF(FILE* pFile)
 		fprintf(pFile, "20\n");
 		fprintf(pFile, "%g\n", vCent.y);
 		fprintf(pFile, "40\n");
-		fprintf(pFile, "%g\n", dRadius);
+		fprintf(pFile, "%g\n", dRad);
 		fprintf(pFile, "50\n");
 		fprintf(pFile, "%g\n", startAngle);
 		fprintf(pFile, "51\n");
