@@ -15307,12 +15307,6 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 			if ((dU > 0) && (dU < 1))
 			{
 				r = pC->knotInsertion(dU, pC->p + 1, k, cPts, knots);
-				//Whole curve with added knots
-				//pNewC = new NCurve();
-				//pNewC->GenerateExp(p, cPts, knots);
-				//pNewC->iLabel = pC->iLabel;
-				//AddObj(pNewC);
-				//First segment curve
 				cPtsSeg.Size(k + 1);
 				knotsSeg.Size(k + r + 1);
 				for (i = 0; i < k + 1; i++)
