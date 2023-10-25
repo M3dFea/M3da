@@ -15673,10 +15673,10 @@ NCircle* DBase::Fillet2(double dR, CPoint PNear1, CPoint PNear2)
 					cCir->iLabel = iCVLabCnt;
 					iCVLabCnt++;
 					InvalidateOGL();
-					ReDraw();
 				}
 				S_Count--;
 				S_Count--;
+				ReDraw();
 
 			}
 		}
@@ -15926,6 +15926,15 @@ NCircle* DBase::FilletIter(NLine* Ln1, NLine* Ln2, double dR, C3dVector PNear1, 
 		{
 			w1 += Deltaw1;
 			w2 += Deltaw2;
+			if (w1 < 0)
+				w1 = 0;
+			else if (w1 > 1)
+				w1 = 1;
+			if (w2 < 0)
+				w2 = 0;
+			else if (w2 > 1)
+				w2 = 1;
+
 			//need to do one point at a time
 			v1 = Ln1->GetPt(w1);
 			vDir1 = Ln1->GetDir(w1); vDir1.Normalize();
