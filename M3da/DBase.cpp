@@ -15363,7 +15363,6 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 
 				InvalidateOGL();
 				S_Des();
-
 				cPts.DeleteAll();
 				knots.DeleteAll();
 			}
