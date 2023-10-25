@@ -9,6 +9,7 @@
 #pragma warning(disable:4477)
 BOOL gORTHO;
 BOOL gDSP_CPTS = FALSE;
+const double dTol = 0.00000001;  //unsed for Surface tolerance
 const double Pi = 3.1415926535;
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -6387,8 +6388,29 @@ void DBase::TrimLn()
 
 
 
+//Caluclate the aparent intersection of two lines in 3d
+//lines defined as points
+BOOL DBase::LnIntByPoints(C3dVector p11, C3dVector p12, C3dVector p21,
+	               C3dVector p22, C3dVector& pInt)
+{
+	C3dVector v1, v2;
+	NLine* Ln1;
+	NLine* Ln2;
+	v1 = p11; v1 -= p12; v1.Normalize();
+	v2 = p21; v2 -= p22; v2.Normalize();
+	//Check for parrellel lines
+	if (abs(v1.Dot(v2)) > 0.95)
+		return (FALSE);
+	Ln1 = new NLine();
+	Ln1->Create(p11, p12, -1, NULL);
+	Ln2 = new NLine();
+	Ln2->Create(p21, p22, -1, NULL);
+	pInt = NLnInt(Ln1, Ln2, &v1);
 
-
+	delete(Ln1);
+	delete(Ln2);
+	return (TRUE);
+}
 
 C3dVector DBase::LnInt(Line_Object* L1,G_Object* L2)
 {
@@ -11905,7 +11927,7 @@ if (iNo>0)
   {
 	//Deal with circles which don't give equal spacings
 	//due to parametric nature
-	if ((S_Buff[iCO]->iObjType == 7) ||
+	if ((S_Buff[iCO]->iObjType == 7) &&
 		(S_Buff[iCO]->iType == 3))
 	{
 		pCir = (NCircle*) S_Buff[iCO];
@@ -15626,38 +15648,37 @@ NCircle* DBase::Fillet2(double dR, CPoint PNear1, CPoint PNear2)
 
 	C3dVector pN1 = PickPointToGlobal(PNear1);
 	C3dVector pN2 = PickPointToGlobal(PNear2);
+
+
 	if (dR > 0)
 	{
 		if (S_Count > 1)
 		{
-			if ((S_Buff[S_Count - 2]->iObjType == 7) &&
-				(S_Buff[S_Count - 2]->iType == 2))
-			{
+			if ((S_Buff[S_Count - 2]->iObjType == 7))
 				Ln = (NLine*)S_Buff[S_Count - 2];
-			}
 			else
-			{
 				bErr = TRUE;
-			}
-			if ((S_Buff[S_Count - 1]->iObjType == 7) &&
-				(S_Buff[S_Count - 1]->iType == 2))
-			{
+			if ((S_Buff[S_Count - 1]->iObjType == 7))
 				Ln1 = (NLine*)S_Buff[S_Count - 1];
-			}
 			else
-			{
 				bErr = TRUE;
-			}
 			if (!bErr)
 			{
-				cCir = Fillet(Ln, Ln1, dR, pN1, pN2);
-				cCir->iLabel = iCVLabCnt;
-				iCVLabCnt++;
+				if ((Ln->iType==2) && (Ln1->iType == 2))
+				   cCir = Fillet(Ln, Ln1, dR, pN1, pN2);	//for lines only
+				else
+				   cCir = FilletIter(Ln, Ln1, dR, pN1, pN2); //for lines only
+				if (cCir != nullptr)
+				{
+					AddObj(cCir);
+					cCir->iLabel = iCVLabCnt;
+					iCVLabCnt++;
+					InvalidateOGL();
+					ReDraw();
+				}
 				S_Count--;
 				S_Count--;
-				AddObj(cCir);
-				InvalidateOGL();
-				ReDraw();
+
 			}
 		}
 	}
@@ -15835,6 +15856,133 @@ NCircle* DBase::Fillet(NLine* Ln, NLine* Ln1, double dR, C3dVector PNear1, C3dVe
 
 	return cCir;
 }
+
+
+//Fillet between 2 arbitrary curves
+//need to iterate for rad circle centre
+NCircle* DBase::FilletIter(NLine* Ln1, NLine* Ln2, double dR, C3dVector PNear1, C3dVector PNear2)
+{
+	NCircle* cCir = nullptr;
+	int iter = 0;
+	CvPt_Object* pPt;
+	BOOL bErr;
+	double dDir1c = 1;      //Direction check
+	double dDir2c = 1;      //Direction check
+	double dMinDist, dDist;
+	double dTD;
+	double w1, w2;				//the w values of the near point on the 2 curves
+	double Deltaw1, Deltaw2;
+	int i;
+	C3dVector v1, v2;			//The actual points on curve
+	C3dVector vCur1, vCur2;
+	C3dVector vD1, vD2, vDir1, vDir2;;			//The direction vectors
+	C3dVector vBet1, vBet2;
+	C3dVector vAC;				//Apperent interection
+	C3dVector vAN;              //Apperent Normal
+	C3dVector vAD1, vAD2;       //Apperent Directions
+	C3dVector vBet;             //Between point v1,v2
+	C3dVector vX1,vX2;
+	w1 = Ln1->MinWPt(PNear1);
+	w2 = Ln2->MinWPt(PNear2);
+	v1 = Ln1->GetPt(w1);
+	v2 = Ln2->GetPt(w2);
+	vDir1 = Ln1->GetDir(w1); vDir1.Normalize();
+	vDir2 = Ln2->GetDir(w2); vDir2.Normalize();
+	vD1 = vDir1; vD2 = vDir2;
+	vD1 += v1; vD2 += v2;
+	bErr = LnIntByPoints(v1, vD1, v2, vD2, vAC);
+	if (bErr)
+	{
+		vAD1 = (v1 - vAC); vAD1.Normalize();
+		vAD2 = (v2 - vAC); vAD2.Normalize();
+		vAN = vAD1.Cross(vAD2);
+		vAN.Normalize();
+		//Direction Check between point
+		vBet = v1; vBet += v2; vBet *= 0.5;
+		//pPt = AddPt(vBet, -1, TRUE);
+		vX1 = vDir1.Cross(vAN); vX1.Normalize();
+		vX2 = vDir2.Cross(vAN); vX2.Normalize();
+
+		//Need to check both vX vectors point to between point
+		vBet1 = vBet - v1;
+		vBet1.Normalize();
+		vBet2 = vBet -v2;
+		vBet2.Normalize();
+		if (vBet1.Dot(vX1) < 0)
+			dDir1c = -1;  //Direction need reversing
+		if (vBet2.Dot(vX2) < 0)
+			dDir2c = -1;
+		vX1 *= dDir1c;
+		vX2 *= dDir2c;
+		//Start of iteration.
+		//The initial centre ooints
+		vX1 *= dR;
+		vX2 *= dR;
+		vCur1 = v1 + vX1;
+		vCur2 = v2 + vX2;
+		dMinDist = vCur1.Dist(vCur2);
+		Deltaw1 = 0.005;
+		Deltaw2 = 0.005;
+		do
+		{
+			w1 += Deltaw1;
+			w2 += Deltaw2;
+			//need to do one point at a time
+			v1 = Ln1->GetPt(w1);
+			vDir1 = Ln1->GetDir(w1); vDir1.Normalize();
+			vX1 = vDir1.Cross(vAN); vX1.Normalize();
+			vX1 *= dDir1c;
+			vX1 *= dR;
+			vCur1 = v1 + vX1;
+			dTD = vCur1.Dist(vCur2);
+			if (dTD < dMinDist)
+			{
+				dMinDist = dTD;
+			}
+			else 
+			{
+				dMinDist = dTD;
+				Deltaw1 *= -0.5;
+			}
+			// Second Curve
+			v2 = Ln2->GetPt(w2);
+			vDir2= Ln2->GetDir(w2); vDir2.Normalize();
+			vX2 = vDir2.Cross(vAN); vX2.Normalize();
+			vX2 *= dDir2c;
+			vX2 *= dR;
+			vCur2 = v2 + vX2;
+			dTD = vCur1.Dist(vCur2);
+			if (dTD < dMinDist)
+			{
+				dMinDist = dTD;
+			}
+			else
+			{
+				dMinDist = dTD;
+				Deltaw2 *= -0.5;
+			}
+			
+			iter++;
+		} while ((dMinDist > dTol) && (iter<5000));
+		pPt = AddPt(vCur2, -1, TRUE);
+		char buff[200];
+		sprintf_s(buff, "Interation to Intersect %i", iter);
+		outtext1(buff);
+		if (iter < 5000)
+		{
+			//create the circle
+			
+			cCir = new NCircle();
+			cCir->Create(vAN, vCur2, dR, -1, NULL);
+		}
+	}
+	else
+	{
+		outtext1("ERROR: Intersection Error.");
+	}
+	return (cCir);
+}
+
 
 
 NCircle* DBase::Circ3Pts(C3dVector p1,C3dVector p2,C3dVector p3)

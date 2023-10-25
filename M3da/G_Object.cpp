@@ -45740,12 +45740,24 @@ void NCurve::ExportDXF(FILE* pFile)
 	iL = iFile;
 	if (iL < 0)
 		iL = 0;
-
+	//value 70 are bitwise flags defining the spline
+//1 = Closed spline
+//2 = Periodic spline
+//4 = Rational spline
+//8 = Planar
+//16 = Linear (planar bit is also set)
+//32.... 256 - knot param.
+//32 = chord
+//64 = sqrt. chord
+//128 = uniform
+//256 = custom
+//512 =  CV frame visibility
+//1024 = if present, the spline is defined by fit points. Otherwise, by control vertices.
 	fprintf(pFile, "SPLINE\n");
-	fprintf(pFile, "8\n");
+	fprintf(pFile, "4\n");
 	fprintf(pFile, "%i\n", iL); //Layer number
 	fprintf(pFile, "70\n");
-	fprintf(pFile, "4\n"); //rational b spline
+	fprintf(pFile, "36\n"); //rational b spline
 	fprintf(pFile, "71\n");
 	fprintf(pFile, "%i\n", p); //write the degree of the NURBS spline
 	fprintf(pFile, "72\n");
@@ -45767,7 +45779,7 @@ void NCurve::ExportDXF(FILE* pFile)
 		fprintf(pFile, "%g\n", cPts[i]->Pt_Point->y);	// write the y-coordinate of the control point
 		fprintf(pFile, "30\n");						// write a line with value 30
 		fprintf(pFile, "%g\n", cPts[i]->Pt_Point->z);	// write the z-coordinate of the control point
-		fprintf(pFile, "42\n");
+		fprintf(pFile, "41\n");
 		fprintf(pFile, "%g\n", cPts[i]->w);
 	}
 

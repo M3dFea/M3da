@@ -332,14 +332,19 @@ NLine* AddLinTan2Cir(CPoint PNear1, CPoint PNear2);
 NCircle* AddCirCR(C3dVector vNorm,C3dVector vCent,double dR,int ilab);
 void AddDragCIR(C3dVector vN, C3dVector v1);
 void TrimLn();
+//Fileet two LINES in 3d
 NCircle* Fillet(NLine* L1,NLine* L2,double dR,C3dVector PNear1,C3dVector PNear2);
+//Fileet two Curves in 3d iterate for intersections
+NCircle* FilletIter(NLine* L1, NLine* L2, double dR, C3dVector PNear1, C3dVector PNear2);
 NCircle* Fillet2(double dR,CPoint PNear1,CPoint PNear2);
 NCircle* Circ3Pts(C3dVector p1,C3dVector p2,C3dVector p3);
 NCircle* Arc3Pts(C3dVector p1,C3dVector p2,C3dVector p3);
 void Corner(NLine* L1,NLine* L2,C3dVector PNear1,C3dVector PNear2);
 void Corner2(CPoint PNear1,CPoint PNear2);
 void Trim(CPoint PNear1, CPoint PNear2);
-C3dVector LnInt(Line_Object* L1,G_Object* L2);
+C3dVector LnInt(Line_Object* L1, G_Object* L2);
+BOOL LnIntByPoints(C3dVector p11, C3dVector p12, C3dVector p21, C3dVector p22, C3dVector &pInt);
+
 C3dVector LnInt2(Line_Object* L1,G_Object* L2);
 C3dVector NLnInt(NCurve* L1,NCurve* L2,C3dVector* pNear);
 C3dVector NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear);

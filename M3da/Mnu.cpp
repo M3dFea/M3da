@@ -5635,15 +5635,16 @@ if (iStat == 1)
   else
 	  gDIM_RADSZ = dRad;
   iStat=2;
+  cDBase->FILTER.Clear();
+  cDBase->FILTER.SetFilter(0);
+  cDBase->FILTER.SetFilter(1);
+  cDBase->FILTER.SetFilter(5);
+  cDBase->FILTER.SetFilter(6);
+  cDBase->FILTER.SetFilter(7);
+  cDBase->FILTER.SetFilter(13);
 }
 if (iStat == 2)
 {
-	cDBase->FILTER.Clear();
-	cDBase->FILTER.SetFilter(0);
-	cDBase->FILTER.SetFilter(5);
-	cDBase->FILTER.SetFilter(6);
-	cDBase->FILTER.SetFilter(7);
-	cDBase->FILTER.SetFilter(13);
   outtext2("//ENTER CIRCLE CENTRE");
   iResumePos=3;
   iCancelPos=100;
