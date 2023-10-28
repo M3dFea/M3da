@@ -1127,8 +1127,8 @@ void CM3daDoc::OnCreateCircle()
 if (pMnu->isNULL())
 {
   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-  outtextMSG2("CIRCR");
-  sLastcmd="CIRCR";
+  outtextMSG2("CIRCR2");
+  sLastcmd="CIRCR2";
 }
 else
 {
@@ -3448,8 +3448,8 @@ void CM3daDoc::OnCircleCirclecenreradius()
 if (pMnu->isNULL())
 {
   SetModifiedFlag(); CheckPoint();bFinalChkPt=FALSE;
-  outtextMSG2("CIRCR");
-  sLastcmd="CIRCR";
+  outtextMSG2("CIRCR2");
+  sLastcmd="CIRCR2";
 }
 else
 {

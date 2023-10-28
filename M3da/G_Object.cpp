@@ -45734,13 +45734,15 @@ void NCurve::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 void NCurve::ExportDXF(FILE* pFile)
 {
+
 	// Write the spline
 	int iL;
 	int i;
 	iL = iFile;
 	if (iL < 0)
 		iL = 0;
-	//value 70 are bitwise flags defining the spline
+
+//value 70 are bitwise flags defining the spline
 //1 = Closed spline
 //2 = Periodic spline
 //4 = Rational spline
@@ -47519,10 +47521,16 @@ vCent+=vIn;
 void NCircle::Transform(C3dMatrix TMat)
 {
   NCurve::Transform(TMat);
-  vCent=TMat.Mult(vCent);
-  TMat.m_30=0;
-  TMat.m_31=0;
-  TMat.m_32=0;
+  C3dVector vTmp;
+  double dRad;
+  vTmp.x = 0.5 * (cPts[4]->Pt_Point->x - cPts[0]->Pt_Point->x);
+  vTmp.y = 0.5 * (cPts[4]->Pt_Point->y - cPts[0]->Pt_Point->y);
+  vTmp.z = 0.5 * (cPts[4]->Pt_Point->z - cPts[0]->Pt_Point->z);
+  dRad = vTmp.Mag();
+  dRadius = dRad;
+  vCent.x = vTmp.x + cPts[0]->Pt_Point->x;
+  vCent.y = vTmp.y + cPts[0]->Pt_Point->y;
+  vCent.z = vTmp.z + cPts[0]->Pt_Point->z;
   //vNorm=TMat.Mult(vNorm);
 }
 

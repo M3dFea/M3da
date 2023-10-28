@@ -6399,7 +6399,7 @@ BOOL DBase::LnIntByPoints(C3dVector p11, C3dVector p12, C3dVector p21,
 	v1 = p11; v1 -= p12; v1.Normalize();
 	v2 = p21; v2 -= p22; v2.Normalize();
 	//Check for parrellel lines
-	if (abs(v1.Dot(v2)) > 0.95)
+	if (abs(v1.Dot(v2)) > 1.0)
 		return (FALSE);
 	Ln1 = new NLine();
 	Ln1->Create(p11, p12, -1, NULL);
@@ -8071,7 +8071,7 @@ int j;
 double dInc;
 for (i=0;i<S_Count;i++)
 {
-	if (S_Buff[i]->iType == 1)
+	if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 1))
 	{
 		//NEEDS UPDATING TO CURVE SPLIT FOR WS & WE <> 0 & 1
 		//Curves->Add(S_Buff[i]->Copy(NULL));
@@ -8093,7 +8093,7 @@ for (i=0;i<S_Count;i++)
 			Curves->Add(pPC);
 		}
 	}
-	else if (S_Buff[i]->iType == 2)
+	else if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 2))
 	{
 		C3dVector p1, p2;
 		NCurve* C1 = (NCurve*)S_Buff[i];
@@ -8110,7 +8110,7 @@ for (i=0;i<S_Count;i++)
      pSS=(NCurveOnSurf*) S_Buff[i];
      Curves->Add(pSS->GetSurfaceCVG(pSS->pParent));
   }
-  else if (S_Buff[i]->iType == 3)
+  else if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 3))
   {
   //Need to deal with incomplete circles until we have 
   //the arbitaru arc
@@ -14889,9 +14889,41 @@ void DBase::ExportDXF(FILE* pFile2)
 	fprintf(pFile2, "0\n");				// write a line with value 0
 	for (iCO = 0; iCO < DB_ObjectCount; iCO++)
 	{ 
-		//Curves and Point so far
-		if ((DB_Obj[iCO]->iObjType == 0) || (DB_Obj[iCO]->iObjType == 7)) 
+		//Curves and Points so far
+		if ((DB_Obj[iCO]->iObjType == 7) && (DB_Obj[iCO]->iType == 1))
+		{   //need to deal with trimmed curves
+
+			NCurve* pC = (NCurve*)DB_Obj[iCO];
+			NCurve* pC1 = nullptr;
+			NCurve* pC2 = nullptr;
+			NCurve* pC3 = nullptr;
+			NCurve* pC4 = nullptr;
+			NCurve* pT = nullptr;
+			C3dVector vs, ve;
+			vs = pC->GetPt(pC->ws);
+			ve = pC->GetPt(pC->we);
+			pT = pC;
+            if (pC->ws>0)
+			{
+				CurveDivide(pC, pC1, pC2, vs);
+				pT = pC2;
+			}
+			if (pC->we < 1)
+			{
+				CurveDivide(pT, pC3, pC4, ve);
+				pT = pC3;
+			}
+			pT->ExportDXF(pFile2);
+			delete(pC1);
+			delete(pC2);
+			delete(pC3);
+			delete(pC4);
+
+		}
+		else if ((DB_Obj[iCO]->iObjType == 0) || (DB_Obj[iCO]->iObjType == 7))
+		{
 			DB_Obj[iCO]->ExportDXF(pFile2);
+		}
 
 	}
 	fprintf(pFile2, "ENDSEC\n");			// end the section
@@ -15262,8 +15294,12 @@ void DBase::KnotInsertion(NCurve* pC,C3dVector vPt)
   }
 }
 
-void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
+//Divide a curve into 2 at point
+//pC original
+//pC1 first new curve pC2 remainder of curve
+void DBase::CurveDivide(NCurve* pC, NCurve* &pC1, NCurve* &pC2, C3dVector vPt)
 {
+	double dU;
 	Vec<C4dVector> cPts;
 	Vec<double> knots;
 	Vec<C4dVector> cPtsSeg;
@@ -15275,8 +15311,65 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 	int r;
 	int i;
 	int k = 0;
+	p = pC->p;
+	dU = pC->MinWPt(vPt);
+	if ((dU > 0) && (dU < 1))
+	{
+		r = pC->knotInsertion(dU, pC->p + 1, k, cPts, knots);
+		cPtsSeg.Size(k + 1);
+		knotsSeg.Size(k + r + 1);
+		for (i = 0; i < k + 1; i++)
+			cPtsSeg[i] = cPts[i];
+		for (i = 0; i < k + r + 1; i++)
+		{
+			dTmp = knots[i] / knots[k + r];
+			knotsSeg[i] = dTmp;
+		}
+		if (pC->iType == 1)
+			pC1 = new NCurve();
+		else
+			pC1 = new NLine();
+		pC1->GenerateExp(p, cPtsSeg, knotsSeg);
+		pC1->iLabel = pC->iLabel;
+		//AddObj(pNewC);
+		cPtsSeg.DeleteAll();
+		knotsSeg.DeleteAll();
+		//cPts.DeleteAll();
+		//knots.DeleteAll();
+		//Second segment curve
+		int iSS;
+		cPtsSeg.Size(cPts.n - (k + 1));
+		knotsSeg.Size(cPtsSeg.n + r);
+		for (i = (k + 1); i < cPts.n; i++)
+			cPtsSeg[i - (k + 1)] = cPts[i];
+		for (i = k + 1; i < cPts.n + r; i++)
+		{
+			dTmp = (knots[i] - knots[k + 1]) / (knots[cPts.n + r - 1] - knots[k + 1]);
+			knotsSeg[i - (k + 1)] = dTmp;
+		}
+		if (pC->iType == 1)
+			pC2 = new NCurve();
+		else
+			pC2 = new NLine();
+		pC2->GenerateExp(p, cPtsSeg, knotsSeg);
+		pC2->iLabel = iCVLabCnt;
+		iCVLabCnt++;
+		//AddObj(pNewC);
+		cPtsSeg.DeleteAll();
+		knotsSeg.DeleteAll();
+
+	}
+	cPts.DeleteAll();
+    knots.DeleteAll();
+}
+
+
+void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
+{
+	Vec<C4dVector> cPts;
 	double dU;
-	NCurve* pNewC = NULL;
+	NCurve* pNewC1 = NULL;
+	NCurve* pNewC2 = NULL;
 	NCircle* pCir = NULL;
 	if (pC != NULL)
 	{
@@ -15302,51 +15395,11 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 		else
 		{
 			outtext1("Curve found for knot insertion.");
-			p = pC->p;
-			dU = pC->MinWPt(vPt);
-			if ((dU > 0) && (dU < 1))
+			CurveDivide(pC, pNewC1, pNewC2, vPt);
+			if ((pNewC1 != nullptr) && (pNewC2 != nullptr))
 			{
-				r = pC->knotInsertion(dU, pC->p + 1, k, cPts, knots);
-				cPtsSeg.Size(k + 1);
-				knotsSeg.Size(k + r + 1);
-				for (i = 0; i < k + 1; i++)
-					cPtsSeg[i] = cPts[i];
-				for (i = 0; i < k + r + 1; i++)
-				{
-					dTmp = knots[i] / knots[k + r];
-					knotsSeg[i] = dTmp;
-				}
-				if (pC->iType == 1)
-					pNewC = new NCurve();
-				else
-					pNewC = new NLine();
-				pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
-				pNewC->iLabel = pC->iLabel;
-				AddObj(pNewC);
-				cPtsSeg.DeleteAll();
-				knotsSeg.DeleteAll();
-				//Second segment curve
-				int iSS;
-				cPtsSeg.Size(cPts.n - (k + 1));
-				knotsSeg.Size(cPtsSeg.n + r);
-				for (i = (k + 1); i < cPts.n; i++)
-					cPtsSeg[i - (k + 1)] = cPts[i];
-				for (i = k + 1; i < cPts.n + r; i++)
-				{
-					dTmp = (knots[i] - knots[k + 1]) / (knots[cPts.n + r - 1] - knots[k + 1]);
-					knotsSeg[i - (k + 1)] = dTmp;
-				}
-				if (pC->iType == 1)
-					pNewC = new NCurve();
-				else
-					pNewC = new NLine();
-				pNewC->GenerateExp(p, cPtsSeg, knotsSeg);
-				pNewC->iLabel = iCVLabCnt;
-				iCVLabCnt++;
-				AddObj(pNewC);
-				cPtsSeg.DeleteAll();
-				knotsSeg.DeleteAll();
-
+				AddObj(pNewC1);
+				AddObj(pNewC2);
 				//Remove original
 				if (pC->pParent == NULL)
 				{
@@ -15354,15 +15407,8 @@ void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
 					Dsp_Rem(pC);
 					Dsp_RemGP(pC);
 				}
-
 				InvalidateOGL();
 				S_Des();
-				cPts.DeleteAll();
-				knots.DeleteAll();
-			}
-			else
-			{
-				outtext1("ERROR: No Projection onto Curve.");
 			}
 		}
 	}
@@ -15944,7 +15990,7 @@ NCircle* DBase::FilletIter(NLine* Ln1, NLine* Ln2, double dR, C3dVector PNear1, 
 			else 
 			{
 				dMinDist = dTD;
-				Deltaw1 *= -0.5;
+				Deltaw1 *= -0.75;
 			}
 			// Second Curve
 			v2 = Ln2->GetPt(w2);
@@ -15961,16 +16007,16 @@ NCircle* DBase::FilletIter(NLine* Ln1, NLine* Ln2, double dR, C3dVector PNear1, 
 			else
 			{
 				dMinDist = dTD;
-				Deltaw2 *= -0.5;
+				Deltaw2 *= -0.75;
 			}
 			
 			iter++;
-		} while ((dMinDist > dTol) && (iter<5000));
+		} while ((dMinDist > dTol) && (iter<1000000));
 		pPt = AddPt(vCur2, -1, TRUE);
 		char buff[200];
 		sprintf_s(buff, "Interation to Intersect %i", iter);
 		outtext1(buff);
-		if (iter < 5000)
+		if (iter < 1000000)
 		{
 			//create the circle
 			

@@ -1109,6 +1109,16 @@ if (iStat == 0)
 	pNext->Init(cDBase,-1)	;
 	this->DoMenu(CInMsg,Pt);
   }
+  else if (CInMsg == "CIRCR2")
+  {
+  iResumePos = 0;
+  iCancelPos = 100;
+  cDBase->DB_ActiveBuffSet(2);
+  cDBase->DB_ClearBuff();
+  pNext = new zCIRCR2_Mnu();
+  pNext->Init(cDBase, -1);
+  this->DoMenu(CInMsg, Pt);
+  }
   else if (CInMsg == "LNX")
   { 
 	iResumePos=0;
@@ -3948,6 +3958,80 @@ MenuEnd:
 return RetVal;
 }
 
+int zCIRCR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		C3dVector vN;
+		vN.Set(0, 0, 1);
+		vN = cDBase->GlobaltoWP3(vN);
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
+			outtext2("//CIRCLE CENTRE");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			cDBase->bIsDrag = TRUE;
+			p1 = cDBase->DB_PopBuff();
+			cDBase->AddDragCIR(vN, p1);
+			cDBase->vLS = p1;
+			char OutT[80];
+			sprintf_s(OutT, "%s %g)", "ENTER RADIUS (", gDIM_RADSZ);
+			SetFocus();
+			outtext2(OutT);
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		else if (iStat == 2)
+		{
+			cDBase->bIsDrag = FALSE;
+			C3dVector p2;
+			p2 = cDBase->DB_PopBuff();
+			double dRad = p2.x;
+			if (dRad == 0)
+				dRad = gDIM_RADSZ;
+			else
+				gDIM_RADSZ = dRad;
+			cDBase->AddCirCR(vN, p1, dRad, -1);
+			outtext1("1 Circle Created.");
+			RetVal = 1;
+			cDBase->FILTER.SetAll();
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 int zLNTANCIR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
@@ -5442,7 +5526,7 @@ if (iStat == 2)
 {
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
-	  outtext2("//PICK POINT TO SCALE ABOUT");
+	outtext2("//PICK POINT TO SCALE ABOUT");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();

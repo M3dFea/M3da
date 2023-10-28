@@ -702,6 +702,7 @@ C3dVector Intersect(BOOL &bErr, CPoint nPt);
 C3dVector ClosestTo(C3dVector vPt);
 void KnotModify(NCurve* pC,CString sKnot);
 void KnotInsertion(NCurve* pC, C3dVector vPt);
+void CurveDivide(NCurve* pC, NCurve* &pC1, NCurve* &pC2, C3dVector vPt);
 void CurveSplit(NCurve* pC, C3dVector vPt);
 G_Object*  AddRHDCyl(C3dVector vNorm,C3dVector vCent,C3dVector vRef,double dR,int ilab,BOOL bRedraw);
 C3dVector PickPointToGlobal(CPoint Pt);
