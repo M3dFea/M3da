@@ -3638,7 +3638,7 @@ if (iStat == 0)
 	cDBase->FILTER.SetFilter(6);
 	cDBase->FILTER.SetFilter(7);
 	cDBase->FILTER.SetFilter(13);
-	outtext2("//ENTER LOCATION");
+	outtext2("//PICK LOCATION OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3707,7 +3707,7 @@ if (iStat == 0)
 	cDBase->FILTER.SetFilter(6);
 	cDBase->FILTER.SetFilter(7);
 	cDBase->FILTER.SetFilter(13);
-	outtext2("//ENTER LOCATION");
+	outtext2("//PICK POINT OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3765,7 +3765,7 @@ int zLN_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		}
 		if (iStat == 1) 
 		{
-			outtext2("//ENTER PT1");
+			outtext2("//PICK FIRST POINT OR TYPE COORDINATE");
 			iResumePos = 2;
 			iCancelPos = 100;
 			pNext = new zPT_Mnu();
@@ -3779,7 +3779,7 @@ int zLN_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 			p1 = cDBase->DB_PopBuff();
 			cDBase->AddDragLN(p1);
 			cDBase->vLS = p1;
-			outtext2("//ENTER PT2");
+			outtext2("//PICK SECOND POINT OR TYPE COORDINATE");
 			iResumePos = 3;
 			iCancelPos = 100;
 			pNext = new zPT_Mnu();
@@ -3835,7 +3835,7 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			cDBase->FILTER.SetFilter(7);
 			cDBase->FILTER.SetFilter(13);
 			bF = TRUE; //First time in we need 2 points
-			outtext2("//ENTER PT1");
+			outtext2("//PICK FIRST POINT OR TYPE COORDINATE");
 			iResumePos = 1;
 			iCancelPos = 100;
 			pNext = new zPT_Mnu();
@@ -3852,7 +3852,7 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			}
 			cDBase->AddDragLN(pLast);
 			cDBase->vLS = pLast;
-			outtext2("//ENTER PT2");
+			outtext2("//PICK NEXT POINT OR TYPE COORDINATE");
 			iResumePos = 2;
 			iCancelPos = 100;
 			pNext = new zPT_Mnu();
@@ -3913,7 +3913,7 @@ if (iStat == 0)
 	cDBase->FILTER.SetFilter(6);
 	cDBase->FILTER.SetFilter(7);
 	cDBase->FILTER.SetFilter(13);
-	outtext2("//CIRCLE CENTRE");
+	outtext2("//PICK CIRCLE CENTRE OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3926,7 +3926,7 @@ if (iStat == 1)
 	p1 = cDBase->DB_PopBuff();
 	cDBase->AddDragCIR(vN,p1);
 	cDBase->vLS = p1;
-	outtext2("//ENTER POINT ON RADIUS");
+	outtext2("//PICK OR ENTER POINT ON RADIUS");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3979,7 +3979,7 @@ int zCIRCR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			cDBase->FILTER.SetFilter(6);
 			cDBase->FILTER.SetFilter(7);
 			cDBase->FILTER.SetFilter(13);
-			outtext2("//CIRCLE CENTRE");
+			outtext2("//PICK CIRCLE CENTRE OR TYPE COORDINATE");
 			iResumePos = 1;
 			iCancelPos = 100;
 			pNext = new zPT_Mnu();
@@ -4057,7 +4057,7 @@ int zLNTANCIR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			cDBase->FILTER.SetFilter(6);
 			cDBase->FILTER.SetFilter(7);
 			cDBase->FILTER.SetFilter(13);
-			outtext2("//PICK POINT");
+			outtext2("//PICK POINT OR TYPE COORDINATE");
 			iResumePos = 1;
 			iCancelPos = 100;
 			pNext = new zPT_Mnu();
@@ -4383,7 +4383,7 @@ if (iStat == 0)
 	cDBase->FILTER.SetFilter(6);
 	cDBase->FILTER.SetFilter(7);
 	cDBase->FILTER.SetFilter(13);
-	outtext2("//ENTER PT1");
+	outtext2("//PICK FIRST POINT OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4396,7 +4396,7 @@ if (iStat == 1)
 	p1 = cDBase->DB_PopBuff();
 	cDBase->AddDragLN(p1);
 	cDBase->vLS = p1;
-	outtext2("//ENTER PT2");
+	outtext2("//PICK SECOND POINT OR TYPE COORDINATE");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4447,7 +4447,7 @@ if (iStat == 0)
 	cDBase->FILTER.SetFilter(6);
 	cDBase->FILTER.SetFilter(7);
 	cDBase->FILTER.SetFilter(13);
-	outtext2("//ENTER LOCATION");
+	outtext2("//PICK POINT OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4503,7 +4503,7 @@ if (iStat == 0)
 	cDBase->FILTER.SetFilter(6);
 	cDBase->FILTER.SetFilter(7);
 	cDBase->FILTER.SetFilter(13);
-	outtext2("//ENTER LOCATION");
+	outtext2("//PICK POINT OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
