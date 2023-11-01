@@ -46106,7 +46106,10 @@ void NCurve::OglDrawW(int iDspFlgs, double dS1, double dS2) {
 		if (DrawCPts || gDSP_CPTS) 
 		{
 			OglDrawCtrlPts();
+			sprintf_s(sLab, " S");
+			OglString(iDspFlgs, cPts[0]->Pt_Point->x, cPts[0]->Pt_Point->y, cPts[0]->Pt_Point->z, &sLab[0]);
 		}
+		glColor3fv(cols[iColour]);
 		C3dVector vPt;
 		C3dVector vPt2;
 		double dw = 0;
