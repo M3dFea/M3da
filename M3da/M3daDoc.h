@@ -535,6 +535,7 @@ public:
   afx_msg void OnExportExportdxf();
   afx_msg void OnCurvemodifyLayernumber();
   afx_msg void OnSelectionSelectcurve();
+  afx_msg void OnViewToggleoncirclestartmarkers();
 };
 
 

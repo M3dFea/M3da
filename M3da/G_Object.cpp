@@ -46106,6 +46106,9 @@ void NCurve::OglDrawW(int iDspFlgs, double dS1, double dS2) {
 		if (DrawCPts || gDSP_CPTS) 
 		{
 			OglDrawCtrlPts();
+		}
+		if (gDSP_CIRS) //put a s at start of circle helps woth trimming
+		{
 			sprintf_s(sLab, " S");
 			OglString(iDspFlgs, cPts[0]->Pt_Point->x, cPts[0]->Pt_Point->y, cPts[0]->Pt_Point->z, &sLab[0]);
 		}

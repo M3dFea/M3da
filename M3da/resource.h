@@ -592,13 +592,14 @@
 #define ID_EXPORT_EXPORTDXF             33405
 #define ID_CURVEMODIFY_LAYERNUMBER      33406
 #define ID_SELECTION_SELECTCURVE        33407
+#define ID_VIEW_TOGGLEONCIRCLESTARTMARKERS 33408
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        363
-#define _APS_NEXT_COMMAND_VALUE         33408
+#define _APS_NEXT_COMMAND_VALUE         33409
 #define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

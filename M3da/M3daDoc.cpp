@@ -384,6 +384,7 @@ ON_COMMAND(ID_VIEW_TOGGLECONTROLPOINTVISABILITY, &CM3daDoc::OnViewTogglecontrolp
 ON_COMMAND(ID_EXPORT_EXPORTDXF, &CM3daDoc::OnExportExportdxf)
 ON_COMMAND(ID_CURVEMODIFY_LAYERNUMBER, &CM3daDoc::OnCurvemodifyLayernumber)
 ON_COMMAND(ID_SELECTION_SELECTCURVE, &CM3daDoc::OnSelectionSelectcurve)
+ON_COMMAND(ID_VIEW_TOGGLEONCIRCLESTARTMARKERS, &CM3daDoc::OnViewToggleoncirclestartmarkers)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6476,4 +6477,23 @@ void CM3daDoc::OnSelectionSelectcurve()
 	{
 		outtext1("Finish Current Operation.");
 	}
+}
+
+
+void CM3daDoc::OnViewToggleoncirclestartmarkers()
+{
+	// TODO: Add your command handler code here
+	if (gDSP_CIRS == FALSE)
+	{
+		gDSP_CIRS = TRUE;
+		outtext1("Circle Start Markers ON.");
+	}
+	else
+	{
+		gDSP_CIRS = FALSE;
+		outtext1("Circle Start Markers OFF.");
+	}
+	cDBase->InvalidateOGL();
+	cDBase->ReDraw();
+
 }

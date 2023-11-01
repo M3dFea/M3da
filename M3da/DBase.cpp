@@ -9,6 +9,7 @@
 #pragma warning(disable:4477)
 BOOL gORTHO;
 BOOL gDSP_CPTS = FALSE;
+BOOL gDSP_CIRS = TRUE;
 const double dTol = 0.00000001;  //unsed for Surface tolerance
 const double Pi = 3.1415926535;
 #define D2R  0.01745329251994
