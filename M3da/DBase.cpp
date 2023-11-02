@@ -473,7 +473,7 @@ iCVLabCnt=1;
 iSFLabCnt=1;
 iPartLabCnt = 1;
 iNoSymbols=0;
-LoadSymbolsInterbal();  //Load the Acad char set
+LoadSymbolsInternal();  //Load the Acad char set
 pWorldBMP = NULL;
 ResFrameDelay = 200;
 NoResFrame = 5;
@@ -22452,7 +22452,7 @@ displaySymTable();
 // Pre: TRUE
 // Post: Symbols table loaded from SymTable.h stored internally
 //********************************************************************
-void DBase::LoadSymbolsInterbal()
+void DBase::LoadSymbolsInternal()
 {
 	int iStop = 0;
 	CString s1;

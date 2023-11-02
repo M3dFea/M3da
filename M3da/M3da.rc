@@ -168,7 +168,7 @@ BEGIN
         MENUITEM "Display Element Offsets",     ID_VIEW_DISPLAYELEMENTOFFSETS
         MENUITEM "Display Element Coord Sys",   ID_VIEW_DISPLAYELEMENTCOORDSYS
         MENUITEM "Display Material Direction",  ID_VIEW_DISPLAYMATERIALDURECTION
-        MENUITEM "Toggle on Circle Start Markers", ID_VIEW_TOGGLEONCIRCLESTARTMARKERS
+        MENUITEM "Toggle On/Off Circle Start Markers", ID_VIEW_TOGGLEONCIRCLESTARTMARKERS
         MENUITEM "Toggle Control Point Visability", ID_VIEW_TOGGLECONTROLPOINTVISABILITY
         MENUITEM "Object Control Point On/Off", ID_VIEW_CONTROLPOINT
         MENUITEM "Surface Direction Markers On/Off", ID_VIEW_SURFACEDIRECTIONMARKERS

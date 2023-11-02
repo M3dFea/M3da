@@ -69,7 +69,7 @@ Symbol* GetSymbol(int iLab);
 void LoadSymbols(FILE* pFile);
 //14/07/2020
 //Load the symbols table from SymTable.h stored internally
-void LoadSymbolsInterbal();
+void LoadSymbolsInternal();
 void SymTableCalcMetrics();
 void AddText(C3dVector vN, C3dVector vInPt, CString inText,double dH);
 void RebuildText(Text* pText);
