@@ -24806,9 +24806,9 @@ int i,j;
 int iDof=1;
 int mdof;
 FILE* pFile;
-pFile = fopen("GENDOF_DIAG.txt","w");
+//pFile = fopen("GENDOF_DIAG.txt","w");
 
-fprintf(pFile,"%s%i\n","NO of Nodes ",iNdNo);
+//fprintf(pFile,"%s%i\n","NO of Nodes ",iNdNo);
 for(i=0;i<iNdNo;i++)
 {
   mdof=MaxDof(pNodes[i]);
@@ -24816,7 +24816,7 @@ for(i=0;i<iNdNo;i++)
   {
     if (pNodes[i]->dof[j]!=-1)
     {
-      fprintf(pFile,"%s %i %s %i\n","Node ",pNodes[i]->iLabel,"DOF",j);
+      //fprintf(pFile,"%s %i %s %i\n","Node ",pNodes[i]->iLabel,"DOF",j);
       pNodes[i]->dof[j]=iDof;
       iDof++;
     }
@@ -24826,8 +24826,8 @@ for(i=0;i<iNdNo;i++)
     pNodes[i]->dof[j]=0;
   }
 }
-fprintf(pFile,"%s%i\n","iDof ",iDof);
-fclose(pFile);
+//fprintf(pFile,"%s%i\n","iDof ",iDof);
+//fclose(pFile);
 return(iDof-1);
 }
 
@@ -24837,19 +24837,19 @@ int ME_Object::GenDofs1D(int iD)
 int i;
 int iDof=iD;
 FILE* pFile;
-pFile = fopen("GENDOF_DIAG.txt","w");
-fprintf(pFile,"%s%i\n","NO of Nodes ",iNdNo);
+//pFile = fopen("GENDOF_DIAG.txt","w");
+//fprintf(pFile,"%s%i\n","NO of Nodes ",iNdNo);
 for(i=0;i<iNdNo;i++)
 {
   if (pNodes[i]->dof[0]==0)
   {
-    fprintf(pFile,"%s %i %s %i\n","Node ",pNodes[i]->iLabel,"DOF",0);
+    //fprintf(pFile,"%s %i %s %i\n","Node ",pNodes[i]->iLabel,"DOF",0);
     pNodes[i]->dof[0]=iDof;
     iDof++;
   }
 }
-fprintf(pFile,"%s%i\n","iDof ",iDof);
-fclose(pFile);
+//fprintf(pFile,"%s%i\n","iDof ",iDof);
+//fclose(pFile);
 return(iDof-1);
 }
 
@@ -26873,8 +26873,8 @@ Res->lab[5]="RZ";
 
 int i;
 FILE* pFile;
-pFile = fopen("DispRes.txt","w");
-fprintf(pFile,"%s\n","DISPLACEMENTS");
+//pFile = fopen("DispRes.txt","w");
+//fprintf(pFile,"%s\n","DISPLACEMENTS");
 float X,Y,Z;
 
 for(i=0;i<iNdNo;i++)
@@ -26922,9 +26922,9 @@ for(i=0;i<iNdNo;i++)
   pRes->v[5]=Z;
   }
   Res->Add(pRes);
-  fprintf_s(pFile,"%s%6i%s%6.4f%s%6.4f%s%6.4f\n","Node ",pNodes[i]->iLabel," X: ",X," Y: ",Y," Z: ",Z);
+  //fprintf_s(pFile,"%s%6i%s%6.4f%s%6.4f%s%6.4f\n","Node ",pNodes[i]->iLabel," X: ",X," Y: ",Y," Z: ",Z);
 }
-fclose(pFile);
+//fclose(pFile);
 if (Res->iCnt>0)
 {
   ResultsSets[iNoRes]=Res;
