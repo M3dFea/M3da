@@ -44665,7 +44665,8 @@ cPoly->we = we;
 cPoly->iInc = iInc;
 cPoly->dLSize = dLSize;
 cPoly->pParent=Parrent;
-
+cPoly->iLnThk = iLnType;
+cPoly->iLnType = iLnType;
 for (i=0;i<iNoCPts;i++)
 {
   cPoly->cPts[i]=new CvPt_Object();
@@ -47502,6 +47503,8 @@ cPoly->p = p;
 cPoly->ws = ws;
 cPoly->we = we;
 cPoly->pParent=Parrent;
+cPoly->iLnThk = iLnThk;
+cPoly->iLnType = iLnType;
 cPoly->dRadius=dRadius;
 for (i=0;i<iNoCPts;i++)
 {
@@ -47860,7 +47863,8 @@ cPoly->p = p;
 cPoly->ws = ws;
 cPoly->we = we;
 cPoly->pParent=Parrent;
-
+cPoly->iLnThk = iLnThk;
+cPoly->iLnType = iLnType;
 for (i=0;i<iNoCPts;i++)
 {
   cPoly->cPts[i]=new CvPt_Object();
