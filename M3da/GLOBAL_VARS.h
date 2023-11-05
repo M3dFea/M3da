@@ -15,6 +15,7 @@ extern double gDIM_RADSZ;
 extern double gDIM_CVORD;
 extern BOOL gDSP_CPTS;
 extern BOOL gDSP_CIRS;
+extern BOOL gDSP_BACK;
 extern BOOL gORTHO;
 extern DSP_Triad tOrient;
 

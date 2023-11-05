@@ -203,6 +203,7 @@ BEGIN
         END
         MENUITEM "Gradient Filled Background",  ID_VIEW_GFRADIENTFILLEDBACKGROUND
         MENUITEM "White Background",            ID_VIEW_WHITE
+        MENUITEM "Toggle On/Off Background Bitman", ID_VIEW_TOGGLEON
     END
     POPUP "Create"
     BEGIN
@@ -1331,6 +1332,8 @@ STRINGTABLE
 BEGIN
     ID_VIEW_TOGGLEONCIRCLESTARTMARKERS 
                             "Put an S at Beginning of Circle (Helps when using Trim)"
+    ID_TOOLS_INSERTBITMAPBACKGROUND "Insert a Bitmap Background Image"
+    ID_VIEW_TOGGLEON        "Toggle On and Off any Background Bitmap"
 END
 
 #endif    // English (United States) resources

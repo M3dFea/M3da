@@ -1,15 +1,18 @@
 ﻿#include "DBase.h"
 #include <cmath>
-#include <iostream>
 #include "gl\gl.h"
 #include "gl\glu.h"
 #include "M3Da.h"
 #include "SymTable.h"
 #include "GLOBAL_VARS.h"
+#include <fstream>  // Include the necessary header file
+#include <string>
+#include <atlstr.h>
 #pragma warning(disable:4477)
 BOOL gORTHO;
 BOOL gDSP_CPTS = FALSE;
 BOOL gDSP_CIRS = TRUE;
+BOOL gDSP_BACK = TRUE;
 const double dTol = 0.00000001;  //unsed for Surface tolerance
 const double Pi = 3.1415926535;
 #define D2R  0.01745329251994
@@ -1429,6 +1432,10 @@ void DBase::Serialize(CArchive& ar)
 			case 604 :
 				DB_Obj[i] = new SweepB;
 				DB_Obj[i]->Serialize(ar,iVER);
+				break;
+			case 999:
+				DB_Obj[i] = new BackGround(WPSize);
+				DB_Obj[i]->Serialize(ar, iVER);
 				break;
 			case 500 :
 				DB_Obj[i] = new WG_Def;
@@ -12295,6 +12302,30 @@ void DBase::insPlanet()
 
 }
 
+//*******************************************************
+//Insert sphere and render with earth bmp if loaded
+//11/01/22
+//*******************************************************
+void DBase::insBackGround()
+{
+	char buff[200];
+	
+	BackGround* pS;
+	pS = new BackGround(WPSize);
+
+	if (pWorldBMP != nullptr)
+	{
+		pS->AttachTexture(pWorldBMP);
+		sprintf_s(buff, "%x", pWorldBMP->header);
+		outtext1(buff);
+		AddObj(pS);
+		ReDraw();
+	}
+	else
+		outtext1("LOAD BITMAP FIRST");
+
+}
+
   //SolveIncompFluids();
 
 
@@ -13144,48 +13175,73 @@ outtext1("    ****");
 }
 
 
-GLuint DBase::S_loadBMP(FILE* pFile, CString inName)
+GLuint DBase::S_loadBMP(CString sFile, CString inName) 
 {
-  if (pWorldBMP==NULL)
-  {
-    pWorldBMP=new BMP();
-  }
-  else
-  {
-     delete(pWorldBMP);
-     pWorldBMP=NULL;
-  }
+	//Load the bitman must read as a binary file
+	CT2CA pszConvertedAnsiString(sFile);
+	std::string strFileName(pszConvertedAnsiString);
 
- 
-  if (pFile==NULL) 
-  { 
-    outtext1("ERROR: Image could not be opened.");
-    return (0); 
-  }
-  if (fread(pWorldBMP->header, 1, 54, pFile) != 54)
-  { // If not 54 bytes read : problem
-    outtext1("ERROR: Not a correct BMP file.");
-    return (0);
-  }
-  if (pWorldBMP->header[0] != 'B' || pWorldBMP->header[1] != 'M')
-  {
-    outtext1("ERROR: Not a correct BMP file.");
-    return 0;
-  }
-  // Read ints from the byte array
-  pWorldBMP->dataPos = *(int*)&(pWorldBMP->header[0x0A]);
-  pWorldBMP->imageSize = *(int*)&(pWorldBMP->header[0x22]);
-  pWorldBMP->width = *(int*)&(pWorldBMP->header[0x12]);
-  pWorldBMP->height = *(int*)&(pWorldBMP->header[0x16]);
-  // Some BMP files are misformatted, guess missing information
-  if (pWorldBMP->imageSize == 0)    pWorldBMP->imageSize = pWorldBMP->width*pWorldBMP->height * 3; // 3 : one byte for each Red, Green and Blue component
-  if (pWorldBMP->dataPos == 0)      pWorldBMP->dataPos = 54; // The BMP header is done that way
-                                       // Create a buffer
-  pWorldBMP->data = new unsigned char[pWorldBMP->imageSize];
-  // Read the actual data from the file into the buffer
-  fread(pWorldBMP->data, 1, pWorldBMP->imageSize, pFile);
-  return(1);
+	if (pWorldBMP != nullptr) {
+		delete (pWorldBMP);
+		pWorldBMP = nullptr;
+    }
+	//Open file
+	std::ifstream file(strFileName.c_str(), std::ios::binary);
+	if (!file.is_open()) {
+		outtext1("ERROR: Image could not be opened.");
+		return 0;
+	}
+
+	pWorldBMP = new BMP();
+	// Read the BMP header
+	if (!file.read(reinterpret_cast<char*>(pWorldBMP->header), 54)) {
+		outtext1("ERROR: Not a correct BMP file.");
+		file.close();
+		delete (pWorldBMP);
+		return 0;
+	}
+	if (pWorldBMP->header[0] != 'B' || pWorldBMP->header[1] != 'M') {
+		outtext1("ERROR: Not a correct BMP file.");
+		file.close();
+		delete (pWorldBMP);
+		return 0;
+	}
+	//// Read ints from the byte array
+    pWorldBMP->dataPos = *(int*)&(pWorldBMP->header[0x0A]);
+    pWorldBMP->imageSize = *(int*)&(pWorldBMP->header[0x22]);
+    pWorldBMP->width = *(int*)&(pWorldBMP->header[0x12]);
+    pWorldBMP->height = *(int*)&(pWorldBMP->header[0x16]);
+	// Allocate memory for the data buffer
+	pWorldBMP->data = new unsigned char[pWorldBMP->imageSize];
+
+	// Check if memory allocation was successful
+	if (pWorldBMP->data == nullptr) {
+		outtext1("ERROR: Bad Memory Allocation.");
+		file.close();
+		delete (pWorldBMP);
+		return 0;
+	}
+
+	// Read the actual data from the file into the buffer
+	file.seekg(pWorldBMP->dataPos, file.beg);
+	if (!file.read(reinterpret_cast<char*>(pWorldBMP->data), pWorldBMP->imageSize))
+	{
+		outtext1("ERROR: Data Read Failure.");
+		delete[] pWorldBMP->data;
+		pWorldBMP->data = nullptr;
+		file.close();
+		return 0;
+	}
+
+	file.close(); // Close the file when done
+	return 1;
 }
+
+
+
+
+
+
 
 
 int DBase::S_ImportWG(FILE* pFile,CString inName)

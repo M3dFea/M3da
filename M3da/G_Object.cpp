@@ -2062,96 +2062,101 @@ Planet::Planet()
   Drawn = 0;
   Selectable = 1;
   Visable = 1;
-  iObjType = 1;
+  iObjType = 998;
   pParent = NULL;
-  pTexture=NULL;
+  pTexture=nullptr;
 }
 
 Planet::~Planet()
 {
-  pTexture = NULL;
+  pTexture = nullptr;
 }
 
 void Planet::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
-  GLuint textureID;
-  glColor3fv(cols[124]);
-  glGenTextures(1, &textureID);
-  // "Bind" the newly created texture : all future texture functions will modify this texture
-  glBindTexture(GL_TEXTURE_2D, textureID);
-  // Give the image to OpenGL
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pTexture->width, pTexture->height, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pTexture->data);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glEnable(GL_TEXTURE_2D);
-  glEnable(GL_NORMALIZE);
-  double dDec;
-  double dDec1;
-  double dRA;
-  double dRA1;
-  C3dVector n0;
-  C3dVector n1;
-  C3dVector n2;
-  C3dVector n3;
-  float R=1;
-  float x0,y0,z0;
-  float x1, y1, z1;
-  float x2, y2, z2;
-  float x3, y3, z3;
-  float tRA,tRA1,tDEC,tDEC1;
-  int i,j;
-  i=0,j=0;
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glShadeModel(GL_SMOOTH);
-  for (i=0;i<48;i++)
-  {
-    for (j=0;j<36;j++)
-    {
-      dRA=i*7.5;
-      dRA1 = (i+1) * 7.5;
-      dDec=j*5-90;
-      dDec1=(j+1)*5-90;
-      tRA=dRA/360;
-      tRA1=dRA1/360;
-      tDEC=(dDec+90)/180;
-      tDEC1 = (dDec1 + 90) / 180;
-      x0 = R*cos(D2R*dDec)*cos(D2R*dRA);
-      y0 = R*cos(D2R*dDec)*sin(D2R*dRA);
-      z0 = R*sin(D2R*dDec);
-      x1 = R*cos(D2R*dDec)*cos(D2R*dRA1);
-      y1 = R*cos(D2R*dDec)*sin(D2R*dRA1);
-      z1 = R*sin(D2R*dDec);
-      x2 = R*cos(D2R*dDec1)*cos(D2R*dRA1);
-      y2 = R*cos(D2R*dDec1)*sin(D2R*dRA1);
-      z2 = R*sin(D2R*dDec1);
-      x3 = R*cos(D2R*dDec1)*cos(D2R*dRA);
-      y3 = R*cos(D2R*dDec1)*sin(D2R*dRA);
-      z3 = R*sin(D2R*dDec1);
-      n0.Set(x0,y0,z0);
-      n1.Set(x1, y1, z1);
-      n2.Set(x2, y2, z2);
-      n3.Set(x3, y3, z3);
-      n0.Normalize();
-      n1.Normalize();
-      n2.Normalize();
-      n3.Normalize();
-      glBegin(GL_POLYGON);
-        glTexCoord2f(tRA, tDEC);
-        glVertex3f(x0, y0, z0);
-        glNormal3f((float)n0.x, (float)n0.y, (float)n0.z);
-        glTexCoord2f(tRA1, tDEC);
-        glVertex3f(x1, y1, z1);
-        glNormal3f((float)n1.x, (float)n1.y, (float)n1.z);
-        glTexCoord2f(tRA1, tDEC1);
-        glVertex3f(x2, y2, z2);
-        glNormal3f((float)n2.x, (float)n2.y, (float)n2.z);
-        glTexCoord2f(tRA, tDEC1);
-        glVertex3f(x3, y3, z3);
-        glNormal3f((float)n3.x, (float)n3.y, (float)n3.z);
-      glEnd();
-    }
+	if ((pTexture != nullptr) && (gDSP_BACK == TRUE))
+	{
+      int width = pTexture->width;
+      int height = pTexture->height;
+	  GLuint textureID;
+	  glColor3fv(cols[124]);
+	  glGenTextures(1, &textureID);
+	  // "Bind" the newly created texture : all future texture functions will modify this texture
+	  glBindTexture(GL_TEXTURE_2D, textureID);
+	  // Give the image to OpenGL
+	  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pTexture->width, pTexture->height, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pTexture->data);
+	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	  glEnable(GL_TEXTURE_2D);
+	  glEnable(GL_NORMALIZE);
+	  double dDec;
+	  double dDec1;
+	  double dRA;
+	  double dRA1;
+	  C3dVector n0;
+	  C3dVector n1;
+	  C3dVector n2;
+	  C3dVector n3;
+	  float R = 1;
+	  float x0, y0, z0;
+	  float x1, y1, z1;
+	  float x2, y2, z2;
+	  float x3, y3, z3;
+	  float tRA, tRA1, tDEC, tDEC1;
+	  int i, j;
+	  i = 0, j = 0;
+	  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	  glShadeModel(GL_SMOOTH);
+	  for (i = 0; i < 48; i++)
+	  {
+		  for (j = 0; j < 36; j++)
+		  {
+			  dRA = i * 7.5;
+			  dRA1 = (i + 1) * 7.5;
+			  dDec = j * 5 - 90;
+			  dDec1 = (j + 1) * 5 - 90;
+			  tRA = dRA / 360;
+			  tRA1 = dRA1 / 360;
+			  tDEC = (dDec + 90) / 180;
+			  tDEC1 = (dDec1 + 90) / 180;
+			  x0 = R * cos(D2R * dDec) * cos(D2R * dRA);
+			  y0 = R * cos(D2R * dDec) * sin(D2R * dRA);
+			  z0 = R * sin(D2R * dDec);
+			  x1 = R * cos(D2R * dDec) * cos(D2R * dRA1);
+			  y1 = R * cos(D2R * dDec) * sin(D2R * dRA1);
+			  z1 = R * sin(D2R * dDec);
+			  x2 = R * cos(D2R * dDec1) * cos(D2R * dRA1);
+			  y2 = R * cos(D2R * dDec1) * sin(D2R * dRA1);
+			  z2 = R * sin(D2R * dDec1);
+			  x3 = R * cos(D2R * dDec1) * cos(D2R * dRA);
+			  y3 = R * cos(D2R * dDec1) * sin(D2R * dRA);
+			  z3 = R * sin(D2R * dDec1);
+			  n0.Set(x0, y0, z0);
+			  n1.Set(x1, y1, z1);
+			  n2.Set(x2, y2, z2);
+			  n3.Set(x3, y3, z3);
+			  n0.Normalize();
+			  n1.Normalize();
+			  n2.Normalize();
+			  n3.Normalize();
+			  glBegin(GL_POLYGON);
+			  glTexCoord2f(tRA, tDEC);
+			  glVertex3f(x0, y0, z0);
+			  glNormal3f((float)n0.x, (float)n0.y, (float)n0.z);
+			  glTexCoord2f(tRA1, tDEC);
+			  glVertex3f(x1, y1, z1);
+			  glNormal3f((float)n1.x, (float)n1.y, (float)n1.z);
+			  glTexCoord2f(tRA1, tDEC1);
+			  glVertex3f(x2, y2, z2);
+			  glNormal3f((float)n2.x, (float)n2.y, (float)n2.z);
+			  glTexCoord2f(tRA, tDEC1);
+			  glVertex3f(x3, y3, z3);
+			  glNormal3f((float)n3.x, (float)n3.y, (float)n3.z);
+			  glEnd();
+		  }
+	  }
+	  glDeleteTextures(1, &textureID);
   }
-
 }
 
 void Planet::OglDraw(int iDspFlgs, double dS1, double dS2)
@@ -2170,8 +2175,97 @@ void Planet::AttachTexture(BMP* pT)
 }
 
 
+//**********************************************************************
+//Test class for the Bitmat BackGround
+//**********************************************************************
+IMPLEMENT_DYNAMIC(BackGround, CObject)
+
+
+BackGround::BackGround(double dWPSize)
+{
+	Drawn = 0;
+	Selectable = 1;
+	Visable = 1;
+	iObjType = 999;
+	pParent = NULL;
+	pTexture = nullptr;
+	dS = dWPSize;
+}
+
+BackGround::~BackGround()
+{
+	pTexture = nullptr;
+}
+
+void BackGround::OglDrawW(int iDspFlgs, double dS1, double dS2) {
+	if ((pTexture != nullptr) && (gDSP_BACK==TRUE))
+	{
+	  int width = pTexture->width;
+	  int height = pTexture->height;
+	  double dW = dS;
+	  double dH = dS;
+	  double dRatio;
+	  dRatio = static_cast<double>(height) / width; // Using static_cast to ensure correct division
+	  dH *= dRatio;
+
+		GLuint textureID;
+		glColor3fv(cols[124]);
+		glGenTextures(1, &textureID);
+		// "Bind" the newly created texture: all future texture functions will modify this texture
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		// Give the image to OpenGL GL_RGB
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pTexture->width, pTexture->height, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pTexture->data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_NORMALIZE);
+		double dDec;
+		double dDec1;
+		double dRA;
+		double dRA1;
+		C3dVector n0;
+		C3dVector n1;
+		C3dVector n2;
+		C3dVector n3;
+
+		// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glShadeModel(GL_SMOOTH);
+
+		glBegin(GL_POLYGON);
+		glTexCoord2f(0, 0);
+		glVertex3f(-dW / 2, -dH / 2, -0.1);
+		glNormal3f((float)0.0, (float)0.0, (float)1.0);
+		glTexCoord2f(1, 0);
+		glVertex3f(dW / 2, -dH / 2, -0.1);
+		glNormal3f((float)0.0, (float)0.0, (float)1.0);
+		glTexCoord2f(1, 1);
+		glVertex3f(dW / 2, dH / 2, -0.1);
+		glNormal3f((float)0.0, (float)0.0, (float)1.0);
+		glTexCoord2f(0, 1);
+		glVertex3f(-dW / 2, dH / 2, -0.1);
+		glNormal3f((float)0.0, (float)0.0, (float)1.0);
+		glEnd();
+		glDeleteTextures(1, &textureID);
+	}
+}
+
+void BackGround::OglDraw(int iDspFlgs, double dS1, double dS2)
+{
+	OglDrawW(iDspFlgs, dS1, dS2);
+}
+
+void BackGround::Draw(CDC* pDC, int iDrawmode)
+{
+
+}
+
+void BackGround::AttachTexture(BMP* pT)
+{
+	pTexture = pT;
+}
+
 //**********************************************
-IMPLEMENT_DYNAMIC( Node, CObject )
+IMPLEMENT_DYNAMIC(Node, CObject )
 // Create Object
 
 Node::Node()

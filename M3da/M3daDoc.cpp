@@ -6,6 +6,8 @@
 #include "M3da.h"
 #include "M3daDoc.h"
 #include "GLOBAL_VARS.h"
+#include <iostream>
+#include <fstream>
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -385,6 +387,8 @@ ON_COMMAND(ID_EXPORT_EXPORTDXF, &CM3daDoc::OnExportExportdxf)
 ON_COMMAND(ID_CURVEMODIFY_LAYERNUMBER, &CM3daDoc::OnCurvemodifyLayernumber)
 ON_COMMAND(ID_SELECTION_SELECTCURVE, &CM3daDoc::OnSelectionSelectcurve)
 ON_COMMAND(ID_VIEW_TOGGLEONCIRCLESTARTMARKERS, &CM3daDoc::OnViewToggleoncirclestartmarkers)
+ON_COMMAND(ID_TOOLS_INSERTBITMAPBACKGROUND, &CM3daDoc::OnToolsInsertbitmapbackground)
+ON_COMMAND(ID_VIEW_TOGGLEON, &CM3daDoc::OnViewToggleon)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -1025,12 +1029,8 @@ void CM3daDoc::OnImportLoadbmp()
     CString sFile = FDia.GetFileName();
     if (sFile != "")
     {
-        pFile = fopen(sPath, "r");
-        if (pFile != NULL)
-        {
-            cDBase->S_loadBMP(pFile, sFile);
-        }
-        fclose(pFile);
+       if (cDBase->S_loadBMP(sPath, sFile));
+	      cDBase->insBackGround();
     }
 }
 
@@ -5792,7 +5792,19 @@ void CM3daDoc::OnElementmodifiyBeamoffsetinbeamz()
 void CM3daDoc::OnToolsPlanet()
 {
 	// TODO: Add your command handler code here
-	cDBase->insPlanet();
+		// TODO: Add your command handler code here
+	outtext1("IMPORT EARTH BMP FILE");
+	FILE* pFile;
+	//TODO: Add your command handler code here
+	CFileDialog FDia(TRUE, "BMP", "*.BMP", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
+	FDia.DoModal();
+	CString sPath = FDia.GetPathName();
+	CString sFile = FDia.GetFileName();
+	if (sFile != "")
+	{
+		if (cDBase->S_loadBMP(sPath, sFile))
+			cDBase->insPlanet();
+	}
 }
 
 
@@ -6496,4 +6508,41 @@ void CM3daDoc::OnViewToggleoncirclestartmarkers()
 	cDBase->InvalidateOGL();
 	cDBase->ReDraw();
 
+}
+
+
+void CM3daDoc::OnToolsInsertbitmapbackground()
+{
+	// TODO: Add your command handler code here
+	outtext1("IMPORT BMP BACKGROUND FILE");
+	FILE* pFile;
+	//TODO: Add your command handler code here
+	CFileDialog FDia(TRUE, "BMP", "*.BMP", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
+	FDia.DoModal();
+	CString sPath = FDia.GetPathName();
+	CString sFile = FDia.GetFileName();
+	if (sFile != "")
+	{
+		if (cDBase->S_loadBMP(sPath, sFile))
+			cDBase->insBackGround();
+	}
+	
+}
+
+
+void CM3daDoc::OnViewToggleon()
+{
+	// TODO: Add your command handler code here
+	if (gDSP_BACK == FALSE)
+	{
+		gDSP_BACK = TRUE;
+		outtext1("Background is ON.");
+	}
+	else
+	{
+		gDSP_BACK = FALSE;
+		outtext1("Background is OFF.");
+	}
+	cDBase->InvalidateOGL();
+	cDBase->ReDraw();
 }

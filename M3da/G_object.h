@@ -1908,6 +1908,24 @@ public:
   virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
 };
 
+//**********************************************************************
+//Test class for the a bitmap background
+//**********************************************************************
+class BackGround : public G_Object
+{
+	DECLARE_DYNAMIC(BackGround)
+
+public:
+	double dS;
+	BackGround(double dWPSize);
+	virtual ~BackGround();
+	BMP* pTexture = nullptr;
+	void AttachTexture(BMP* pT);
+	virtual void Draw(CDC* pDC, int iDrawmode);
+	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+};
+
 
 class Node : public G_Object
 {

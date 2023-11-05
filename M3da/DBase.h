@@ -582,7 +582,7 @@ void S_ImportIges(FILE* pFile, CString inName);
 void S_ImportCat(FILE* pFile, CString inName);
 int S_ImportWG(FILE* pFile, CString inName);
 //******************BITMAP FOR EARTH TEXTURE MAP EXAMPLR*************************
-GLuint S_loadBMP(FILE* pFile, CString inName);
+GLuint S_loadBMP(CString sFile, CString inName);
 //*******************************************************************************
 ME_Object* ImportUNV(FILE* pFile,CString inName);
 ME_Object* ImportNAS(FILE* pFile,CString inName,BOOL ReLab);
@@ -640,6 +640,7 @@ void Test2();
 void TestMPM2();
 void TestFL();     //Test Face list display
 void insPlanet();
+void insBackGround();
 void Dsp_CtrlPts();
 void Move(ObjList* Nodes,C3dVector vTrVect);
 void Align(ObjList* Objs,C3dVector p1,C3dVector p2,C3dVector p3,

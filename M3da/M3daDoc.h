@@ -536,6 +536,8 @@ public:
   afx_msg void OnCurvemodifyLayernumber();
   afx_msg void OnSelectionSelectcurve();
   afx_msg void OnViewToggleoncirclestartmarkers();
+  afx_msg void OnToolsInsertbitmapbackground();
+  afx_msg void OnViewToggleon();
 };
 
 
