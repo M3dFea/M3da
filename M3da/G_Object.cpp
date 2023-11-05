@@ -2072,6 +2072,7 @@ Planet::~Planet()
   pTexture = nullptr;
 }
 
+//Planet Draw
 void Planet::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
 	if ((pTexture != nullptr) && (gDSP_BACK == TRUE))
