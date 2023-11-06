@@ -10811,6 +10811,14 @@ if ((iDrawmode == 4) || (iDrawmode == 5))
 			S_Buff[iDB_I]->HighLight(pDC);
 		}
 	}
+	//Highlight Points in the point Buffer
+	C3dVector vPt;
+	for (iDB_I = 0; iDB_I < DB_BuffCount; iDB_I++)
+	{
+		vPt=DB_PtBuff[iDB_I];
+		vPt.SetToScr(&pModelMat, &pScrMat);
+		pDC->Ellipse(int(vPt.x + 8), int(vPt.y + 8), int(vPt.x - 8), int(vPt.y - 8));
+	}
 	if (OTemp->iNo > 0)
 	{
 		iHC = OTemp->iNo;
