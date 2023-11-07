@@ -6342,7 +6342,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	  outtext2("// ENTER PT1");
+	outtext2("// PICK PT1");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -6351,7 +6351,7 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-	  outtext2("// ENTER PT2");
+	  outtext2("// PICK PT2");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();

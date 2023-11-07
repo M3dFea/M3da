@@ -6498,7 +6498,7 @@ C3dVector DBase::NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear)
 		P1 = L1->MinPt(P2);
 		dDist = P2.Dist(P1);
 		iMaxIt++;
-	} while ((dDist > dTol) && (iMaxIt<100));
+	} while ((dDist > dTol) && (iMaxIt<10000));
 	char S1[200];
 	CString OutT;
 	sprintf_s(S1, "ITERATIONS: %i TOL: %f", iMaxIt, dDist);
@@ -6564,7 +6564,7 @@ C3dVector DBase::NLnInt3(NCurve* L1, NCurve* L2, C3dVector* pNear)
 	} while ((dDist > dTol) && (iMaxIt < 1000));
 	char S1[200];
 	CString OutT;
-	sprintf_s(S1, "ITERATIONS: %i TOL: %f", iMaxIt, dDist);
+	sprintf_s(S1, "ITERATIONS: %i TOL: %g", iMaxIt, dDist);
 	outtext1(S1);
 	return (P1);
 }
@@ -15514,7 +15514,7 @@ if (S_Count>1)
   }
   if (!bErr)
   {
-    vRet=NLnInt2(Ln,Ln1,&pN1);
+    vRet=NLnInt3(Ln,Ln1,&pN1);
     S_Count--;
     S_Count--;
     ReDraw();
@@ -19357,21 +19357,21 @@ void DBase::lMeasure(C3dVector v1,C3dVector v2)
   CString OutT;
   WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
   outtext1("LINEAR DISTANCE (GLOBAL)"); 
-  sprintf_s(S1,"GL:X,%f,Y,%f,Z,%f",v.x,v.y,v.z);
+  sprintf_s(S1,"GL: X,%f,Y,%f,Z,%f",v.x,v.y,v.z);
   OutT=S1;
   outtext1(OutT); 
   if (pWPlane->iWPMode == 1)
   {
     
-    sprintf_s(S1,"WP:R,%f,T,%f,Z,%f",vg.x,vg.y,vg.z);
+    sprintf_s(S1,"WP: R,%f,T,%f,Z,%f",vg.x,vg.y,vg.z);
   }
   else
   {
-    sprintf_s(S1,"WP:X,%f,Y,%f,Z,%f",vg.x,vg.y,vg.z);
+    sprintf_s(S1,"WP: X,%f,Y,%f,Z,%f",vg.x,vg.y,vg.z);
   }
   OutT=S1;
   outtext1(OutT); 
-  sprintf_s(S1,"MAG:,%f",vg.Mag());
+  sprintf_s(S1,"MAG: %f",vg.Mag());
   OutT=S1;
   outtext1(OutT); 
 
