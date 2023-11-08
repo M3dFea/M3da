@@ -157,12 +157,12 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     TRACE0("Failed to create toolbar\n");
     return -1;      // fail to create
   }
-	//if (!m_Qwanta.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(1,1,1,1), AFX_IDW_MENUBAR+6) ||
-	//	!m_Qwanta.LoadToolBar(IDR_QWANTA))
-	//{
-	//	TRACE0("Failed to create toolbar\n");
-	//	return -1;      // fail to create
-	//}
+	if (!m_QFilter.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(1,1,1,1), AFX_IDW_MENUBAR+6) ||
+		!m_QFilter.LoadToolBar(IDR_QFILTER))
+	{
+		TRACE0("Failed to create toolbar\n");
+		return -1;      // fail to create
+	}
 
 	CString strToolBarName2;
 	bNameValid = strToolBarName2.LoadString(IDS_DRAW);  //IDS_DRAW
@@ -210,7 +210,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
   //bNameValid = strToolBarName3.LoadString(IDS_STRING115);
   //ASSERT(bNameValid);
   m_Utils.SetWindowText("Utils");
-
+  m_QFilter.SetWindowText("Quick Filter");
   //bNameValid = strToolBarName3.LoadString(IDS_QWANTA);
   //ASSERT(bNameValid);
   //m_Qwanta.SetWindowText(strToolBarName3);
@@ -230,7 +230,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
   m_POST.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
   m_Projection.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
   m_Utils.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
-	//m_Qwanta.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
+  m_QFilter.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
+  //m_Qwanta.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
 	// Allow user-defined toolbars operations:
 	InitUserToolbars(NULL, uiFirstUserToolBarId, uiLastUserToolBarId);
 
@@ -269,6 +270,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
  m_POST.EnableDocking(CBRS_ALIGN_ANY);
  m_Projection.EnableDocking(CBRS_ALIGN_ANY);
  m_Utils.EnableDocking(CBRS_ALIGN_ANY);
+ m_QFilter.EnableDocking(CBRS_ALIGN_ANY);
  //m_Qwanta.EnableDocking(CBRS_ALIGN_ANY);
  EnableDocking(CBRS_ALIGN_ANY);
   //AA.EnableDocking(CBRS_BOTTOM);
@@ -284,6 +286,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
  DockPane(&m_POST);
  DockPane(&m_Projection);
  DockPane(&m_Utils);
+ DockPane(&m_QFilter);
  //DockPane(&m_Qwanta);
 	// enable Visual Studio 2005 style docking window behavior
 //	CDockingManager::SetDockingMode(DT_SMART);

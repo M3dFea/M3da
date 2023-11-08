@@ -538,6 +538,12 @@ public:
   afx_msg void OnViewToggleoncirclestartmarkers();
   afx_msg void OnToolsInsertbitmapbackground();
   afx_msg void OnViewToggleon();
+  afx_msg void OnQfilterNodes();
+  afx_msg void OnQfilterElements();
+  afx_msg void OnQfilterPoints();
+  afx_msg void OnQfilterCurves();
+  afx_msg void OnQfilterSurface();
+  afx_msg void OnQfilterAll();
 };
 
 

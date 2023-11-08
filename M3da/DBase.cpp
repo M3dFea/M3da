@@ -11412,6 +11412,46 @@ void DBase::SetFilter()
 
 }
 
+void DBase::QFilterNode()
+{
+	FILTER.Clear();
+	FILTER.SetFilter(1);
+	outtext1("Only Nodes are Pickable. ");
+}
+
+void DBase::QFilterElement()
+{
+	FILTER.Clear();
+	FILTER.SetFilter(3);
+	outtext1("Only Elements are Pickable. ");
+}
+
+void DBase::QFilterPoint()
+{
+	FILTER.Clear();
+	FILTER.SetFilter(0);
+	outtext1("Only Points are Pickable. ");
+}
+
+void DBase::QFilterCurve()
+{
+	FILTER.Clear();
+	FILTER.SetFilter(7);
+	outtext1("Only Curvess are Pickable. ");
+}
+
+void DBase::QFilterSurface()
+{
+	FILTER.Clear();
+	FILTER.SetFilter(15);
+	outtext1("Only Surfaces are Pickable. ");
+}
+
+void DBase::QFilterAll()
+{
+	FILTER.SetAll();
+	outtext1("Everything is Pickable. ");
+}
 
 int DBase::GetGroupID()
 {

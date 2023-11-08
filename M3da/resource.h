@@ -71,6 +71,7 @@
 #define IDD_ENTEDITOR                   353
 #define IDD_PCOMPEDIT                   356
 #define IDD_GRAPH                       361
+#define IDR_QFILTER                     363
 #define IDC_EDIT1                       1000
 #define IDC_EDIT2                       1001
 #define IDC_EDIT3                       1002
@@ -595,13 +596,26 @@
 #define ID_VIEW_TOGGLEONCIRCLESTARTMARKERS 33408
 #define ID_TOOLS_INSERTBITMAPBACKGROUND 33409
 #define ID_VIEW_TOGGLEON                33410
+#define ID_QNODE                        33411
+#define ID_QELEMENT                     33412
+#define ID_QPOINT                       33413
+#define ID_QCURVE                       33414
+#define ID_QSURFACE                     33415
+#define ID_QALL                         33416
+#define ID_TOOLS_QFILTER                33417
+#define ID_QFILTER_NODES                33418
+#define ID_QFILTER_ELEMENTS             33419
+#define ID_QFILTER_POINTS               33420
+#define ID_QFILTER_CURVES               33421
+#define ID_QFILTER_SURFACE              33422
+#define ID_QFILTER_ALL                  33423
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        363
-#define _APS_NEXT_COMMAND_VALUE         33411
+#define _APS_NEXT_RESOURCE_VALUE        365
+#define _APS_NEXT_COMMAND_VALUE         33424
 #define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

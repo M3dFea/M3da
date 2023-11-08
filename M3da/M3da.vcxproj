@@ -277,6 +277,7 @@
     <Image Include="res\bmp00007.bmp" />
     <Image Include="res\bmp00008.bmp" />
     <Image Include="res\bmp00009.bmp" />
+    <Image Include="res\bmp00010.bmp" />
     <Image Include="res\icon1.ico" />
     <Image Include="res\M3da.ico" />
     <Image Include="res\M3daDoc.ico" />

@@ -354,6 +354,15 @@ BEGIN
     END
     POPUP "Tools"
     BEGIN
+        POPUP "QFilter"
+        BEGIN
+            MENUITEM "Nodes",                       ID_QFILTER_NODES
+            MENUITEM "Elements",                    ID_QFILTER_ELEMENTS
+            MENUITEM "Points",                      ID_QFILTER_POINTS
+            MENUITEM "Curves",                      ID_QFILTER_CURVES
+            MENUITEM "Surface",                     ID_QFILTER_SURFACE
+            MENUITEM "All",                         ID_QFILTER_ALL
+        END
         POPUP "Workplane"
         BEGIN
             MENUITEM "WP Size",                     ID_TOOLS_WPSIZE
@@ -1334,6 +1343,12 @@ BEGIN
                             "Put an S at Beginning of Circle (Helps when using Trim)"
     ID_TOOLS_INSERTBITMAPBACKGROUND "Insert a Bitmap Background Image"
     ID_VIEW_TOGGLEON        "Toggle On and Off any Background Bitmap"
+    ID_QFILTER_NODES        "Pick Nodes Only"
+    ID_QFILTER_ELEMENTS     "Pick Elements Only"
+    ID_QFILTER_POINTS       "Pick Points Only"
+    ID_QFILTER_CURVES       "Pick Curves Only"
+    ID_QFILTER_SURFACE      "Pick Surfaces Only"
+    ID_QFILTER_ALL          "Pick All"
 END
 
 #endif    // English (United States) resources
@@ -1371,6 +1386,8 @@ IDR_POST                BITMAP                  "res\\bmp00008.bmp"
 IDR_PROJ                BITMAP                  "res\\bmp00009.bmp"
 
 IDR_UTILITIES           BITMAP                  "res\\bmp00005.bmp"
+
+IDR_QFILTER             BITMAP                  "res\\bmp00010.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1583,6 +1600,16 @@ BEGIN
     BUTTON      ID_NODEMODIFY_CHANGEZORDINATE
     BUTTON      ID_CHECKS_MERGENODES
     BUTTON      ID_CHECKS_FREEEDGEDISPLAY
+END
+
+IDR_QFILTER TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_QFILTER_NODES
+    BUTTON      ID_QFILTER_ELEMENTS
+    BUTTON      ID_QFILTER_POINTS
+    BUTTON      ID_QFILTER_CURVES
+    BUTTON      ID_QFILTER_SURFACE
+    BUTTON      ID_QFILTER_ALL
 END
 
 
@@ -2289,6 +2316,15 @@ BEGIN
     ID_ORTHO                "Ortgogonal Line Drawing Mode"
     ID_VIEW_TOGGLECONTROLPOINTVISABILITY "Toggle Control Point Visability"
     ID_BUTTON33403          "Toggle Control Point Visability"
+END
+
+STRINGTABLE
+BEGIN
+    ID_QNODE                "Pick Nodes Obly"
+    ID_QELEMENT             "Pick Elements Only"
+    ID_QPOINT               "Pick Points Only"
+    ID_QCURVE               "Pick Curves Only"
+    ID_QALL                 "Pick All"
 END
 
 #endif    // English (United Kingdom) resources

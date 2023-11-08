@@ -389,6 +389,12 @@ ON_COMMAND(ID_SELECTION_SELECTCURVE, &CM3daDoc::OnSelectionSelectcurve)
 ON_COMMAND(ID_VIEW_TOGGLEONCIRCLESTARTMARKERS, &CM3daDoc::OnViewToggleoncirclestartmarkers)
 ON_COMMAND(ID_TOOLS_INSERTBITMAPBACKGROUND, &CM3daDoc::OnToolsInsertbitmapbackground)
 ON_COMMAND(ID_VIEW_TOGGLEON, &CM3daDoc::OnViewToggleon)
+ON_COMMAND(ID_QFILTER_NODES, &CM3daDoc::OnQfilterNodes)
+ON_COMMAND(ID_QFILTER_ELEMENTS, &CM3daDoc::OnQfilterElements)
+ON_COMMAND(ID_QFILTER_POINTS, &CM3daDoc::OnQfilterPoints)
+ON_COMMAND(ID_QFILTER_CURVES, &CM3daDoc::OnQfilterCurves)
+ON_COMMAND(ID_QFILTER_SURFACE, &CM3daDoc::OnQfilterSurface)
+ON_COMMAND(ID_QFILTER_ALL, &CM3daDoc::OnQfilterAll)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6545,4 +6551,46 @@ void CM3daDoc::OnViewToggleon()
 	}
 	cDBase->InvalidateOGL();
 	cDBase->ReDraw();
+}
+
+
+void CM3daDoc::OnQfilterNodes()
+{
+	// TODO: Add your command handler code here
+	cDBase->QFilterNode();
+}
+
+
+void CM3daDoc::OnQfilterElements()
+{
+	// TODO: Add your command handler code here
+	cDBase->QFilterElement();
+}
+
+
+void CM3daDoc::OnQfilterPoints()
+{
+	// TODO: Add your command handler code here
+	cDBase->QFilterPoint();
+}
+
+
+void CM3daDoc::OnQfilterCurves()
+{
+	// TODO: Add your command handler code here
+	cDBase->QFilterCurve();
+}
+
+
+void CM3daDoc::OnQfilterSurface()
+{
+	// TODO: Add your command handler code here
+	cDBase->QFilterSurface();
+}
+
+
+void CM3daDoc::OnQfilterAll()
+{
+	// TODO: Add your command handler code here
+	cDBase->QFilterAll();
 }
