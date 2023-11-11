@@ -169,64 +169,65 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     TRACE0("Failed to create toolbar\n");
     return -1;      // fail to create
   }
-	if (!m_QFilter.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(1,1,1,1), AFX_IDW_MENUBAR+6) ||
+	if (!m_QFilter.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(1,1,1,1), AFX_IDW_MENUBAR+11) ||
 		!m_QFilter.LoadToolBar(IDR_QFILTER))
 	{
 		TRACE0("Failed to create toolbar\n");
 		return -1;      // fail to create
 	}
 
-	CString strToolBarName2;
-	bNameValid = strToolBarName2.LoadString(IDS_DRAW);  //IDS_DRAW
-	//ASSERT(bNameValid);
-    m_Draw.SetWindowText(strToolBarName2);
+
   
 	CString strToolBarName;
 	bNameValid = strToolBarName.LoadString(IDS_TOOLBAR_STANDARD);
-	//ASSERT(bNameValid);
+	ASSERT(bNameValid);
 	m_wndToolBar.SetWindowText(strToolBarName);
+
+	CString strToolBarName2;
+	int iIDS;
+	iIDS = IDS_DRAW;
+	bNameValid = strToolBarName2.LoadString(IDS_DRAW);  //IDS_DRAW
+	//ASSERT(bNameValid);
+	m_Draw.SetWindowText("Draw");
 
 	CString strToolBarName3;
 	bNameValid = strToolBarName3.LoadString(IDS_CREATE2);
 	//ASSERT(bNameValid);
-  m_Create.SetWindowText(strToolBarName3);
-  strToolBarName3 = "";
-	bNameValid = strToolBarName3.LoadString(IDS_EDIT);
+    m_Create.SetWindowText("Create");
+
+    CString  strToolBarName4;
+	bNameValid = strToolBarName4.LoadString(IDS_EDIT);
 	//ASSERT(bNameValid);
-    m_Edit.SetWindowText(strToolBarName3);
+    m_Edit.SetWindowText("Edit");
 
-	bNameValid = strToolBarName3.LoadString(IDS_FE);
+	CString  strToolBarName5;
+	bNameValid = strToolBarName5.LoadString(IDS_FE);
 	//ASSERT(bNameValid);
-  m_FE.SetWindowText(strToolBarName3);
+    m_FE.SetWindowText("FE");
 
-	bNameValid = strToolBarName3.LoadString(IDS_GROUP);
+	CString  strToolBarName6;
+	bNameValid = strToolBarName6.LoadString(IDS_GROUP);
 	//ASSERT(bNameValid);
-  m_Group.SetWindowText(strToolBarName3);
+    m_Group.SetWindowText("Groups");
 
-  bNameValid = strToolBarName3.LoadString(IDS_LBC);
+	CString  strToolBarName7;
+    bNameValid = strToolBarName7.LoadString(IDS_BC);
 	//ASSERT(bNameValid);
-  m_BC.SetWindowText(strToolBarName3);
+    m_BC.SetWindowText("BoundaryCoditions");
 
-  bNameValid = strToolBarName3.LoadString(IDS_ELTYPE);
+	CString  strToolBarName8;
+    bNameValid = strToolBarName8.LoadString(IDS_ELTYPE);
 	//ASSERT(bNameValid);
-  m_ELTYPE.SetWindowText(strToolBarName3);
+    m_ELTYPE.SetWindowText("Element Types");
 
-  bNameValid = strToolBarName3.LoadString(IDS_POST);
+	CString  strToolBarName9;
+    bNameValid = strToolBarName9.LoadString(IDS_POST);
 	//ASSERT(bNameValid);
-  m_POST.SetWindowText(strToolBarName3);
+    m_POST.SetWindowText("Post Processing");
 
-  bNameValid = strToolBarName3.LoadString(IDS_STRING115);
-  //ASSERT(bNameValid);
-  m_Projection.SetWindowText("Proj");
-
-  //bNameValid = strToolBarName3.LoadString(IDS_STRING115);
-  //ASSERT(bNameValid);
-  m_Utils.SetWindowText("Utils");
-  m_QFilter.SetWindowText("Quick Filter");
-  //bNameValid = strToolBarName3.LoadString(IDS_QWANTA);
-  //ASSERT(bNameValid);
-  //m_Qwanta.SetWindowText(strToolBarName3);
-  
+    m_Projection.SetWindowText("Project");
+    m_Utils.SetWindowText("Utils");
+    m_QFilter.SetWindowText("Quick Filter");
 
 	CString strCustomize;
 	bNameValid = strCustomize.LoadString(IDS_TOOLBAR_CUSTOMIZE);
