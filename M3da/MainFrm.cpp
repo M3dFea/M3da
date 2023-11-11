@@ -67,6 +67,18 @@ CMainFrame::~CMainFrame()
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
+	int iIDR;
+	iIDR=IDR_DRAW;
+	iIDR = IDR_CREATE;
+	iIDR = IDR_EDIT;
+	iIDR = IDR_FE;
+	iIDR = IDR_GROUP;
+	iIDR = IDR_BC;
+	iIDR = IDR_ELTYPE;
+	iIDR = IDR_POST;
+	iIDR = IDR_PROJ;
+	iIDR = IDR_UTILITIES;
+	iIDR = IDR_QFILTER;
 	if (CFrameWndEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
