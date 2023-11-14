@@ -4205,10 +4205,12 @@ else if (iStat == 3)
 	  dH = gTXT_HEIGHT;
   else
 	  gTXT_HEIGHT = dH;
-  C3dVector vN;
+  C3dVector vN, vDir;
   vN.Set(0, 0, 1);
-  vN = cDBase->GlobaltoWP3(vN);
-  cDBase->AddText(vN,p1, sText,dH);
+  vDir.Set(1, 0, 0);  //Text direction assume workplane X
+  vN = cDBase->WPtoGlobal2(vN);
+  vDir = cDBase->WPtoGlobal2(vDir);
+  cDBase->AddText(vN,vDir,p1, sText,dH);
   outtext1("Text Added.");
   RetVal = 1;
 }

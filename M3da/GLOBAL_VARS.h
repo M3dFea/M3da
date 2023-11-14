@@ -1,4 +1,5 @@
 #pragma once
+
 extern double gPT_SIZE;
 extern double gND_SIZE;
 extern double gLM_SIZE;
@@ -18,4 +19,7 @@ extern BOOL gDSP_CIRS;
 extern BOOL gDSP_BACK;
 extern BOOL gORTHO;
 extern DSP_Triad tOrient;
-
+extern int iNoSymbols;
+extern double dAveW;
+extern double dAveH;
+extern Symbol* pSymTable[10000];

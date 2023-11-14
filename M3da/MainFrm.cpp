@@ -203,7 +203,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	CString  strToolBarName5;
 	bNameValid = strToolBarName5.LoadString(IDS_FE);
 	//ASSERT(bNameValid);
-    m_FE.SetWindowText("FE");
+    m_FE.SetWindowText("F.E.");
 
 	CString  strToolBarName6;
 	bNameValid = strToolBarName6.LoadString(IDS_GROUP);
@@ -213,7 +213,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	CString  strToolBarName7;
     bNameValid = strToolBarName7.LoadString(IDS_BC);
 	//ASSERT(bNameValid);
-    m_BC.SetWindowText("BoundaryCoditions");
+    m_BC.SetWindowText("Boundary Conditions");
 
 	CString  strToolBarName8;
     bNameValid = strToolBarName8.LoadString(IDS_ELTYPE);

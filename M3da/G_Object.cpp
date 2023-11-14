@@ -44760,7 +44760,7 @@ cPoly->we = we;
 cPoly->iInc = iInc;
 cPoly->dLSize = dLSize;
 cPoly->pParent=Parrent;
-cPoly->iLnThk = iLnType;
+cPoly->iLnThk = iLnThk;
 cPoly->iLnType = iLnType;
 for (i=0;i<iNoCPts;i++)
 {
@@ -47368,6 +47368,7 @@ else
 
 C3dVector NCircle::Get_Centroid()
 {
+
 return(vCent);
 }
 

@@ -10,7 +10,7 @@
 const int VERSION_NO=-69;
 const int MAX_GPS = 1000;
 const int MAX_TEMPGRP = 10000;
-const int MAX_SYMBOLS = 10000;
+
 const int MAX_SIZE = 10000000;
 
 
@@ -71,7 +71,7 @@ void LoadSymbols(FILE* pFile);
 //Load the symbols table from SymTable.h stored internally
 void LoadSymbolsInternal();
 void SymTableCalcMetrics();
-void AddText(C3dVector vN, C3dVector vInPt, CString inText,double dH);
+void AddText(C3dVector vN, C3dVector vDir, C3dVector vInPt, CString inText,double dH);
 void RebuildText(Text* pText);
 //debug only
 void displaySymTable();

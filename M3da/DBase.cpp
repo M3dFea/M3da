@@ -16119,7 +16119,7 @@ NCircle* DBase::FilletIter(NLine* Ln1, NLine* Ln2, double dR, C3dVector PNear1, 
 		} while ((dMinDist > dTol) && (iter<1000000));
 		pPt = AddPt(vCur2, -1, TRUE);
 		char buff[200];
-		sprintf_s(buff, "Interation to Intersect %i", iter);
+		sprintf_s(buff, "Interation to Intersect %i Tol %g", iter, dMinDist);
 		outtext1(buff);
 		if (iter < 1000000)
 		{
@@ -22332,9 +22332,9 @@ return (pRet);
 }
 
 //*********************************************************
-// Text to be inserted ay vInPt and transformed tp vN
+// Text to be inserted at vInPt and transformed to vN
 //*********************************************************
-void DBase::AddText(C3dVector vN,C3dVector vInPt, CString inText, double dH)
+void DBase::AddText(C3dVector vN, C3dVector vDir, C3dVector vInPt, CString inText, double dH)
 {
 	int i=0;
 	int iL=0;
