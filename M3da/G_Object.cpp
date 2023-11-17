@@ -41983,14 +41983,26 @@ void Text::Transform(C3dMatrix TMat)
 
 	vDir = TMat2 * vDir;
 	vNorm = TMat2 * vNorm;
-	BuildText();
+	Symbol* pS = (Symbol*) pSyms->Head;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Transform(TMat);
+		pS = (Symbol*)pS->next;
+	}
 }
 
 void Text::Translate(C3dVector vIn)
 {
 
 	vInsPt += vIn;
-	BuildText();
+	Symbol* pS = (Symbol*)pSyms->Head;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Translate(vIn);
+		pS = (Symbol*)pS->next;
+	}
 }
 
 void Text::Move(C3dVector vM)
@@ -42016,6 +42028,8 @@ void Text::Serialize(CArchive& ar, int iV)
 	{
 		G_Object::Serialize(ar, iV);
 		inPt->Serialize(ar, iV);				 //Insertion Point
+		vInsPt.Serialize(ar, iV);
+		vDir.Serialize(ar, iV);
 		vNorm.Serialize(ar, iV); 			//Normal
 		ar<<dTextHeight;					//Text Height
 		ar<<sText;
@@ -42031,6 +42045,11 @@ void Text::Serialize(CArchive& ar, int iV)
 	{
 		G_Object::Serialize(ar, iV);
 		inPt->Serialize(ar, iV);				 //Insertion Point
+		if (iV < -69)
+		{
+			vInsPt.Serialize(ar, iV);            //Insertion point
+			vDir.Serialize(ar, iV);              //Text Direcyopn
+		}
 		vNorm.Serialize(ar, iV); 			//Normal
 		ar >> dTextHeight;					//Text Height
 		ar >> sText;
@@ -42095,6 +42114,12 @@ int Text::GetVarHeaders(CString sVar[])
 	iNo++;
 	sVar[iNo] = "Height";
 	iNo++;
+	sVar[iNo] = "Insertion Pt";
+	iNo++;
+	sVar[iNo] = "Text Direction";
+	iNo++;
+	sVar[iNo] = "Text Normal";
+	iNo++;
 	return(iNo);
 }
 
@@ -42109,13 +42134,72 @@ int Text::GetVarValues(CString sVar[])
 	sprintf_s(S1, "%g", dTextHeight);
 	sVar[iNo] = S1;
 	iNo++;
+	sprintf_s(S1, "%g,%g,%g", vInsPt.x, vInsPt.y, vInsPt.z);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g,%g,%g", vDir.x, vDir.y, vDir.z);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g,%g,%g", vNorm.x, vNorm.y, vNorm.z);
+	sVar[iNo] = S1;
+	iNo++;
 	return (iNo);
 }
 
 void Text::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
+	int i = 0;
+	int index = 0;
+	CString line;
+	CString field;
+	CArray<CString, CString> v;
 	sText = sVar[0];
 	dTextHeight = atof(sVar[1]);
+	line = _T(sVar[2]);
+	index = 0;
+	while (AfxExtractSubString(field, line, index, _T(',')) ||
+		   AfxExtractSubString(field, line, index, _T(' ')))
+	{
+		v.Add(field);
+		++index;
+	}
+	if (index == 3)
+	{
+			vInsPt.x = atof(v[0]);
+			vInsPt.y = atof(v[1]);
+			vInsPt.z = atof(v[2]);
+	}
+	line = _T(sVar[3]);
+	index = 0;
+	v.RemoveAll();
+	while (AfxExtractSubString(field, line, index, _T(',')) ||
+		AfxExtractSubString(field, line, index, _T(' ')))
+	{
+		v.Add(field);
+		++index;
+	}
+	if (index == 3)
+	{
+		vDir.x = atof(v[0]);
+		vDir.y = atof(v[1]);
+		vDir.z = atof(v[2]);
+	}
+	line = _T(sVar[4]);
+	index = 0;
+	v.RemoveAll();
+	while (AfxExtractSubString(field, line, index, _T(',')) ||
+		AfxExtractSubString(field, line, index, _T(' ')))
+	{
+		v.Add(field);
+		++index;
+	}
+	if (index == 3)
+	{
+		vNorm.x = atof(v[0]);
+		vNorm.y = atof(v[1]);
+		vNorm.z = atof(v[2]);
+	}
+
 	BuildText();
 }
 
