@@ -59,20 +59,15 @@ void DeleteAll();
 int DspFlags;
 BOOL bPICK;
 int iVER;
-int iNoSymbols;
-double dAveW=1;
-double dAveH=1;
-Symbol* pSymTable[MAX_SYMBOLS];
 void ClearSymTable();
 void AddSymbol(Symbol* pSym);
-Symbol* GetSymbol(int iLab);
+//Symbol* GetSymbol(int iLab);
 void LoadSymbols(FILE* pFile);
 //14/07/2020
 //Load the symbols table from SymTable.h stored internally
 void LoadSymbolsInternal();
 void SymTableCalcMetrics();
 void AddText(C3dVector vN, C3dVector vDir, C3dVector vInPt, CString inText,double dH);
-void RebuildText(Text* pText);
 //debug only
 void displaySymTable();
 //****************************     End 28/09/2016    ****************************

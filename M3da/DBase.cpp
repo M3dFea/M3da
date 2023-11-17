@@ -19334,11 +19334,6 @@ void DBase::EditObject()
 		Dlg.pO = pO;
 		Dlg.DoModal();
 		S_Count--;
-		//Update onject that can't do it them selves!
-		if (pO->iObjType == 6) //Text must be rebuilt with new symbols
-		{
-			RebuildText((Text*) pO);
-		}
 		InvalidateOGL();
 		ReGen();
 
@@ -22312,145 +22307,23 @@ void DBase::AddSymbol(Symbol* pSym)
 }
 
 
-Symbol* DBase::GetSymbol(int iLab)
-{
-Symbol* pRet=NULL;
-int i;
-  if (iNoSymbols>0)
-  {
-    for(i=0;i<iNoSymbols;i++)
-    {
-      if (pSymTable[i]->iLabel==iLab)
-	  {
-         pRet=pSymTable[i];
-		 break;
-	  }
-    }
-  }
 
-return (pRet);
-}
 
 //*********************************************************
 // Text to be inserted at vInPt and transformed to vN
 //*********************************************************
 void DBase::AddText(C3dVector vN, C3dVector vDir, C3dVector vInPt, CString inText, double dH)
 {
-	int i=0;
-	int iL=0;
-	int iC=0;
-	double dScl = 0;
-	if (dH <= 0)
-	{
-		dScl = 1;
-	}
-	else
-	{
-		dScl = dH / dAveH;
-	}
-
-	C3dVector vM;
-	vM.Set(0, 0, 0);
-	Symbol* pSym = NULL;
-	Symbol* pSymN = NULL;
-	iL = inText.GetLength();
-	Text* pText = new Text(vN,iTxtLabCnt,inText, dH);
+	Text* pText = new Text(vInPt,vN,vDir,iTxtLabCnt,inText, dH);
 	iTxtLabCnt++;
-	for (i = 0; i < iL; i++)
+	if (pText != nullptr)
 	{
-		iC = inText[i];
-		pSym = GetSymbol(iC);
-		if (pSym!=NULL)
-		{ 
-			pSymN = (Symbol*)pSym->Copy(NULL);
-			pSymN->Translate(vM);
-			pSymN->pParent = pText;
-			pSymN->iColour = pText->iColour;
-			pText->pSyms->Add(pSymN);
-			vM.x += pSym->w+0.25*dAveW;
-		}
+		AddObj(pText);
+		ReDraw();
 	}
-	C3dMatrix RMat;
-	RMat.MakeUnit();
-	RMat.Scale(dScl);
-	pText->Transform(RMat);
-	//Transfor to worplane orientation
-	RMat = GetWPmat();
-	RMat.m_30 = 0;
-	RMat.m_31 = 0;
-	RMat.m_32 = 0;
-	C3dMatrix TMat;
-	pText->Transform(RMat);
-	//Move to Insertion point
-	TMat.Translate(vInPt.x, vInPt.y, vInPt.z);
-	pText->Transform(TMat);
-
-	AddObj(pText);
-	ReDraw();
 }
 
-void DBase::RebuildText(Text* pText)
-{
-	int i = 0;
-	int iL = 0;
-	int iC = 0;
-	double dScl = 0;
-	C3dVector vN;
-	C3dVector vInPt;
-	CString inText;
-	double dH;
-	vN = pText->vNorm;
-	vInPt = pText->inPt->Pt_Point;
-	pText->inPt->Pt_Point->Set(0, 0, 0);
-	inText = pText->sText;
-	dH = pText->dTextHeight;
-	pText->pSyms->DeleteAll();
 
-	if (dH <= 0)
-	{
-		dScl = 1;
-	}
-	else
-	{
-		dScl = dH / dAveH;
-	}
-
-	C3dVector vM;
-	vM.Set(0, 0, 0);
-	Symbol* pSym = NULL;
-	Symbol* pSymN = NULL;
-	iL = inText.GetLength();
-
-	for (i = 0; i < iL; i++)
-	{
-		iC = inText[i];
-		pSym = GetSymbol(iC);
-		if (pSym != NULL)
-		{
-			pSymN = (Symbol*)pSym->Copy(NULL);
-			pSymN->Translate(vM);
-			pSymN->pParent = pText;
-			pSymN->iColour = pText->iColour;
-			pText->pSyms->Add(pSymN);
-			vM.x += pSym->w + 0.25 * dAveW;
-		}
-	}
-	C3dMatrix RMat;
-	RMat.MakeUnit();
-	RMat.Scale(dScl);
-	pText->Transform(RMat);
-	//Transfor to worplane orientation
-	RMat = GetWPmat();
-	RMat.m_30 = 0;
-	RMat.m_31 = 0;
-	RMat.m_32 = 0;
-	C3dMatrix TMat;
-	pText->Transform(RMat);
-	//Move to Insertion point
-	TMat.Translate(vInPt.x, vInPt.y, vInPt.z);
-	pText->Transform(TMat);
-
-}
 
 
 
@@ -22481,19 +22354,26 @@ dAveW=0;
 Symbol* pS = NULL;
 if (iNoSymbols > 0)
 {
-	for (i = 0; i < this->iNoSymbols; i++)
+	for (i = 0; i < iNoSymbols; i++)
 	{
-		this->pSymTable[i]->CalculateMetrics();
+		pSymTable[i]->CalculateMetrics();
 		dAveH += pSymTable[i]->h;
 		dAveW += pSymTable[i]->w;
 	}
 	dAveH /= iNoSymbols;
 	dAveW /= iNoSymbols;
 	//Set space width, which will calculated as 0
-	pS = GetSymbol(32);
-	pS->w = dAveW;
+	//pS = GetSymbol(32);
+	//pS->w = dAveW;
+	for (i = 0; i < iNoSymbols; i++)
+	{
+		if (pSymTable[i]->iLabel == 32)
+		{
+			pSymTable[i]->w= dAveW;;
+			break;
+		}
+	}
 }
-
 }
 
 
@@ -22504,11 +22384,13 @@ int iStop =0;
 char s1[1000];
 char s2[20];
 char s3[20]; 
-
+//These are globals
+iNoSymbols = 0;
+dAveW = 1;
+dAveH = 1;
+//******************
 C3dVector vP1;
 C3dVector vP2;
-
-
 
 int iLab;
 Symbol* pSym;

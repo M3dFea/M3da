@@ -1,8 +1,13 @@
 #include "G_Object.h"
 #include "M3Da.h"
 #include "GLOBAL_VARS.h"
-
 //START OF GLOBAL VARIABLES - TRYING THIS OUT 22/09/2023
+//**************Symbols table are GLOBAL scope**************
+Symbol* pSymTable[MAX_SYMBOLS];
+int iNoSymbols = 0;
+double dAveW = 1;
+double dAveH = 1;
+//*********************************************************
 double gPT_SIZE = 12;
 double gND_SIZE = 10;
 double gLM_SIZE = 20;
@@ -41699,13 +41704,35 @@ OglDrawW(iDspFlgs,dS1,dS2);
 // Text Object added
 // linked list of symbols
 //*****************************************************************
+
+
+Symbol* GetSymbol(int iLab)
+{
+	Symbol* pRet = NULL;
+	int i;
+	if (iNoSymbols > 0)
+	{
+		for (i = 0; i < iNoSymbols; i++)
+		{
+			if (pSymTable[i]->iLabel == iLab)
+			{
+				pRet = pSymTable[i];
+				break;
+			}
+		}
+	}
+
+	return (pRet);
+}
+
 IMPLEMENT_DYNAMIC(Text, CObject)
 
 Text::Text()
 {
+	pParent = nullptr;
+	pSyms = nullptr;
 	C3dVector inP;
 	inP.Set(0, 0, 0);
-	pParent = NULL;
 	Drawn = 0;
 	Selectable = 1;
 	Visable = 1;
@@ -41723,37 +41750,115 @@ Text::Text()
 	vNorm.Set(0,0,1);
 }
 
-Text::Text(C3dVector vN,int iLab,CString sT, double dH)
+Text::Text(C3dVector vInPt, C3dVector vN, C3dVector vTDir, int iLab,CString sT, double dH)
 {
-	C3dVector inP;
-	inP.Set(0, 0, 0);
-	pParent = NULL;
+
+	pParent = nullptr;
+	pSyms = nullptr;
 	Drawn = 0;
 	Selectable = 1;
 	Visable = 1;
 	iObjType = 6;
 	iLabel = iLab;
 	iColour = 100;
-	pSyms = new cLinkedList();
 	sText = "";
 	dTextHeight=dH;
 	sText=sT;
-	if (inPt != NULL)
-	{
-		delete(inPt);
-	}
-	inPt = new CvPt_Object;
-	inPt->Create(inP, 0, -1, 0, 0, 20, this);
+	vInsPt = vInPt;
 	vNorm=vN;
+	vDir = vTDir;
+	BuildText();
 }
 
 Text::~Text()
 {
-	if (inPt != NULL)
+	if (inPt != nullptr)
 		delete (inPt);
-	if (pSyms != NULL)
+	if (pSyms != nullptr)
 		pSyms->DeleteAll();
 }
+
+void Text::BuildText()
+{
+	double dScl = 0;
+	int i = 0;
+	int iL = 0;
+	int iC = 0;
+	C3dVector vM;
+	C3dMatrix RMat;
+	C3dMatrix TMat;
+	if (inPt != nullptr)
+		delete(inPt);
+	inPt = new CvPt_Object;
+	//C3dVector inP; inP.Set(0, 0, 0);
+	inPt->Create(vInsPt, 0, -1, 0, 0, 20, this);
+	if (pSyms == nullptr)
+		pSyms = new cLinkedList();
+	pSyms->DeleteAll();
+	//Text scaling
+	if (dTextHeight <= 0)
+		dScl = 1;
+	else
+		dScl = dTextHeight / dAveH;
+    //Build the text from the symbols table
+	vM.Set(0, 0, 0);
+	Symbol* pSym = nullptr;
+	Symbol* pSymN = nullptr;
+	iL = sText.GetLength();
+	for (i = 0; i < iL; i++)
+	{
+		iC = sText[i];
+		pSym = GetSymbol(iC);
+		if (pSym != NULL)
+		{
+			pSymN = (Symbol*)pSym->Copy(NULL);
+			pSymN->Translate(vM);
+			pSymN->pParent = this;
+			pSymN->iColour = this->iColour;
+			this->pSyms->Add(pSymN);
+			vM.x += pSym->w + 0.25 * dAveW;
+		}
+	}
+	//Scale
+	RMat.MakeUnit();
+	RMat.Scale(dScl);
+
+	Symbol* pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Transform(RMat);
+		pS = (Symbol*)pS->next;
+	}
+	//Orientate
+
+
+	C3dVector vX, vY, vZ;
+	vX = vDir; vX.Normalize();
+	vZ = vNorm; vZ.Normalize();
+	vY = vZ.Cross(vX); vY.Normalize();
+	RMat.MakeUnit();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Transform(RMat);
+		pS = (Symbol*)pS->next;
+	}
+
+	//Move to Insertion point
+	TMat.Translate(vInsPt.x, vInsPt.y, vInsPt.z);
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Transform(TMat);
+		pS = (Symbol*)pS->next;
+	}
+
+}
+
 
 void Text::OglDraw(int iDspFlgs, double dS1, double dS2)
 {
@@ -41869,27 +41974,23 @@ void Text::HighLight(CDC* pDC)
 void Text::Transform(C3dMatrix TMat)
 {
 
-	inPt->Transform(TMat);
-	vNorm = TMat * vNorm;
-	Symbol* pS = NULL;
-	pS = (Symbol*)pSyms->Head;
-	while (pS != NULL)
-	{
-		pS->Transform(TMat);
-		pS = (Symbol*)pS->next;
-	}
+
+	//vInsPt = inPt->Pt_Point;;
+	C3dMatrix TMat2;
+	TMat2 = TMat;
+	TMat2.ClearTranslations();
+	vInsPt = TMat * vInsPt;
+
+	vDir = TMat2 * vDir;
+	vNorm = TMat2 * vNorm;
+	BuildText();
 }
 
 void Text::Translate(C3dVector vIn)
 {
-	Symbol* pS = NULL;
-	pS = (Symbol*)pSyms->Head;
-	inPt->Translate(vIn);
-	while (pS != NULL)
-	{
-		pS->Translate(vIn);
-		pS = (Symbol*)pS->next;
-	}
+
+	vInsPt += vIn;
+	BuildText();
 }
 
 void Text::Move(C3dVector vM)
@@ -41965,21 +42066,19 @@ G_Object* Text::Copy(G_Object* Parrent)
 	cText->iLabel = iLabel;
 	cText->pParent = Parrent;
 	//Specifics
-	cText->inPt->Pt_Point->x = inPt->Pt_Point->x; 
-	cText->inPt->Pt_Point->y = inPt->Pt_Point->y;
-	cText->inPt->Pt_Point->z = inPt->Pt_Point->z;
-	cText->inPt->iColour = inPt->iColour;
-	cText->vNorm = vNorm;			
+	cText->vNorm = vNorm;	
+	cText->vDir = vDir;
+	cText->vInsPt = vInsPt;
 	cText->dTextHeight = dTextHeight;
-	cText->sText;
-			
+	cText->sText = sText;
+	cText->BuildText();
 
-	pS = (Symbol*) pSyms->Head;
-	while (pS != NULL)
-	{
-		cText->pSyms->Add(pS->Copy(cText));
-		pS = (Symbol*) pS->next;
-	}
+	//pS = (Symbol*) pSyms->Head;
+	//while (pS != NULL)
+	//{
+	//	cText->pSyms->Add(pS->Copy(cText));
+	//	pS = (Symbol*) pS->next;
+	//}
 	
 	return(cText);
 }
@@ -42017,6 +42116,7 @@ void Text::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
 	sText = sVar[0];
 	dTextHeight = atof(sVar[1]);
+	BuildText();
 }
 
 void Text::Info()

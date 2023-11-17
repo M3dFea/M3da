@@ -2115,18 +2115,22 @@ Link(double x1, double y1, double z1,
 };
 
 
+
 class Text : public G_Object
 {
 DECLARE_DYNAMIC(Text)
 public:
-	CvPt_Object* inPt=NULL;         //Insertion Point
-	C3dVector vNorm;				//Normal
-	double dTextHeight;				//Text Height
-	cLinkedList* pSyms;				//Sybols list forming text
+	CvPt_Object* inPt = nullptr;			//Insertion Point
+	C3dVector vInsPt;						//Insertion Point
+	C3dVector vNorm;						//Normal
+	C3dVector vDir;							//X Direction of Text;
+	double dTextHeight;						//Text Height
+	cLinkedList* pSyms;						//Sybols list forming text
 	CString sText;
 	Text();
-	Text(C3dVector vN,int iLab, CString sT,double dH);
+	Text(C3dVector vInPt, C3dVector vN, C3dVector vTDir,int iLab, CString sT,double dH);
 	~Text();
+	virtual void BuildText();
 	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
 	virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
