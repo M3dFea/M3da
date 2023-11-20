@@ -1082,26 +1082,27 @@ iType[6] =(6);		//TEXT
 iType[7] =(7);		//NURBS CURVE
 iType[8] = (8);		//EEDGE
 iType[9] = (9);	    //EFACE
-iType[10] =(12);		//COORDSYS
-iType[11] =(13);		//CURVE ON SURFACE
-iType[12] =(14);		//SOLID SECTION
-iType[13] =(15);	//NURBS SURFACE
-iType[14] =(18);	//FACE
-iType[15] =(19);	//SHELL
-iType[16] =(20);	//PART
-iType[17] =(200);	//LSET
-iType[18] =(201);	//BSET
-iType[19] =(202);	//TSET
-iType[20] =(321);	//FORCE
-iType[21] =(323);	//MOMENT
-iType[22] =(324);	//PRESSURE
-iType[23] =(322);	//RESTRAINT
-iType[24] =(325);	//TEMPERATURE
-iType[25] =(326);	//FLUX LOAD
-iType[26] =(327);	//T BC
-iType[27] =(328);	//ACCEL LOAD
-iType[28] =(329);	//ROTATION ACCEL LOAD
-iType[29] =(330);	//RESULTS VECTOR
+iType[10] = (10);	//DIM
+iType[11] =(12);		//COORDSYS
+iType[12] =(13);		//CURVE ON SURFACE
+iType[13] =(14);		//SOLID SECTION
+iType[14] =(15);	//NURBS SURFACE
+iType[15] =(18);	//FACE
+iType[16] =(19);	//SHELL
+iType[17] =(20);	//PART
+iType[18] =(200);	//LSET
+iType[19] =(201);	//BSET
+iType[20] =(202);	//TSET
+iType[21] =(321);	//FORCE
+iType[22] =(323);	//MOMENT
+iType[23] =(324);	//PRESSURE
+iType[24] =(322);	//RESTRAINT
+iType[25] =(325);	//TEMPERATURE
+iType[26] =(326);	//FLUX LOAD
+iType[27] =(327);	//T BC
+iType[28] =(328);	//ACCEL LOAD
+iType[29] =(329);	//ROTATION ACCEL LOAD
+iType[30] =(330);	//RESULTS VECTOR
 
 sType[0] = "POINT";
 sType[1] = "NODE";
@@ -1113,27 +1114,28 @@ sType[6] = "TEXT";
 sType[7] = "CURVE";
 sType[8] = "EEDGE";
 sType[9] = "EFACE";
-sType[10] = "COORDSYS";
-sType[11] = "CURVE ON SURFACE";
-sType[12] = "SECTION";
-sType[13] = "SURFACE";
-sType[14] = "FACE";
-sType[15] = "SHELL";
-sType[16] = "PART";
-sType[17] = "LOAD SET";        // LOAD SET
-sType[18] = "BC SET";          //SET
-sType[19] = "TEMPERATURE SET"; //SET
-sType[20] = "FORCE";
-sType[21] = "MOMENT";
-sType[22] = "PRESSURE";
-sType[23] = "RESTRAINT";
-sType[24] ="TEMP STRUCTURAL";
-sType[25] ="NET FLUX Q";
-sType[26] ="TEMP BC T";
-sType[27] ="ACCEL BODY LOAD";
-sType[28] = "ROTATIONAL BODY LOAD";
-sType[29] = "RESULTS VECTOR";
-iNoOfType=30;
+sType[10] = "DIMENSION";
+sType[11] = "COORDSYS";
+sType[12] = "CURVE ON SURFACE";
+sType[13] = "SECTION";
+sType[14] = "SURFACE";
+sType[15] = "FACE";
+sType[16] = "SHELL";
+sType[17] = "PART";
+sType[18] = "LOAD SET";        // LOAD SET
+sType[19] = "BC SET";          //SET
+sType[20] = "TEMPERATURE SET"; //SET
+sType[21] = "FORCE";
+sType[22] = "MOMENT";
+sType[23] = "PRESSURE";
+sType[24] = "RESTRAINT";
+sType[25] ="TEMP STRUCTURAL";
+sType[26] ="NET FLUX Q";
+sType[27] ="TEMP BC T";
+sType[28] ="ACCEL BODY LOAD";
+sType[29] = "ROTATIONAL BODY LOAD";
+sType[30] = "RESULTS VECTOR";
+iNoOfType=31;
 
 //USED IN ASTRIUMS QUANTA PROGRAM
 //iType[17] =(500); //WG DEF
@@ -1777,8 +1779,8 @@ Drawn = 0;
 Selectable  = 1; 
 Visable  = 1;
 bDrawLab = FALSE;
-pParent=NULL;
-next=NULL;
+pParent=nullptr;
+next= nullptr;
 
 }
 
@@ -41985,24 +41987,14 @@ void Text::Transform(C3dMatrix TMat)
 	vNorm = TMat2 * vNorm;
 	Symbol* pS = (Symbol*) pSyms->Head;
 	pS = (Symbol*)pSyms->Head;
-	while (pS != NULL)
-	{
-		pS->Transform(TMat);
-		pS = (Symbol*)pS->next;
-	}
+	BuildText();
 }
 
 void Text::Translate(C3dVector vIn)
 {
 
 	vInsPt += vIn;
-	Symbol* pS = (Symbol*)pSyms->Head;
-	pS = (Symbol*)pSyms->Head;
-	while (pS != NULL)
-	{
-		pS->Translate(vIn);
-		pS = (Symbol*)pS->next;
-	}
+	BuildText();
 }
 
 void Text::Move(C3dVector vM)
@@ -42225,52 +42217,50 @@ IMPLEMENT_DYNAMIC(DIM, CObject)
 
 DIM::DIM()
 {
-	G_Object::G_Object();
-	pParent = NULL;
-	Drawn = 0;
-	Selectable = 1;
-	Visable = 1;
+	//0 N/A 
+//1 Aligned Linear
+//2 H/V Linear
+//3 Dia
+//4 Rad
 	iObjType = 10;
+	iType = 1;
 	iLabel = -1;
 	iColour = 100;
 	sText = "";
-	inPt.Set(0, 0, 1);
-	vOMatWP.MakeUnit();
-	dScl = 1;
-	//0 N/A 
-    //1 Aligned Linear
-    //2 H/V Linear
-    //3 Dia
-    //4 Rad
-	iType = 0;
-	pRefObjs = nullptr;
 	pDimObjs = nullptr;
-	sText = "";;
+	pPt1 = nullptr;      //1st dim point
+	pPt2 = nullptr;      //2nd dim point or null
+	pInsPt = nullptr;    //Ins Point
+	dDrgScl = 1;
+	vNorm.Set(0.0,0.0,1.0);                  //Normal to dim
+	vDir.Set(1.0,0.0,0.0);                   //Direction of dim
+
 }
 
-DIM::DIM(C3dVector invInPt, C3dMatrix inMat, int iniLab, double indScl, CString isText)
+DIM::DIM(C3dVector vPt1,
+	     C3dVector vPt2,
+	     C3dVector vInsPt,
+	     C3dVector vN,
+	     C3dVector vD,
+	     int iLab)
 {
-	G_Object::G_Object();
-	pParent = NULL;
-	Drawn = 0;
-	Selectable = 1;
-	Visable = 1;
-	iObjType = 10;
-	iLabel = iniLab;
+//0 N/A 
+//1 Aligned Linear
+//2 H/V Linear
+//3 Dia
+//4 Rad
+	iObjType = 10;       //Type Dimension
+	iType = 1;        //Aligned dimension
+	iLabel = iLab;
 	iColour = 100;
-	sText = isText;
-	inPt = invInPt;
-	vOMatWP = inMat;
-	dScl = indScl;
-	//0 N/A 
-    //1 Aligned Linear
-    //2 H/V Linear
-    //3 Dia
-    //4 Rad
-	iType = 0;
-	pRefObjs = nullptr;
+	sText = "";
 	pDimObjs = nullptr;
-	sText = "";;
+	pPt1 = nullptr;      //1st dim point
+	pPt2 = nullptr;      //2nd dim point or null
+	pInsPt = nullptr;    //Ins Point
+	dDrgScl = 1;
+	vNorm = vN;
+	vDir = vD;
 }
 
 DIM::~DIM()

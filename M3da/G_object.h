@@ -2151,19 +2151,20 @@ public:
 
 };
 
+//Baseline DIm is aligned type 1
 class DIM : public G_Object
 {
 	DECLARE_DYNAMIC(DIM)
 public:
 	//pObjext* 
-	C3dVector inPt;         //Insertion Point
-	C3dMatrix vOMatWP;		//WP alignement matrix
-	double dScl = 1;        //Text Height
-	CString sText;          //The text on the dim
-	BOOL bArrowsIn = TRUE;  //arrow point in from leaders
-	//The object that where dimentsioned  eg Circle Line Points ->Get_Centroid values
-	//use Clear to remove in cLinkedList
-	cLinkedList* pRefObjs = NULL;
+	CvPt_Object* pPt1 = nullptr;      //1st dim point
+	CvPt_Object* pPt2 = nullptr;      //2nd dim point or null
+	CvPt_Object* pInsPt = nullptr;    //Ins Point
+	C3dVector vNorm;                  //Normal to dim
+	C3dVector vDir;                   //Direction of dim
+	double dDrgScl;						//Drawing scale Height
+	CString sText;						//The text on the dim
+	BOOL bArrowsIn = TRUE;				//arrow point in from leaders
 	//The dim draw grachics objects
 	//use DeleteAll to delete in cLinkedList before regenerating
 	cLinkedList* pDimObjs= NULL;             
@@ -2174,7 +2175,13 @@ public:
     //4 Rad
 
 	DIM();
-	DIM(C3dVector vInPt, C3dMatrix inMat, int iLab, double dScl, CString isText);
+	DIM(C3dVector vPt1,
+		C3dVector vPt2,
+		C3dVector vInsPt,
+		C3dVector vN,
+		C3dVector vD,
+		int iLab);
+
 	~DIM();
 	//virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	//virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);

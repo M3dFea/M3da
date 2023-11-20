@@ -1027,7 +1027,6 @@ void CM3daDoc::OnImportLoadbmp()
 {
     // TODO: Add your command handler code here
     outtext1("IMPORT BMP FILE");
-    FILE* pFile;
     //TODO: Add your command handler code here
     CFileDialog FDia(TRUE, "BMP", "*.BMP", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
     FDia.DoModal();
@@ -1035,7 +1034,7 @@ void CM3daDoc::OnImportLoadbmp()
     CString sFile = FDia.GetFileName();
     if (sFile != "")
     {
-       if (cDBase->S_loadBMP(sPath, sFile));
+       if (cDBase->S_loadBMP(sPath, sFile))
 	      cDBase->insBackGround();
     }
 }
@@ -2061,11 +2060,11 @@ void CM3daDoc::OnEditLabel()
 {
   // TODO: Add your command handler code here
   outtextMSG2("LAB");
-
-	  int iSelLabType = cDBase->GetItemType();
-	  char sStr[10];
-	  itoa(iSelLabType, sStr, 10);
-	  outtextMSG2(sStr);
+  int iSelLabType = cDBase->GetItemType();
+  char sStr[10];
+  itoa(iSelLabType, sStr, 10);
+  //_itoa_s(iSelLabType, sStr, sizeof(sStr), 10);
+  outtextMSG2(sStr);
 }
 
 
@@ -5800,7 +5799,6 @@ void CM3daDoc::OnToolsPlanet()
 	// TODO: Add your command handler code here
 		// TODO: Add your command handler code here
 	outtext1("IMPORT EARTH BMP FILE");
-	FILE* pFile;
 	//TODO: Add your command handler code here
 	CFileDialog FDia(TRUE, "BMP", "*.BMP", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
 	FDia.DoModal();
@@ -6521,7 +6519,6 @@ void CM3daDoc::OnToolsInsertbitmapbackground()
 {
 	// TODO: Add your command handler code here
 	outtext1("IMPORT BMP BACKGROUND FILE");
-	FILE* pFile;
 	//TODO: Add your command handler code here
 	CFileDialog FDia(TRUE, "BMP", "*.BMP", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
 	FDia.DoModal();
