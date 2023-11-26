@@ -5927,6 +5927,24 @@ void DBase::AddDragLN(C3dVector v1)
 	pDragObj = (NLine*)LnIn;
 }
 
+void DBase::AddDragDIM(C3dVector v1, C3dVector v2)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+
+	DIM* pDIM = new DIM(v1,v2,v2,vO,vN,vDir,gTXT_HEIGHT,-1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*) pDIM;
+}
 
 
 NLine* DBase::AddLNfromDrag(C3dVector v2)
@@ -5951,6 +5969,27 @@ NLine* DBase::AddLNfromDrag(C3dVector v2)
 		ReDraw();
 	}
 	return (LnIn);
+}
+
+DIM* DBase::AddDIMAfromDrag(C3dVector v3)
+{
+
+	DIM* pD = nullptr;
+	C3dMatrix mTran;
+	C3dVector vn1, vn2;
+	WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+	mTran = pWPlane->mWPTransform;
+	if (pDragObj != nullptr)
+	{
+		pDragObj->DragUpdate(v3, mTran);
+		pD = (DIM*) pDragObj;
+		pDragObj = nullptr;
+
+		//iDIMLabCnt++;  NEW DIM COUNT
+		AddObj(pD);
+		ReDraw();
+	}
+	return (pD);
 }
 
 

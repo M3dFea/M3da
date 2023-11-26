@@ -199,6 +199,7 @@ const int MAX_RESSETS=50000;
 class Part;
 class Graph;
 class ME_Object;
+class NLine;
 class G_Object;
 class G_ObjectD;
 class SecTable;
@@ -2131,6 +2132,7 @@ public:
 	Text(C3dVector vInPt, C3dVector vN, C3dVector vTDir,int iLab, CString sT,double dH);
 	~Text();
 	virtual void BuildText();
+	virtual double GetLength();
 	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
 	virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
@@ -2156,18 +2158,46 @@ class DIM : public G_Object
 {
 	DECLARE_DYNAMIC(DIM)
 public:
-	//pObjext* 
+	//These next 3 are the grips for the DIM 
+	double dDimScl;
+	double dDrgScl;						//Drawing scale Height
+	double dDist = 0;
+	BOOL bTextOverRide = FALSE;
+	CString sText;						//The text on the dim
+	Text* pText = nullptr;
+	BOOL bArrowsIn = TRUE;				//arrow point in from leaders
+	C3dVector* vInsPt;					//Ins Point
+	C3dVector vOrig;					//Origin
+	C3dVector vNorm;					//Normal to dim
+	C3dVector vDir;						//WP Direction of dim
+
+	C3dVector* vPt1;					//1st dim point
+	C3dVector* vPt2;					//2nd dim point or null
+	C3dVector vDX;                      //x dir of dim
+	C3dVector vDY;                      //y dir of dim
+
+	C3dVector vPP1;                       
+	C3dVector vPP2;
+	C3dVector vPP1D;
+	C3dVector vPP1A1;					//Arrow point 1
+	C3dVector vPP1A2;					//Arrow point 2
+	C3dVector vPP2D;
+	C3dVector vPP2A1;					//Arrow point 1
+	C3dVector vPP2A2;					//Arrow point 2
+
+	//below are the projected points back to WP
+	//these are se;ectable
 	CvPt_Object* pPt1 = nullptr;      //1st dim point
 	CvPt_Object* pPt2 = nullptr;      //2nd dim point or null
 	CvPt_Object* pInsPt = nullptr;    //Ins Point
-	C3dVector vNorm;                  //Normal to dim
-	C3dVector vDir;                   //Direction of dim
-	double dDrgScl;						//Drawing scale Height
-	CString sText;						//The text on the dim
-	BOOL bArrowsIn = TRUE;				//arrow point in from leaders
-	//The dim draw grachics objects
-	//use DeleteAll to delete in cLinkedList before regenerating
-	cLinkedList* pDimObjs= NULL;             
+
+	NLine* pLeader1 = nullptr;
+	NLine* pLeader2 = nullptr;
+	NLine* pDimLine1 = nullptr;  //one halve of dim line
+	NLine* pDimLine2 = nullptr;  //other halve
+
+
+           
 	//0 N/A 
     //1 Aligned Linear
     //2 H/V Linear
@@ -2178,13 +2208,16 @@ public:
 	DIM(C3dVector vPt1,
 		C3dVector vPt2,
 		C3dVector vInsPt,
+		C3dVector vO,
 		C3dVector vN,
 		C3dVector vD,
+		double dDScl,
 		int iLab);
 
 	~DIM();
 	//virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
-	//virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
 	//virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
 	//virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
 	//virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);

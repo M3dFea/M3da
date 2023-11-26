@@ -41780,6 +41780,16 @@ Text::~Text()
 		pSyms->DeleteAll();
 }
 
+double Text::GetLength()
+{
+	double drc = 0;
+	int iL = 0;
+
+	iL = sText.GetLength();
+	drc = iL * dAveW* dTextHeight / dAveH;
+	return(drc);
+}
+
 void Text::BuildText()
 {
 	double dScl = 0;
@@ -41982,19 +41992,38 @@ void Text::Transform(C3dMatrix TMat)
 	TMat2 = TMat;
 	TMat2.ClearTranslations();
 	vInsPt = TMat * vInsPt;
+	inPt->Pt_Point->x = vInsPt.x;
+	inPt->Pt_Point->y = vInsPt.y;
+	inPt->Pt_Point->z = vInsPt.z;
 
 	vDir = TMat2 * vDir;
 	vNorm = TMat2 * vNorm;
 	Symbol* pS = (Symbol*) pSyms->Head;
 	pS = (Symbol*)pSyms->Head;
-	BuildText();
+	//BuildText();
+
+	while (pS != NULL)
+	{
+		pS->Transform(TMat);
+		pS = (Symbol*)pS->next;
+	}
 }
 
 void Text::Translate(C3dVector vIn)
 {
 
 	vInsPt += vIn;
-	BuildText();
+	inPt->Pt_Point->x = vInsPt.x;
+	inPt->Pt_Point->y = vInsPt.y;
+	inPt->Pt_Point->z = vInsPt.z;
+	//BuildText();
+	Symbol* pS = nullptr;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Translate(vIn);
+		pS = (Symbol*)pS->next;
+	}
 }
 
 void Text::Move(C3dVector vM)
@@ -42227,10 +42256,11 @@ DIM::DIM()
 	iLabel = -1;
 	iColour = 100;
 	sText = "";
-	pDimObjs = nullptr;
+
 	pPt1 = nullptr;      //1st dim point
 	pPt2 = nullptr;      //2nd dim point or null
 	pInsPt = nullptr;    //Ins Point
+	dDimScl = 1;
 	dDrgScl = 1;
 	vNorm.Set(0.0,0.0,1.0);                  //Normal to dim
 	vDir.Set(1.0,0.0,0.0);                   //Direction of dim
@@ -42240,8 +42270,10 @@ DIM::DIM()
 DIM::DIM(C3dVector vPt1,
 	     C3dVector vPt2,
 	     C3dVector vInsPt,
+	     C3dVector vO,
 	     C3dVector vN,
 	     C3dVector vD,
+	     double dDScl,
 	     int iLab)
 {
 //0 N/A 
@@ -42250,23 +42282,279 @@ DIM::DIM(C3dVector vPt1,
 //3 Dia
 //4 Rad
 	iObjType = 10;       //Type Dimension
-	iType = 1;        //Aligned dimension
+	iType = 1;			 //Aligned dimension
 	iLabel = iLab;
-	iColour = 100;
+	iColour = 124;
 	sText = "";
-	pDimObjs = nullptr;
 	pPt1 = nullptr;      //1st dim point
 	pPt2 = nullptr;      //2nd dim point or null
 	pInsPt = nullptr;    //Ins Point
 	dDrgScl = 1;
+	dDimScl = dDScl;
+	vOrig = vO;
 	vNorm = vN;
 	vDir = vD;
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPP1 = vPt1;
+	vPP2 = vPt2;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+	dDist = vPP1.Dist(vPP2) / dDrgScl;
+	char buff[200];
+	sprintf_s(buff, "%.2f", dDist);
+	sText = buff;
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX = vPP2 - vPP1; vDX.Normalize();
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vPP1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vPP2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Leader Line
+	pLeader1 = new NLine();
+	pLeader1->Create(vPP1, vInsPt,-1,this);
+	pLeader1->iColour = iColour;
+	pLeader2 = new NLine();
+	pLeader2->Create(vPP2, vInsPt, -1, this);
+	pLeader2->iColour = iColour;
+	pDimLine1 = new NLine();
+	pDimLine1->Create(vPP1, vPP2, -1, this);
+	pDimLine1->iColour = iColour;
+	pDimLine2 = new NLine();
+	pDimLine2->Create(vPP1, vPP2, -1, this);
+	pDimLine2->iColour = iColour;
+	//Text insertion point - need to lift off the dim line slightly
+
+	pText = new Text(vInsPt, vNorm, vDX, -1, sText, dDimScl);
+	pText->iColour = iColour;
 }
 
 DIM::~DIM()
 {
+	if (pPt1 != nullptr)
+	{
+		delete (pPt1);
+		pPt1 = nullptr;
+	}
+	if (pPt2 != nullptr)
+	{
+		delete (pPt2);
+		pPt2 = nullptr;
+	}
+	if (pInsPt != nullptr)
+	{
+		delete (pInsPt);
+		pInsPt = nullptr;
+	}
+
+
+
+
+	   
+	    
 }
 
+void DIM::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	//pPt1->OglDrawW(iDspFlgs,dS1,dS2);
+	//pPt2->OglDrawW(iDspFlgs, dS1, dS2);
+	pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
+	pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
+	pLeader2->OglDrawW(iDspFlgs, dS1, dS2);
+	pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
+	pDimLine2->OglDrawW(iDspFlgs, dS1, dS2);
+	pText->OglDrawW(iDspFlgs, dS1, dS2);
+	//Filled Arrow Heads
+	glColor3fv(cols[iColour]);
+	glBegin(GL_POLYGON);
+	  glVertex3f(vPP1D.x, vPP1D.y, vPP1D.z);
+	  glVertex3f(vPP1A1.x, vPP1A1.y, vPP1A1.z);
+	  glVertex3f(vPP1A2.x, vPP1A2.y, vPP1A2.z);
+	glEnd();
+	glBegin(GL_POLYGON);
+	  glVertex3f(vPP2D.x, vPP2D.y, vPP2D.z);
+	  glVertex3f(vPP2A1.x, vPP2A1.y, vPP2A1.z);
+	  glVertex3f(vPP2A2.x, vPP2A2.y, vPP2A2.z);
+	glEnd();
+}
+
+
+void DIM::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	C3dVector vP1toIns , vT, vOff, vLOff;
+	vOff = vDY * dDimScl * 0.25;    //Text Offset
+	vLOff = (vPP1D - vPP1);
+	vLOff.Normalize();
+	vLOff *= dDimScl * 0.5;         //Leader offset
+	double dExtY = 0;
+	vP1toIns = inPt;
+	vP1toIns -= vPP1;
+	dExtY = vP1toIns.Dot(vDY);
+	vPP1D = vPP1;
+	vPP1D += vDY* dExtY;
+	vPP2D = vPP2;
+	vPP2D += vDY * dExtY;
+
+	pInsPt->SetTo(inPt);
+	// THE LEADERS
+	pLeader1->cPts[0]->SetTo(vPP1+ vLOff);
+	pLeader2->cPts[0]->SetTo(vPP2 + vLOff);
+	pLeader1->cPts[1]->SetTo(vPP1D + vLOff);
+	pLeader2->cPts[1]->SetTo(vPP2D + vLOff);
+
+	//THE DIMENSION LINES
+	//need to see if lines are in or out and calc end points
+	//and arrow heads
+	C3dVector vDimDir1; 
+	C3dVector vInPtDir1;
+	C3dVector vDimDir2;
+	C3dVector vInPtDir2;
+	C3dVector vDimDir;
+	C3dVector vExt;
+	C3dVector vYPOff;
+	double dDotOut1;
+	double dDotOut2;
+	double dDLen1;
+	double dDLen2;
+	//check to see if insersion point is outside on vPP1D side
+	vDimDir1 = (vPP2D - vPP1D);
+	vDimDir1.Normalize();
+	vInPtDir1 = (inPt - vPP1D);
+	dDLen1 = vInPtDir1.Mag();
+	vInPtDir1.Normalize();
+	dDotOut1 = vDimDir1.Dot(vInPtDir1);
+	//check to see if insersion point is outside on vPP2D side
+	vDimDir2 = (vPP1D - vPP2D);
+	vDimDir2.Normalize();
+	vInPtDir2 = (inPt - vPP2D);
+	dDLen2 = vInPtDir2.Mag();
+	vInPtDir2.Normalize();
+	dDotOut2 = vDimDir2.Dot(vInPtDir2);
+	if (dDotOut1 < 0)
+	{
+		vExt = vDimDir1; vExt *= dDLen1;
+		vT = vPP1D; vT -= vExt;
+		pDimLine1->cPts[0]->SetTo(vPP1D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vDimDir1; vDimDir.Normalize(); //
+		vDimDir *= 1.2;
+		vYPOff = vDY;
+		vYPOff *= 0.3;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D - vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D - vT;
+
+		vExt *= 0.5;
+		vT = vPP2D; vT += vExt;
+		pDimLine2->cPts[0]->SetTo(vPP2D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP2D
+		vDimDir = vDimDir1; vDimDir.Normalize(); //
+		vDimDir *= 1.2;
+		vYPOff = vDY;
+		vYPOff *= 0.3;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D + vT;
+	}
+	else if (dDotOut2 < 0)
+	{
+		//Also need to add length of text
+		dDLen2 += pText->GetLength();
+		vExt = vDimDir2; vExt *= dDLen2;
+		vT = vPP2D; vT -= vExt;
+		pDimLine1->cPts[0]->SetTo(vPP2D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vDimDir2; vDimDir.Normalize(); //
+		vDimDir *= 1.2;
+		vYPOff = vDY;
+		vYPOff *= 0.3;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D + vT;
+
+		vExt *= 0.5;
+		vT = vPP1D; vT += vExt;
+		pDimLine2->cPts[0]->SetTo(vPP1D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP2D
+		vDimDir = vDimDir2; vDimDir.Normalize(); //
+		vDimDir *= 1.2;
+		vYPOff = vDY;
+		vYPOff *= 0.3;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D - vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D - vT;
+	}
+	else //insertion point is between leaders
+	{
+		vT = vPP2D; vT += vPP1D; vT *= 0.5;
+		pDimLine1->cPts[0]->SetTo(vPP1D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		pDimLine2->cPts[0]->SetTo(vPP2D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vPP2D - vPP1D; vDimDir.Normalize(); //
+		vDimDir *= 1.2;
+		vYPOff = vDY;
+		vYPOff *= 0.3;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D + vT;
+		//Arrow points vPP2D
+		vDimDir = vPP1D - vPP2D; vDimDir.Normalize(); //
+		vDimDir *= 1.2;
+		vYPOff = vDY;
+		vYPOff *= 0.3;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D + vT;
+	}
+
+	//THE TEXT
+	C3dVector vTxtTrans;
+	vTxtTrans = inPt;
+	vTxtTrans += vOff;
+	vTxtTrans-=	pText->vInsPt;
+	pText->Translate(vTxtTrans);
+}
 
 //26/09/2016
 //symbol class used for compounds of lines
