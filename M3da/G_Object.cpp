@@ -42232,19 +42232,179 @@ void Text::Info()
 	outtext1(S1);
 }
 
-
-
 //*****************************************************************
-// BlowsR 14/07/2020
-// Text Object added
-// linked list of symbols
+// BlowsR 27/11/2023
+// Aligned Dimension
 //*****************************************************************
 IMPLEMENT_DYNAMIC(DIM, CObject)
-//DIM();
-//DIM(C3dVector vInPt, C3dVector vN, int iLab, double dScl);
-//~DIM();
 
 DIM::DIM()
+{
+	//0 N/A 
+//1 Aligned Linear
+//2 H/V Linear
+//3 Dia
+//4 Rad
+	iObjType = 10;
+	iType = 0;
+	iLabel = -1;
+	iColour = 100;
+	sText = "";
+}
+
+DIM::DIM(C3dVector vPt1,
+	C3dVector vPt2,
+	C3dVector vInsPt,
+	C3dVector vO,
+	C3dVector vN,
+	C3dVector vD,
+	double dDScl,
+	int iLab)
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 H/V Linear
+	//3 Dia
+	//4 Rad
+	iObjType = 10;       //Type Dimension
+	iType = 0;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 124;
+	sText = "";
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	vDInsPt = vInsPt;				//Ins Point
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+DIM::~DIM()
+{
+	if (pInsPt != nullptr)
+	{
+		delete (pInsPt);
+		pInsPt = nullptr;
+	}
+}
+
+void  DIM::Build()
+{
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+}
+
+void DIM::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+
+}
+
+G_ObjectD DIM::SelDist(CPoint InPT, Filter FIL)
+{
+	CPoint cPt;
+	G_ObjectD Ret;
+	if (pInsPt != nullptr)
+	{
+		Ret = pInsPt->SelDist(InPT, FIL);
+		Ret.pObj = this;
+	}
+	else
+	{
+		Ret.Dist = 100000000000000.0;;
+		Ret.pObj = this;
+	}
+	return (Ret);
+}
+
+void DIM::SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran)
+{
+	if (pInsPt != nullptr)
+	{
+		pInsPt->SetToScr(pModMat, pScrTran);
+	}
+}
+
+void DIM::HighLight(CDC* pDC)
+{
+	if (pInsPt != nullptr)
+	{
+		pInsPt->HighLight(pDC);
+	}
+}
+
+void DIM::Serialize(CArchive& ar, int iV)
+{
+	if (ar.IsStoring())
+	{
+		// TODO: add storing code here
+		G_Object::Serialize(ar, iV);
+		ar << dDimScl;
+		ar << dDrgScl;						//Drawing scale Height
+		ar << vDPt1.x;						//1st dim point
+		ar << vDPt1.y;
+		ar << vDPt1.z;
+		ar << vDPt2.x;						//2nd dim point or null
+		ar << vDPt2.y;
+		ar << vDPt2.z;
+		ar << vDInsPt.x;					//Ins Point
+		ar << vDInsPt.y;
+		ar << vDInsPt.z;
+		ar << vOrig.x;						//Origin
+		ar << vOrig.y;
+		ar << vOrig.z;
+		ar << vNorm.x;					//Normal to dim
+		ar << vNorm.y;
+		ar << vNorm.z;
+		ar << vDir.x;					//WP Direction of dim
+		ar << vDir.y;
+		ar << vDir.z;
+		ar << sText;						//The text on the dim
+		ar << bTextOverRide;
+	}
+	else
+	{
+		G_Object::Serialize(ar, iV);
+		ar >> dDimScl;
+		ar >> dDrgScl;						//Drawing scale Height
+		ar >> vDPt1.x;						//1st dim point
+		ar >> vDPt1.y;
+		ar >> vDPt1.z;
+		ar >> vDPt2.x;						//2nd dim point or null
+		ar >> vDPt2.y;
+		ar >> vDPt2.z;
+		ar >> vDInsPt.x;					//Ins Point
+		ar >> vDInsPt.y;
+		ar >> vDInsPt.z;
+		ar >> vOrig.x;						//Origin
+		ar >> vOrig.y;
+		ar >> vOrig.z;
+		ar >> vNorm.x;					//Normal to dim
+		ar >> vNorm.y;
+		ar >> vNorm.z;
+		ar >> vDir.x;					//WP Direction of dim
+		ar >> vDir.y;
+		ar >> vDir.z;
+		ar >> sText;						//The text on the dim
+		ar >> bTextOverRide;
+		Build();
+	}
+}
+
+void DIM::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+
+}
+
+//*****************************************************************
+// BlowsR 27/11/2023
+// Aligned Dimension
+//*****************************************************************
+IMPLEMENT_DYNAMIC(DIMA, CObject)
+
+DIMA::DIMA()
 {
 	//0 N/A 
 //1 Aligned Linear
@@ -42256,7 +42416,6 @@ DIM::DIM()
 	iLabel = -1;
 	iColour = 100;
 	sText = "";
-
 	pPt1 = nullptr;      //1st dim point
 	pPt2 = nullptr;      //2nd dim point or null
 	pInsPt = nullptr;    //Ins Point
@@ -42267,14 +42426,14 @@ DIM::DIM()
 
 }
 
-DIM::DIM(C3dVector vPt1,
-	     C3dVector vPt2,
-	     C3dVector vInsPt,
-	     C3dVector vO,
-	     C3dVector vN,
-	     C3dVector vD,
-	     double dDScl,
-	     int iLab)
+DIMA::DIMA(C3dVector vPt1,
+	       C3dVector vPt2,
+	       C3dVector vInsPt,
+	       C3dVector vO,
+	       C3dVector vN,
+	       C3dVector vD,
+	       double dDScl,
+	       int iLab)
 {
 //0 N/A 
 //1 Aligned Linear
@@ -42291,16 +42450,24 @@ DIM::DIM(C3dVector vPt1,
 	pInsPt = nullptr;    //Ins Point
 	dDrgScl = 1;
 	dDimScl = dDScl;
+	vDInsPt= vInsPt;					//Ins Point
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
 	vOrig = vO;
 	vNorm = vN;
 	vDir = vD;
+	Build();
+}
+
+
+void  DIMA::Build()
+{
 	//Transform all to DIM plain (for this is workplane)
 	C3dMatrix RMat;
 	RMat.MakeUnit();
 	C3dVector vX;
 	C3dVector vY;
 	C3dVector vZ;
-
 	vZ = vNorm;
 	vX = vDir;
 	vZ.Normalize();
@@ -42311,8 +42478,8 @@ DIM::DIM(C3dVector vPt1,
 	RMat.SetColVec(2, vY);
 	RMat.SetColVec(3, vZ);
 	RMat.Transpose();
-	vPP1 = vPt1;
-	vPP2 = vPt2;
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
 	vPP1 -= vOrig;
 	vPP2 -= vOrig;
 	vPP1 = RMat * vPP1;
@@ -42332,19 +42499,18 @@ DIM::DIM(C3dVector vPt1,
 	vPP2D = vPP2;;
 	vDX = vPP2 - vPP1; vDX.Normalize();
 	vDY = vNorm.Cross(vDX); vDY.Normalize();
-
 	pPt1 = new CvPt_Object();
-	pPt1->Create(vPP1, 1, -1, 0, 0, 11, nullptr);
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
 	pPt2 = new CvPt_Object();
-	pPt2->Create(vPP2, 1, -1, 0, 0, 11, nullptr);
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
 	pInsPt = new CvPt_Object();
-	pInsPt->Create(vInsPt, 1, -1, 0, 0, 11, nullptr);
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
 	//First Leader Line
 	pLeader1 = new NLine();
-	pLeader1->Create(vPP1, vInsPt,-1,this);
+	pLeader1->Create(vPP1, vDInsPt, -1, this);
 	pLeader1->iColour = iColour;
 	pLeader2 = new NLine();
-	pLeader2->Create(vPP2, vInsPt, -1, this);
+	pLeader2->Create(vPP2, vDInsPt, -1, this);
 	pLeader2->iColour = iColour;
 	pDimLine1 = new NLine();
 	pDimLine1->Create(vPP1, vPP2, -1, this);
@@ -42353,12 +42519,11 @@ DIM::DIM(C3dVector vPt1,
 	pDimLine2->Create(vPP1, vPP2, -1, this);
 	pDimLine2->iColour = iColour;
 	//Text insertion point - need to lift off the dim line slightly
-
-	pText = new Text(vInsPt, vNorm, vDX, -1, sText, dDimScl);
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sText, dDimScl);
 	pText->iColour = iColour;
 }
 
-DIM::~DIM()
+DIMA::~DIMA()
 {
 	if (pPt1 != nullptr)
 	{
@@ -42383,7 +42548,7 @@ DIM::~DIM()
 	    
 }
 
-void DIM::OglDrawW(int iDspFlgs, double dS1, double dS2)
+void DIMA::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
 	//pPt1->OglDrawW(iDspFlgs,dS1,dS2);
 	//pPt2->OglDrawW(iDspFlgs, dS1, dS2);
@@ -42393,8 +42558,16 @@ void DIM::OglDrawW(int iDspFlgs, double dS1, double dS2)
 	pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
 	pDimLine2->OglDrawW(iDspFlgs, dS1, dS2);
 	pText->OglDrawW(iDspFlgs, dS1, dS2);
-	//Filled Arrow Heads
+
 	glColor3fv(cols[iColour]);
+	//Dim attachment points
+	glPointSize(5);
+	glBegin(GL_POINTS);
+	  glVertex3f(vPP1.x, vPP1.y, vPP1.z);
+	  glVertex3f(vPP2.x, vPP2.y, vPP2.z);
+	glEnd();
+	//Filled Arrow Heads
+
 	glBegin(GL_POLYGON);
 	  glVertex3f(vPP1D.x, vPP1D.y, vPP1D.z);
 	  glVertex3f(vPP1A1.x, vPP1A1.y, vPP1A1.z);
@@ -42407,8 +42580,19 @@ void DIM::OglDrawW(int iDspFlgs, double dS1, double dS2)
 	glEnd();
 }
 
+void DIMA::Colour(int iCol)
+{
+	this->iColour = iCol;
+	pInsPt->iColour=iCol;
+	pLeader1->iColour = iCol;
+	pLeader2->iColour = iCol;
+	pDimLine1->iColour = iCol;
+	pDimLine2->iColour = iCol;
+	pText->iColour = iCol;
 
-void DIM::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+}
+
+void DIMA::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
 	C3dVector vP1toIns , vT, vOff, vLOff;
 	vOff = vDY * dDimScl * 0.25;    //Text Offset

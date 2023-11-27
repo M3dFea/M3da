@@ -5927,7 +5927,7 @@ void DBase::AddDragLN(C3dVector v1)
 	pDragObj = (NLine*)LnIn;
 }
 
-void DBase::AddDragDIM(C3dVector v1, C3dVector v2)
+void DBase::AddDragDIMA(C3dVector v1, C3dVector v2)
 {
 	C3dVector vN, vDir, vO;
 	vO.Set(0, 0, 0);
@@ -5939,7 +5939,7 @@ void DBase::AddDragDIM(C3dVector v1, C3dVector v2)
 	vN -= vO;
 	vDir -= vO;
 
-	DIM* pDIM = new DIM(v1,v2,v2,vO,vN,vDir,gTXT_HEIGHT,-1);
+	DIM* pDIM = new DIMA(v1,v2,v2,vO,vN,vDir,gTXT_HEIGHT,-1);
 	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
 	if (pDragObj != nullptr)
 		delete(pDragObj);

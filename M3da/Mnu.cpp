@@ -3862,7 +3862,7 @@ int zDIMA_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		{
 			cDBase->bIsDrag = TRUE;
 			p2 = cDBase->DB_PopBuff();
-			cDBase->AddDragDIM(p1,p2);
+			cDBase->AddDragDIMA(p1,p2);
 			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
 			iResumePos = 4;
 			iCancelPos = 100;

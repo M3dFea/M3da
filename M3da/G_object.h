@@ -2158,25 +2158,71 @@ class DIM : public G_Object
 {
 	DECLARE_DYNAMIC(DIM)
 public:
-	//These next 3 are the grips for the DIM 
+	//The next need serialising
 	double dDimScl;
 	double dDrgScl;						//Drawing scale Height
-	double dDist = 0;
-	BOOL bTextOverRide = FALSE;
-	CString sText;						//The text on the dim
-	Text* pText = nullptr;
-	BOOL bArrowsIn = TRUE;				//arrow point in from leaders
-	C3dVector* vInsPt;					//Ins Point
+	C3dVector vDPt1;					//1st dim point
+	C3dVector vDPt2;					//2nd dim point or null
+	C3dVector vDInsPt;					//Ins Point
+	CvPt_Object* pInsPt = nullptr;    //Ins Point
 	C3dVector vOrig;					//Origin
 	C3dVector vNorm;					//Normal to dim
 	C3dVector vDir;						//WP Direction of dim
+	CString sText;						//The text on the dim
+	BOOL bTextOverRide = FALSE;
+	//*****************************************************************
+	//0 N/A 
+	//1 Aligned Linear
+	//2 H/V Linear
+	//3 Dia
+	//4 Rad
 
-	C3dVector* vPt1;					//1st dim point
-	C3dVector* vPt2;					//2nd dim point or null
+	DIM();
+	DIM(C3dVector vPt1,
+		C3dVector vPt2,
+		C3dVector vInsPt,
+		C3dVector vO,
+		C3dVector vN,
+		C3dVector vD,
+		double dDScl,
+		int iLab);
+
+
+	~DIM();
+	virtual void Build();
+	//virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
+	//virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
+	virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
+	virtual void HighLight(CDC* pDC);
+	//virtual void Transform(C3dMatrix TMAt);
+	//virtual void Translate(C3dVector vIn);
+	//virtual void Move(C3dVector vM);
+	virtual void Serialize(CArchive& ar, int iV);
+	//virtual C3dVector Get_Centroid();
+	//virtual G_Object* Copy(G_Object* Parrent);
+	//virtual CString GetName();
+	//virtual int GetVarHeaders(CString sVar[]);
+	//virtual int GetVarValues(CString sVar[]);
+	//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+	//virtual void Info();
+};
+
+//Baseline DIm is aligned type 1
+class DIMA : public DIM
+{
+	DECLARE_DYNAMIC(DIMA)
+public:
+
+	//******************************************************************
+	double dDist = 0;
+	Text* pText = nullptr;
+	BOOL bArrowsIn = TRUE;				//arrow point in from leaders
 	C3dVector vDX;                      //x dir of dim
 	C3dVector vDY;                      //y dir of dim
-
-	C3dVector vPP1;                       
+	C3dVector vPP1;                     //Projected pick points  
 	C3dVector vPP2;
 	C3dVector vPP1D;
 	C3dVector vPP1A1;					//Arrow point 1
@@ -2189,7 +2235,7 @@ public:
 	//these are se;ectable
 	CvPt_Object* pPt1 = nullptr;      //1st dim point
 	CvPt_Object* pPt2 = nullptr;      //2nd dim point or null
-	CvPt_Object* pInsPt = nullptr;    //Ins Point
+
 
 	NLine* pLeader1 = nullptr;
 	NLine* pLeader2 = nullptr;
@@ -2204,20 +2250,22 @@ public:
     //3 Dia
     //4 Rad
 
-	DIM();
-	DIM(C3dVector vPt1,
-		C3dVector vPt2,
-		C3dVector vInsPt,
-		C3dVector vO,
-		C3dVector vN,
-		C3dVector vD,
-		double dDScl,
-		int iLab);
+	DIMA();
+	DIMA(C3dVector vPt1,
+		 C3dVector vPt2,
+		 C3dVector vInsPt,
+		 C3dVector vO,
+		 C3dVector vN,
+		 C3dVector vD,
+		 double dDScl,
+		 int iLab);
 
-	~DIM();
+	~DIMA();
+	virtual void Build();
 	//virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
 	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual void Colour(int iCol);
 	//virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
 	//virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
 	//virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);

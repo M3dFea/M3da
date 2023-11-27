@@ -305,7 +305,7 @@ void AddCoordSys(C3dVector p1,C3dVector p2,C3dVector p3,int Lab,int Typ,int iRID
 CvPt_Object* AddPt(C3dVector InPt, int iLab,BOOL bRedraw);
 void AddPt2(double x,double y,double z, int iLab);
 void AddDragLN(C3dVector v1);
-void AddDragDIM(C3dVector v1,C3dVector v2);
+void AddDragDIMA(C3dVector v1,C3dVector v2);
 NLine* AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw);
 NLine* AddLNfromDrag(C3dVector v2);
 DIM* AddDIMAfromDrag(C3dVector v3);
