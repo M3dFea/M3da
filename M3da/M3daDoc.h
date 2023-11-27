@@ -544,6 +544,8 @@ public:
   afx_msg void OnQfilterCurves();
   afx_msg void OnQfilterSurface();
   afx_msg void OnQfilterAll();
+  afx_msg void OnDimensiontoolsDimsize();
+  afx_msg void OnDimensiontoolsAligneddim();
 };
 
 

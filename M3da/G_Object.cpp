@@ -17,6 +17,7 @@ double gFC_SIZE = 3;
 double gWP_SIZE = 12;
 double gBM_SIZE = 2;
 double gTXT_SIZE = 2;
+double gDIM_SIZE = 0.5;
 //END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -1909,6 +1910,10 @@ void G_Object::Serialize(CArchive& ar,int iV)
 CString G_Object::ToString()
 {
 return("");
+}
+
+void G_Object::Build()
+{
 }
 
 void G_Object::Info()
@@ -42395,7 +42400,7 @@ void DIM::Serialize(CArchive& ar, int iV)
 
 void DIM::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
-
+	vDInsPt = inPt;
 }
 
 //*****************************************************************
@@ -42521,6 +42526,9 @@ void  DIMA::Build()
 	//Text insertion point - need to lift off the dim line slightly
 	pText = new Text(vDInsPt, vNorm, vDX, -1, sText, dDimScl);
 	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
 }
 
 DIMA::~DIMA()
@@ -42540,12 +42548,32 @@ DIMA::~DIMA()
 		delete (pInsPt);
 		pInsPt = nullptr;
 	}
-
-
-
-
-	   
-	    
+	if (pLeader1 != nullptr)
+	{
+		delete (pLeader1);
+		pLeader1 = nullptr;
+	}
+	if (pLeader2 != nullptr)
+	{
+		delete (pLeader2);
+		pLeader2 = nullptr;
+	}
+	if (pDimLine1 != nullptr)
+	{
+		delete (pDimLine1);
+		pDimLine1 = nullptr;
+	}
+	if (pDimLine2 != nullptr)
+	{
+		delete (pDimLine2);
+		pDimLine2 = nullptr;
+	}
+	if (pText != nullptr)
+	{
+		delete (pText);
+		pText = nullptr;
+	}
+   
 }
 
 void DIMA::OglDrawW(int iDspFlgs, double dS1, double dS2)
@@ -42594,6 +42622,7 @@ void DIMA::Colour(int iCol)
 
 void DIMA::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
+	vDInsPt = inPt;
 	C3dVector vP1toIns , vT, vOff, vLOff;
 	vOff = vDY * dDimScl * 0.25;    //Text Offset
 	vLOff = (vPP1D - vPP1);

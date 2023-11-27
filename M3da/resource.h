@@ -609,13 +609,16 @@
 #define ID_QFILTER_CURVES               33421
 #define ID_QFILTER_SURFACE              33422
 #define ID_QFILTER_ALL                  33423
+#define ID_CREATE_DIMENSIONTOOLS        33424
+#define ID_DIMENSIONTOOLS_DIMSIZE       33425
+#define ID_DIMENSIONTOOLS_ALIGNEDDIM    33426
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        365
-#define _APS_NEXT_COMMAND_VALUE         33424
+#define _APS_NEXT_COMMAND_VALUE         33427
 #define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

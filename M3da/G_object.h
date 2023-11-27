@@ -1654,6 +1654,7 @@ public:
   virtual void Create();
   virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
   virtual void Info();
+  virtual void Build();
   virtual CString ToString();
   virtual C3dVector MinPt(C3dVector inPt);
   virtual G_Object* Copy(G_Object* Parrent);
@@ -2218,7 +2219,7 @@ public:
 
 	//******************************************************************
 	double dDist = 0;
-	Text* pText = nullptr;
+
 	BOOL bArrowsIn = TRUE;				//arrow point in from leaders
 	C3dVector vDX;                      //x dir of dim
 	C3dVector vDY;                      //y dir of dim
@@ -2235,13 +2236,11 @@ public:
 	//these are se;ectable
 	CvPt_Object* pPt1 = nullptr;      //1st dim point
 	CvPt_Object* pPt2 = nullptr;      //2nd dim point or null
-
-
 	NLine* pLeader1 = nullptr;
 	NLine* pLeader2 = nullptr;
 	NLine* pDimLine1 = nullptr;  //one halve of dim line
 	NLine* pDimLine2 = nullptr;  //other halve
-
+	Text* pText = nullptr;
 
            
 	//0 N/A 

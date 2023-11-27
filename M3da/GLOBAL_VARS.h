@@ -23,3 +23,4 @@ extern int iNoSymbols;
 extern double dAveW;
 extern double dAveH;
 extern Symbol* pSymTable[10000];
+extern double gDIM_SIZE;

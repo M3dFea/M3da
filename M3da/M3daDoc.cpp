@@ -395,6 +395,8 @@ ON_COMMAND(ID_QFILTER_POINTS, &CM3daDoc::OnQfilterPoints)
 ON_COMMAND(ID_QFILTER_CURVES, &CM3daDoc::OnQfilterCurves)
 ON_COMMAND(ID_QFILTER_SURFACE, &CM3daDoc::OnQfilterSurface)
 ON_COMMAND(ID_QFILTER_ALL, &CM3daDoc::OnQfilterAll)
+ON_COMMAND(ID_DIMENSIONTOOLS_DIMSIZE, &CM3daDoc::OnDimensiontoolsDimsize)
+ON_COMMAND(ID_DIMENSIONTOOLS_ALIGNEDDIM, &CM3daDoc::OnDimensiontoolsAligneddim)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6590,4 +6592,34 @@ void CM3daDoc::OnQfilterAll()
 {
 	// TODO: Add your command handler code here
 	cDBase->QFilterAll();
+}
+
+
+void CM3daDoc::OnDimensiontoolsDimsize()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("DIMSCL");
+		sLastcmd = "DIMSCL";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnDimensiontoolsAligneddim()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		outtextMSG2("DIMA");
+		sLastcmd = "DIMA";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
 }

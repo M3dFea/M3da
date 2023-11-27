@@ -207,6 +207,11 @@ BEGIN
     END
     POPUP "Create"
     BEGIN
+        POPUP "Dimension Tools"
+        BEGIN
+            MENUITEM "Dim Size",                    ID_DIMENSIONTOOLS_DIMSIZE
+            MENUITEM "Aligned Dim",                 ID_DIMENSIONTOOLS_ALIGNEDDIM
+        END
         POPUP "Curve Tools"
         BEGIN
             MENUITEM "Ortho Snap",                  ID_CURVETOOLS_ORTHOSNAP
@@ -1349,6 +1354,12 @@ BEGIN
     ID_QFILTER_CURVES       "Pick Curves Only"
     ID_QFILTER_SURFACE      "Pick Surfaces Only"
     ID_QFILTER_ALL          "Pick All"
+END
+
+STRINGTABLE
+BEGIN
+    ID_DIMENSIONTOOLS_DIMSIZE "Set the size (text height) of dimensions."
+    ID_DIMENSIONTOOLS_ALIGNEDDIM "Create an aligned dimension."
 END
 
 #endif    // English (United States) resources

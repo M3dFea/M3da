@@ -2465,6 +2465,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "DIMSCL")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMSCL_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "DIMA")
 	  {
 		  iResumePos = 0;
@@ -4312,6 +4322,47 @@ if (iStat == 100)
 }
 MenuEnd:
 return RetVal;
+}
+
+int zDIMSCL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			char OutT[80];
+			sprintf_s(OutT, "%s %g)", "ENTER DIMENSION SIXE (", gDIM_SIZE);
+			outtext2(OutT);
+			SetFocus();
+			iStat = 1;
+		}
+		else if (iStat == 1)
+		{
+			double dH;
+			dH = atof(CInMsg);
+			if (dH <= 0)
+				dH = gDIM_SIZE;
+			else
+				gDIM_SIZE = dH;
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->bIsDrag = FALSE;
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
 }
 
 int zCIR3PT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
@@ -18696,6 +18747,9 @@ MenuEnd:
 return RetVal;
 }
 
+
+
+
 int zRESSETVECSCL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
@@ -19822,6 +19876,8 @@ int zTXTSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 MenuEnd:
 	return RetVal;
 }
+
+
 
 int zBMSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {

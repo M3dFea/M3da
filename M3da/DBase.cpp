@@ -1223,6 +1223,7 @@ void DBase::Serialize(CArchive& ar)
 		ar << gDIM_OFFSZ;
 		ar << gTXT_HEIGHT;
 		ar << gDIM_RADSZ;
+		ar << gDIM_SIZE;
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
 		ar<<DB_ObjectCount;
@@ -1293,6 +1294,10 @@ void DBase::Serialize(CArchive& ar)
 			ar >> gDIM_OFFSZ;
 			ar >> gTXT_HEIGHT;
 			ar >> gDIM_RADSZ;
+		}
+		if (iVER <= -70)
+		{
+			ar >> gDIM_SIZE;
 		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);
@@ -1385,9 +1390,15 @@ void DBase::Serialize(CArchive& ar)
 				DB_Obj[i]->iObjType = 7;
 				DB_Obj[i]->iType = 2;
 				break;
-			case 10 :
-				DB_Obj[i] = new Surf_Ex1;
-				DB_Obj[i]->Serialize(ar,iVER);
+			case 10:
+				if (iSecondaryType == 0)
+					DB_Obj[i] = new DIM();
+				else if (iSecondaryType == 1)
+					DB_Obj[i] = new DIMA();
+				DB_Obj[i]->Serialize(ar, iVER);
+				DB_Obj[i]->iObjType = iType;
+				DB_Obj[i]->iType = iSecondaryType;
+				DB_Obj[i]->Build();
 				break;
 			case 11 :
 				DB_Obj[i] = new Surf_R;
@@ -5939,7 +5950,7 @@ void DBase::AddDragDIMA(C3dVector v1, C3dVector v2)
 	vN -= vO;
 	vDir -= vO;
 
-	DIM* pDIM = new DIMA(v1,v2,v2,vO,vN,vDir,gTXT_HEIGHT,-1);
+	DIM* pDIM = new DIMA(v1,v2,v2,vO,vN,vDir,gDIM_SIZE,-1);
 	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
 	if (pDragObj != nullptr)
 		delete(pDragObj);
@@ -14894,7 +14905,7 @@ void DBase::DeleteObj()
 					Dsp_RemGP(S_Buff[iCO]);
 				}
 			}  
-			else if((S_Buff[iCO]->iObjType==0) || (S_Buff[iCO]->iObjType==2) ||(S_Buff[iCO]->iObjType==5) || (S_Buff[iCO]->iObjType==6) ||(S_Buff[iCO]->iObjType==7)  || (S_Buff[iCO]->iObjType==15) || (S_Buff[iCO]->iObjType==18) || (S_Buff[iCO]->iObjType==500))
+			else if((S_Buff[iCO]->iObjType==0) || (S_Buff[iCO]->iObjType==2) ||(S_Buff[iCO]->iObjType==5) || (S_Buff[iCO]->iObjType==6) ||(S_Buff[iCO]->iObjType==7) || (S_Buff[iCO]->iObjType == 10) || (S_Buff[iCO]->iObjType==15) || (S_Buff[iCO]->iObjType==18) || (S_Buff[iCO]->iObjType==500))
 			{
 				if (S_Buff[iCO]->pParent==NULL)
 				{
