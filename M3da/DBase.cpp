@@ -1395,6 +1395,12 @@ void DBase::Serialize(CArchive& ar)
 					DB_Obj[i] = new DIM();
 				else if (iSecondaryType == 1)
 					DB_Obj[i] = new DIMA();
+				else if (iSecondaryType == 2)
+					DB_Obj[i] = new DIMH();
+				else if (iSecondaryType == 3)
+					DB_Obj[i] = new DIMV();
+				else if (iSecondaryType == 7)
+					DB_Obj[i] = new DIML();
 				DB_Obj[i]->Serialize(ar, iVER);
 				DB_Obj[i]->iObjType = iType;
 				DB_Obj[i]->iType = iSecondaryType;
@@ -5957,6 +5963,64 @@ void DBase::AddDragDIMA(C3dVector v1, C3dVector v2)
 	pDragObj = (DIM*) pDIM;
 }
 
+void DBase::AddDragDIMH(C3dVector v1, C3dVector v2)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+
+	DIM* pDIM = new DIMH(v1, v2, v2, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
+void DBase::AddDragDIMV(C3dVector v1, C3dVector v2)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+
+	DIM* pDIM = new DIMV(v1, v2, v2, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
+
+void DBase::AddDragDIML(CString sText, C3dVector v1)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+
+	DIM* pDIM = new DIML(sText,v1, v1, v1, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
 
 NLine* DBase::AddLNfromDrag(C3dVector v2)
 {
@@ -5982,9 +6046,8 @@ NLine* DBase::AddLNfromDrag(C3dVector v2)
 	return (LnIn);
 }
 
-DIM* DBase::AddDIMAfromDrag(C3dVector v3)
+DIM* DBase::AddDIMfromDrag(C3dVector v3)
 {
-
 	DIM* pD = nullptr;
 	C3dMatrix mTran;
 	C3dVector vn1, vn2;
@@ -6002,6 +6065,8 @@ DIM* DBase::AddDIMAfromDrag(C3dVector v3)
 	}
 	return (pD);
 }
+
+
 
 
 NLine* DBase::AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw)

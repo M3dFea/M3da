@@ -546,6 +546,10 @@ public:
   afx_msg void OnQfilterAll();
   afx_msg void OnDimensiontoolsDimsize();
   afx_msg void OnDimensiontoolsAligneddim();
+  afx_msg void OnDimensiontoolsLineardim();
+  afx_msg void OnDimensiontoolsHorizontaldim();
+  afx_msg void OnDimensiontoolsVerticaldim();
+  afx_msg void OnDimensiontoolsLeadertext();
 };
 
 

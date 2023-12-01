@@ -211,6 +211,9 @@ BEGIN
         BEGIN
             MENUITEM "Dim Size",                    ID_DIMENSIONTOOLS_DIMSIZE
             MENUITEM "Aligned Dim",                 ID_DIMENSIONTOOLS_ALIGNEDDIM
+            MENUITEM "Horizontal Dim",              ID_DIMENSIONTOOLS_HORIZONTALDIM
+            MENUITEM "Vertical Dim",                ID_DIMENSIONTOOLS_VERTICALDIM
+            MENUITEM "Leader Text",                 ID_DIMENSIONTOOLS_LEADERTEXT
         END
         POPUP "Curve Tools"
         BEGIN
@@ -1360,6 +1363,10 @@ STRINGTABLE
 BEGIN
     ID_DIMENSIONTOOLS_DIMSIZE "Set the size (text height) of dimensions."
     ID_DIMENSIONTOOLS_ALIGNEDDIM "Create an aligned dimension."
+    ID_DIMENSIONTOOLS_LINEARDIM "Create a horizontal linear dimension."
+    ID_DIMENSIONTOOLS_HORIZONTALDIM "Create horizonatal linear dimension"
+    ID_DIMENSIONTOOLS_VERTICALDIM "Create vertical linear dimension"
+    ID_DIMENSIONTOOLS_LEADERTEXT "Create text with leader line."
 END
 
 #endif    // English (United States) resources

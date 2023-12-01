@@ -397,6 +397,10 @@ ON_COMMAND(ID_QFILTER_SURFACE, &CM3daDoc::OnQfilterSurface)
 ON_COMMAND(ID_QFILTER_ALL, &CM3daDoc::OnQfilterAll)
 ON_COMMAND(ID_DIMENSIONTOOLS_DIMSIZE, &CM3daDoc::OnDimensiontoolsDimsize)
 ON_COMMAND(ID_DIMENSIONTOOLS_ALIGNEDDIM, &CM3daDoc::OnDimensiontoolsAligneddim)
+ON_COMMAND(ID_DIMENSIONTOOLS_LINEARDIM, &CM3daDoc::OnDimensiontoolsLineardim)
+ON_COMMAND(ID_DIMENSIONTOOLS_HORIZONTALDIM, &CM3daDoc::OnDimensiontoolsHorizontaldim)
+ON_COMMAND(ID_DIMENSIONTOOLS_VERTICALDIM, &CM3daDoc::OnDimensiontoolsVerticaldim)
+ON_COMMAND(ID_DIMENSIONTOOLS_LEADERTEXT, &CM3daDoc::OnDimensiontoolsLeadertext)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6615,8 +6619,73 @@ void CM3daDoc::OnDimensiontoolsAligneddim()
 	// TODO: Add your command handler code here
 	if (pMnu->isNULL())
 	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("DIMA");
 		sLastcmd = "DIMA";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnDimensiontoolsLineardim()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("DIMHV");
+		sLastcmd = "DIMHV";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnDimensiontoolsHorizontaldim()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("DIMH");
+		sLastcmd = "DIMH";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnDimensiontoolsVerticaldim()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("DIMV");
+		sLastcmd = "DIMV";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnDimensiontoolsLeadertext()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("DIML");
+		sLastcmd = "DIML";
 	}
 	else
 	{

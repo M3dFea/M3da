@@ -2169,14 +2169,19 @@ public:
 	C3dVector vOrig;					//Origin
 	C3dVector vNorm;					//Normal to dim
 	C3dVector vDir;						//WP Direction of dim
+	CString sTextPre;
 	CString sText;						//The text on the dim
+	CString sTextPost;
 	BOOL bTextOverRide = FALSE;
 	//*****************************************************************
 	//0 N/A 
 	//1 Aligned Linear
-	//2 H/V Linear
-	//3 Dia
+	//2 Horizontal Linear
+	//3 Vertical Linear
 	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
 
 	DIM();
 	DIM(C3dVector vPt1,
@@ -2205,9 +2210,9 @@ public:
 	//virtual C3dVector Get_Centroid();
 	//virtual G_Object* Copy(G_Object* Parrent);
 	//virtual CString GetName();
-	//virtual int GetVarHeaders(CString sVar[]);
-	//virtual int GetVarValues(CString sVar[]);
-	//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 	//virtual void Info();
 };
 
@@ -2245,8 +2250,8 @@ public:
            
 	//0 N/A 
     //1 Aligned Linear
-    //2 H/V Linear
-    //3 Dia
+    //2 Horizontal Linear
+    //3 Vertical Linear
     //4 Rad
 
 	DIMA();
@@ -2280,6 +2285,57 @@ public:
 	//virtual int GetVarValues(CString sVar[]);
 	//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 	//virtual void Info();
+};
+
+class DIMH : public DIMA
+{
+	DECLARE_DYNAMIC(DIMH)
+	DIMH();
+	DIMH(C3dVector vPt1,
+		  C3dVector vPt2,
+		  C3dVector vInsPt,
+		  C3dVector vO,
+		  C3dVector vN,
+		  C3dVector vD,
+		  double dDScl,
+		  int iLab);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+};
+
+class DIMV : public DIMA
+{
+	DECLARE_DYNAMIC(DIMV)
+	DIMV();
+	DIMV(C3dVector vPt1,
+		C3dVector vPt2,
+		C3dVector vInsPt,
+		C3dVector vO,
+		C3dVector vN,
+		C3dVector vD,
+		double dDScl,
+		int iLab);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+};
+
+class DIML : public DIMA
+{
+	DECLARE_DYNAMIC(DIML)
+	DIML();
+	DIML(CString sLText,
+		 C3dVector vPt1,
+		 C3dVector vPt2,
+		 C3dVector vInsPt,
+		 C3dVector vO,
+		 C3dVector vN,
+		 C3dVector vD,
+		 double dDScl,
+		 int iLab);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual void Colour(int iCol);
 };
 
 
