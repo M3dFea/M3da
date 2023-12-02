@@ -8,7 +8,7 @@ int iNoSymbols = 0;
 double dAveW = 1;
 double dAveH = 1;
 //*********************************************************
-double gPT_SIZE = 12;
+double gPT_SIZE = 5;
 double gND_SIZE = 10;
 double gLM_SIZE = 20;
 double gEL_SIZE = 2;
@@ -42293,6 +42293,11 @@ DIM::DIM(C3dVector vPt1,
 
 DIM::~DIM()
 {
+	Clean();
+}
+
+void  DIM::Clean()
+{
 	if (pInsPt != nullptr)
 	{
 		delete (pInsPt);
@@ -42350,6 +42355,7 @@ void DIM::Serialize(CArchive& ar, int iV)
 	{
 		// TODO: add storing code here
 		G_Object::Serialize(ar, iV);
+		ar << dDIM;
 		ar << dDimScl;
 		ar << dDrgScl;						//Drawing scale Height
 		ar << vDPt1.x;						//1st dim point
@@ -42378,6 +42384,7 @@ void DIM::Serialize(CArchive& ar, int iV)
 	else
 	{
 		G_Object::Serialize(ar, iV);
+		ar >> dDIM;
 		ar >> dDimScl;
 		ar >> dDrgScl;						//Drawing scale Height
 		ar >> vDPt1.x;						//1st dim point
@@ -42446,7 +42453,7 @@ int DIM::GetVarValues(CString sVar[])
 void DIM::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
 	sTextPre = sVar[0];
-	if (sVar[0] != sText) 
+	if (sVar[1] != sText) 
 	{
 		sText = sVar[1];
 		bTextOverRide = TRUE;
@@ -42458,6 +42465,7 @@ void DIM::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 	sTextPost = sVar[2];
 	dDimScl = atof(sVar[3]);
 	dDrgScl = atof(sVar[4]);
+	Clean();
 	Build();
 }
 
@@ -42531,79 +42539,12 @@ DIMA::DIMA(C3dVector vPt1,
 	Build();
 }
 
-
-void  DIMA::Build()
+DIMA::~DIMA()
 {
-	//Transform all to DIM plain (for this is workplane)
-	C3dMatrix RMat;
-	RMat.MakeUnit();
-	C3dVector vX;
-	C3dVector vY;
-	C3dVector vZ;
-	vZ = vNorm;
-	vX = vDir;
-	vZ.Normalize();
-	vX.Normalize();
-	vY = vZ.Cross(vX);
-	vY.Normalize();
-	RMat.SetColVec(1, vX);
-	RMat.SetColVec(2, vY);
-	RMat.SetColVec(3, vZ);
-	RMat.Transpose();
-	vPP1 = vDPt1;
-	vPP2 = vDPt2;
-	vPP1 -= vOrig;
-	vPP2 -= vOrig;
-	vPP1 = RMat * vPP1;
-	vPP2 = RMat * vPP2;
-	vPP1.z = 0;
-	vPP2.z = 0;
-	RMat.Transpose();
-	vPP1 = RMat * vPP1;
-	vPP2 = RMat * vPP2;
-	vPP1 += vOrig;
-	vPP2 += vOrig;
-	dDist = vPP1.Dist(vPP2) / dDrgScl;
-	char buff[200];
-	if (!bTextOverRide)
-	{
-		sprintf_s(buff, "%.2f", dDist);
-		sText = buff;
-	}
-	vPP1D = vPP1;
-	vPP2D = vPP2;;
-	vDX = vPP2 - vPP1; vDX.Normalize();
-	vDY = vNorm.Cross(vDX); vDY.Normalize();
-	pPt1 = new CvPt_Object();
-	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
-	pPt2 = new CvPt_Object();
-	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
-	pInsPt = new CvPt_Object();
-	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
-	//First Leader Line
-	pLeader1 = new NLine();
-	pLeader1->Create(vPP1, vDInsPt, -1, this);
-	pLeader1->iColour = iColour;
-	pLeader2 = new NLine();
-	pLeader2->Create(vPP2, vDInsPt, -1, this);
-	pLeader2->iColour = iColour;
-	pDimLine1 = new NLine();
-	pDimLine1->Create(vPP1, vPP2, -1, this);
-	pDimLine1->iColour = iColour;
-	pDimLine2 = new NLine();
-	pDimLine2->Create(vPP1, vPP2, -1, this);
-	pDimLine2->iColour = iColour;
-	//Text insertion point - need to lift off the dim line slightly
-	CString sT;
-	sT = sTextPre + sText + sTextPost;
-	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl);
-	pText->iColour = iColour;
-	C3dMatrix mWP;
-	//The call to DragUpdate should probably be called build
-	DragUpdate(vDInsPt, mWP);
+	Clean();
 }
 
-DIMA::~DIMA()
+void  DIMA::Clean()
 {
 	if (pPt1 != nullptr)
 	{
@@ -42645,8 +42586,82 @@ DIMA::~DIMA()
 		delete (pText);
 		pText = nullptr;
 	}
-   
 }
+
+void  DIMA::Build()
+{
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+	dDIM = vPP1.Dist(vPP2);
+	dDist = dDIM / dDrgScl;
+	char buff[200];
+	if (!bTextOverRide)
+	{
+		sprintf_s(buff, "%.2f", dDist);
+		sText = buff;
+	}
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX = vPP2 - vPP1; vDX.Normalize();
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Leader Line
+	pLeader1 = new NLine();
+	pLeader1->Create(vPP1, vDInsPt, -1, this);
+	pLeader1->iColour = iColour;
+	pLeader2 = new NLine();
+	pLeader2->Create(vPP2, vDInsPt, -1, this);
+	pLeader2->iColour = iColour;
+	pDimLine1 = new NLine();
+	pDimLine1->Create(vPP1, vPP2, -1, this);
+	pDimLine1->iColour = iColour;
+	pDimLine2 = new NLine();
+	pDimLine2->Create(vPP1, vPP2, -1, this);
+	pDimLine2->iColour = iColour;
+	//Text insertion point - need to lift off the dim line slightly
+	CString sT;
+	sT = sTextPre + sText + sTextPost;
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl);
+	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
+}
+
+
+
 
 void DIMA::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
@@ -42877,7 +42892,7 @@ DIMH::DIMH(C3dVector vPt1,
 	pPt1 = nullptr;      //1st dim point
 	pPt2 = nullptr;      //2nd dim point or null
 	pInsPt = nullptr;    //Ins Point
-	dDrgScl = 2;
+	dDrgScl = 1;
 	dDimScl = dDScl;
 	vDInsPt = vInsPt;					//Ins Point
 	vDPt1 = vPt1;					//1st dim point
@@ -42922,10 +42937,13 @@ void  DIMH::Build()
 
 	vPP1D = vPP1;
 	vPP2D = vPP2;;
-	vDX.Set(1, 0, 0); //Horizontal
+	vDX = vX;
+	//vDX.Set(1, 0, 0); //Horizontal
 	C3dVector vDDD;
 	vDDD = vPP2D - vPP1D;
-	dDist = abs(vDDD.Dot(vDX));
+	dDIM = abs(vDDD.Dot(vDX));
+	dDist = dDIM / dDrgScl;
+
 	//dDist = vPP1D.Dist(vPP2D) / dDrgScl;
 	char buff[200];
 	if (!bTextOverRide)
@@ -42966,7 +42984,7 @@ void  DIMH::Build()
 void DIMH::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
 	vDInsPt = inPt;
-	C3dVector vP1toIns, vT, vOff, vLOff;
+	C3dVector vP1toIns, vP2toIns, vT, vOff, vLOff;
 	double dExtY = 0;
 	vP1toIns = inPt;
 	vP1toIns -= vPP1;
@@ -42974,7 +42992,13 @@ void DIMH::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 	vPP1D = vPP1;
 	vPP1D += vDY * dExtY;
 	vPP2D = vPP2;
-	vPP2D.y = vPP1D.y;
+
+	vP2toIns = inPt;
+	vP2toIns -= vPP2;
+	dExtY = vP2toIns.Dot(vDY);
+	vPP2D = vPP2;
+	vPP2D += vDY * dExtY;
+
 	vOff = vDY * dDimScl * 0.25;    //Text Offset
 	vLOff = (vPP1D - vPP1);
 	vLOff.Normalize();
@@ -43147,7 +43171,7 @@ DIMV::DIMV(C3dVector vPt1,
 	pPt1 = nullptr;      //1st dim point
 	pPt2 = nullptr;      //2nd dim point or null
 	pInsPt = nullptr;    //Ins Point
-	dDrgScl = 2;
+	dDrgScl = 1;
 	dDimScl = dDScl;
 	vDInsPt = vInsPt;					//Ins Point
 	vDPt1 = vPt1;					//1st dim point
@@ -43192,10 +43216,12 @@ void  DIMV::Build()
 
 	vPP1D = vPP1;
 	vPP2D = vPP2;;
-	vDX.Set(0, 1, 0); //Vertical
+	vDX = vY;
+	//vDX.Set(0, 1, 0); //Vertical
 	C3dVector vDDD;
 	vDDD = vPP2D - vPP1D;
-	dDist = abs(vDDD.Dot(vDX));
+	dDIM = abs(vDDD.Dot(vDX));
+	dDist = dDIM / dDrgScl;
 	//dDist = vPP1D.Dist(vPP2D) / dDrgScl;
 	char buff[200];
 	if (!bTextOverRide)
@@ -43236,15 +43262,19 @@ void  DIMV::Build()
 void DIMV::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
 	vDInsPt = inPt;
-	C3dVector vP1toIns, vT, vOff, vLOff;
+	C3dVector vP1toIns, vP2toIns, vT, vOff, vLOff;
 	double dExtY = 0;
 	vP1toIns = inPt;
 	vP1toIns -= vPP1;
 	dExtY = vP1toIns.Dot(vDY);
 	vPP1D = vPP1;
 	vPP1D += vDY * dExtY;
+	vP2toIns = inPt;
+	vP2toIns -= vPP2;
+	dExtY = vP2toIns.Dot(vDY);
 	vPP2D = vPP2;
-	vPP2D.x = vPP1D.x;  //The only change from horizontal
+	vPP2D += vDY * dExtY;
+	//vPP2D.x = vPP1D.x;  //The only change from horizontal
 	vOff = vDY * dDimScl * 0.25;    //Text Offset
 	vLOff = (vPP1D - vPP1);
 	vLOff.Normalize();
@@ -43424,7 +43454,7 @@ DIML::DIML(CString sLText,
 	pPt1 = nullptr;      //1st dim point
 	pPt2 = nullptr;      //2nd dim point or null
 	pInsPt = nullptr;    //Ins Point
-	dDrgScl = 2;
+	dDrgScl = 1;
 	dDimScl = dDScl;
 	vDInsPt = vInsPt;					//Ins Point
 	vDPt1 = vPt1;					//1st dim point
@@ -43480,12 +43510,12 @@ void  DIML::Build()
 	pInsPt = new CvPt_Object();
 	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
 	//First Leader Line
+	pDimLine1 = new NLine();
+	pDimLine1->Create(vPP1, vDInsPt, -1, this);
+	pDimLine1->iColour = iColour;
 	pLeader1 = new NLine();
-	pLeader1->Create(vPP1, vDInsPt, -1, this);
+	pLeader1->Create(vDInsPt, vDInsPt, -1, this);
 	pLeader1->iColour = iColour;
-	pLeader2 = new NLine();
-	pLeader2->Create(vDInsPt, vDInsPt, -1, this);
-	pLeader2->iColour = iColour;
 	//Text insertion point - need to lift off the dim line slightly
 	CString sT;
 	sT = sTextPre + sText + sTextPost;
@@ -43507,12 +43537,12 @@ void DIML::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 
 	pInsPt->SetTo(inPt);
 	// THE LEADERS
-	pLeader1->cPts[0]->SetTo(vPP1);
-	pLeader1->cPts[1]->SetTo(vDInsPt);
-	pLeader2->cPts[0]->SetTo(vDInsPt);
+	pDimLine1->cPts[0]->SetTo(vPP1);
+	pDimLine1->cPts[1]->SetTo(vDInsPt);
+	pLeader1->cPts[0]->SetTo(vDInsPt);
 	vT = vDInsPt;
 	vT.x+= pText->GetLength();;
-	pLeader2->cPts[1]->SetTo(vT);
+	pLeader1->cPts[1]->SetTo(vT);
 	//dDLen2 += pText->GetLength();
 	//THE TEXT
 	C3dVector vTxtTrans;
@@ -43540,8 +43570,8 @@ void DIML::OglDrawW(int iDspFlgs, double dS1, double dS2)
 	pPt1->OglDrawW(iDspFlgs,dS1,dS2);
 	//pPt2->OglDrawW(iDspFlgs, dS1, dS2);
 	pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
+	pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
 	pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
-	pLeader2->OglDrawW(iDspFlgs, dS1, dS2);
 	pText->OglDrawW(iDspFlgs, dS1, dS2);
 
 	glColor3fv(cols[iColour]);
@@ -43571,12 +43601,235 @@ void DIML::Colour(int iCol)
 {
 	this->iColour = iCol;
 	pInsPt->iColour = iCol;
+	pDimLine1->iColour = iCol;
 	pLeader1->iColour = iCol;
-	pLeader2->iColour = iCol;
 	pText->iColour = iCol;
 
 }
 
+
+IMPLEMENT_DYNAMIC(DIMR, CObject)
+
+DIMR::DIMR()
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iType = 4;
+}
+
+DIMR::DIMR(double dRad,
+	C3dVector vPt1,
+	C3dVector vPt2,
+	C3dVector vInsPt,
+	C3dVector vO,
+	C3dVector vN,
+	C3dVector vD,
+	double dDScl,
+	int iLab)
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iObjType = 10;       //Type Dimension
+	iType = 4;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 4;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPt1 = nullptr;      //1st dim point
+	pPt2 = nullptr;      //2nd dim point or null
+	pInsPt = nullptr;    //Ins Point
+	dDIM = dRad;
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	vDInsPt = vInsPt;					//Ins Point
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+void  DIMR::Build()
+{
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX.Set(1, 0, 0); //Horizontal
+
+	dDist = dDIM / dDrgScl;
+	//dDist = vPP1D.Dist(vPP2D) / dDrgScl;
+	char buff[200];
+	if (!bTextOverRide)
+	{
+		sprintf_s(buff, "R%.2f", dDist);
+		sText = buff;
+	}
+
+
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Leader Line
+	pDimLine1 = new NLine();
+	pDimLine1->Create(vPP1, vDInsPt, -1, this);
+	pDimLine1->iColour = iColour;
+
+	//Text insertion point - need to lift off the dim line slightly
+	CString sT;
+	sT = sTextPre + sText + sTextPost;
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl);
+	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
+}
+
+void DIMR::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	BOOL bOutSide = TRUE;
+	vDInsPt = inPt;
+	C3dVector vP1toIns, vT, vOff, vLOff,vTD, vTD2, vDArr;
+	//vPP1, vDInsPt
+	vP1toIns = vDInsPt - vPP1;
+	double ddddd = vP1toIns.Mag();
+	if (vP1toIns.Mag() > dDIM)
+		bOutSide = TRUE;
+	else
+		bOutSide = FALSE;
+	vP1toIns.Normalize();
+	vTD = vP1toIns;
+	vDArr = vTD.Cross(vNorm); vDArr.Normalize();
+	vOff = -vDArr * dDimScl * 0.25;    //Text Offset
+	vTD2 = vP1toIns;
+	vP1toIns *= dDIM; //point on circu
+	vP1toIns += vPP1;
+	pInsPt->SetTo(inPt);
+	// THE LEADERS	pDimLine1->cPts[0]->SetTo(vPP1);
+	vPP1D = vP1toIns;
+	pDimLine1->cPts[0]->SetTo(vP1toIns);
+	vTD2 *= pText->GetLength();
+	if (bOutSide)
+	   pDimLine1->cPts[1]->SetTo(vDInsPt+ vTD2);
+	else 
+		pDimLine1->cPts[1]->SetTo(vPP1);
+	//THE TEXT
+	C3dVector vRevText;
+	C3dVector vTxtTrans;
+	vRevText = vTD;
+	vTxtTrans = inPt;
+	if (vRevText.Dot(vDX) < 0)
+	{
+		vRevText *= -1;
+		vTxtTrans += vTD2;
+		vTxtTrans -= vOff;
+	}
+	else
+	{
+		vTxtTrans += vOff;
+	}
+	
+	vTxtTrans -= pText->vInsPt;
+	pText->Translate(vTxtTrans);
+	pText->vDir = vRevText;
+	pText->BuildText();
+
+	//**************************************************
+    //Arrow points vPP1D
+	C3dVector vDimDir, vYPOff;
+	vDimDir = vTD;
+	if (!bOutSide)
+		vDimDir *= -1;
+	
+	vDimDir *= 1.2;
+	vYPOff = vDArr;
+	vYPOff *= 0.3;
+	vT = vDimDir + vYPOff; vT *= dDimScl;
+	vPP1A1 = vP1toIns + vT;
+	vT = vDimDir - vYPOff; vT *= dDimScl;
+	vPP1A2 = vP1toIns + vT;
+
+}
+
+void DIMR::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	//pPt1->OglDrawW(iDspFlgs, dS1, dS2);
+	//pPt2->OglDrawW(iDspFlgs, dS1, dS2);
+	pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
+	pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
+	//pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
+	pText->OglDrawW(iDspFlgs, dS1, dS2);
+
+	glColor3fv(cols[iColour]);
+	//glPointSize(5);
+	//glBegin(GL_POINTS);
+	//glVertex3f(vPP1.x, vPP1.y, vPP1.z);
+	//glEnd();
+	//Filled Arrow Heads
+	glBegin(GL_POLYGON);
+	glVertex3f(vPP1D.x, vPP1D.y, vPP1D.z);
+	glVertex3f(vPP1A1.x, vPP1A1.y, vPP1A1.z);
+	glVertex3f(vPP1A2.x, vPP1A2.y, vPP1A2.z);
+	glEnd();
+
+}
+
+
+void DIMR::Colour(int iCol)
+{
+	this->iColour = iCol;
+	pInsPt->iColour = iCol;
+	pDimLine1->iColour = iCol;
+	pLeader1->iColour = iCol;
+	pText->iColour = iCol;
+
+}
 //26/09/2016
 //symbol class used for compounds of lines
 // fonts, hatches etc

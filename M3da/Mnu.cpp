@@ -2515,6 +2515,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "DIMR")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMR_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "DEL")
 	  {
 		  iResumePos = 0;
@@ -4136,6 +4146,88 @@ int zDIML_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 			outtext1("1 Dim Created.");
 			cDBase->bIsDrag = FALSE;
 			cDBase->ReDraw();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+int zDIMR_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			cDBase->FILTER.Save();
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("// PICK CIRCLE ");
+			iStat = 2;
+		}
+		else if (iStat == 2)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				if ((cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7) &&
+					(cDBase->S_Buff[cDBase->S_Count - 1]->iType == 3))
+				{
+					pC = (NCircle*)cDBase->S_Buff[cDBase->S_Count - 1];
+					p2 = pC->Get_Centroid();
+					cDBase->S_Count = S_initCnt;
+					iStat = 3;
+				}
+				else
+				{
+					outtext1("Error: Must pick circle or arc.");
+					cDBase->S_Count--;
+					iStat = 1;
+					this->DoMenu(CInMsg, Pt);
+				}
+	
+			}
+		}
+		if (iStat == 3)
+		{
+			cDBase->bIsDrag = TRUE;
+			cDBase->AddDragDIMR(pC, p2);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+
+			p2 = cDBase->DB_PopBuff();
+			cDBase->AddDIMfromDrag(p2);
+			outtext1("1 Dim Created.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->FILTER.Restore();
 			RetVal = 1;
 		}
 
@@ -17869,7 +17961,9 @@ int zSELCURLAY_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			cDBase->FILTER.Save();
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(6);
 			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(10);
 			outtext2("// ENTER LAYER OR PICK CURVE/POINT");
 			CInMsg = "NULL";
 			iStat = 1;
@@ -17888,7 +17982,9 @@ int zSELCURLAY_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 				if (cDBase->S_Count == S_initCnt + 1)
 				{
 					if ((cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 0) ||
-						(cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7))
+						(cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 6) ||
+						(cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7) ||
+						(cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 10))
 					{
 						Node* pE = (Node*)cDBase->S_Buff[cDBase->S_Count - 1];
 						cDBase->SelCursbyLAY(pE->iFile);
@@ -20535,7 +20631,7 @@ int zMODLAYNO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("// PICK CURVES / POINTS TO SET LAYER");
+			outtext2("// PICK CURVES / POINTS / DIMS TO SET LAYER");
 			iStat = 1;
 
 		}

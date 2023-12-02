@@ -1399,6 +1399,8 @@ void DBase::Serialize(CArchive& ar)
 					DB_Obj[i] = new DIMH();
 				else if (iSecondaryType == 3)
 					DB_Obj[i] = new DIMV();
+				else if (iSecondaryType == 4)
+					DB_Obj[i] = new DIMR();
 				else if (iSecondaryType == 7)
 					DB_Obj[i] = new DIML();
 				DB_Obj[i]->Serialize(ar, iVER);
@@ -6015,6 +6017,26 @@ void DBase::AddDragDIML(CString sText, C3dVector v1)
 	vDir -= vO;
 
 	DIM* pDIM = new DIML(sText,v1, v1, v1, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
+void DBase::AddDragDIMR(NCircle* pC, C3dVector v1)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+	C3dVector vC;
+	vC = pC->Get_Centroid();
+	DIM* pDIM = new DIMR(pC->dRadius, vC, vC, vC, vO, vN, vDir, gDIM_SIZE, -1);
 	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
 	if (pDragObj != nullptr)
 		delete(pDragObj);
@@ -19344,7 +19366,7 @@ void DBase::SelCursbyLAY(int iLAY)
 	int iCO;
 	for (iCO = 0; iCO < iDspLstCount; iCO++)
 	{
-		if ((Dsp_List[iCO]->iObjType == 0) || (Dsp_List[iCO]->iObjType == 7))
+		if ((Dsp_List[iCO]->iObjType == 0) || (Dsp_List[iCO]->iObjType == 6) || (Dsp_List[iCO]->iObjType == 7) || (Dsp_List[iCO]->iObjType == 10))
 		{
 			if (Dsp_List[iCO]->iFile == iLAY)
 			{
@@ -20137,7 +20159,7 @@ void DBase::ModLayerNo(int iF)
 	int iCO = 0;
 	for (iCO = 0; iCO < S_Count; iCO++)
 	{
-		if ((S_Buff[iCO]->iObjType == 0) || (S_Buff[iCO]->iObjType == 7))
+		if ((S_Buff[iCO]->iObjType == 0) || (S_Buff[iCO]->iObjType == 7) || (S_Buff[iCO]->iObjType == 6) || (S_Buff[iCO]->iObjType == 10))
 		{
 			S_Buff[iCO]->iFile = iF; //iFile is used as layer for point and curves
 			iNoC++;

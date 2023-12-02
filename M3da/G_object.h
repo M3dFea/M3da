@@ -2162,6 +2162,7 @@ public:
 	//The next need serialising
 	double dDimScl;
 	double dDrgScl;						//Drawing scale Height
+	double dDIM;
 	C3dVector vDPt1;					//1st dim point
 	C3dVector vDPt2;					//2nd dim point or null
 	C3dVector vDInsPt;					//Ins Point
@@ -2195,6 +2196,7 @@ public:
 
 
 	~DIM();
+	virtual void Clean();
 	virtual void Build();
 	//virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
@@ -2265,6 +2267,7 @@ public:
 		 int iLab);
 
 	~DIMA();
+	virtual void Clean();
 	virtual void Build();
 	//virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
@@ -2338,6 +2341,25 @@ class DIML : public DIMA
 	virtual void Colour(int iCol);
 };
 
+
+class DIMR : public DIMA
+{
+	DECLARE_DYNAMIC(DIMR)
+	DIMR();
+	DIMR(double dRad,
+		C3dVector vPt1,
+		C3dVector vPt2,
+		C3dVector vInsPt,
+		C3dVector vO,
+		C3dVector vN,
+		C3dVector vD,
+		double dDScl,
+		int iLab);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual void Colour(int iCol);
+};
 
 //26/09/2016
 //symbol class used for compounds of lines
