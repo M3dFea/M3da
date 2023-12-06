@@ -214,6 +214,7 @@ BEGIN
             MENUITEM "Horizontal Dim",              ID_DIMENSIONTOOLS_HORIZONTALDIM
             MENUITEM "Vertical Dim",                ID_DIMENSIONTOOLS_VERTICALDIM
             MENUITEM "Radius Dim",                  ID_DIMENSIONTOOLS_RADIUSDIM
+            MENUITEM "Diameter Dim",                ID_DIMENSIONTOOLS_DIAMETERDIM
             MENUITEM "Leader Text",                 ID_DIMENSIONTOOLS_LEADERTEXT
         END
         POPUP "Curve Tools"
@@ -1369,6 +1370,7 @@ BEGIN
     ID_DIMENSIONTOOLS_VERTICALDIM "Create vertical linear dimension"
     ID_DIMENSIONTOOLS_LEADERTEXT "Create text with leader line."
     ID_DIMENSIONTOOLS_RADIUSDIM "Create a radius dimension."
+    ID_DIMENSIONTOOLS_DIAMETERDIM "Create a diameter dimension."
 END
 
 #endif    // English (United States) resources

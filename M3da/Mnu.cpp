@@ -2455,6 +2455,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "TEST")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zTEST_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "SELCURLAY")
 	  {
 		  iResumePos = 0;
@@ -2522,6 +2532,16 @@ if (iStat == 0)
 		  cDBase->DB_ActiveBuffSet(2);
 		  cDBase->DB_ClearBuff();
 		  pNext = new zDIMR_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMD")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMD_Mnu();
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
@@ -4212,6 +4232,88 @@ int zDIMR_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		{
 			cDBase->bIsDrag = TRUE;
 			cDBase->AddDragDIMR(pC, p2);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+
+			p2 = cDBase->DB_PopBuff();
+			cDBase->AddDIMfromDrag(p2);
+			outtext1("1 Dim Created.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->FILTER.Restore();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+int zDIMD_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			cDBase->FILTER.Save();
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("// PICK CIRCLE ");
+			iStat = 2;
+		}
+		else if (iStat == 2)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				if ((cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7) &&
+					(cDBase->S_Buff[cDBase->S_Count - 1]->iType == 3))
+				{
+					pC = (NCircle*)cDBase->S_Buff[cDBase->S_Count - 1];
+					p2 = pC->Get_Centroid();
+					cDBase->S_Count = S_initCnt;
+					iStat = 3;
+				}
+				else
+				{
+					outtext1("Error: Must pick circle or arc.");
+					cDBase->S_Count--;
+					iStat = 1;
+					this->DoMenu(CInMsg, Pt);
+				}
+
+			}
+		}
+		if (iStat == 3)
+		{
+			cDBase->bIsDrag = TRUE;
+			cDBase->AddDragDIMD(pC, p2);
 			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
 			iResumePos = 4;
 			iCancelPos = 100;
@@ -6369,34 +6471,11 @@ int zTEST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			cDBase->FILTER.Clear();
-			cDBase->FILTER.SetFilter(3);
-			outtext2("// ENTER PID OR PICK ELEMENT");
-			CInMsg = "NULL";
+			cDBase->displaySymTable();
 			iStat = 1;
+			RetVal = 1;
 		}
-		if (iStat == 1)
-		{
-			if ((CInMsg != "MouseInp") && (CInMsg != "D") && (CInMsg != "NULL"))
-			{
-				C3dVector GetPt;
-				int iPt = ExtractPt(CInMsg, &GetPt);
-				cDBase->ViewLam((int)GetPt.x);
-				RetVal = 1;
-			}
-			else if (CInMsg == "MouseInp")
-			{
-				if (cDBase->S_Count == S_initCnt + 1)
-				{
-					if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 3)
-					{
-						E_Object* pE = (E_Object*)cDBase->S_Buff[cDBase->S_Count - 1];
-						cDBase->ViewLam(pE->PID);
-					}
-					RetVal = 1;
-				}
-			}
-		}
+
 
 		//Escape clause
 		if (iStat == 100)

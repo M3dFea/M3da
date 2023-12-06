@@ -200,6 +200,7 @@ class Part;
 class Graph;
 class ME_Object;
 class NLine;
+class NCurve;
 class G_Object;
 class G_ObjectD;
 class SecTable;
@@ -1654,6 +1655,7 @@ public:
   virtual void Create();
   virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
   virtual void Info();
+  virtual void ModLayNo(int iLay);
   virtual void Build();
   virtual CString ToString();
   virtual C3dVector MinPt(C3dVector inPt);
@@ -2114,6 +2116,7 @@ Link();
 Link(double x1, double y1, double z1,
 	 double x2, double y2, double z2);
 ~Link();
+virtual void ExportDXF(FILE* pFile,int iLay);
 };
 
 
@@ -2130,7 +2133,7 @@ public:
 	cLinkedList* pSyms;						//Sybols list forming text
 	CString sText;
 	Text();
-	Text(C3dVector vInPt, C3dVector vN, C3dVector vTDir,int iLab, CString sT,double dH);
+	Text(C3dVector vInPt, C3dVector vN, C3dVector vTDir,int iLab, CString sT,double dH, G_Object* Parrent);
 	~Text();
 	virtual void BuildText();
 	virtual double GetLength();
@@ -2151,6 +2154,7 @@ public:
 	virtual int GetVarValues(CString sVar[]);
 	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 	virtual void Info();
+	virtual void ExportDXF(FILE* pFile);
 
 };
 
@@ -2163,6 +2167,7 @@ public:
 	double dDimScl;
 	double dDrgScl;						//Drawing scale Height
 	double dDIM;
+	int iDimOpt = 0;
 	C3dVector vDPt1;					//1st dim point
 	C3dVector vDPt2;					//2nd dim point or null
 	C3dVector vDInsPt;					//Ins Point
@@ -2202,7 +2207,7 @@ public:
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
 	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
 	virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
-	//virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
+	virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
 	virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
 	virtual void HighLight(CDC* pDC);
 	//virtual void Transform(C3dMatrix TMAt);
@@ -2215,6 +2220,7 @@ public:
 	virtual int GetVarHeaders(CString sVar[]);
 	virtual int GetVarValues(CString sVar[]);
 	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+	virtual void ExportDXF(FILE* pFile);
 	//virtual void Info();
 };
 
@@ -2273,6 +2279,8 @@ public:
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
 	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
 	virtual void Colour(int iCol);
+	virtual void ExportDXF(FILE* pFile);
+	virtual void ModLayNo(int iLay);
 	//virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
 	//virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
 	//virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
@@ -2361,6 +2369,25 @@ class DIMR : public DIMA
 	virtual void Colour(int iCol);
 };
 
+class DIMD : public DIMA
+{
+	DECLARE_DYNAMIC(DIMD)
+	DIMD();
+	DIMD(double dRad,
+		C3dVector vPt1,
+		C3dVector vPt2,
+		C3dVector vInsPt,
+		C3dVector vO,
+		C3dVector vN,
+		C3dVector vD,
+		double dDScl,
+		int iLab);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual void Colour(int iCol);
+};
+
 //26/09/2016
 //symbol class used for compounds of lines
 // fonts, hatches etc
@@ -2395,6 +2422,7 @@ public:
    virtual void Move(C3dVector vM);
    virtual void Serialize(CArchive& ar,int iV);
    virtual C3dVector Get_Centroid();
+   virtual void ExportDXF(FILE* pFile);
    //virtual void S_Box(CPoint P1,CPoint P2,ObjList* pSel);
 };
 
@@ -2665,9 +2693,11 @@ public:
    double dRadius;
    C3dVector vNorm;
    C3dVector vCent;
+   C3dVector vR;
    NCircle();
    virtual void Create(C3dVector vN,C3dVector vC,double dRad,int iLab,G_Object* Parrent);
-   virtual void Create2(C3dVector vN,C3dVector vC,C3dVector vR,double dRad,int iLab,G_Object* Parrent);
+   virtual void Create2(C3dVector vN,C3dVector vC,C3dVector vRD,double dRad,int iLab,G_Object* Parrent);
+   virtual void Build();
    virtual void DragUpdate(C3dVector inPt,C3dMatrix mWP);
    virtual void Serialize(CArchive& ar,int iV);
    virtual void Info();

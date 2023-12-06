@@ -1401,6 +1401,8 @@ void DBase::Serialize(CArchive& ar)
 					DB_Obj[i] = new DIMV();
 				else if (iSecondaryType == 4)
 					DB_Obj[i] = new DIMR();
+				else if (iSecondaryType == 5)
+					DB_Obj[i] = new DIMD();
 				else if (iSecondaryType == 7)
 					DB_Obj[i] = new DIML();
 				DB_Obj[i]->Serialize(ar, iVER);
@@ -6037,6 +6039,26 @@ void DBase::AddDragDIMR(NCircle* pC, C3dVector v1)
 	C3dVector vC;
 	vC = pC->Get_Centroid();
 	DIM* pDIM = new DIMR(pC->dRadius, vC, vC, vC, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
+void DBase::AddDragDIMD(NCircle* pC, C3dVector v1)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+	C3dVector vC;
+	vC = pC->Get_Centroid();
+	DIM* pDIM = new DIMD(pC->dRadius, vC, vC, vC, vO, vN, vDir, gDIM_SIZE, -1);
 	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
 	if (pDragObj != nullptr)
 		delete(pDragObj);
@@ -15162,7 +15184,10 @@ void DBase::ExportDXF(FILE* pFile2)
 			delete(pC4);
 
 		}
-		else if ((DB_Obj[iCO]->iObjType == 0) || (DB_Obj[iCO]->iObjType == 7))
+		else if ((DB_Obj[iCO]->iObjType == 0) 
+			    || (DB_Obj[iCO]->iObjType == 6)
+			    || (DB_Obj[iCO]->iObjType == 7)
+			    || (DB_Obj[iCO]->iObjType == 10))
 		{
 			DB_Obj[iCO]->ExportDXF(pFile2);
 		}
@@ -20161,7 +20186,7 @@ void DBase::ModLayerNo(int iF)
 	{
 		if ((S_Buff[iCO]->iObjType == 0) || (S_Buff[iCO]->iObjType == 7) || (S_Buff[iCO]->iObjType == 6) || (S_Buff[iCO]->iObjType == 10))
 		{
-			S_Buff[iCO]->iFile = iF; //iFile is used as layer for point and curves
+			S_Buff[iCO]->ModLayNo(iF); //iFile is used as layer for point and curves
 			iNoC++;
 		}
 	}
@@ -22451,7 +22476,7 @@ void DBase::AddSymbol(Symbol* pSym)
 //*********************************************************
 void DBase::AddText(C3dVector vN, C3dVector vDir, C3dVector vInPt, CString inText, double dH)
 {
-	Text* pText = new Text(vInPt,vN,vDir,iTxtLabCnt,inText, dH);
+	Text* pText = new Text(vInPt,vN,vDir,iTxtLabCnt,inText, dH,nullptr);
 	iTxtLabCnt++;
 	if (pText != nullptr)
 	{

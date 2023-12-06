@@ -310,6 +310,7 @@ void AddDragDIMH(C3dVector v1, C3dVector v2);
 void AddDragDIMV(C3dVector v1, C3dVector v2);
 void AddDragDIML(CString sText,C3dVector v1);
 void AddDragDIMR(NCircle* pC, C3dVector v1);
+void AddDragDIMD(NCircle* pC, C3dVector v1);
 NLine* AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw);
 NLine* AddLNfromDrag(C3dVector v2);
 DIM* AddDIMfromDrag(C3dVector v3);

@@ -402,6 +402,7 @@ ON_COMMAND(ID_DIMENSIONTOOLS_HORIZONTALDIM, &CM3daDoc::OnDimensiontoolsHorizonta
 ON_COMMAND(ID_DIMENSIONTOOLS_VERTICALDIM, &CM3daDoc::OnDimensiontoolsVerticaldim)
 ON_COMMAND(ID_DIMENSIONTOOLS_LEADERTEXT, &CM3daDoc::OnDimensiontoolsLeadertext)
 ON_COMMAND(ID_DIMENSIONTOOLS_RADIUSDIM, &CM3daDoc::OnDimensiontoolsRadiusdim)
+ON_COMMAND(ID_DIMENSIONTOOLS_DIAMETERDIM, &CM3daDoc::OnDimensiontoolsDiameterdim)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6703,6 +6704,22 @@ void CM3daDoc::OnDimensiontoolsRadiusdim()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("DIMR");
 		sLastcmd = "DIMR";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnDimensiontoolsDiameterdim()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("DIMD");
+		sLastcmd = "DIMD";
 	}
 	else
 	{
