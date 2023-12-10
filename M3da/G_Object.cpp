@@ -8,7 +8,7 @@ int iNoSymbols = 0;
 double dAveW = 1;
 double dAveH = 1;
 //*********************************************************
-double gPT_SIZE = 5;
+double gPT_SIZE = 10;
 double gND_SIZE = 10;
 double gLM_SIZE = 20;
 double gEL_SIZE = 2;
@@ -41859,7 +41859,8 @@ void Text::BuildText()
 	//Scale
 	RMat.MakeUnit();
 	RMat.Scale(dScl);
-
+	dLen = vM.x;
+	dLen *= dScl;
 	Symbol* pS = (Symbol*)pSyms->Head;
 	while (pS != NULL)
 	{
@@ -42077,6 +42078,7 @@ void Text::Serialize(CArchive& ar, int iV)
 		vInsPt.Serialize(ar, iV);
 		vDir.Serialize(ar, iV);
 		vNorm.Serialize(ar, iV); 			//Normal
+		ar << dLen;
 		ar<<dTextHeight;					//Text Height
 		ar<<sText;
 		ar<<pSyms->iCnt;	 
@@ -42097,6 +42099,8 @@ void Text::Serialize(CArchive& ar, int iV)
 			vDir.Serialize(ar, iV);              //Text Direcyopn
 		}
 		vNorm.Serialize(ar, iV); 			//Normal
+		if (iV<=-70)
+		  ar >> dLen;
 		ar >> dTextHeight;					//Text Height
 		ar >> sText;
 		ar >> iNo;
@@ -42408,6 +42412,9 @@ void DIM::Serialize(CArchive& ar, int iV)
 		ar << dDimScl;
 		ar << dDrgScl;						//Drawing scale Height
 		ar << iDimOpt;
+		ar << vDAngVert.x;
+		ar << vDAngVert.y;
+		ar << vDAngVert.z;
 		ar << vDPt1.x;						//1st dim point
 		ar << vDPt1.y;
 		ar << vDPt1.z;
@@ -42438,6 +42445,9 @@ void DIM::Serialize(CArchive& ar, int iV)
 		ar >> dDimScl;
 		ar >> dDrgScl;						//Drawing scale Height
 		ar >> iDimOpt;
+		ar >> vDAngVert.x;
+		ar >> vDAngVert.y;
+		ar >> vDAngVert.z;
 		ar >> vDPt1.x;						//1st dim point
 		ar >> vDPt1.y;
 		ar >> vDPt1.z;
@@ -42556,9 +42566,15 @@ DIMA::DIMA()
 	sTextPre = "";
 	sText = "";
 	sTextPost = "";;
-	pPt1 = nullptr;      //1st dim point
-	pPt2 = nullptr;      //2nd dim point or null
-	pInsPt = nullptr;    //Ins Point
+	pPtV = nullptr;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
 	dDimScl = 1;
 	dDrgScl = 1;
 	vNorm.Set(0.0,0.0,1.0);                  //Normal to dim
@@ -42587,9 +42603,15 @@ DIMA::DIMA(C3dVector vPt1,
 	sTextPre = "";
 	sText = "";
 	sTextPost = "";;
-	pPt1 = nullptr;      //1st dim point
-	pPt2 = nullptr;      //2nd dim point or null
-	pInsPt = nullptr;    //Ins Point
+	pPtV = nullptr;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
 	dDrgScl = 1;
 	dDimScl = dDScl;
 	vDInsPt= vInsPt;					//Ins Point
@@ -42608,6 +42630,11 @@ DIMA::~DIMA()
 
 void  DIMA::Clean()
 {
+	if (pPtV != nullptr)
+	{
+		delete (pPtV);
+		pPtV = nullptr;
+	}
 	if (pPt1 != nullptr)
 	{
 		delete (pPt1);
@@ -42708,12 +42735,15 @@ void  DIMA::Build()
 	pLeader2->Create(vPP2, vDInsPt, -1, this);
 	pLeader2->iColour = iColour;
 	pLeader2->iLnThk = 2;
-	pDimLine1 = new NLine();
-	pDimLine1->Create(vPP1, vPP2, -1, this);
-	pDimLine1->iColour = iColour;
-	pDimLine2 = new NLine();
-	pDimLine2->Create(vPP1, vPP2, -1, this);
-	pDimLine2->iColour = iColour;
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine2 = pL;
 	//Text insertion point - need to lift off the dim line slightly
 	CString sT;
 	sT = sTextPre + sText + sTextPost;
@@ -42729,14 +42759,22 @@ void  DIMA::Build()
 
 void DIMA::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
-	pPt1->OglDrawW(iDspFlgs,dS1,dS2);
-	pPt2->OglDrawW(iDspFlgs, dS1, dS2);
-	pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
-	pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
-	pLeader2->OglDrawW(iDspFlgs, dS1, dS2);
-	pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
-	pDimLine2->OglDrawW(iDspFlgs, dS1, dS2);
-	pText->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pPt1!=nullptr)
+	  pPt1->OglDrawW(iDspFlgs,dS1,dS2);
+	if (pPt2 != nullptr)
+	  pPt2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pInsPt != nullptr)
+	  pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pLeader1 != nullptr)
+	  pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pLeader2 != nullptr)
+	  pLeader2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pDimLine1 != nullptr)
+	  pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pDimLine2 != nullptr)
+	  pDimLine2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pText != nullptr)
+	  pText->OglDrawW(iDspFlgs, dS1, dS2);
 
 	glColor3fv(cols[iColour]);
 	//Dim attachment points
@@ -42762,12 +42800,24 @@ void DIMA::OglDrawW(int iDspFlgs, double dS1, double dS2)
 void DIMA::Colour(int iCol)
 {
 	this->iColour = iCol;
-	pInsPt->iColour=iCol;
-	pLeader1->iColour = iCol;
-	pLeader2->iColour = iCol;
-	pDimLine1->iColour = iCol;
-	pDimLine2->iColour = iCol;
-	pText->iColour = iCol;
+	if (pPtV != nullptr)
+	  pPtV->iColour = iCol;
+	if (pPt1!=nullptr)
+	  pPt1->iColour = iCol;
+	if (pPt2 != nullptr)
+	  pPt2->iColour = iCol;
+	if (pInsPt != nullptr)
+	  pInsPt->iColour=iCol;
+	if (pLeader1 != nullptr)
+	  pLeader1->iColour = iCol;
+	if (pLeader2 != nullptr)
+	  pLeader2->iColour = iCol;
+	if (pDimLine1 != nullptr)
+	  pDimLine1->iColour = iCol;
+	if (pDimLine2 != nullptr)
+	  pDimLine2->iColour = iCol;
+	if (pText != nullptr)
+	  pText->iColour = iCol;
 
 }
 
@@ -42926,6 +42976,8 @@ void DIMA::ExportDXF(FILE* pFile)
 	v1.Set(1, 1, 1);
 	NLine* ll = new NLine();
 	ll->Create(v1, v1, -1, nullptr);
+	if (pPtV != NULL)
+	  pPtV->ExportDXF(pFile);      //1st dim point
 	if (pPt1!=NULL)
 	  pPt1->ExportDXF(pFile);      //1st dim point
 	if (pPt2 != NULL)
@@ -42952,6 +43004,21 @@ void DIMA::ExportDXF(FILE* pFile)
 		ll->cPts[1]->SetTo(vPP1D);
 		ll->iFile = this->iFile;
 		ll->ExportDXF(pFile);
+		if (iType == 6) //Second arror head for Ang DIM
+		{
+			ll->cPts[0]->SetTo(vPP2D);
+			ll->cPts[1]->SetTo(vPP2A1);
+			ll->iFile = this->iFile;
+			ll->ExportDXF(pFile);
+			ll->cPts[0]->SetTo(vPP2A1);
+			ll->cPts[1]->SetTo(vPP2A2);
+			ll->iFile = this->iFile;
+			ll->ExportDXF(pFile);
+			ll->cPts[0]->SetTo(vPP2A2);
+			ll->cPts[1]->SetTo(vPP2D);
+			ll->iFile = this->iFile;
+			ll->ExportDXF(pFile);
+		}
 	}
 	if (pDimLine2 != NULL)
 	{
@@ -42977,6 +43044,8 @@ void DIMA::ExportDXF(FILE* pFile)
 void DIMA::ModLayNo(int iLay)
 {
 	this->iFile = iLay;
+	if (pPtV != NULL)
+		pPtV->ModLayNo(iLay);      //1st dim point
 	if (pPt1 != NULL)
 		pPt1->ModLayNo(iLay);      //1st dim point
 	if (pPt2 != NULL)
@@ -42992,6 +43061,329 @@ void DIMA::ModLayNo(int iLay)
 	if (pText != NULL)
 		pText->ModLayNo(iLay);
 }
+
+
+IMPLEMENT_DYNAMIC(DIMANG, CObject)
+
+DIMANG::DIMANG()
+{
+	//*****************************************************************
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iObjType = 10;
+	iType = 6;
+	iLabel = -1;
+	iColour = 162;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPt1 = nullptr;				//1st dim point
+	pPt2 = nullptr;				//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;		//one halve of dim line
+	pDimLine2 = nullptr;		//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;			//Ins Point
+	dDimScl = 1;
+	dDrgScl = 1;
+	vNorm.Set(0.0, 0.0, 1.0);                  //Normal to dim
+	vDir.Set(1.0, 0.0, 0.0);                   //Direction of dim
+
+}
+
+DIMANG::DIMANG(C3dVector vVPt,
+	           C3dVector vPt1,
+	           C3dVector vPt2,
+	           C3dVector vInsPt,
+	           C3dVector vO,
+	           C3dVector vN,
+	           C3dVector vD,
+	           double dDScl,
+	           int iLab)
+{
+	//*****************************************************************
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iObjType = 10;       //Type Dimension
+	iType = 6;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 4;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPtV = nullptr;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;	
+	pInsPt = nullptr;				//Ins Point
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	vDInsPt = vInsPt;				//Ins Point
+	vDAngVert = vVPt;
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+void  DIMANG::Build()
+{  
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPPV = vDAngVert;
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
+	vPPV -= vOrig;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPPV = RMat * vPPV;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPPV.z = 0;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPPV = RMat * vPPV;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPPV += vOrig;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+	vPP1D = vPP1;
+	vPP2D = vPP2;
+	//Need to calc angle
+	C3dVector v1, v2;
+	double dA;
+	double dR;
+	
+	v1 = vPP1 - vPPV;
+	dR = v1.Mag();
+	v1.Normalize();
+	v2 = vPP2 - vPPV; v2.Normalize();
+	dA = v1.AngSigned(v2, vNorm);
+	dDIM = dA;
+	dDist = dDIM ;
+	char buff[200];
+	if (!bTextOverRide)
+	{
+		char newCharacter = 1;  // Assuming the character 8960 is a TCHAR
+		sprintf_s(buff, "%.2f", dDist);
+		sText = buff;
+		sText += newCharacter;
+	}
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX = vPP1 - vPP2; vDX.Normalize();
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+    //The picked points
+	pPtV = new CvPt_Object();
+	pPtV->Create(vDAngVert, 1, -1, 0, 0, 11, nullptr);
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Leader Line
+	pLeader1 = new NLine();
+	pLeader1->Create(vPP1, vPP1D, -1, this);
+	pLeader1->iColour = iColour;
+	pLeader1->iLnThk = 2;
+	//Second Learder
+	pLeader2 = new NLine();
+	pLeader2->Create(vPP2, vPP2D, -1, this);
+	pLeader2->iColour = iColour;
+	//pLeader2->iLnThk = 2;
+	NCircle* pC;
+	pC = new NCircle();
+	pC->Create2(vNorm, vPPV, v1, dR,-1, this);
+	pC->iColour = iColour;
+	pDimLine1 = pC;
+	//used as leader
+	pC = new NCircle();
+	pC->Create2(vNorm, vPPV, v1, dR, -1, this);
+	pC->iColour = iColour;
+	pC->we = 0;
+	pDimLine2 = pC;
+	//Circle end ppoiny
+	double we;
+	we = pDimLine1->MinWPt(vPP2);
+	pDimLine1->we = we;
+	//pL = new NLine();
+	//pL->Create(vPP1, vPP2, -1, this);
+	//pL->iColour = iColour;
+	//pDimLine2 = pL;
+	//Text insertion point - need to lift off the dim line slightly
+	CString sT;
+	sT = sTextPre + sText + sTextPost;
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl, this);
+	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
+}
+
+void DIMANG::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	double w;
+	C3dVector vTxtMid, vTxtDir, vTxtOff;
+	double txtLen;
+	vDInsPt = inPt;
+	pInsPt->Pt_Point->Set(vDInsPt.x, vDInsPt.y, vDInsPt.z);
+
+	//update dime circle
+	pDimLine1->DragUpdate(vDInsPt, mWP);
+	w = pDimLine1->MinWPt(vDInsPt);
+	//pDimLine2 is used a leader if neaded
+	pDimLine2->ws = 0.0;
+	pDimLine2->we = 0.0;
+	if (w > pDimLine1->we)
+	{
+		if (w > 0.5)
+		{
+			pDimLine2->ws = w;
+			pDimLine2->we = 1.0;
+		}
+		else
+		{
+			pDimLine2->ws = 0;
+			pDimLine2->we = w;
+		}
+	}
+	pDimLine2->DragUpdate(inPt, mWP);
+	//find new text dir
+	
+	vTxtDir = pDimLine1->GetDir(w);
+	vTxtDir *= -1;
+	//find leader end points and update leaders
+	vPP1D = pDimLine1->GetPt(pDimLine1->ws);
+	vPP2D = pDimLine1->GetPt(pDimLine1->we);
+	//Leader offsets
+	C3dVector vLOff1, vLOff2;
+	vLOff1 = vPP1D - vPP1; vLOff1.Normalize();
+	vLOff1 *= dDimScl * 0.5;
+	pLeader1->cPts[0]->SetTo(vPP1 + vLOff1);
+	pLeader1->cPts[1]->SetTo(vPP1D+ vLOff1);
+	vLOff2 = vPP2D - vPP2; vLOff2.Normalize();
+	vLOff2 *= dDimScl * 0.5;
+	pLeader2->cPts[0]->SetTo(vPP2 + vLOff2);
+	pLeader2->cPts[1]->SetTo(vPP2D + vLOff2);
+
+	//THE TEXT
+	vTxtMid = vTxtDir;
+	vTxtMid.Normalize();
+	txtLen = pText->dLen;
+	vTxtMid *= 0.5 * txtLen;
+	vTxtOff = vDInsPt - vPPV;
+	vTxtOff.Normalize();
+	vTxtOff *= dDimScl * 0.25;
+
+	C3dVector vTxtTrans;
+	vTxtTrans = vDInsPt;
+	vTxtTrans -= pText->vInsPt;
+	vTxtTrans -= vTxtMid;
+	vTxtTrans += vTxtOff;
+	pText->vDir = vTxtDir;
+	pText->Translate(vTxtTrans);
+	pText->BuildText();
+	//The Arrow Points
+	C3dVector vDimDir,vT;
+	vDimDir = pDimLine1->GetDir(0); vDimDir.Normalize();
+	vLOff1.Normalize();
+	vDimDir *= 1.5;
+	vLOff1 *= 0.4;
+	vT = vDimDir + vLOff1; vT *= dDimScl;
+    vPP1A1 = vPP1D + vT;
+    vT = vDimDir - vLOff1; vT *= dDimScl;
+    vPP1A2 = vPP1D + vT;
+	//Second Arrow
+	vDimDir = pDimLine1->GetDir(pDimLine1->we); vDimDir.Normalize();
+	vLOff2.Normalize();
+	vDimDir *= -1.5;
+	vLOff2 *= 0.4;
+	vT = vDimDir + vLOff2; vT *= dDimScl;
+	vPP2A1 = vPP2D + vT;
+	vT = vDimDir - vLOff2; vT *= dDimScl;
+	vPP2A2 = vPP2D + vT;
+}
+
+void DIMANG::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	if (pPtV != nullptr)
+		pPtV->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pPt1 != nullptr)
+		pPt1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pPt2 != nullptr)
+		pPt2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pInsPt != nullptr)
+	  pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pText != nullptr)
+	  pText->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pDimLine1 != nullptr)
+	  pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pDimLine2 != nullptr)  //Used as leader
+		pDimLine2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pLeader1 != nullptr)
+	  pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pLeader2 != nullptr)
+		pLeader2->OglDrawW(iDspFlgs, dS1, dS2);
+	//Filled Arrow Heads
+	glBegin(GL_POLYGON);
+	  glVertex3f(vPP1D.x, vPP1D.y, vPP1D.z);
+	  glVertex3f(vPP1A1.x, vPP1A1.y, vPP1A1.z);
+	  glVertex3f(vPP1A2.x, vPP1A2.y, vPP1A2.z);
+	glEnd();
+	glBegin(GL_POLYGON);
+	  glVertex3f(vPP2D.x, vPP2D.y, vPP2D.z);
+	  glVertex3f(vPP2A1.x, vPP2A1.y, vPP2A1.z);
+	  glVertex3f(vPP2A2.x, vPP2A2.y, vPP2A2.z);
+	glEnd();
+
+	glPointSize(5);
+	glBegin(GL_POINTS);
+	  glVertex3f(vPP1.x, vPP1.y, vPP1.z);
+	  glVertex3f(vPP2.x, vPP2.y, vPP2.z);
+	  glVertex3f(vPPV.x, vPPV.y, vPPV.z);
+	glEnd();
+}
+
+
+
+
+
 //Horizontal / Vertical dimension
 
 IMPLEMENT_DYNAMIC(DIMH, CObject)
@@ -43026,9 +43418,14 @@ DIMH::DIMH(C3dVector vPt1,
 	sTextPre = "";
 	sText = "";
 	sTextPost = "";;
-	pPt1 = nullptr;      //1st dim point
-	pPt2 = nullptr;      //2nd dim point or null
-	pInsPt = nullptr;    //Ins Point
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
 	dDrgScl = 1;
 	dDimScl = dDScl;
 	vDInsPt = vInsPt;					//Ins Point
@@ -43104,12 +43501,15 @@ void  DIMH::Build()
 	pLeader2->Create(vPP2, vDInsPt, -1, this);
 	pLeader2->iColour = iColour;
 	pLeader2->iLnThk = 2;
-	pDimLine1 = new NLine();
-	pDimLine1->Create(vPP1, vPP2, -1, this);
-	pDimLine1->iColour = iColour;
-	pDimLine2 = new NLine();
-	pDimLine2->Create(vPP1, vPP2, -1, this);
-	pDimLine2->iColour = iColour;
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine2 = pL;
 	//Text insertion point - need to lift off the dim line slightly
 	CString sT;
 	sT = sTextPre + sText + sTextPost;
@@ -43307,9 +43707,14 @@ DIMV::DIMV(C3dVector vPt1,
 	sTextPre = "";
 	sText = "";
 	sTextPost = "";;
-	pPt1 = nullptr;      //1st dim point
-	pPt2 = nullptr;      //2nd dim point or null
-	pInsPt = nullptr;    //Ins Point
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
 	dDrgScl = 1;
 	dDimScl = dDScl;
 	vDInsPt = vInsPt;					//Ins Point
@@ -43384,12 +43789,15 @@ void  DIMV::Build()
 	pLeader2->Create(vPP2, vDInsPt, -1, this);
 	pLeader2->iColour = iColour;
 	pLeader2->iLnThk = 2;
-	pDimLine1 = new NLine();
-	pDimLine1->Create(vPP1, vPP2, -1, this);
-	pDimLine1->iColour = iColour;
-	pDimLine2 = new NLine();
-	pDimLine2->Create(vPP1, vPP2, -1, this);
-	pDimLine2->iColour = iColour;
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine2 = pL;
 	//Text insertion point - need to lift off the dim line slightly
 	CString sT;
 	sT = sTextPre + sText + sTextPost;
@@ -43592,9 +44000,14 @@ DIML::DIML(CString sLText,
 	sTextPre = "";
 	sText = sLText;
 	sTextPost = "";;
-	pPt1 = nullptr;      //1st dim point
-	pPt2 = nullptr;      //2nd dim point or null
-	pInsPt = nullptr;    //Ins Point
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
 	dDrgScl = 1;
 	dDimScl = dDScl;
 	vDInsPt = vInsPt;					//Ins Point
@@ -43651,9 +44064,11 @@ void  DIML::Build()
 	pInsPt = new CvPt_Object();
 	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
 	//First Leader Line
-	pDimLine1 = new NLine();
-	pDimLine1->Create(vPP1, vDInsPt, -1, this);
-	pDimLine1->iColour = iColour;
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vDInsPt, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
 	pLeader1 = new NLine();
 	pLeader1->Create(vDInsPt, vDInsPt, -1, this);
 	pLeader1->iColour = iColour;
@@ -43790,9 +44205,14 @@ DIMR::DIMR(double dRad,
 	sTextPre = "";
 	sText = "";
 	sTextPost = "";;
-	pPt1 = nullptr;      //1st dim point
-	pPt2 = nullptr;      //2nd dim point or null
-	pInsPt = nullptr;    //Ins Point
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
 	dDIM = dRad;
 	dDrgScl = 1;
 	dDimScl = dDScl;
@@ -43860,9 +44280,11 @@ void  DIMR::Build()
 	pInsPt = new CvPt_Object();
 	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
 	//First Leader Line
-	pDimLine1 = new NLine();
-	pDimLine1->Create(vPP1, vDInsPt, -1, this);
-	pDimLine1->iColour = iColour;
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vDInsPt, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
 	pLeader1 = new NLine();
 	pLeader1->Create(vPP1, vDInsPt, -1, this);
 	pLeader1->iColour = iColour;
@@ -44023,9 +44445,14 @@ DIMD::DIMD(double dRad,
 	sTextPre = "";
 	sText = "";
 	sTextPost = "";;
-	pPt1 = nullptr;      //1st dim point
-	pPt2 = nullptr;      //2nd dim point or null
-	pInsPt = nullptr;    //Ins Point
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
 	dDIM = dRad;
 	dDrgScl = 1;
 	dDimScl = dDScl;
@@ -44084,7 +44511,6 @@ void  DIMD::Build()
 		sText = buff;
 		char newCharacter = 0;  // Assuming the character 8960 is a TCHAR
 		sText.Insert(0, newCharacter);
-		outtext2(sText);
 	}
 
 
@@ -44096,13 +44522,16 @@ void  DIMD::Build()
 	pInsPt = new CvPt_Object();
 	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
 	//First Dim Line
-	pDimLine1 = new NLine();
-	pDimLine1->Create(vPP1, vDInsPt, -1, this);
-	pDimLine1->iColour = iColour;
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vDInsPt, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
 	//Second Dim Line
-	pDimLine2 = new NLine();
-	pDimLine2->Create(vPP1, vPP1, -1, this);
-	pDimLine2->iColour = iColour;
+	pL = new NLine();
+	pL->Create(vPP1, vPP1, -1, this);
+	pL->iColour = iColour;
+	pDimLine2 = pL;
 	//Circle crossing leader line
 	pLeader1 = new NLine();
 	pLeader1->Create(vPP1, vDInsPt, -1, this);
@@ -49327,6 +49756,8 @@ NCircle::NCircle()
 
 void NCircle::Create(C3dVector vN,C3dVector vC,double dRad,int iLab,G_Object* Parrent)
 {
+
+
 iType = 3;
 ws=0;
 we=1;
@@ -49339,6 +49770,8 @@ iLnThk=4;
 iLnType=1;
 iObjType = 7;
 dRadius = dRad;
+if (dRadius == 0)
+  dRadius = 0.00001;
 pParent=Parrent;
 iNoCPts=0;
 p=2;
@@ -49391,9 +49824,10 @@ knots[11]=1.0;
 C3dMatrix RMat;
 RMat=RMat.CalcTran(vN);
 C3dMatrix TMat;
+RMat.Translate(vC.x, vC.y, vC.z);
 this->Transform(RMat);
-TMat.Translate(vC.x,vC.y,vC.z);
-this->Transform(TMat);
+//TMat.Translate(vC.x,vC.y,vC.z);
+//this->Transform(TMat);
 vCent.Set(vC.x,vC.y,vC.z);
 }
 
@@ -49424,6 +49858,7 @@ Build();
 
 void NCircle::Build()
 {
+	Clean();
 	C3dVector vPt;
 	//C3dVector vC;
 	//vC = vCent;
@@ -49488,15 +49923,16 @@ void NCircle::Build()
 
 void NCircle::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 {
-	double r2 = 0.70710678118654752440084436210485;
+	//double r2 = 0.70710678118654752440084436210485;
 	C3dVector a;
 	a = vCent;
 	a -= inPt;
 	dRadius = a.Mag();
-	cPts[0]->Pt_Point->Set(dRadius, 0, 0);
-	cPts[1]->Pt_Point->Set(dRadius,dRadius, 0);
-	cPts[2]->Pt_Point->Set(0,dRadius,0);
-	cPts[3]->Pt_Point->Set(-dRadius,dRadius, 0);
+	Build();
+	//cPts[0]->Pt_Point->Set(dRadius, 0, 0);
+	//cPts[1]->Pt_Point->Set(dRadius,dRadius, 0);
+	//cPts[2]->Pt_Point->Set(0,dRadius,0);
+	/*cPts[3]->Pt_Point->Set(-dRadius,dRadius, 0);
 	cPts[4]->Pt_Point->Set(-dRadius,0,0);
 	cPts[5]->Pt_Point->Set(-dRadius,-dRadius,0);
 	cPts[6]->Pt_Point->Set(0,-dRadius,0);
@@ -49509,7 +49945,7 @@ void NCircle::DragUpdate(C3dVector inPt, C3dMatrix mWP)
 	C3dMatrix TMat;
 	this->NCurve::Transform(RMat);
 	TMat.Translate(vCent.x, vCent.y, vCent.z);
-	this->NCurve::Transform(TMat);
+	this->NCurve::Transform(TMat);*/
 }
 
 
@@ -49806,8 +50242,16 @@ void NCircle::Transform(C3dMatrix TMat)
   vCent.x = vTmp.x + cPts[0]->Pt_Point->x;
   vCent.y = vTmp.y + cPts[0]->Pt_Point->y;
   vCent.z = vTmp.z + cPts[0]->Pt_Point->z;
-  //vNorm=TMat.Mult(vNorm);
-  vR = vTmp.Normalize();
+  
+  vR.x = (cPts[0]->Pt_Point->x - cPts[4]->Pt_Point->x);
+  vR.y = (cPts[0]->Pt_Point->y - cPts[4]->Pt_Point->y);
+  vR.z = (cPts[0]->Pt_Point->z - cPts[4]->Pt_Point->z);
+  vR.Normalize();
+  vTmp.x = (cPts[2]->Pt_Point->x - vCent.x);
+  vTmp.y = (cPts[2]->Pt_Point->y - vCent.y);
+  vTmp.z = (cPts[2]->Pt_Point->z - vCent.z);
+  vTmp.Normalize();
+  vNorm = vR.Cross(vTmp);
 
 }
 
@@ -49828,6 +50272,82 @@ void NCircle::Info()
   outtext1(S1);
   outtext1("    ****");
 }
+
+int NCircle::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+
+	sVar[iNo] = "KNOT Vector";
+	iNo++;
+	sVar[iNo] = "U Start";
+	iNo++;
+	sVar[iNo] = "U End";
+	iNo++;
+	sVar[iNo] = "Radius";
+	iNo++;
+	return(iNo);
+}
+
+
+int NCircle::GetVarValues(CString sVar[])
+{
+	int i;
+	int iNo = 0;
+	char S1[80] = "";
+	CString sKnots = "";
+	for (i = 0; i < iNoCPts + p; i++)
+	{
+		sprintf_s(S1, "%g,", knots[i]);
+		sKnots += S1;
+	}
+	sprintf_s(S1, "%g", knots[iNoCPts + p]);
+	sKnots += S1;
+	//CString str = str(3.1);
+	sVar[iNo] = sKnots;
+	iNo++;
+	sprintf_s(S1, "%g", ws);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", we);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dRadius);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void NCircle::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int i = 0;
+	int index = 0;
+	CString line = _T(sVar[0]);
+	CString field;
+	CArray<CString, CString> v;
+
+	while (AfxExtractSubString(field, line, index, _T(',')))
+	{
+		v.Add(field);
+		++index;
+	}
+	if (index == iNoCPts + p + 1)
+	{
+		for (i = 0; i < iNoCPts + p + 1; i++)
+		{
+			knots[i] = atof(v[i]);
+		}
+	}
+	double uS, uE;
+	uS = atof(sVar[1]);
+	uE = atof(sVar[2]);
+	if ((uS >= 0.0) && (uS <= 1.0) && (uS < uE))
+		ws = uS;
+	if ((uE >= 0.0) && (uE <= 1.0) && (uE > uS))
+		we = uE;
+	dRadius = atof(sVar[3]);
+	Build();
+}
+
 
 
 IMPLEMENT_DYNAMIC(NLine, CObject)

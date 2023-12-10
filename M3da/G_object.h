@@ -2125,6 +2125,7 @@ class Text : public G_Object
 {
 DECLARE_DYNAMIC(Text)
 public:
+	double dLen = 0;
 	CvPt_Object* inPt = nullptr;			//Insertion Point
 	C3dVector vInsPt;						//Insertion Point
 	C3dVector vNorm;						//Normal
@@ -2168,6 +2169,7 @@ public:
 	double dDrgScl;						//Drawing scale Height
 	double dDIM;
 	int iDimOpt = 0;
+	C3dVector vDAngVert;                 //vertex of the angle
 	C3dVector vDPt1;					//1st dim point
 	C3dVector vDPt2;					//2nd dim point or null
 	C3dVector vDInsPt;					//Ins Point
@@ -2244,23 +2246,27 @@ public:
 	C3dVector vPP2D;
 	C3dVector vPP2A1;					//Arrow point 1
 	C3dVector vPP2A2;					//Arrow point 2
-
+	//Angualar dim aditions the vertex point
+	C3dVector vPPV;                   //Angular vertex point WP
+	CvPt_Object* pPtV = nullptr;
 	//below are the projected points back to WP
 	//these are se;ectable
 	CvPt_Object* pPt1 = nullptr;      //1st dim point
 	CvPt_Object* pPt2 = nullptr;      //2nd dim point or null
 	NLine* pLeader1 = nullptr;
 	NLine* pLeader2 = nullptr;
-	NLine* pDimLine1 = nullptr;  //one halve of dim line
-	NLine* pDimLine2 = nullptr;  //other halve
+	NCurve* pDimLine1 = nullptr;  //one halve of dim line
+	NCurve* pDimLine2 = nullptr;  //other halve
 	Text* pText = nullptr;
 
-           
 	//0 N/A 
-    //1 Aligned Linear
-    //2 Horizontal Linear
-    //3 Vertical Linear
-    //4 Rad
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
 
 	DIMA();
 	DIMA(C3dVector vPt1,
@@ -2298,6 +2304,30 @@ public:
 	//virtual void Info();
 };
 
+//Angular dimension - angle buy 3pts def
+// 
+// vVPt------------>vPt2
+//     -----    +Z)
+//          ------->vPt1
+class DIMANG : public DIMA
+{
+	DECLARE_DYNAMIC(DIMANG)
+
+	DIMANG();
+	DIMANG(C3dVector vVPt,
+		   C3dVector vPt1,
+		   C3dVector vPt2,
+		   C3dVector vInsPt,
+		   C3dVector vO,
+		   C3dVector vN,
+		   C3dVector vD,
+		   double dDScl,
+		   int iLab);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+};
+
 class DIMH : public DIMA
 {
 	DECLARE_DYNAMIC(DIMH)
@@ -2313,6 +2343,8 @@ class DIMH : public DIMA
 	virtual void Build();
 	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
 };
+
+
 
 class DIMV : public DIMA
 {
@@ -2714,6 +2746,9 @@ public:
    //USED FOR TRIM
    void RotateToUS(double U);
    virtual void ExportDXF(FILE* pFile);
+   virtual int GetVarHeaders(CString sVar[]);
+   virtual int GetVarValues(CString sVar[]);
+   virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 

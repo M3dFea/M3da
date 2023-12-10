@@ -1403,6 +1403,8 @@ void DBase::Serialize(CArchive& ar)
 					DB_Obj[i] = new DIMR();
 				else if (iSecondaryType == 5)
 					DB_Obj[i] = new DIMD();
+				else if (iSecondaryType == 6)
+					DB_Obj[i] = new DIMANG();
 				else if (iSecondaryType == 7)
 					DB_Obj[i] = new DIML();
 				DB_Obj[i]->Serialize(ar, iVER);
@@ -5967,6 +5969,25 @@ void DBase::AddDragDIMA(C3dVector v1, C3dVector v2)
 	pDragObj = (DIM*) pDIM;
 }
 
+void DBase::AddDragDIMANG(C3dVector vVert, C3dVector v1, C3dVector v2)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+
+	DIM* pDIM = new DIMANG(vVert,v1, v2, v2, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
 void DBase::AddDragDIMH(C3dVector v1, C3dVector v2)
 {
 	C3dVector vN, vDir, vO;
@@ -6043,6 +6064,16 @@ void DBase::AddDragDIMR(NCircle* pC, C3dVector v1)
 	if (pDragObj != nullptr)
 		delete(pDragObj);
 	pDragObj = (DIM*)pDIM;
+}
+
+void DBase::AddDimForDrag(DIM* pD)
+{
+	Dsp_Rem(pD);
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*) pD;
+	InvalidateOGL();
+	ReDraw();
 }
 
 void DBase::AddDragDIMD(NCircle* pC, C3dVector v1)

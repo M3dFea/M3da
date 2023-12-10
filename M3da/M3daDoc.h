@@ -552,6 +552,8 @@ public:
   afx_msg void OnDimensiontoolsLeadertext();
   afx_msg void OnDimensiontoolsRadiusdim();
   afx_msg void OnDimensiontoolsDiameterdim();
+  afx_msg void OnDimensiontoolsAngulardimby3points();
+  afx_msg void OnDimensiontoolsDragdim();
 };
 
 

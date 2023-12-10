@@ -2495,6 +2495,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "DIMANG")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMANG_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "DIMH")
 	  {
 		  iResumePos = 0;
@@ -2534,6 +2544,16 @@ if (iStat == 0)
 		  pNext = new zDIMR_Mnu();
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMDRAG")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zDIMDRAG_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
 	  }
 	  else if (CInMsg == "DIMD")
 	  {
@@ -3967,6 +3987,88 @@ MenuEnd:
 	return RetVal;
 }
 
+
+int zDIMANG_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			outtext2("// ANGULAR DIMENSION BY 3 POINTS");
+			outtext2("// PICK FIRST POINT OR TYPE COORDINATE");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			p1 = cDBase->DB_PopBuff();
+			outtext2("// PICK SECOND POINT OR TYPE COORDINATE");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			p2 = cDBase->DB_PopBuff();
+			outtext2("// PICK THIRD POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			cDBase->bIsDrag = TRUE;
+			p3 = cDBase->DB_PopBuff();
+			cDBase->AddDragDIMANG(p2,p1,p3);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 5;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 5)
+		{
+			pIns = cDBase->DB_PopBuff();
+			cDBase->AddDIMfromDrag(pIns);
+			outtext1("1 Dim Created.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
 int zDIMH_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -4249,6 +4351,91 @@ int zDIMR_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 			cDBase->ReDraw();
 			cDBase->FILTER.Restore();
 			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+int zDIMDRAG_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			cDBase->FILTER.Save();
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(10);
+			outtext2("// PICK DIMENSION TO DRAG ");
+			iStat = 2;
+		}
+		else if (iStat == 2)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 10) 
+				{
+					pD = (DIM*)cDBase->S_Buff[cDBase->S_Count - 1];
+					cDBase->S_Count = S_initCnt;
+					iStat = 3;
+				}
+				else
+				{
+					outtext1("Error: Must pick dimension to drag.");
+					cDBase->S_Count--;
+					iStat = 1;
+					this->DoMenu(CInMsg, Pt);
+				}
+
+			}
+		}
+		if (iStat == 3)
+		{
+			cDBase->bIsDrag = TRUE;
+			cDBase->AddDimForDrag(pD);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+
+			p1 = cDBase->DB_PopBuff();
+			C3dMatrix mTran;  //not used
+			pD->DragUpdate(p1, mTran);
+			outtext1("1 Dim Updated.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->Dsp_Add(pD);
+			cDBase->InvalidateOGL();
+			cDBase->ReDraw();
+			cDBase->FILTER.Restore();
+			cDBase->pDragObj = nullptr;
+			iStat = 1;
+			this->DoMenu(CInMsg, Pt);
 		}
 
 		//Escape clause

@@ -216,6 +216,8 @@ BEGIN
             MENUITEM "Radius Dim",                  ID_DIMENSIONTOOLS_RADIUSDIM
             MENUITEM "Diameter Dim",                ID_DIMENSIONTOOLS_DIAMETERDIM
             MENUITEM "Leader Text",                 ID_DIMENSIONTOOLS_LEADERTEXT
+            MENUITEM "Angular Dim by 3 Points",     ID_DIMENSIONTOOLS_ANGULARDIMBY3POINTS
+            MENUITEM "Drag Dim",                    ID_DIMENSIONTOOLS_DRAGDIM
         END
         POPUP "Curve Tools"
         BEGIN
@@ -1371,6 +1373,9 @@ BEGIN
     ID_DIMENSIONTOOLS_LEADERTEXT "Create text with leader line."
     ID_DIMENSIONTOOLS_RADIUSDIM "Create a radius dimension."
     ID_DIMENSIONTOOLS_DIAMETERDIM "Create a diameter dimension."
+    ID_DIMENSIONTOOLS_ANGULARDIMBY3POINTS 
+                            "Create Angular Dimension by 3 Points"
+    ID_DIMENSIONTOOLS_DRAGDIM "Drag dimension to re-position."
 END
 
 #endif    // English (United States) resources

@@ -403,6 +403,8 @@ ON_COMMAND(ID_DIMENSIONTOOLS_VERTICALDIM, &CM3daDoc::OnDimensiontoolsVerticaldim
 ON_COMMAND(ID_DIMENSIONTOOLS_LEADERTEXT, &CM3daDoc::OnDimensiontoolsLeadertext)
 ON_COMMAND(ID_DIMENSIONTOOLS_RADIUSDIM, &CM3daDoc::OnDimensiontoolsRadiusdim)
 ON_COMMAND(ID_DIMENSIONTOOLS_DIAMETERDIM, &CM3daDoc::OnDimensiontoolsDiameterdim)
+ON_COMMAND(ID_DIMENSIONTOOLS_ANGULARDIMBY3POINTS, &CM3daDoc::OnDimensiontoolsAngulardimby3points)
+ON_COMMAND(ID_DIMENSIONTOOLS_DRAGDIM, &CM3daDoc::OnDimensiontoolsDragdim)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6720,6 +6722,38 @@ void CM3daDoc::OnDimensiontoolsDiameterdim()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("DIMD");
 		sLastcmd = "DIMD";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnDimensiontoolsAngulardimby3points()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("DIMANG");
+		sLastcmd = "DIMANG";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnDimensiontoolsDragdim()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("DIMDRAG");
+		sLastcmd = "DIMDRAG";
 	}
 	else
 	{
