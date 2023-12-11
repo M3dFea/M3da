@@ -1416,6 +1416,8 @@ IDR_UTILITIES           BITMAP                  "res\\bmp00005.bmp"
 
 IDR_QFILTER             BITMAP                  "res\\bmp00010.bmp"
 
+IDR_DIMS                BITMAP                  "res\\bmp00011.bmp"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1637,6 +1639,20 @@ BEGIN
     BUTTON      ID_QFILTER_CURVES
     BUTTON      ID_QFILTER_SURFACE
     BUTTON      ID_QFILTER_ALL
+END
+
+IDR_DIMS TOOLBAR 24, 24
+BEGIN
+    BUTTON      ID_DIMENSIONTOOLS_DIMSIZE
+    BUTTON      ID_DIMENSIONTOOLS_ALIGNEDDIM
+    BUTTON      ID_DIMENSIONTOOLS_HORIZONTALDIM
+    BUTTON      ID_DIMENSIONTOOLS_VERTICALDIM
+    BUTTON      ID_DIMENSIONTOOLS_RADIUSDIM
+    BUTTON      ID_DIMENSIONTOOLS_DIAMETERDIM
+    BUTTON      ID_DIMENSIONTOOLS_ANGULARDIMBY3POINTS
+    SEPARATOR
+    BUTTON      ID_DIMENSIONTOOLS_LEADERTEXT
+    BUTTON      ID_DIMENSIONTOOLS_DRAGDIM
 END
 
 
@@ -2352,6 +2368,26 @@ BEGIN
     ID_QPOINT               "Pick Points Only"
     ID_QCURVE               "Pick Curves Only"
     ID_QALL                 "Pick All"
+    ID_QFILTER_NODES        "Pick Nodes Only"
+    ID_QFILTER_ELEMENTS     "Pick Elements Only"
+    ID_QFILTER_POINTS       "Pick Points Only"
+    ID_QFILTER_CURVES       "Pick Curves Only"
+    ID_QFILTER_SURFACE      "Pick Surfaces Only"
+    ID_QFILTER_ALL          "All Pickable"
+END
+
+STRINGTABLE
+BEGIN
+    ID_DIMENSIONTOOLS_DIMSIZE "Set Dimension Size."
+    ID_DIMENSIONTOOLS_ALIGNEDDIM "Aligned Dimension"
+    ID_DIMENSIONTOOLS_HORIZONTALDIM "Horizontal Dimension."
+    ID_DIMENSIONTOOLS_VERTICALDIM "Vertical Dimension."
+    ID_DIMENSIONTOOLS_LEADERTEXT "Leader Text"
+    ID_DIMENSIONTOOLS_RADIUSDIM "Radius Dimension."
+    ID_DIMENSIONTOOLS_DIAMETERDIM "Diameter Dimension."
+    ID_DIMENSIONTOOLS_ANGULARDIMBY3POINTS "Angular Dimension by 3 Points."
+    ID_DIMENSIONTOOLS_DRAGDIM "Reposition Dimension by Drag."
+    IDR_DIMS                "Dimensioning"
 END
 
 #endif    // English (United Kingdom) resources

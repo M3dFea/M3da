@@ -176,6 +176,13 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;      // fail to create
 	}
 
+	if (!m_DIMS.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(1, 1, 1, 1), AFX_IDW_MENUBAR + 12) ||
+		!m_DIMS.LoadToolBar(IDR_DIMS))
+	{
+		TRACE0("Failed to create toolbar\n");
+		return -1;      // fail to create
+	}
+
 
   
 	CString strToolBarName;
@@ -228,6 +235,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     m_Projection.SetWindowText("Project");
     m_Utils.SetWindowText("Utils");
     m_QFilter.SetWindowText("Quick Filter");
+	m_DIMS.SetWindowText("Dimension");
 
 	CString strCustomize;
 	bNameValid = strCustomize.LoadString(IDS_TOOLBAR_CUSTOMIZE);
@@ -244,6 +252,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
   m_Projection.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
   m_Utils.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
   m_QFilter.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
+  m_DIMS.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
   //m_Qwanta.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
 	// Allow user-defined toolbars operations:
 	InitUserToolbars(NULL, uiFirstUserToolBarId, uiLastUserToolBarId);
@@ -284,6 +293,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
  m_Projection.EnableDocking(CBRS_ALIGN_ANY);
  m_Utils.EnableDocking(CBRS_ALIGN_ANY);
  m_QFilter.EnableDocking(CBRS_ALIGN_ANY);
+ m_DIMS.EnableDocking(CBRS_ALIGN_ANY);
  //m_Qwanta.EnableDocking(CBRS_ALIGN_ANY);
  EnableDocking(CBRS_ALIGN_ANY);
   //AA.EnableDocking(CBRS_BOTTOM);
@@ -300,6 +310,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
  DockPane(&m_Projection);
  DockPane(&m_Utils);
  DockPane(&m_QFilter);
+ DockPane(&m_DIMS);
  //DockPane(&m_Qwanta);
 	// enable Visual Studio 2005 style docking window behavior
 //	CDockingManager::SetDockingMode(DT_SMART);

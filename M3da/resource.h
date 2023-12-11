@@ -620,13 +620,15 @@
 #define ID_DIMENSIONTOOLS_DIAMETERDIM   33432
 #define ID_DIMENSIONTOOLS_ANGULARDIMBY3POINTS 33433
 #define ID_DIMENSIONTOOLS_DRAGDIM       33434
+#define IDR_DIMS                        33435
+#define ID_BUTTON33443                  33443
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        365
-#define _APS_NEXT_COMMAND_VALUE         33435
+#define _APS_NEXT_RESOURCE_VALUE        369
+#define _APS_NEXT_COMMAND_VALUE         33444
 #define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

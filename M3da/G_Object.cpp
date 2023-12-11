@@ -1914,6 +1914,7 @@ return("");
 
 void G_Object::Build()
 {
+
 }
 
 void G_Object::Info()
@@ -42975,6 +42976,7 @@ void DIMA::ExportDXF(FILE* pFile)
 	C3dVector v1;
 	v1.Set(1, 1, 1);
 	NLine* ll = new NLine();
+	ModLayNo(iFile);
 	ll->Create(v1, v1, -1, nullptr);
 	if (pPtV != NULL)
 	  pPtV->ExportDXF(pFile);      //1st dim point
