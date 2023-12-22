@@ -554,6 +554,7 @@ public:
   afx_msg void OnDimensiontoolsDiameterdim();
   afx_msg void OnDimensiontoolsAngulardimby3points();
   afx_msg void OnDimensiontoolsDragdim();
+  afx_msg void OnDimensiontoolsCirclecentremarker();
 };
 
 

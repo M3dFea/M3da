@@ -6066,6 +6066,72 @@ void DBase::AddDragDIMR(NCircle* pC, C3dVector v1)
 	pDragObj = (DIM*)pDIM;
 }
 
+void DBase::AddCirCL(NCircle* pC)
+{
+	int iC = 12;
+	NLine* pCL = nullptr;
+	C3dVector vDirX, vDirY, vO, vCent, p1X, p1Y, p2X, p2Y;
+	double dR = 1;
+	dR = pC->dRadius;
+	vO.Set(0, 0, 0);  //Origin
+	vDirX.Set(1, 0, 0);  //X Dir
+	vDirY.Set(0, 1, 0);  //Y Dir
+	vCent = pC->Get_Centroid();
+	vO = WPtoGlobal2(vO);
+	vDirX = WPtoGlobal2(vDirX);
+	vDirY = WPtoGlobal2(vDirY);
+	vDirX -= vO; 
+	vDirY -= vO; 
+	p1X = vDirX;
+	p1Y = vDirY;
+	//Centre of matker
+	p1X *= 0.25 * dR;
+	p1Y *= 0.25 * dR;
+    //Add Circle Centre Lines
+	pCL = new NLine();
+	pCL->Create(vCent - p1X, vCent + p1X, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+	pCL = new NLine();
+	pCL->Create(vCent - p1Y, vCent + p1Y, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+
+	//X 
+	p1X = vDirX;
+	p2X = vDirX;
+	p1X *= 0.5 * dR;
+	p2X *= 1.25 * dR;
+	pCL = new NLine();
+	pCL->Create(vCent - p1X, vCent - p2X, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+	pCL = new NLine();
+	pCL->Create(vCent + p1X, vCent + p2X, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+	//Y
+	p1Y = vDirY;
+	p2Y = vDirY;
+	p1Y *= 0.5 * dR;
+	p2Y *= 1.25 * dR;
+	pCL = new NLine();
+	pCL->Create(vCent - p1Y, vCent - p2Y, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+	pCL = new NLine();
+	pCL->Create(vCent + p1Y, vCent + p2Y, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+
+}
+
 void DBase::AddDimForDrag(DIM* pD)
 {
 	Dsp_Rem(pD);

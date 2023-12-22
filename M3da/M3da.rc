@@ -218,6 +218,7 @@ BEGIN
             MENUITEM "Leader Text",                 ID_DIMENSIONTOOLS_LEADERTEXT
             MENUITEM "Angular Dim by 3 Points",     ID_DIMENSIONTOOLS_ANGULARDIMBY3POINTS
             MENUITEM "Drag Dim",                    ID_DIMENSIONTOOLS_DRAGDIM
+            MENUITEM "Circle Centre Marker",        ID_DIMENSIONTOOLS_CIRCLECENTREMARKER
         END
         POPUP "Curve Tools"
         BEGIN
@@ -1378,6 +1379,11 @@ BEGIN
     ID_DIMENSIONTOOLS_DRAGDIM "Drag dimension to re-position."
 END
 
+STRINGTABLE
+BEGIN
+    ID_DIMENSIONTOOLS_CIRCLECENTREMARKER "Create circle centre marker."
+END
+
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -1653,6 +1659,7 @@ BEGIN
     SEPARATOR
     BUTTON      ID_DIMENSIONTOOLS_LEADERTEXT
     BUTTON      ID_DIMENSIONTOOLS_DRAGDIM
+    BUTTON      ID_DIMENSIONTOOLS_CIRCLECENTREMARKER
 END
 
 
@@ -2388,6 +2395,11 @@ BEGIN
     ID_DIMENSIONTOOLS_ANGULARDIMBY3POINTS "Angular Dimension by 3 Points."
     ID_DIMENSIONTOOLS_DRAGDIM "Reposition Dimension by Drag."
     IDR_DIMS                "Dimensioning"
+END
+
+STRINGTABLE
+BEGIN
+    ID_DIMENSIONTOOLS_CIRCLECENTREMARKER "Create circle centre markers."
 END
 
 #endif    // English (United Kingdom) resources

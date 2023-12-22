@@ -993,6 +993,14 @@ public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zDIMCL_Mnu : public zMnu
+{
+	C3dVector p2;
+	NCircle* pC = nullptr;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zDIMDRAG_Mnu : public zMnu
 {
 	C3dVector p1;

@@ -405,6 +405,7 @@ ON_COMMAND(ID_DIMENSIONTOOLS_RADIUSDIM, &CM3daDoc::OnDimensiontoolsRadiusdim)
 ON_COMMAND(ID_DIMENSIONTOOLS_DIAMETERDIM, &CM3daDoc::OnDimensiontoolsDiameterdim)
 ON_COMMAND(ID_DIMENSIONTOOLS_ANGULARDIMBY3POINTS, &CM3daDoc::OnDimensiontoolsAngulardimby3points)
 ON_COMMAND(ID_DIMENSIONTOOLS_DRAGDIM, &CM3daDoc::OnDimensiontoolsDragdim)
+ON_COMMAND(ID_DIMENSIONTOOLS_CIRCLECENTREMARKER, &CM3daDoc::OnDimensiontoolsCirclecentremarker)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6754,6 +6755,22 @@ void CM3daDoc::OnDimensiontoolsDragdim()
 		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
 		outtextMSG2("DIMDRAG");
 		sLastcmd = "DIMDRAG";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnDimensiontoolsCirclecentremarker()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("DIMCL");
+		sLastcmd = "DIMCL";
 	}
 	else
 	{

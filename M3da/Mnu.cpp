@@ -2545,6 +2545,16 @@ if (iStat == 0)
 		  pNext->Init(cDBase, -1);
 		  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "DIMCL")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zDIMCL_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "DIMDRAG")
 	  {
 	  iResumePos = 0;
@@ -4358,6 +4368,73 @@ int zDIMR_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		{
 			cDBase->FILTER.SetAll();
 			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+int zDIMCL_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			cDBase->FILTER.Save();
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("// PICK CIRCLE ");
+			iStat = 2;
+		}
+		else if (iStat == 2)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				if ((cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7) &&
+					(cDBase->S_Buff[cDBase->S_Count - 1]->iType == 3))
+				{
+					pC = (NCircle*)cDBase->S_Buff[cDBase->S_Count - 1];
+					cDBase->S_Count = S_initCnt;
+					iStat = 3;
+				}
+				else
+				{
+					outtext1("Error: Must pick circle or arc.");
+					cDBase->S_Count--;
+					iStat = 1;
+					this->DoMenu(CInMsg, Pt);
+				}
+
+			}
+		}
+		if (iStat == 3)
+		{
+
+			cDBase->AddCirCL(pC);
+			outtext1("1 CL Created.");
+			cDBase->ReDraw();
+			cDBase->FILTER.Restore();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
 			cDBase->ReDraw();
 			cDBase->DB_BuffCount = initCnt;
 			cDBase->S_Count = S_initCnt;
