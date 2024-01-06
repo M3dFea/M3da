@@ -3486,6 +3486,7 @@ public:
    Mat GetParticlePos();      //used for 2d MPM example
    Mat getCoords2d();
    Mat getCoords3d();
+   Mat getCoords3d_MIN3();
    //Mat getCoords3d();
    virtual Vec<int> GetSteerVec3d();
    virtual Vec<int> GetSteerVec1d();

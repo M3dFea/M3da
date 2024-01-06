@@ -15353,6 +15353,35 @@ for (i=0;i<iNoNodes;i++)
 return (coord);
 }
 
+//*******************************************************************
+//Get The coordinates after transforming the element to the XY plain
+// For MIN3 element point are relative to first node
+//********************************************************************
+Mat E_Object3::getCoords3d_MIN3()
+{
+	int i;
+	C3dVector p;
+	Mat coord(iNoNodes, 2);
+	C3dMatrix M3 = this->GetElSys();
+	//M3.Transpose();
+	for (i = 0; i < iNoNodes; i++)
+	{
+		C3dVector p, v;
+		p.x = pVertex[i]->Pt_Point->x;
+		p.y = pVertex[i]->Pt_Point->y;
+		p.z = pVertex[i]->Pt_Point->z;
+		v = M3.Mult(p);
+		*coord.mn(i + 1, 1) = v.x;
+		*coord.mn(i + 1, 2) = v.y;
+	}
+	for (i = 0; i < iNoNodes; i++)
+	{
+		*coord.mn(i + 1, 1) -= *coord.mn(1, 1);
+		*coord.mn(i + 1, 2) -= *coord.mn(1, 2);
+	}
+	return (coord);
+}
+
 
 Mat E_Object3::ShapeDer(Mat Points, int i)
 {
@@ -23195,7 +23224,7 @@ iStep=0;
       }
       else
       {
-	      outtext1("ERROR: negative jacobian");
+	    outtext1("ERROR: negative jacobian");
         pE->Reverse();
         KME=pE->GetStiffMat(PropsT,MatT);
         Steer=pE->GetSteerVec3d();

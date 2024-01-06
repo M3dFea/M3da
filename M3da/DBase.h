@@ -7,7 +7,7 @@
 
 //Note the version number has to be negative
 //so we can maintain compatability with older files
-const int VERSION_NO=-70;
+const int VERSION_NO=-71;
 const int MAX_GPS = 1000;
 const int MAX_TEMPGRP = 10000;
 
