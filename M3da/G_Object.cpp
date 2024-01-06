@@ -2238,9 +2238,7 @@ void BackGround::OglDrawW(int iDspFlgs, double dS1, double dS2) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glEnable(GL_TEXTURE_2D);
 		glEnable(GL_NORMALIZE);
-		double dDec;
 		double dDec1;
-		double dRA;
 		double dRA1;
 		C3dVector n0;
 		C3dVector n1;
@@ -2354,8 +2352,6 @@ char S1[80];
 //New to handle the DEF system eventually
   //ME_Object* ME = (ME_Object*) pParent;
 C3dVector pt(Pt_Point->x, Pt_Point->y, Pt_Point->z);
-int i;
-int iDefCYS[10];
 int iN = 0;
 int iRID;
 CoordSys* pD;
@@ -15357,28 +15353,30 @@ return (coord);
 //Get The coordinates after transforming the element to the XY plain
 // For MIN3 element point are relative to first node
 //********************************************************************
-Mat E_Object3::getCoords3d_MIN3()
+Mat E_Object3::getCoords_XEL()
 {
 	int i;
+	double dx, dy, dz;
+
 	C3dVector p;
-	Mat coord(iNoNodes, 2);
+	Mat coord(iNoNodes, 3);
 	C3dMatrix M3 = this->GetElSys();
 	//M3.Transpose();
 	for (i = 0; i < iNoNodes; i++)
 	{
 		C3dVector p, v;
-		p.x = pVertex[i]->Pt_Point->x;
-		p.y = pVertex[i]->Pt_Point->y;
-		p.z = pVertex[i]->Pt_Point->z;
+		p.x = pVertex[i]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+		p.y = pVertex[i]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+		p.z = pVertex[i]->Pt_Point->z - pVertex[0]->Pt_Point->z;
 		v = M3.Mult(p);
 		*coord.mn(i + 1, 1) = v.x;
 		*coord.mn(i + 1, 2) = v.y;
+		*coord.mn(i + 1, 3) = v.z;
+		dx = *coord.mn(i + 1, 1);
+		dy = *coord.mn(i + 1, 2);
+		dz = *coord.mn(i + 1, 3);
 	}
-	for (i = 0; i < iNoNodes; i++)
-	{
-		*coord.mn(i + 1, 1) -= *coord.mn(1, 1);
-		*coord.mn(i + 1, 2) -= *coord.mn(1, 2);
-	}
+
 	return (coord);
 }
 
@@ -15454,271 +15452,300 @@ int E_Object3::noDof()
 return(6);
 }
 
+
+// 06/01/2024 MIN3 IMPLEMENTATION 
 Mat E_Object3::GetStiffMat(PropTable* PropsT,MatTable* MatT)
 {
-Mat bee;   //strain displacement matrix
-int nip=0;
+Mat KE;   
+//**********************************************************************************************************************************
+//!Initialize - these may need moving to higher scope 
+double BENSUM = 0;
+double SHRSUM = 0;
+double PSI_HAT = 0;
+double PHI_SQ = 0;
+double X2E = 0;
+double X3E = 0;
+double Y3E = 0;
+double AREA = 0;
+//Get Element Coord sys TE;
+Mat XEL = getCoords_XEL();     //Local element coordinates
+C3dMatrix TE = this->GetElSys(); 
+//Calculate element geometry parameters from data block XEL
+//XEL is local element coods
+X2E = *XEL.mn(2, 1);
+X3E = *XEL.mn(3, 1);
+Y3E = *XEL.mn(3, 2);
+AREA = X2E * Y3E / 2.0;
 
-Mat coord2;
-Mat deriv;
-Mat deriv2;
-Mat fun;
-Mat Points;
-Mat jac;
-int i;
-double det;
-Mat bT;
-Mat db;
-Mat bdb;
-int iDof;
-int iS;
-int MID=-1;
-double dE=210e9;
-double dv=0.29;
-char S1[80];
-double dthk=0.001;
-
-Property* pS=PropsT->GetItem(PID);
-if (pS!=NULL)
-{
-  MID=pS->GetDefMatID();
-}
-Material* pM=MatT->GetItem(MID);
-if (pS==NULL)
-{
-  sprintf_s(S1,"ERROR: PROPERTY NOT FOUND FOR EL %i",iLabel);
-  outtext1(S1);
-}
-if (pM==NULL)
-{  
-  sprintf_s(S1,"ERROR: MATERIAL NOT FOUND FOR EL %i",iLabel);
-  outtext1(S1); 
-}
-//Get Shell thick ness
-
-if (((iType==91) || (iType==94)) && (pS!=NULL))
-{
-  PSHELL* pSh = (PSHELL*) pS;
-  dthk=pSh->dT;
+return (KE);
 }
 
-if ((pM!=NULL) && (pM->iType = 1))
-{
-  MAT1* pIsen = (MAT1*) pM;
-  dE=pIsen->dE;
-  dv=pIsen->dNU;
-}
-//This part calculates the 2d membraine stiffness
-iDof=2;   //2 dof X,Y per node
-nip=1;    //1 intergration points
-iS=3;
-
-Mat KM(iDof*iNoNodes,iDof*iNoNodes);
-Mat dee=DeeMat(dE,dv,iS);
-Mat coord=getCoords3d();
-C3dMatrix M3=this->GetElSys();
-Points=Sample(nip);
-//Membraine stiffness calculation
-//for dof 12
-  for(i=1;i<nip+1;i++)
-  {
-    det = 0;
-    fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-    bT.clear();db.clear();bdb.clear();bee.clear();
-    fun=ShapeFun(Points, i);
-    deriv=ShapeDer(Points, i);
-    jac = deriv*coord;
-    jac=jac.InvertJac(det);
-    deriv2 = jac*deriv;
-    bee=bmat(coord, deriv2,iS,iDof);
-    bT = bee;
-    bT.Transpose();
-    db = dee*bee;
-    bdb = bT*db;
-    det*=*Points.mn(i,3);
-    bdb*=det;
-    KM+=bdb;
-  }
-KM*=dthk;
-fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-bT.clear();db.clear();bdb.clear();bee.clear();
-//Mindlin Formulation
-//Sheer Stifness Calculation
-//I think need to be reduced integration 1 sample point
-double G,kk;
-int k;
-dee.clear();
-dee.Create(2,2);
-G=0.5*dE/(1+dv);
-kk=5.0/6.0;
-*dee.mn(1,1) = kk*G*dthk;
-*dee.mn(2,2) = kk*G*dthk;
-*dee.mn(1,2) = 0;
-*dee.mn(2,1) = 0;
-Mat KM2(12,12); 
-nip=1;
-Points=Sample(nip);
-for(i=1;i<nip+1;i++)
-  {
-    det = 0;
-    fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-    bT.clear();db.clear();bdb.clear();bee.clear();
-    fun=ShapeFun(Points, i);
-    deriv=ShapeDer(Points, i);
-    jac = deriv*coord;
-    jac=jac.InvertJac(det);
-    deriv2 = jac*deriv;
-    bee.clear();
-    bee.Create(2,12);
-    for (k=1;k<iNoNodes+1;k++)//was m
-    {
-      *bee.mn(1,(k)*3-2) = *deriv2.mn(1,k);
-      *bee.mn(1,(k)*3-1) = 0;
-      *bee.mn(1,(k)*3-0) = *fun.mn(1,k);
-      *bee.mn(2,(k)*3-2) = *deriv2.mn(2,k);
-      *bee.mn(2,(k)*3-1) = -*fun.mn(1,k);
-      *bee.mn(2,(k)*3-0) = 0;
-    }
-    bT = bee;
-    bT.Transpose();
-    db = dee*bee;
-    bdb = bT*db;
-    det*=*Points.mn(i,3);
-    bdb*=det;
-    KM2+=bdb;
-  }
-fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-bT.clear();db.clear();bdb.clear();bee.clear();
-//The bending part
-dee.clear();
-dee.Create(3,3);
-double Cf;
-Cf=dE*dthk*dthk*dthk/(12*(1-dv*dv));
-//nip should be 3 set to 1 for debugging
-nip=1;
-//*******************************************************************
-Points=Sample(nip);
-*dee.mn(1,1) = 1;
-*dee.mn(1,2) = dv;
-*dee.mn(1,3) = 0;
-*dee.mn(2,1) = dv;
-*dee.mn(2,2) = 1;
-*dee.mn(2,3) = 0;
-*dee.mn(3,1) = 0;
-*dee.mn(3,2) = 0;
-*dee.mn(3,3) = (1-dv);
-dee*=Cf;
-Mat KM3(12,12); 
-for(i=1;i<nip+1;i++)
-  {
-    fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-    bT.clear();db.clear();bdb.clear();bee.clear();
-    det = 0;
-    fun=ShapeFun(Points, i);
-    deriv=ShapeDer(Points, i);
-    jac = deriv*coord;
-    jac=jac.InvertJac(det);
-    deriv2 = jac*deriv;
-    bee.clear();
-    bee.Create(3,12);
-    for (k=1;k<iNoNodes+1;k++)//was m
-    {
-      *bee.mn(1,(k)*3-2) = 0;
-      *bee.mn(1,(k)*3-1) = 0;
-      *bee.mn(1,(k)*3-0) = -*deriv2.mn(1,k);
-      *bee.mn(2,(k)*3-2) = 0;
-      *bee.mn(2,(k)*3-1) = *deriv2.mn(2,k);
-      *bee.mn(2,(k)*3-0) = 0;
-      *bee.mn(3,(k)*3-2) = 0;
-      *bee.mn(3,(k)*3-1) = *deriv2.mn(1,k);
-      *bee.mn(3,(k)*3-0) = -*deriv2.mn(2,k);
-    }
-    bT = bee;
-    bT.Transpose();
-    db = dee*bee;
-    bdb = bT*db;
-    det*=*Points.mn(i,3);
-    bdb*=det;
-    KM3+=bdb;
-  }
-KM2+=KM3;
-//KM2 = KM3;
-fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-bT.clear();db.clear();bdb.clear();bee.clear();
-//Assemble all the components inplain,shear and bending in KMf
-Mat KMf(6*iNoNodes,6*iNoNodes);
-Vec<int> V(6);
-*V.nn(1)=1;
-*V.nn(2)=2;
-*V.nn(3)=7;
-*V.nn(4)=8;
-*V.nn(5)=13;
-*V.nn(6)=14;
-
-int j;
-for (i=1;i<=6;i++)
-{
-  for (j=1;j<=6;j++)
-  {
-    *KMf.mn(V[i-1],V[j-1])=*KM.mn(i,j);
-  }
-}
-Vec<int> V1(9);
-*V1.nn(1)=3;
-*V1.nn(2)=4;
-*V1.nn(3)=5;
-*V1.nn(4)=9;
-*V1.nn(5)=10;
-*V1.nn(6)=11;
-*V1.nn(7)=15;
-*V1.nn(8)=16;
-*V1.nn(9)=17;
-
-for (i=1;i<=9;i++)
-{
-  for (j=1;j<=9;j++)
-  {
-    *KMf.mn(V1[i-1],V1[j-1])=*KM2.mn(i,j);
-  }
-}
-
-for (i=6;i<=18;i+=6)
-{
-  *KMf.mn(i,i)=0.01;  //DRILLING STIFFNES
-}
-//Transform to global
-//M3.Transpose();
-Mat TMAT(18,18);
-
-for (i=1;i<18;i+=3)
-{
-    *TMAT.mn(i,i)=M3.m_00;
-    *TMAT.mn(i+1,i)=M3.m_10;
-    *TMAT.mn(i+2,i)=M3.m_20;
-
-    *TMAT.mn(i,i+1)=M3.m_01;
-    *TMAT.mn(i+1,i+1)=M3.m_11;
-    *TMAT.mn(i+2,i+1)=M3.m_21;
-
-    *TMAT.mn(i,i+2)=M3.m_02;
-    *TMAT.mn(i+1,i+2)=M3.m_12;
-    *TMAT.mn(i+2,i+2)=M3.m_22;
-}
-//TMAT.diag();
-Mat TMATT=TMAT;
-TMATT.Transpose();
-Mat T;
-Mat TT;
-T=KMf*TMAT;
-TT=TMATT*T;
-KM.clear();
-KM2.clear();
-TMATT.clear();
-TMAT.clear();
-T.clear();
-return (TT);
-}
-
+//06/01/2024 old implementation of K mat which does not
+//work
+//Mat E_Object3::GetStiffMat(PropTable* PropsT, MatTable* MatT)
+//{
+//	Mat bee;   //strain displacement matrix
+//	int nip = 0;
+//
+//	Mat coord2;
+//	Mat deriv;
+//	Mat deriv2;
+//	Mat fun;
+//	Mat Points;
+//	Mat jac;
+//	int i;
+//	double det;
+//	Mat bT;
+//	Mat db;
+//	Mat bdb;
+//	int iDof;
+//	int iS;
+//	int MID = -1;
+//	double dE = 210e9;
+//	double dv = 0.29;
+//	char S1[80];
+//	double dthk = 0.001;
+//
+//	Property* pS = PropsT->GetItem(PID);
+//	if (pS != NULL)
+//	{
+//		MID = pS->GetDefMatID();
+//	}
+//	Material* pM = MatT->GetItem(MID);
+//	if (pS == NULL)
+//	{
+//		sprintf_s(S1, "ERROR: PROPERTY NOT FOUND FOR EL %i", iLabel);
+//		outtext1(S1);
+//	}
+//	if (pM == NULL)
+//	{
+//		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
+//		outtext1(S1);
+//	}
+//	//Get Shell thick ness
+//
+//	if (((iType == 91) || (iType == 94)) && (pS != NULL))
+//	{
+//		PSHELL* pSh = (PSHELL*)pS;
+//		dthk = pSh->dT;
+//	}
+//
+//	if ((pM != NULL) && (pM->iType = 1))
+//	{
+//		MAT1* pIsen = (MAT1*)pM;
+//		dE = pIsen->dE;
+//		dv = pIsen->dNU;
+//	}
+//	//This part calculates the 2d membraine stiffness
+//	iDof = 2;   //2 dof X,Y per node
+//	nip = 1;    //1 intergration points
+//	iS = 3;
+//
+//	Mat KM(iDof * iNoNodes, iDof * iNoNodes);
+//	Mat dee = DeeMat(dE, dv, iS);
+//	Mat coord = getCoords3d();
+//	C3dMatrix M3 = this->GetElSys();
+//	Points = Sample(nip);
+//	//Membraine stiffness calculation
+//	//for dof 12
+//	for (i = 1; i < nip + 1; i++)
+//	{
+//		det = 0;
+//		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//		bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//		fun = ShapeFun(Points, i);
+//		deriv = ShapeDer(Points, i);
+//		jac = deriv * coord;
+//		jac = jac.InvertJac(det);
+//		deriv2 = jac * deriv;
+//		bee = bmat(coord, deriv2, iS, iDof);
+//		bT = bee;
+//		bT.Transpose();
+//		db = dee * bee;
+//		bdb = bT * db;
+//		det *= *Points.mn(i, 3);
+//		bdb *= det;
+//		KM += bdb;
+//	}
+//	KM *= dthk;
+//	fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//	bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//	//Mindlin Formulation
+//	//Sheer Stifness Calculation
+//	//I think need to be reduced integration 1 sample point
+//	double G, kk;
+//	int k;
+//	dee.clear();
+//	dee.Create(2, 2);
+//	G = 0.5 * dE / (1 + dv);
+//	kk = 5.0 / 6.0;
+//	*dee.mn(1, 1) = kk * G * dthk;
+//	*dee.mn(2, 2) = kk * G * dthk;
+//	*dee.mn(1, 2) = 0;
+//	*dee.mn(2, 1) = 0;
+//	Mat KM2(12, 12);
+//	nip = 1;
+//	Points = Sample(nip);
+//	for (i = 1; i < nip + 1; i++)
+//	{
+//		det = 0;
+//		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//		bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//		fun = ShapeFun(Points, i);
+//		deriv = ShapeDer(Points, i);
+//		jac = deriv * coord;
+//		jac = jac.InvertJac(det);
+//		deriv2 = jac * deriv;
+//		bee.clear();
+//		bee.Create(2, 12);
+//		for (k = 1; k < iNoNodes + 1; k++)//was m
+//		{
+//			*bee.mn(1, (k) * 3 - 2) = *deriv2.mn(1, k);
+//			*bee.mn(1, (k) * 3 - 1) = 0;
+//			*bee.mn(1, (k) * 3 - 0) = *fun.mn(1, k);
+//			*bee.mn(2, (k) * 3 - 2) = *deriv2.mn(2, k);
+//			*bee.mn(2, (k) * 3 - 1) = -*fun.mn(1, k);
+//			*bee.mn(2, (k) * 3 - 0) = 0;
+//		}
+//		bT = bee;
+//		bT.Transpose();
+//		db = dee * bee;
+//		bdb = bT * db;
+//		det *= *Points.mn(i, 3);
+//		bdb *= det;
+//		KM2 += bdb;
+//	}
+//	fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//	bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//	//The bending part
+//	dee.clear();
+//	dee.Create(3, 3);
+//	double Cf;
+//	Cf = dE * dthk * dthk * dthk / (12 * (1 - dv * dv));
+//	//nip should be 3 set to 1 for debugging
+//	nip = 1;
+//	//*******************************************************************
+//	Points = Sample(nip);
+//	*dee.mn(1, 1) = 1;
+//	*dee.mn(1, 2) = dv;
+//	*dee.mn(1, 3) = 0;
+//	*dee.mn(2, 1) = dv;
+//	*dee.mn(2, 2) = 1;
+//	*dee.mn(2, 3) = 0;
+//	*dee.mn(3, 1) = 0;
+//	*dee.mn(3, 2) = 0;
+//	*dee.mn(3, 3) = (1 - dv);
+//	dee *= Cf;
+//	Mat KM3(12, 12);
+//	for (i = 1; i < nip + 1; i++)
+//	{
+//		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//		bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//		det = 0;
+//		fun = ShapeFun(Points, i);
+//		deriv = ShapeDer(Points, i);
+//		jac = deriv * coord;
+//		jac = jac.InvertJac(det);
+//		deriv2 = jac * deriv;
+//		bee.clear();
+//		bee.Create(3, 12);
+//		for (k = 1; k < iNoNodes + 1; k++)//was m
+//		{
+//			*bee.mn(1, (k) * 3 - 2) = 0;
+//			*bee.mn(1, (k) * 3 - 1) = 0;
+//			*bee.mn(1, (k) * 3 - 0) = -*deriv2.mn(1, k);
+//			*bee.mn(2, (k) * 3 - 2) = 0;
+//			*bee.mn(2, (k) * 3 - 1) = *deriv2.mn(2, k);
+//			*bee.mn(2, (k) * 3 - 0) = 0;
+//			*bee.mn(3, (k) * 3 - 2) = 0;
+//			*bee.mn(3, (k) * 3 - 1) = *deriv2.mn(1, k);
+//			*bee.mn(3, (k) * 3 - 0) = -*deriv2.mn(2, k);
+//		}
+//		bT = bee;
+//		bT.Transpose();
+//		db = dee * bee;
+//		bdb = bT * db;
+//		det *= *Points.mn(i, 3);
+//		bdb *= det;
+//		KM3 += bdb;
+//	}
+//	KM2 += KM3;
+//	//KM2 = KM3;
+//	fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//	bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//	//Assemble all the components inplain,shear and bending in KMf
+//	Mat KMf(6 * iNoNodes, 6 * iNoNodes);
+//	Vec<int> V(6);
+//	*V.nn(1) = 1;
+//	*V.nn(2) = 2;
+//	*V.nn(3) = 7;
+//	*V.nn(4) = 8;
+//	*V.nn(5) = 13;
+//	*V.nn(6) = 14;
+//
+//	int j;
+//	for (i = 1; i <= 6; i++)
+//	{
+//		for (j = 1; j <= 6; j++)
+//		{
+//			*KMf.mn(V[i - 1], V[j - 1]) = *KM.mn(i, j);
+//		}
+//	}
+//	Vec<int> V1(9);
+//	*V1.nn(1) = 3;
+//	*V1.nn(2) = 4;
+//	*V1.nn(3) = 5;
+//	*V1.nn(4) = 9;
+//	*V1.nn(5) = 10;
+//	*V1.nn(6) = 11;
+//	*V1.nn(7) = 15;
+//	*V1.nn(8) = 16;
+//	*V1.nn(9) = 17;
+//
+//	for (i = 1; i <= 9; i++)
+//	{
+//		for (j = 1; j <= 9; j++)
+//		{
+//			*KMf.mn(V1[i - 1], V1[j - 1]) = *KM2.mn(i, j);
+//		}
+//	}
+//
+//	for (i = 6; i <= 18; i += 6)
+//	{
+//		*KMf.mn(i, i) = 0.01;  //DRILLING STIFFNES
+//	}
+//	//Transform to global
+//	//M3.Transpose();
+//	Mat TMAT(18, 18);
+//
+//	for (i = 1; i < 18; i += 3)
+//	{
+//		*TMAT.mn(i, i) = M3.m_00;
+//		*TMAT.mn(i + 1, i) = M3.m_10;
+//		*TMAT.mn(i + 2, i) = M3.m_20;
+//
+//		*TMAT.mn(i, i + 1) = M3.m_01;
+//		*TMAT.mn(i + 1, i + 1) = M3.m_11;
+//		*TMAT.mn(i + 2, i + 1) = M3.m_21;
+//
+//		*TMAT.mn(i, i + 2) = M3.m_02;
+//		*TMAT.mn(i + 1, i + 2) = M3.m_12;
+//		*TMAT.mn(i + 2, i + 2) = M3.m_22;
+//	}
+//	//TMAT.diag();
+//	Mat TMATT = TMAT;
+//	TMATT.Transpose();
+//	Mat T;
+//	Mat TT;
+//	T = KMf * TMAT;
+//	TT = TMATT * T;
+//	KM.clear();
+//	KM2.clear();
+//	TMATT.clear();
+//	TMAT.clear();
+//	T.clear();
+//	return (TT);
+//}
 
 void E_Object3::TranslateAVF(C3dVector vIn)
 {
