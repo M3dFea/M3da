@@ -2072,7 +2072,7 @@ void Mat::diag()
 FILE* pFile;
 int i;
 int j;
-pFile = fopen("MAT_DIAG.txt","w");
+pFile = fopen("C:/SCRATCH/MIN3/MAT_DIAG_MIN3.txt","w");
 
 fprintf(pFile,"%s\n","MATRIX");
 fprintf(pFile,"%s%i%s%i\n","M",m,"N",n);
@@ -2083,7 +2083,7 @@ for (i=0;i<m;i++)
   {
   fprintf(pFile,"%f,",*mn(i+1,j+1));
   }
-fprintf(pFile,"\n","");
+fprintf(pFile,"\n");
 }
 fclose(pFile);
 }

@@ -3182,6 +3182,8 @@ public:
    virtual void RepNodeInEl(Node* pThis,Node* pWith);
    virtual Mat KayMat(double K, int iD);
    virtual Mat DeeMat(double E, double v,int iD);
+   virtual Mat DeeBM(double E, double v, int iD);
+   virtual Mat DeeSH(double E, double v, int iD);
    virtual int noDof();
    virtual BOOL ChkNegJac();
    virtual int GetfaceList(eFace* Faces[6]);
@@ -3491,6 +3493,10 @@ public:
    virtual Vec<int> GetSteerVec3d();
    virtual Vec<int> GetSteerVec1d();
    int MaxBW();
+   //MIN3 Membrane stiffness returns BIG_BM
+   Mat TMEM1_BM(int OPT, double AREA, double X2E, double X3E, double Y3E);
+   Mat TMEM1_KE(int OPT, double AREA, double X2E, double X3E, double Y3E, Mat SHELL_A);
+   Mat TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E, Mat SHELL_D, Mat SHELL_T);
    virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
    virtual BOOL NodeInEl(Node* pN);
    virtual void RepNodeInEl(Node* pThis,Node* pWith);

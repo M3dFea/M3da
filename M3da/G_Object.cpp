@@ -11553,7 +11553,7 @@ if (iD==3)  //Plain Stress
   C = E / (1-v*v);
   *dee.mn(1, 1) = C;
   *dee.mn(2, 2) = C;
-  *dee.mn(3, 3) = 0.5*(1-v)*C;
+  *dee.mn(3, 3) = 0.5*(1-v)*C; //this should be G not sure is correct??
   *dee.mn(1, 2) = v*C;
   *dee.mn(2, 1) = v*C;
 }
@@ -11598,6 +11598,39 @@ else if(iD==6)
 return (dee);
 }
 
+//SHELL_D matrix for bending coeffients for Dee Matrix
+Mat E_Object::DeeBM(double E, double v, int iD)
+{
+	Mat EBM(3, 3);
+	double G = 0;
+	double DEN1 = 0;
+	double E0 = 0;
+	G = E / (2 * (1 + v));
+	DEN1 = 1 - v*v;
+	if (abs(DEN1)<0.01)
+		outtext1("ERROR: Material Property Error 1-v*v very small.");
+	EBM.MakeZero();
+	E0 = E / DEN1;
+	*EBM.mn(1, 1) = E0;
+	*EBM.mn(2, 2) = *EBM.mn(1, 1);
+	*EBM.mn(3, 3) = G;
+	*EBM.mn(1, 2) = E0 * v;
+	*EBM.mn(2, 1) = *EBM.mn(1, 2);
+
+	return (EBM);
+}
+
+Mat E_Object::DeeSH(double E, double v, int iD)
+{
+	Mat ESH(2, 2);
+	double G = 0;
+	G = E / (2 * (1 + v));
+
+	ESH.MakeZero();
+	*ESH.mn(1, 1) = G;
+	*ESH.mn(2, 2) = G;
+	return (ESH);
+}
 //********************************************************************************
 // THERMAL CONDUCTIVITY MATRIX K
 //********************************************************************************
@@ -15452,11 +15485,356 @@ int E_Object3::noDof()
 return(6);
 }
 
+//07/01/2024 MIN3 IMPLEMENTATION
+Mat E_Object3::TMEM1_BM(int OPT, double AREA, double X2E, double X3E, double Y3E)
+{
+	//Membrane strain / displacement for 1 point CTRIA element
+	double C01 = 0;
+	double C02 = 0;
+	double C03 = 0;
+	double C04 = 0;
+	
+	Mat BM(3,18);
+	C01 = 1 / X2E;
+	C02 = 1 / Y3E;
+	C03 = (X3E - X2E) * C01 * C02;
+	C04 = X3E * C01 * C02;
+
+	*BM.mn(1, 1) = -C01;
+	*BM.mn(1, 7) = C01;
+	*BM.mn(2, 2) = C03;
+	*BM.mn(2, 8) = -C04;
+	*BM.mn(2, 14) = C02;
+	*BM.mn(3, 1) = C03;
+	*BM.mn(3, 2) = -C01;
+	*BM.mn(3, 7) = -C04;
+	*BM.mn(3, 8) = C01;
+	*BM.mn(3, 13) = C02;
+
+	return (BM);
+}
+
+Mat E_Object3::TMEM1_KE(int OPT, double AREA, double X2E, double X3E, double Y3E,Mat SHELL_A)
+{
+	//Membrane strain Stiffness Matrix
+	// BMt * DEE * BM
+	Mat KE;
+	Mat BMT;
+	Mat db;
+	Mat BM = TMEM1_BM(3, AREA, X2E, X3E, Y3E);
+	BMT = BM;
+	BMT.Transpose();
+	db = SHELL_A * BM;
+	KE = BMT * db;
+	KE *= AREA;
+	//Also need to *by area
+	//KE.diag();
+
+	return (KE);
+}
+
+
+Mat E_Object3::TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E, Mat SHELL_D,  Mat SHELL_T)
+{
+	int I, J;
+	//Bending and Shear stiffness matrix
+	double BENSUM = 0;  
+	double SHRSUM = 0;
+	Mat KB(9, 9);   //w,thetaX,thetaY squared NOT the full matrix of 18*18
+	Mat KS(9, 9);   
+	Mat A(3, 1);
+	Mat B(3, 1);
+	Mat FXX(3, 3);
+	Mat FYY(3, 3);
+	Mat FXY(3, 3);
+
+	*A.mn(1, 1) = X3E - X2E;
+	*A.mn(2, 1) = -X3E;
+	*A.mn(3, 1) = X2E;
+	*B.mn(1, 1) = -Y3E;
+	*B.mn(2, 1) = Y3E;
+	*B.mn(3, 1) = 0;
+	double A4 = 4 * AREA;
+	double A42 = A4 * AREA;
+	//********************************************************************
+	//Calculate element stiffness matrix KE. Note that we need to calc KE
+	//if the stress recovery matrices(for OPT(3)) are to be cal'd
+	//since the BE strain recovery matrices use PHI_SQ
+	KB.MakeZero();
+    //Bending stiffness terms(KB)
+
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*FXX.mn(I, J) = *B.mn(I,1) * *B.mn(J,1) / A42;
+			*FYY.mn(I, J) = *A.mn(I,1) * *A.mn(J,1) / A42;
+			*FXY.mn(I, J) = *B.mn(I,1) * *A.mn(J,1) / A42;
+		}
+
+	}
+
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KB.mn(I + 3, J + 3) = AREA * (*SHELL_D.mn(2, 2) * *FYY.mn(I, J) + *SHELL_D.mn(2, 3) * (*FXY.mn(I, J) + *FXY.mn(J, I)) + *SHELL_D.mn(3, 3) * *FXX.mn(I, J));
+		}
+
+	}
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KB.mn(I + 3, J + 6) = -AREA * (*SHELL_D.mn(1, 2) * *FXY.mn(J, I) + *SHELL_D.mn(2, 3) * *FYY.mn(I, J) + *SHELL_D.mn(1, 3) * *FXX.mn(I, J) + *SHELL_D.mn(3, 3) * *FXY.mn(I, J));
+			*KB.mn(J + 6, I + 3) = *KB.mn(I + 3, J + 6);
+		}
+	}
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KB.mn(I + 6, J + 6) = AREA * (*SHELL_D.mn(1, 1) * *FXX.mn(I, J) + *SHELL_D.mn(1, 3) * (*FXY.mn(I, J) + *FXY.mn(J, I)) + *SHELL_D.mn(3, 3) * *FYY.mn(I, J));
+		}
+	}
+	BENSUM = 0;
+	for (I = 4; I < 9 + 1; I++)
+	{
+		BENSUM = BENSUM + *KB.mn(I, I);
+	}
+	//Start of shear stiffness calc
+	//Shear stress terms(KS)
+
+	KS.MakeZero();
+	Mat B2(3, 3);//NEEDS CLEARING AT END
+	*B2.mn(1, 1) = 0;
+	*B2.mn(2, 2) = 0;
+	*B2.mn(3, 3) = 0;
+	*B2.mn(1, 2) = -*B.mn(2,1) * *B.mn(3,1) / A4;
+	*B2.mn(1, 3) = -*B2.mn(1, 2);
+	*B2.mn(2, 1) = *B.mn(1,1) * *B.mn(3,1) / A4;
+	*B2.mn(2, 3) = -*B2.mn(2, 1);
+	*B2.mn(3, 1) = -*B.mn(1,1) * *B.mn(2,1) / A4;
+	*B2.mn(3, 2) = -*B2.mn(3, 1);
+	Mat A2(3, 3);//NEEDS CLEARING AT END
+	*A2.mn(1, 1) = (*A.mn(2,1) * *B.mn(3,1) - *A.mn(3,1) * *B.mn(2,1)) / A4;
+	*A2.mn(2, 2) = (-*A.mn(1,1) * *B.mn(3,1) + *A.mn(3,1) * *B.mn(1,1)) / A4;
+	*A2.mn(3, 3) = (-*A.mn(2,1) * *B.mn(1,1) + *A.mn(1,1) * *B.mn(2,1)) / A4;
+	*A2.mn(1, 2) = -*A.mn(2,1) * *B.mn(3,1) / A4;
+	*A2.mn(1, 3) = *A.mn(3,1) * *B.mn(2,1) / A4;
+	*A2.mn(2, 1) = *A.mn(1,1) * *B.mn(3,1) / A4;
+	*A2.mn(2, 3) = -*A.mn(3,1) * *B.mn(1,1) / A4;
+	*A2.mn(3, 1) = -*A.mn(1,1) * *B.mn(2,1) / A4;
+	*A2.mn(3, 2) = *A.mn(2,1) * *B.mn(1,1) / A4;
+	Mat B1(3, 3);//NEEDS CLEARING AT END
+	*B1.mn(1, 1) = (-*B.mn(2,1) * *A.mn(3,1) + *B.mn(3,1) * *A.mn(2,1)) / A4;
+	*B1.mn(2, 2) = (*B.mn(1,1) * *A.mn(3,1) - *B.mn(3,1) * *A.mn(1,1)) / A4;
+	*B1.mn(3, 3) = (*B.mn(2,1) * *A.mn(1,1) - *B.mn(1,1) * *A.mn(2,1)) / A4;
+	*B1.mn(1, 2) = *B.mn(2,1) * *A.mn(3,1) / A4;
+	*B1.mn(1, 3) = -*B.mn(3,1) * *A.mn(2,1) / A4;
+	*B1.mn(2, 1) = -*B.mn(1,1) * *A.mn(3,1) / A4;
+	*B1.mn(2, 3) = *B.mn(3,1) * *A.mn(1,1) / A4;
+	*B1.mn(3, 1) = *B.mn(1,1) * *A.mn(2,1) / A4;
+	*B1.mn(3, 2) = -*B.mn(2,1) * *A.mn(1,1) / A4;
+	Mat A1(3, 3); //NEEDS CLEARING AT END
+	*A1.mn(1, 1) = 0;
+	*A1.mn(2, 2) = 0;
+	*A1.mn(3, 3) = 0;
+	*A1.mn(1, 2) = *A.mn(2,1) * *A.mn(3,1) / A4;
+	*A1.mn(1, 3) = -*A1.mn(1, 2);
+	*A1.mn(2, 1) = -*A.mn(1,1) * *A.mn(3,1) / A4;
+	*A1.mn(2, 3) = -*A1.mn(2, 1);
+	*A1.mn(3, 1) = *A.mn(1,1) * *A.mn(2,1) / A4;
+	*A1.mn(3, 2) = -*A1.mn(3, 1);
+	Mat I00(3, 3); //NEEDS CLEARING AT END
+	*I00.mn(1, 2) = AREA / 12;
+	*I00.mn(1, 3) = *I00.mn(1, 2);
+	*I00.mn(2, 1) = *I00.mn(1, 2);
+	*I00.mn(2, 3) = *I00.mn(1, 2);
+	*I00.mn(3, 1) = *I00.mn(1, 2);
+	*I00.mn(3, 2) = *I00.mn(1, 2);
+	*I00.mn(1, 1) = 2 * *I00.mn(1, 2);
+	*I00.mn(2, 2) = *I00.mn(1, 1);
+	*I00.mn(3, 3) = *I00.mn(1, 1);
+	Mat IX0(3, 3); //NEEDS CLEARING AT END
+	*IX0.mn(1, 1) = *B.mn(1,1) / 6;
+	*IX0.mn(1, 2) = *IX0.mn(1, 1);
+	*IX0.mn(1, 3) = *IX0.mn(1, 1);
+	*IX0.mn(2, 1) = *B.mn(2,1) / 6;
+	*IX0.mn(2, 2) = *IX0.mn(2, 1);
+	*IX0.mn(2, 3) = *IX0.mn(2, 1);
+	*IX0.mn(3, 1) = *B.mn(3,1) / 6;
+	*IX0.mn(3, 2) = *IX0.mn(3, 1);
+	*IX0.mn(3, 3) = *IX0.mn(3, 1);
+	Mat IY0(3, 3); //NEEDS CLEARING AT END
+	*IY0.mn(1, 1) = *A.mn(1,1) / 6;
+	*IY0.mn(1, 2) = *IY0.mn(1, 1);
+	*IY0.mn(1, 3) = *IY0.mn(1, 1);
+	*IY0.mn(2, 1) = *A.mn(2,1) / 6;
+	*IY0.mn(2, 2) = *IY0.mn(2, 1);
+	*IY0.mn(2, 3) = *IY0.mn(2, 1);
+	*IY0.mn(3, 1) = *A.mn(3,1) / 6;
+	*IY0.mn(3, 2) = *IY0.mn(3, 1);
+	*IY0.mn(3, 3) = *IY0.mn(3, 1);
+	//SHELL_T.diag();
+	Mat S1(3, 3); //NEEDS CLEARING AT END
+	Mat S2(3, 3); //NEEDS CLEARING AT END
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			if (I == J)
+			{
+				*S1.mn(I, J) = *A2.mn(I, J) + 1;
+				*S2.mn(I, J) = *B1.mn(I, J) + 1;
+			}
+			else
+			{
+				*S1.mn(I, J) = *A2.mn(I, J);
+				*S2.mn(I, J) = *B1.mn(I, J);
+			}
+		}
+	}
+	Mat T1(3, 3); //NEEDS CLEARING AT END
+	Mat T2(3, 3); //NEEDS CLEARING AT END
+	Mat T3(3, 3); //NEEDS CLEARING AT END
+	Mat T4(3, 3); //NEEDS CLEARING AT END
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*T1.mn(I, J) = (*SHELL_T.mn(1, 1) * *B2.mn(I, J) + *SHELL_T.mn(1, 2) * *S1.mn(I, J));
+			*T2.mn(I, J) = (*SHELL_T.mn(1, 2) * *B2.mn(I, J) + *SHELL_T.mn(2, 2) * *S1.mn(I, J));
+			*T3.mn(I, J) = (*SHELL_T.mn(1, 1) * *S2.mn(I, J) + *SHELL_T.mn(1, 2) * *A1.mn(I, J));
+			*T4.mn(I, J) = (*SHELL_T.mn(1, 2) * *S2.mn(I, J) + *SHELL_T.mn(2, 2) * *A1.mn(I, J));
+		}
+	}
+
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I, J) = AREA * (*SHELL_T.mn(1, 1) * *FXX.mn(I, J) + *SHELL_T.mn(1, 2) * (*FXY.mn(I, J) + *FXY.mn(J, I)) + *SHELL_T.mn(2, 2) * *FYY.mn(I, J));
+		}
+	}
+	//3x3 KS - 12, 21 Partition
+	Mat DUM1;//NEEDS CLEARING AT END
+	Mat DUM2;//NEEDS CLEARING AT END
+
+	DUM1 = IX0 * T1;
+	DUM2 = IY0 * T2;
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I, J + 3) = -*DUM1.mn(I, J) - *DUM2.mn(I, J);
+			*KS.mn(J + 3, I) = *KS.mn(I, J + 3);
+		}
+	}
+	DUM1.clear();
+	DUM2.clear();
+	//3x3 KS - 13, 31 Partition
+	DUM1 = IX0 * T3;
+	DUM2 = IY0 * T4;
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I, J + 6) = *DUM1.mn(I, J) + *DUM2.mn(I, J);
+			*KS.mn(J + 6, I) = *KS.mn(I, J + 6);
+		}
+	}
+	DUM1.clear();
+	DUM2.clear();
+	Mat DUM3;//NEEDS CLEARING AT END
+	Mat DUM4;//NEEDS CLEARING AT END
+	Mat TT;
+	//3x3 KS - 22 Partition
+	DUM3 = I00 * T1;
+	TT = B2;
+	TT.Transpose();
+	DUM1 = TT * DUM3;
+	DUM4 = I00 * T2;
+	TT = S1;
+	TT.Transpose();
+	DUM2 = TT * DUM4;
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I + 3, J + 3) = *DUM1.mn(I, J) + *DUM2.mn(I, J);
+		}
+	}
+	DUM1.clear();
+	DUM2.clear();
+	DUM3.clear();
+	DUM4.clear();
+	//3x3 KS - 23, 32 Partition
+	//THIS IS INCORRECT
+	DUM3 = I00 * T3;
+	TT = B2;
+	TT.Transpose();
+	DUM1 = TT * DUM3;
+	DUM4 = I00 * T4;
+	TT = S1;
+	TT.Transpose();
+	DUM2 = TT * DUM4;
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I + 3, J + 6) = -*DUM1.mn(I, J) - *DUM2.mn(I, J);
+			*KS.mn(J + 6, I + 3) = *KS.mn(I + 3, J + 6);
+		}
+	}
+	DUM1.clear();
+	DUM2.clear();
+	DUM3.clear();
+	DUM4.clear();
+	//3x3 KS - 33 Partition
+	DUM3 = I00 * T3;
+	TT = S2;
+	TT.Transpose();
+	DUM1 = TT * DUM3;
+	DUM4 = I00 * T4;
+	TT = A1;
+	TT.Transpose();
+	DUM2 = TT * DUM4;
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I + 6, J + 6) = *DUM1.mn(I, J) + *DUM2.mn(I, J);
+		}
+	}
+	DUM1.clear();
+	DUM2.clear();
+	DUM3.clear();
+	DUM4.clear();
+	SHRSUM = 0;
+	for (I = 4; I < 9 + 1; I++)
+	{
+		SHRSUM = SHRSUM + *KS.mn(I, I);
+	}
+
+
+	KS.diag();
+
+	return (KB);
+}
 
 // 06/01/2024 MIN3 IMPLEMENTATION 
 Mat E_Object3::GetStiffMat(PropTable* PropsT,MatTable* MatT)
 {
-Mat KE;   
+char S1[80];
+Mat KE;  
+Mat KEP;
+int MID;
+double dthk =0;
+double dBRatio = 1;
+double dSHRatio = 1;
+double dE = 70e9; 
+double dv = 0.33;
 //**********************************************************************************************************************************
 //!Initialize - these may need moving to higher scope 
 double BENSUM = 0;
@@ -15467,15 +15845,75 @@ double X2E = 0;
 double X3E = 0;
 double Y3E = 0;
 double AREA = 0;
-//Get Element Coord sys TE;
-Mat XEL = getCoords_XEL();     //Local element coordinates
-C3dMatrix TE = this->GetElSys(); 
+
+	Property* pS = PropsT->GetItem(PID);
+	if (pS != NULL)
+	{
+		MID = pS->GetDefMatID();
+	}
+	Material* pM = MatT->GetItem(MID);
+	if (pS == NULL)
+	{
+		sprintf_s(S1, "ERROR: PROPERTY NOT FOUND FOR EL %i", iLabel);
+		outtext1(S1);
+	}
+	if (pM == NULL)
+	{
+		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
+		outtext1(S1);
+	}
+	//Get Shell thick ness
+
+	if (((iType == 91) || (iType == 94)) && (pS != NULL))
+	{
+		PSHELL* pSh = (PSHELL*)pS;
+		dthk = pSh->dT;
+		dBRatio = pSh->d12IT3;
+		dSHRatio = pSh->dTST;
+	}
+//  
+	if ((pM != NULL) && (pM->iType = 1))
+	{
+		MAT1* pIsen = (MAT1*)pM;
+		dE = pIsen->dE;
+		dv = pIsen->dNU;
+	}
+
+Mat XEL = getCoords_XEL();       //Local element coordinates
+C3dMatrix TE = this->GetElSys(); //TE Element coord system
 //Calculate element geometry parameters from data block XEL
 //XEL is local element coods
 X2E = *XEL.mn(2, 1);
 X3E = *XEL.mn(3, 1);
 Y3E = *XEL.mn(3, 2);
 AREA = X2E * Y3E / 2.0;
+//**********************************************************************************************************************************
+//For TRIA3 generate the membrane stiffness
+Mat BM; //Membrane strain / disp matrix 3*24
+//TMEM1 actuall calcate alot more like Mass Matrix and KE
+//just not sure hpw to organise at the moment
+BM = TMEM1_BM(3, AREA, X2E, X3E, Y3E); //OPT 3 = K mat
+//******************************************************
+//The membrane DEE matrix note G is assummed as E/2*(1+v)
+//this may need changing for pcomp
+Mat SHELL_A = DeeMat(dE, dv, 3);
+Mat SHELL_D = DeeBM(dE, dv, 3);
+Mat SHELL_T = DeeSH(dE, dv, 3);
+//NOTE BOTH SHELL_A & SHELL_D need transform by TE if MAT8
+Mat SHELL_D_TRIA = SHELL_D;
+Mat SHELL_T_TRIA = SHELL_T;
+*SHELL_D_TRIA.mn(1, 1) *= dBRatio * dthk * dthk * dthk / 12;
+*SHELL_D_TRIA.mn(2, 2) *= dBRatio * dthk * dthk * dthk / 12;
+*SHELL_D_TRIA.mn(3, 3) *= dBRatio * dthk * dthk * dthk / 12;
+SHELL_D.diag();
+SHELL_A *= dthk;
+*SHELL_T_TRIA.mn(1, 1) *= dSHRatio * dthk;
+*SHELL_T_TRIA.mn(2, 2) *= dSHRatio * dthk;
+//Shell_A need to multiplied by thk
+KE= TMEM1_KE(3, AREA, X2E, X3E, Y3E, SHELL_A);
+//Bending and Shear KE
+KEP = TPLT2_KE(3, AREA, X2E, X3E, Y3E, SHELL_D_TRIA, SHELL_T_TRIA);
+KEP.diag();
 
 return (KE);
 }
@@ -23263,6 +23701,7 @@ iStep=0;
       Steer.clear();
     }
     //***************************************************************
+	
     for (i=0;i<iELCnt;i++)
     {
       for (m=1;m<=KM[i].m;m++)
