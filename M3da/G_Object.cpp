@@ -15540,8 +15540,10 @@ Mat E_Object3::TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E
 	//Bending and Shear stiffness matrix
 	double BENSUM = 0;  
 	double SHRSUM = 0;
+	Mat KE(18, 18);
 	Mat KB(9, 9);   //w,thetaX,thetaY squared NOT the full matrix of 18*18
-	Mat KS(9, 9);   
+	Mat KS(9, 9);  
+	Mat KV(9, 9);
 	Mat A(3, 1);
 	Mat B(3, 1);
 	Mat FXX(3, 3);
@@ -15770,7 +15772,6 @@ Mat E_Object3::TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E
 	DUM3.clear();
 	DUM4.clear();
 	//3x3 KS - 23, 32 Partition
-	//THIS IS INCORRECT
 	DUM3 = I00 * T3;
 	TT = B2;
 	TT.Transpose();
@@ -15817,10 +15818,61 @@ Mat E_Object3::TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E
 		SHRSUM = SHRSUM + *KS.mn(I, I);
 	}
 
+	Vec<int> ID(9);
+    *ID.nn(1) = 3;
+	*ID.nn(2) = 9;
+	*ID.nn(3) = 15;
+	*ID.nn(4) = 4;
+	*ID.nn(5) = 10;
+	*ID.nn(6) = 16;
+	*ID.nn(7) = 5;
+	*ID.nn(8) = 11;
+	*ID.nn(9) = 17;
+	//double PHI_SQ = 0.318704E-03;  //Need to call function for this
+	//******** Shear Correction factor  **********
+	double CBMIN = 2.0; //for tri element - emprirical value??
+	double PSI_HAT = BENSUM / SHRSUM;
+	double DEN = 1 + CBMIN * PSI_HAT;
+	double PHI_SQ = CBMIN * PSI_HAT / DEN;
+	//********************************************
+	for (I = 1; I < 9 + 1; I++)
+	{
+		for (J = 1; J < 9 + 1; J++)
+		{
+			*KV.mn(I, J) = *KB.mn(I, J) + PHI_SQ * *KS.mn(I, J);
+			*KE.mn(*ID.nn(I), *ID.nn(J)) = *KE.mn(*ID.nn(I), *ID.nn(J)) + *KV.mn(I, J);
+		}
+	}
 
-	KS.diag();
-
-	return (KB);
+	FXX.clear();
+	FYY.clear();
+	FXY.clear();
+	A.clear();
+	B.clear();
+	B2.clear();
+	A2.clear();
+	B1.clear();
+	A1.clear();
+	I00.clear();
+	IX0.clear();
+	IY0.clear();
+	S1.clear();
+	S2.clear();
+	T1.clear();
+	T2.clear();
+	T3.clear();
+	T4.clear();
+	TT.clear();
+	DUM1.clear();
+	DUM2.clear();
+	DUM3.clear();
+	DUM4.clear();
+	KV.clear();
+	KB.clear();
+	KS.clear();
+	ID.clear();
+	
+	return (KE);
 }
 
 // 06/01/2024 MIN3 IMPLEMENTATION 
@@ -15845,7 +15897,7 @@ double X2E = 0;
 double X3E = 0;
 double Y3E = 0;
 double AREA = 0;
-
+int i;
 	Property* pS = PropsT->GetItem(PID);
 	if (pS != NULL)
 	{
@@ -15902,9 +15954,8 @@ Mat SHELL_T = DeeSH(dE, dv, 3);
 //NOTE BOTH SHELL_A & SHELL_D need transform by TE if MAT8
 Mat SHELL_D_TRIA = SHELL_D;
 Mat SHELL_T_TRIA = SHELL_T;
-*SHELL_D_TRIA.mn(1, 1) *= dBRatio * dthk * dthk * dthk / 12;
-*SHELL_D_TRIA.mn(2, 2) *= dBRatio * dthk * dthk * dthk / 12;
-*SHELL_D_TRIA.mn(3, 3) *= dBRatio * dthk * dthk * dthk / 12;
+SHELL_D_TRIA *= dBRatio * dthk * dthk * dthk / 12;
+
 SHELL_D.diag();
 SHELL_A *= dthk;
 *SHELL_T_TRIA.mn(1, 1) *= dSHRatio * dthk;
@@ -15913,9 +15964,39 @@ SHELL_A *= dthk;
 KE= TMEM1_KE(3, AREA, X2E, X3E, Y3E, SHELL_A);
 //Bending and Shear KE
 KEP = TPLT2_KE(3, AREA, X2E, X3E, Y3E, SHELL_D_TRIA, SHELL_T_TRIA);
-KEP.diag();
+KE += KEP;
+for (i = 6; i <= 18; i += 6)
+	{
+		*KE.mn(i, i) = 0.01;  //DRILLING STIFFNES
+	}
 
-return (KE);
+	Mat TMAT(18, 18);
+
+	for (i = 1; i < 18; i += 3)
+	{
+		*TMAT.mn(i, i) = TE.m_00;
+		*TMAT.mn(i + 1, i) = TE.m_10;
+		*TMAT.mn(i + 2, i) = TE.m_20;
+
+		*TMAT.mn(i, i + 1) = TE.m_01;
+		*TMAT.mn(i + 1, i + 1) = TE.m_11;
+		*TMAT.mn(i + 2, i + 1) = TE.m_21;
+
+		*TMAT.mn(i, i + 2) = TE.m_02;
+		*TMAT.mn(i + 1, i + 2) = TE.m_12;
+		*TMAT.mn(i + 2, i + 2) = TE.m_22;
+	}
+	//TMAT.diag();
+	Mat TMATT = TMAT;
+	TMATT.Transpose();
+	Mat T;
+	Mat TT;
+	T = KE * TMAT;
+	TT = TMATT * T;
+KE.diag();
+
+
+return (TT);
 }
 
 //06/01/2024 old implementation of K mat which does not
