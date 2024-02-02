@@ -359,7 +359,7 @@ void Vec<T>::diag()
 {
 FILE* pFile;
 int j;
-pFile = fopen("VEC_DIAG.txt","w");
+pFile = fopen("C:/SCRATCH/MIN3/VEC_DIAG.txt","w");
 
 fprintf(pFile,"%s\n","VECTOR");
 fprintf(pFile,"%s%i\n","N",n);

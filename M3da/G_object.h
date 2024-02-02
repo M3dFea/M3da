@@ -3580,9 +3580,18 @@ public:
                          Mat& deriv,
                          Mat& fun);
 	virtual int MaxBW();
-	virtual Mat E_Object4::GetStiffMat(PropTable* PropsT,MatTable* MatT);
-	virtual Mat E_Object4::GetStiffMat_Ex(PropTable* PropsT, MatTable* MatT);
-	Mat E_Object4::GetB_1pt(double &det);
+	Mat getCoords_XEL();
+	//MIN4 Membrane stiffness 
+	//UBROUTINE QMEM1 ( OPT, IORD, RED_INT_SHEAR, AREA, XSD, YSD, BIG_BM )
+	Mat QMEM1_BM(int OPT, double AREA, Vec<double> X2E, Vec<double>  X3E, Mat SHELL_A);
+	Mat QPLT2_KE(int OPT, double AREA, Vec<double> X2E, Vec<double>  X3E, Mat SHELL_D, Mat SHELL_T);
+	Mat BBMIN4(Mat deriv);
+	//Constrained shape frunctions
+	void MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
+		       Vec<double> NXSH, Vec<double> NYSH, Mat DNXSHG, Mat DNYSHG);
+	virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
+	virtual Mat GetStiffMat_Ex(PropTable* PropsT, MatTable* MatT);
+	Mat GetB_1pt(double &det);
 	virtual Vec<int>GetSteerVec3d();
 	virtual Vec<int> GetSteerVec3d_E();
 	virtual Vec<int>GetSteerVec1d();
