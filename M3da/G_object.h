@@ -3584,11 +3584,12 @@ public:
 	//MIN4 Membrane stiffness 
 	//UBROUTINE QMEM1 ( OPT, IORD, RED_INT_SHEAR, AREA, XSD, YSD, BIG_BM )
 	Mat QMEM1_BM(int OPT, double AREA, Vec<double> X2E, Vec<double>  X3E, Mat SHELL_A);
-	Mat QPLT2_KE(int OPT, double AREA, Vec<double> X2E, Vec<double>  X3E, Mat SHELL_D, Mat SHELL_T);
+	Mat QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD, Mat SHELL_D, Mat SHELL_T);
+	Mat QPLT2_KS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX);
 	Mat BBMIN4(Mat deriv);
 	//Constrained shape frunctions
 	void MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
-		       Vec<double> NXSH, Vec<double> NYSH, Mat DNXSHG, Mat DNYSHG);
+		       Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG);
 	virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
 	virtual Mat GetStiffMat_Ex(PropTable* PropsT, MatTable* MatT);
 	Mat GetB_1pt(double &det);

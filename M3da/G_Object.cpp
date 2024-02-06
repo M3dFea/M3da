@@ -15967,7 +15967,7 @@ KEP = TPLT2_KE(3, AREA, X2E, X3E, Y3E, SHELL_D_TRIA, SHELL_T_TRIA);
 KE += KEP;
 for (i = 6; i <= 18; i += 6)
 	{
-		*KE.mn(i, i) = 0.01;  //DRILLING STIFFNES
+		*KE.mn(i, i) = 1.0;  //DRILLING STIFFNES
 	}
 
 	Mat TMAT(18, 18);
@@ -15993,8 +15993,6 @@ for (i = 6; i <= 18; i += 6)
 	Mat TT;
 	T = KE * TMAT;
 	TT = TMATT * T;
-KE.diag();
-
 
 return (TT);
 }
@@ -17382,7 +17380,13 @@ return (iRC);
 Mat E_Object4::Sample(int iNo)
 {
 Mat Pts(iNo,3);
-if (iNo == 4)
+if (iNo == 1)
+{
+  *Pts.mn(1, 1) = 0;
+  *Pts.mn(1, 2) = 0;
+  *Pts.mn(1, 3) = 4;
+}
+else if (iNo == 4)
 {
   double r3 = 0.577350269189626;;
   *Pts.mn(1,1) = -r3;
@@ -17400,11 +17404,36 @@ if (iNo == 4)
   *Pts.mn(3,3) = 1;
   *Pts.mn(4,3) = 1;
 }
-else if (iNo == 1)
+
+else if (iNo == 9)  //Used for the shell transverse shear terms
 {
-  *Pts.mn(1,1) = 0;
-  *Pts.mn(1,2) = 0;
-  *Pts.mn(1,3) = 4;
+	*Pts.mn(1, 1) = -0.774597E+00;
+	*Pts.mn(1, 2) = -0.774597E+00;
+	*Pts.mn(1, 3) = 0.308642E+00;
+	*Pts.mn(2, 1) = -0.774597E+00;
+	*Pts.mn(2, 2) = 0.000000E+00;
+	*Pts.mn(2, 3) = 0.493827E+00;
+	*Pts.mn(3, 1) = -0.774597E+00;
+	*Pts.mn(3, 2) = 0.774597E+00;
+	*Pts.mn(3, 3) = 0.308642E+00;
+	*Pts.mn(4, 1) = 0.000000E+00;
+	*Pts.mn(4, 2) = -0.774597E+00;
+	*Pts.mn(4, 3) = 0.493827E+00;
+	*Pts.mn(5, 1) = 0.000000E+00;
+	*Pts.mn(5, 2) = 0.000000E+00;
+	*Pts.mn(5, 3) = 0.790123E+00;
+	*Pts.mn(6, 1) = 0.000000E+00;
+	*Pts.mn(6, 2) = 0.774597E+00;
+	*Pts.mn(6, 3) = 0.493827E+00;
+	*Pts.mn(7, 1) = 0.774597E+00;
+	*Pts.mn(7, 2) = -0.774597E+00;
+	*Pts.mn(7, 3) = 0.308642E+00;
+	*Pts.mn(8, 1) = 0.774597E+00;
+	*Pts.mn(8, 2) = 0.000000E+00;
+	*Pts.mn(8, 3) = 0.493827E+00;
+	*Pts.mn(9, 1) = 0.774597E+00;
+	*Pts.mn(9, 2) = 0.774597E+00;
+	*Pts.mn(9, 3) = 0.308642E+00;
 }
 return (Pts);
 }
@@ -17816,7 +17845,7 @@ Mat E_Object4::BBMIN4(Mat deriv)
 }
 
 void E_Object4::MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
-	                   Vec<double> NXSH, Vec<double> NYSH, Mat DNXSHG, Mat DNYSHG)
+	                   Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG)
 {
 	//XSD(4)            !1 - D arrays of differences in x side dimensions(local)
 	//YSD(4)            !1 - D arrays of differences in y side dimensions(local)
@@ -17885,6 +17914,7 @@ void E_Object4::MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
 	*DNXSHG.mn(2, 2) = (-Y12 * N5Y + Y23 * N6Y) / 8;
 	*DNXSHG.mn(2, 3) = (-Y23 * N6Y + Y34 * N7Y) / 8;
 	*DNXSHG.mn(2, 4) = (-Y34 * N7Y + Y41 * N8Y) / 8;
+	DNXSHG.diag();
 	//Derivatives of NYSH wrt xi, eta:
 	*DNYSHG.mn(1, 1) = (-X41 * N8X + X12 * N5X) / 8;
 	*DNYSHG.mn(1, 2) = (-X12 * N5X + X23 * N6X) / 8;
@@ -17896,14 +17926,42 @@ void E_Object4::MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
 	*DNYSHG.mn(2, 4) = (-X34 * N7Y + X41 * N8Y) / 8;
 }
 
-Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> X2E, Vec<double>  X3E, Mat SHELL_D, Mat SHELL_T)
+Mat E_Object4::QPLT2_KS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX)
+{
+	Mat BS(2,12);
+	int J, JJ;
+	JJ = 0;
+
+	for (J = 1; J < 4 + 1; J++)
+	{
+		JJ = JJ + 1;
+		*BS.mn(1, JJ) = *DPSHX.mn(1, J);
+		*BS.mn(2, JJ) = *DPSHX.mn(2, J);
+
+		JJ = JJ + 1;
+		*BS.mn(1, JJ) = -*DNXSHX.mn(1, J);
+		*BS.mn(2, JJ) = -*DNXSHX.mn(2, J) - *PSH.mn(1,J);
+
+		JJ = JJ + 1;
+		*BS.mn(1, JJ) = *DNYSHX.mn(1, J) + *PSH.mn(1,J);
+		*BS.mn(2, JJ) = *DNYSHX.mn(2, J);
+	}
+	return (BS);
+}
+
+Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD, Mat SHELL_D, Mat SHELL_T)
 {
 	double BENSUM = 0;
+	double SHRSUM = 0;
 	Mat bee;   //strain displacement matrix
 	int nip = 0;
 	Mat coord2;
 	Mat deriv;
 	Mat deriv2;
+	Mat DPSHX; //Same as deriv2
+	Mat DNXSHX;
+	Mat DNYSHX;
+	Mat BS;
 	Mat fun;
 	Mat Points;
 	Mat jac;
@@ -17911,7 +17969,10 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> X2E, Vec<double>  X3E,
 	Mat db;
 	Mat bdb;
 	Mat KB(8, 8);
-	int i;
+	Mat KS(12, 12);
+	Mat KE(24 , 24);
+	KE.MakeZero();
+	int i,j;
 	double det;
 	nip = 4;
 	Points = Sample(nip);
@@ -17933,22 +17994,114 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> X2E, Vec<double>  X3E,
 		bdb *= det;
 		KB += bdb;
     }
+	KB.diag();
 	BENSUM = 0;                                 //Add all diag terms from KB
-	for (i = 1; i < 8 + 1 + 1; i++)
+	for (i = 1; i < 8 + 1; i++)
 	{
 		BENSUM = BENSUM + *KB.mn(i, i);
 	}
 	KB.diag();
 	//SHEAR TERMS 
+	//CALL ORDER_GAUSS(IORDXX, SSS, HHH)
+	double SSI, SSJ;
+	Vec<double> NXSH(4);
+	Vec<double> NYSH(4);
+	Mat DNXSHG(2,4);
+	Mat DNYSHG(2,4);
+	Points.clear();
+	nip = 9;  //NINE INTEGRATION POINTS
+	Points = Sample(nip);
+	for (i = 1; i < nip + 1; i++)
+	{
+		SSI = *Points.mn(i, 1);  
+		SSJ = *Points.mn(i, 2);
+		det = 0;
+		fun = ShapeFun(Points, i);
+		deriv = ShapeDer(Points, i);
+		MIN4SH(SSI, SSJ, XSD, YSD, NXSH, NYSH, DNXSHG, DNYSHG);
+		DNXSHG.diag();
+		jac = deriv * coord;
+		jac = jac.InvertJac(det);
+		jac.diag();
+		DPSHX.clear();
+		DPSHX = jac * deriv;
+		DNXSHX.clear();
+		DNXSHX = jac * DNXSHG;
+		DNYSHX.clear();
+		DNYSHX = jac * DNYSHG;
+		BS.clear();
+		BS=QPLT2_KS(fun, DPSHX, DNXSHX, DNYSHX);
+		bT = BS;
+		bT.Transpose();
+		db = SHELL_T * BS;
+		bdb = bT * db;
+		det *= *Points.mn(i, 3);  //DET * weight
+		bdb *= det;
+		KS += bdb;
+
+	}
+
+	//Add all diagonal terms from KS for rotational DOF's to get SHRSUM
+	SHRSUM = *KS.mn(2, 2) + *KS.mn(3, 3) + *KS.mn(5, 5) + *KS.mn(6, 6) + *KS.mn(8, 8) + *KS.mn(9, 9) + *KS.mn(11, 11) + *KS.mn(12, 12);
+
+//******** Shear Correction factor  **********
+	double CBMIN = 3.6; //for quad element - emprirical value??
+	double PSI_HAT = BENSUM / SHRSUM;
+	double DEN = 1 + CBMIN * PSI_HAT;
+	double PHI_SQ = CBMIN * PSI_HAT / DEN;
+//******** End Shear Correction factor  **********
+//populate the stiffness matrix
+	Vec<int> IDB(8);
+	*IDB.nn(1) = 4;
+	*IDB.nn(2) = 5;
+	*IDB.nn(3) = 10;
+	*IDB.nn(4) = 11;
+	*IDB.nn(5) = 16;
+	*IDB.nn(6) = 17;
+	*IDB.nn(7) = 22;
+	*IDB.nn(8) = 23;
+
+	for (i = 1; i < 8 + 1; i++)
+	{
+		for (j = 1; j < 8 + 1; j++)
+		{
+			*KE.mn(*IDB.nn(i), *IDB.nn(j)) = *KE.mn(*IDB.nn(i), *IDB.nn(j)) + *KB.mn(i, j);
+		}
+	}
+
+	Vec<int> IDS(12);
+	*IDS.nn(1) = 3;
+	*IDS.nn(2) = 4;
+	*IDS.nn(3) = 5;
+	*IDS.nn(4) = 9;
+	*IDS.nn(5) = 10;
+	*IDS.nn(6) = 11;
+	*IDS.nn(7) = 15;
+	*IDS.nn(8) = 16;
+	*IDS.nn(9) = 17;
+	*IDS.nn(10) = 21;
+	*IDS.nn(11) = 22;
+	*IDS.nn(12) = 23;
+	for (i = 1; i < 12 + 1; i++)
+	{
+		for (j = 1; j < 12 + 1; j++)
+		{
+			*KE.mn(*IDS.nn(i), *IDS.nn(j)) = *KE.mn(*IDS.nn(i), *IDS.nn(j)) + PHI_SQ * *KS.mn(i, j);
+		}
+	}
 	
-	//MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
-	//Vec<double> NXSH, Vec<double> NYSH, Mat DNXSHG, Mat DNYSHG)
-	return (KB);
+
+	return (KE);
 }
 
 Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 {
-
+	//******************************************************************************************************************************
+	//MIN4 quadrilateral thick(Mindlin) plate bending plate element.This element is based on the following work :
+	//"An Improved Treatment Of Transverse Shear In The Mindlin-Type Four-Node Quadrilateral Element", by Alexander Tessler and
+	//Thomas J.R.Hughes, Computer Methods In Applied Mechanics And Engineering 39 (1983) pp 311 - 335
+	//******************************************************************************************************************************
+	int i;
 	int MID = -1;
 	double dE = 210e9;
 	double dv = 0.29;
@@ -18028,54 +18181,40 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 	*SHELL_T_TRIA.mn(1, 1) *= dSHRatio * dthk;
 	*SHELL_T_TRIA.mn(2, 2) *= dSHRatio * dthk;
 	//For QUAD generate the membrane stiffness
-	Mat KM; //Membrane strain / disp matrix 3*24
-	KM = QMEM1_BM(3, AREA, XSD, YSD,SHELL_A); //OPT 3 = K mat
+	Mat KE; //Membrane strain / disp matrix 3*24
+	KE = QMEM1_BM(3, AREA, XSD, YSD,SHELL_A); //OPT 3 = K mat
 	Mat KBS;
 	KBS = QPLT2_KE(3, AREA, XSD, YSD, SHELL_D_TRIA, SHELL_T_TRIA);
-		
-	////Below will be needed
-	//for (i = 6; i <= 24; i += 6)
-	//{   //BECAREFUL MAKING THIS VALUE LARGE MESSES THINGS UP
-	//	*KMf.mn(i, i) = 0.01;       //DRILLING STIFFNESS
-	//}
-	////Transform to global
-	////M3.Transpose();
-	//Mat TMAT(24, 24);
+	KE += KBS;
+	for (i = 6; i <= 24; i += 6)
+	{
+		*KE.mn(i, i) = 1.0;  //DRILLING STIFFNES
+	}
 
-	//for (i = 1; i < 24; i += 3)
-	//{
-	//	*TMAT.mn(i, i) = M3.m_00;
-	//	*TMAT.mn(i + 1, i) = M3.m_10;
-	//	*TMAT.mn(i + 2, i) = M3.m_20;
+	Mat TMAT(24, 24);
 
-	//	*TMAT.mn(i, i + 1) = M3.m_01;
-	//	*TMAT.mn(i + 1, i + 1) = M3.m_11;
-	//	*TMAT.mn(i + 2, i + 1) = M3.m_21;
+	for (i = 1; i < 24; i += 3)
+	{
+		*TMAT.mn(i, i) = TE.m_00;
+		*TMAT.mn(i + 1, i) = TE.m_10;
+		*TMAT.mn(i + 2, i) = TE.m_20;
 
-	//	*TMAT.mn(i, i + 2) = M3.m_02;
-	//	*TMAT.mn(i + 1, i + 2) = M3.m_12;
-	//	*TMAT.mn(i + 2, i + 2) = M3.m_22;
-	//}
-	////TMAT.diag();
-	//Mat TMATT = TMAT;
-	//TMATT.Transpose();
-	//Mat T;
-	//Mat TT;
-	//T = KMf * TMAT;
-	//TT = TMATT * T;
+		*TMAT.mn(i, i + 1) = TE.m_01;
+		*TMAT.mn(i + 1, i + 1) = TE.m_11;
+		*TMAT.mn(i + 2, i + 1) = TE.m_21;
 
-	//KM.clear();
-	//KM2.clear();
-	//KM3.clear();
-	//KMf.clear();
-	//TMATT.clear();
-	//TMAT.clear();
-	//T.clear();
-	//V.clear();
-	//V1.clear();
-	////TT.diag();
-	Mat dum;
-	return (dum);
+		*TMAT.mn(i, i + 2) = TE.m_02;
+		*TMAT.mn(i + 1, i + 2) = TE.m_12;
+		*TMAT.mn(i + 2, i + 2) = TE.m_22;
+	}
+	//TMAT.diag();
+	Mat TMATT = TMAT;
+	TMATT.Transpose();
+	Mat T;
+	Mat TT;
+	T = KE * TMAT;
+	TT = TMATT * T;
+	return (TT);
 }
 
 //01/02/2024 replacing with improved transverse shear above
@@ -25396,6 +25535,7 @@ void ME_Object::GetRotAccelLoads(PropTable* PropsT, MatTable* MatT, cLinkedList*
 
 void ME_Object::GetPressureLoads(cLinkedList* pLC,int neq,Vec<double> &FVec)
 {
+double dTot = 0;
 int j,k;
 double P;
 Mat coord;
@@ -25449,6 +25589,7 @@ while (pNext!=NULL)
      vN=pE->Get_Normal();
      vN.Normalize();
      Node* pN;
+
      for (j=0;j<pE->iNoNodes;j++)
      {
        pN=(Node*) pE->GetNode(j);
@@ -25463,12 +25604,14 @@ while (pNext!=NULL)
        if (pN->dof[2]>0)
 	     {
          *FVec.nn(pN->dof[2])+=*Press.mn(1,j+1)*vN.z;
+		
 	     }
      }
+
   }
 pNext=(BCLD*) pNext->next;
 }
-
+dTot = dTot;
 }
 
 Vec <double> ME_Object::GetTempVec(cLinkedList* pTS,int neq)
