@@ -11559,23 +11559,6 @@ if (iD==3)  //Plain Stress
 }
 else if(iD==6)
 {
-  //v2=v/(1-v);
-  //vv=0.5*(1-2*v)/(1-v);
-  //for (i=1;i<4;i++)
-  //{
-  //  *dee.mn(i, i)=1;
-  //}
-  //for (i=4;i<7;i++)
-  //{
-  //  *dee.mn(i, i)=vv;
-  //}
-  //*dee.mn(1, 2)=vv;
-  //*dee.mn(2, 1)=vv;
-  //*dee.mn(1, 3)=vv;
-  //*dee.mn(3, 1)=vv;
-  //*dee.mn(2, 3)=vv;
-  //*dee.mn(3, 2)=vv;
-  //dee*=E/(2*(1+v)*vv);
 
   v2=v/(1-v);
   vv=0.5*(1-2*v)/(1-v);
@@ -15881,12 +15864,18 @@ Mat E_Object3::GetStiffMat(PropTable* PropsT,MatTable* MatT)
 char S1[80];
 Mat KE;  
 Mat KEP;
-int MID;
+int iMID1 = -1; //Membrane
+int iMID2 = -1; //bending
+int iMID3 = -1; //shear
+int iMID4 = -1;  //Mem / Bend coupling
+Material* pM1 = nullptr;
+Material* pM2 = nullptr;
+Material* pM3 = nullptr;
+Material* pM4 = nullptr;
 double dthk =0;
 double dBRatio = 1;
 double dSHRatio = 1;
-double dE = 70e9; 
-double dv = 0.33;
+
 //**********************************************************************************************************************************
 //!Initialize - these may need moving to higher scope 
 double BENSUM = 0;
@@ -15897,38 +15886,50 @@ double X2E = 0;
 double X3E = 0;
 double Y3E = 0;
 double AREA = 0;
+
+Mat SHELL_A;
+Mat SHELL_D;
+Mat SHELL_T;
 int i;
 	Property* pS = PropsT->GetItem(PID);
-	if (pS != NULL)
-	{
-		MID = pS->GetDefMatID();
-	}
-	Material* pM = MatT->GetItem(MID);
 	if (pS == NULL)
 	{
 		sprintf_s(S1, "ERROR: PROPERTY NOT FOUND FOR EL %i", iLabel);
 		outtext1(S1);
 	}
-	if (pM == NULL)
-	{
-		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
-		outtext1(S1);
-	}
-	//Get Shell thick ness
 
+
+	//Get Shell Stuff
 	if (((iType == 91) || (iType == 94)) && (pS != NULL))
 	{
 		PSHELL* pSh = (PSHELL*)pS;
 		dthk = pSh->dT;
 		dBRatio = pSh->d12IT3;
 		dSHRatio = pSh->dTST;
+		iMID1 = pSh->iMID1;
+		iMID2 = pSh->iMID2;
+		iMID3 = pSh->iMID3;
+		pM1 = MatT->GetItem(iMID1);
+		if (iMID2 == -1)
+			pM2 = pM1; //defualt
+		else
+			pM2 = MatT->GetItem(iMID2);
+		if (iMID3 == -1)
+			pM3 = pM1; //defualt
+		else
+			pM3 = MatT->GetItem(iMID3);
 	}
-//  
-	if ((pM != NULL) && (pM->iType = 1))
+
+	if ((pM1 != nullptr) && (pM2 != nullptr) && (pM3 != nullptr))
 	{
-		MAT1* pIsen = (MAT1*)pM;
-		dE = pIsen->dE;
-		dv = pIsen->dNU;
+		SHELL_A = pM1->DeeMEM();
+		SHELL_D = pM2->DeeBM();
+		SHELL_T = pM3->DeeSH();
+	}
+	else
+	{
+		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
+		outtext1(S1);
 	}
 
 Mat XEL = getCoords_XEL();       //Local element coordinates
@@ -15946,11 +15947,6 @@ Mat BM; //Membrane strain / disp matrix 3*24
 //just not sure hpw to organise at the moment
 BM = TMEM1_BM(3, AREA, X2E, X3E, Y3E); //OPT 3 = K mat
 //******************************************************
-//The membrane DEE matrix note G is assummed as E/2*(1+v)
-//this may need changing for pcomp
-Mat SHELL_A = DeeMat(dE, dv, 3);
-Mat SHELL_D = DeeBM(dE, dv, 3);
-Mat SHELL_T = DeeSH(dE, dv, 3);
 //NOTE BOTH SHELL_A & SHELL_D need transforming to material direction
 Mat SHELL_D_TRIA = SHELL_D;
 Mat SHELL_T_TRIA = SHELL_T;
@@ -17812,7 +17808,7 @@ Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E
 	C3dMatrix M3 = this->GetElSys();    //Element Coordinate system
 	Points = Sample(nip);               //sample points for integration
     //Membraine stiffness calculation
-	//with refuced integration for shear terms
+	//with reduced integration for shear terms
 	//NOTE GAUSS PT COULD BE IN WRONG ORDER??
 	Vec<double> DetJ(4);
 	Mat BEE[4];
@@ -17886,9 +17882,6 @@ Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E
 		KMWp = BMEAN * KM;  //my function returns BMEAN not BMEANT
 		KM.clear();
 		KM = KMWp * BMEANT;
-		//CALL MATMULT_FFF_T(BMEANT, DUM5, 8, 12, 8, DUM6)
-		//CALL MATMULT_FFF(DUM6, BMEANT, 12, 8, 12, DUM7)
-
 		for (i = 1; i <= 12; i++)
 		{
 			for (j = 1; j <= 12; j++)
@@ -18327,46 +18320,61 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 	//Thomas J.R.Hughes, Computer Methods In Applied Mechanics And Engineering 39 (1983) pp 311 - 335
 	//******************************************************************************************************************************
 	int i;
-	int MID = -1;
-	double dE = 210e9;
-	double dv = 0.29;
+	int iMID1 = -1; //Membrane
+	int iMID2 = -1; //bending
+	int iMID3 = -1; //shear
+	int iMID4 = -1;  //Mem / Bend coupling
+	Material* pM1 = nullptr;
+	Material* pM2 = nullptr;
+	Material* pM3 = nullptr;
+	Material* pM4 = nullptr;
 	char S1[80];
 	double dthk = 0.001;
 	double dBRatio = 1;
 	double dSHRatio = 1;
 	double AREA = 1;
+	Mat SHELL_A;
+	Mat SHELL_D;
+	Mat SHELL_T;
 	Property* pS = PropsT->GetItem(PID);
-	if (pS != NULL)
-	{
-		MID = pS->GetDefMatID();
-	}
-	Material* pM = MatT->GetItem(MID);
 	if (pS == NULL)
 	{
 		sprintf_s(S1, "ERROR: PROPERTY NOT FOUND FOR EL %i", iLabel);
 		outtext1(S1);
 	}
-	if (pM == NULL)
-	{
-		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
-		outtext1(S1);
-	}
-	//Get Shell thickness
 
+	//Get Shell Stuff
 	if (((iType == 91) || (iType == 94)) && (pS != NULL))
 	{
 		PSHELL* pSh = (PSHELL*)pS;
 		dthk = pSh->dT;
 		dBRatio = pSh->d12IT3;
 		dSHRatio = pSh->dTST;
+		iMID1 = pSh->iMID1;
+		iMID2 = pSh->iMID2;
+		iMID3 = pSh->iMID3;
+		pM1 = MatT->GetItem(iMID1);
+		if (iMID2 == -1)
+			pM2 = pM1; //defualt
+		else
+			pM2 = MatT->GetItem(iMID2);
+		if (iMID3 == -1)
+			pM3 = pM1; //defualt
+		else
+			pM3 = MatT->GetItem(iMID3);
 	}
 
-	if ((pM != NULL) && (pM->iType = 1))
+	if ((pM1!=nullptr) && (pM2!= nullptr) && (pM3 != nullptr))
 	{
-		MAT1* pIsen = (MAT1*)pM;
-		dE = pIsen->dE;
-		dv = pIsen->dNU;
+		SHELL_A = pM1->DeeMEM();
+		SHELL_D = pM2->DeeBM();
+		SHELL_T = pM3->DeeSH();
 	}
+	else
+    {
+	  sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
+	  outtext1(S1);
+    }
 	//This part calculates the 2d membraine stiffness
 	//iDof = 2;   //2 dof X,Y per node
 	//nip = 4;    //4 intergration points
@@ -18390,12 +18398,7 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 	*YSD.nn(4) = *XEL.mn(4, 2) - *XEL.mn(1, 2);
 	//Note my area is not calculated by numerial integration
 	AREA = this->GetArea2d();
-	//******************************************************
-	//The membrane DEE matrix note G is assummed as E/2*(1+v)
-	//this may need changing for pcomp
-	Mat SHELL_A = DeeMat(dE, dv, 3);
-	Mat SHELL_D = DeeBM(dE, dv, 3);
-	Mat SHELL_T = DeeSH(dE, dv, 3);
+
 	//NOTE BOTH SHELL_A & SHELL_D need transforming to material direction
 	Mat SHELL_D_TRIA = SHELL_D;
 	Mat SHELL_T_TRIA = SHELL_T;
@@ -37467,6 +37470,23 @@ void Property::ChangeMat(int thisMat,int inMID)
 
 // MAT
 IMPLEMENT_DYNAMIC(Material , CObject )
+Mat Material::DeeMEM()
+{
+	Mat Dee;
+	return(Dee);
+}
+
+Mat Material::DeeBM()
+{
+	Mat Dee;
+	return(Dee);
+}
+
+Mat Material::DeeSH()
+{
+	Mat Dee;
+	return(Dee);
+}
 
 void Material::Info()
 {
@@ -39583,6 +39603,62 @@ void MAT1::PutVarValues(int iNo, CString sVar[])
   dk = atof(sVar[8]);
 }
 
+Mat MAT1::DeeMEM()
+{
+	double C, v2, vv,G;
+	int i;
+	Mat dee(3, 3);
+	if (dG > 0)  //G has been specified
+		G = dG;
+	else
+		G = dE / (2 * (1 + dNU));
+	C = dE / (1 - dNU * dNU);
+	*dee.mn(1, 1) = C;
+	*dee.mn(2, 2) = C;
+	*dee.mn(3, 3) = G; // 0.5 * (1 - dNU) * C; //this should be G not sure is correct??
+	*dee.mn(1, 2) = dNU * C;
+	*dee.mn(2, 1) = dNU * C;
+
+	return (dee);
+}
+
+//SHELL_D matrix for bending coeffients for Dee Matrix
+Mat MAT1::DeeBM()
+{
+	Mat EBM(3, 3);
+	double G = 0;
+	double DEN1 = 0;
+	double E0 = 0;
+	if (dG > 0)
+	  G = dG;
+	else
+	  G = dE / (2 * (1 + dNU));
+	DEN1 = 1 - dNU * dNU;
+	if (abs(DEN1) < 0.01)
+		outtext1("ERROR: Material Property Error 1-v*v very small.");
+	EBM.MakeZero();
+	E0 = dE / DEN1;
+	*EBM.mn(1, 1) = E0;
+	*EBM.mn(2, 2) = *EBM.mn(1, 1);
+	*EBM.mn(3, 3) = G;
+	*EBM.mn(1, 2) = E0 * dNU;
+	*EBM.mn(2, 1) = *EBM.mn(1, 2);
+	return (EBM);
+}
+
+Mat MAT1::DeeSH()
+{
+	Mat ESH(2, 2);
+	double G = 0;
+	if (dG > 0)
+		G = dG;
+	else
+		G = dE / (2 * (1 + dNU));
+	ESH.MakeZero();
+	*ESH.mn(1, 1) = G;
+	*ESH.mn(2, 2) = G;
+	return (ESH);
+}
 
 void MAT1::Serialize(CArchive& ar,int iV)
 {

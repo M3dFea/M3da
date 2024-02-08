@@ -770,6 +770,9 @@ class Material : public Entity
 {
 DECLARE_DYNAMIC(Material)
 public:
+virtual Mat DeeMEM();
+virtual Mat DeeBM();
+virtual Mat DeeSH();
 virtual void Info();
 virtual double GetDensity();
 virtual double GetCTE();
@@ -1110,6 +1113,10 @@ double dSC;
 double dSS;
 int iMCSID;
 MAT1();
+//************THESE ARE MOVED HERE FROM ME_Object*********
+virtual Mat DeeMEM();
+virtual Mat DeeBM();
+virtual Mat DeeSH();
 virtual void Info();
 virtual void Serialize(CArchive& ar,int iV);
 virtual void ExportNAS(FILE* pFile);
