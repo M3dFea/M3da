@@ -3587,6 +3587,7 @@ public:
 	Mat QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD, Mat SHELL_D, Mat SHELL_T);
 	Mat QPLT2_KS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX);
 	Mat BBMIN4(Mat deriv);
+	Mat WARP_BMEAN(double& dWarped);
 	//Constrained shape frunctions
 	void MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
 		       Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG);

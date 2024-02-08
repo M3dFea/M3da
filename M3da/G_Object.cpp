@@ -15956,7 +15956,6 @@ Mat SHELL_D_TRIA = SHELL_D;
 Mat SHELL_T_TRIA = SHELL_T;
 SHELL_D_TRIA *= dBRatio * dthk * dthk * dthk / 12;
 
-SHELL_D.diag();
 SHELL_A *= dthk;  //Shell_A need to multiplied by thk
 *SHELL_T_TRIA.mn(1, 1) *= dSHRatio * dthk;
 *SHELL_T_TRIA.mn(2, 2) *= dSHRatio * dthk;
@@ -17389,15 +17388,26 @@ if (iNo == 1)
 else if (iNo == 4)
 {
   double r3 = 0.577350269189626;;
-  *Pts.mn(1,1) = -r3;
-  *Pts.mn(2,1) = r3;
-  *Pts.mn(3,1) = r3;
-  *Pts.mn(4,1) = -r3;
+  *Pts.mn(1, 1) = -r3;
+  *Pts.mn(2, 1) = r3;
+  *Pts.mn(3, 1) = r3;
+  *Pts.mn(4, 1) = -r3;
 
-  *Pts.mn(1,2) = -r3;
-  *Pts.mn(2,2) = -r3;
-  *Pts.mn(3,2) = +r3;
-  *Pts.mn(4,2) = +r3;
+  *Pts.mn(1, 2) = -r3;
+  *Pts.mn(2, 2) = -r3;
+  *Pts.mn(3, 2) = +r3;
+  *Pts.mn(4, 2) = +r3;
+
+  //below as in mystran not the same??
+  //*Pts.mn(1,1) = -r3;
+  //*Pts.mn(2,1) = -r3;
+  //*Pts.mn(3,1) = r3;
+  //*Pts.mn(4,1) = r3;
+
+  //*Pts.mn(1,2) = -r3;
+  //*Pts.mn(2,2) = r3;
+  //*Pts.mn(3,2) = -r3;
+  //*Pts.mn(4,2) = +r3;
 
   *Pts.mn(1,3) = 1;
   *Pts.mn(2,3) = 1;
@@ -17754,11 +17764,12 @@ Mat E_Object4::getCoords_XEL()
 	return (coord);
 }
 
+const double MXWARP = 0.0000001;
 //Calculate KE for bembrane 
 Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E, Mat SHELL_A)
 {
 	//NOTE THIS IS NOT USING REDUCED INTEGRATION AS IN MYSTRAN
-	int i;
+	int i,j,k;
 	double det;
 	Mat bee;   //strain displacement matrix
 	Mat coord2;
@@ -17773,53 +17784,138 @@ Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E
 	int iDof = 2;   //2 dof X,Y per node
 	int nip = 4;    //4 intergration points
 	int iS = 3;
-
+	Vec<int> ID(8);
+	*ID.nn(1) = 1;
+	*ID.nn(2) = 2;
+	*ID.nn(3) = 7;
+	*ID.nn(4) = 8;
+	*ID.nn(5) = 13;
+	*ID.nn(6) = 14;
+	*ID.nn(7) = 19;
+	*ID.nn(8) = 20;
+	Vec<int> ID2(12);
+	*ID2.nn(1) = 1;
+	*ID2.nn(2) = 2;
+	*ID2.nn(3) = 3;
+	*ID2.nn(4) = 7;
+	*ID2.nn(5) = 8;
+	*ID2.nn(6) = 9;
+	*ID2.nn(7) = 13;
+	*ID2.nn(8) = 14;
+	*ID2.nn(9) = 15;
+	*ID2.nn(10) = 19;
+	*ID2.nn(11) = 20;
+	*ID2.nn(12) = 21;
 	Mat KM(iDof * iNoNodes, iDof * iNoNodes);
+	Mat KMf(6 * iNoNodes, 6 * iNoNodes);      //Full stiffness matrix
 	Mat coord = getCoords3d();          //Nodal Coordinates
 	C3dMatrix M3 = this->GetElSys();    //Element Coordinate system
-//	//M3.MakeUnit();
 	Points = Sample(nip);               //sample points for integration
-//Membraine stiffness calculation
-	//for dof 12
+    //Membraine stiffness calculation
+	//with refuced integration for shear terms
+	//NOTE GAUSS PT COULD BE IN WRONG ORDER??
+	Vec<double> DetJ(4);
+	Mat BEE[4];
+	int GAUSS_PT = 0;
+	Points.diag();
 	for (i = 1; i < nip + 1; i++)            // for all integration points
 	{
+		GAUSS_PT = GAUSS_PT + 1;
 		det = 0;
 		fun = ShapeFun(Points, i);
 		deriv = ShapeDer(Points, i);
 		jac = deriv * coord;
 		jac = jac.InvertJac(det);
+		*DetJ.nn(GAUSS_PT) = det;  
 		deriv2 = jac * deriv;
-		bee = bmat(coord, deriv2, iS, iDof);
+		bee = bmat(coord, deriv2, iS, iDof); //3*8 for 1 gauss pt
+		BEE[GAUSS_PT - 1] = bee;
+		BEE[GAUSS_PT - 1].diag();
+		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+	}
+	//reducing the shear terms??
+	double SUMB, SUMD;
+	for (j = 1; j < 2 * iNoNodes + 1; j++)
+	{
+		SUMB = 0;
+		SUMD = 0;
+		for (k = 1; k < nip + 1; k++)
+		{
+			SUMB = SUMB + *DetJ.nn(k) * *BEE[k - 1].mn(3, j);
+			SUMD = SUMD + *DetJ.nn(k);
+		}
+		SUMB = SUMB;
+		for (k = 1; k < nip + 1; k++)
+		{
+			*BEE[k - 1].mn(3, j) = SUMB / SUMD;
+		}
+	}
+
+	for (i = 1; i < nip + 1; i++)            // for all integration points
+	{
+		//below commented out if for full inegration
+		//det = 0;
+		//fun = ShapeFun(Points, i);
+		//deriv = ShapeDer(Points, i);
+		//jac = deriv * coord;
+		//jac = jac.InvertJac(det);
+		//deriv2 = jac * deriv;
+		//bee = bmat(coord, deriv2, iS, iDof);
+
+		bee=BEE[i - 1];
 		bT = bee;
 		bT.Transpose();
 		db = SHELL_A * bee;
 		bdb = bT * db;
 		det *= *Points.mn(i, 3);
-		bdb *= det;
+		bdb *= *DetJ.nn(i);;
 		KM += bdb;
 		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
 		bT.clear(); db.clear(); bdb.clear(); bee.clear(); jac.clear();
 	}
-	//KM *= dthk; included in SHELL_A
-	Points.clear();
-	Mat KMf(6 * iNoNodes, 6 * iNoNodes);
-	Vec<int> V(8);
-	*V.nn(1) = 1;
-	*V.nn(2) = 2;
-	*V.nn(3) = 7;
-	*V.nn(4) = 8;
-	*V.nn(5) = 13;
-	*V.nn(6) = 14;
-	*V.nn(7) = 19;
-	*V.nn(8) = 20;
-	int j;
-	for (i = 1; i <= 8; i++)
+
+
+	double dWarp;
+	Mat BMEAN = WARP_BMEAN(dWarp);
+	Mat BMEANT;
+	BMEANT = BMEAN; //transform to accout for warp
+	BMEANT.Transpose();
+	Mat KMWp;
+	if (dWarp > MXWARP) //It slightly warped need to mod K terms
 	{
-		for (j = 1; j <= 8; j++)
+		KMWp = BMEAN * KM;  //my function returns BMEAN not BMEANT
+		KM.clear();
+		KM = KMWp * BMEANT;
+		//CALL MATMULT_FFF_T(BMEANT, DUM5, 8, 12, 8, DUM6)
+		//CALL MATMULT_FFF(DUM6, BMEANT, 12, 8, 12, DUM7)
+
+		for (i = 1; i <= 12; i++)
 		{
-			*KMf.mn(V[i - 1], V[j - 1]) = *KM.mn(i, j);
+			for (j = 1; j <= 12; j++)
+			{
+				*KMf.mn(ID2[i - 1], ID2[j - 1]) = *KM.mn(i, j);
+			}
 		}
 	}
+	else
+	{
+		for (i = 1; i <= 8; i++)
+		{
+			for (j = 1; j <= 8; j++)
+			{
+				*KMf.mn(ID[i - 1], ID[j - 1]) = *KM.mn(i, j);
+			}
+		}
+	}
+	for (i=0;i<4;i++)
+	   BEE[i].clear();
+	KM.clear();
+	KMWp.clear();
+	Points.clear();
+	BMEANT.clear();
+	BMEAN.clear();
+	ID.clear();
+	ID2.clear();
 	KMf.diag();
 	return (KMf);
 }
@@ -17843,6 +17939,139 @@ Mat E_Object4::BBMIN4(Mat deriv)
 	}
 	return(BB);
 }
+
+//Calcs and checks elem geometry for quad elemsand provides a transformation matrix(TE) to transfer the elem stiffness matrix
+//!in the elem system to the basic coordinate system.Calculates grid point coords in local coord system.
+//!To define the elem coordinate system, a mean plane is defined which lies midway between the grid points(HBAR is mean dist).
+//!The elem z direction is in the direction of the cross product of the diagonals(V13 x V24).Initially, the x axis is along
+//!side 1 - 2 of the elem projection onto the mean plane.For elems thet are not rectangular, the x, y axes are rotated such that x
+//!splits the angle between the diagonals.
+Mat E_Object4::WARP_BMEAN(double& dWarped)
+{
+	int i, j;
+	Mat BMEAN(12,8);
+	C3dVector V13B;
+	C3dVector V24B;
+	C3dVector V12B;
+	C3dVector KVEC;
+	C3dVector IVEC;
+	C3dVector JVEC;
+	C3dVector tmp;
+	double HBAR = 0;
+	double X12 = 0;
+	double X13 = 0;
+	double X24 = 0;
+	double X14 = 0;
+	double X23 = 0;
+	double X34 = 0;
+	double Y3 = 0;
+	double Y4 = 0;
+	double Y34 = 0;
+	double L12 = 0;
+	double L23 = 0;
+	double L34 = 0;
+	double L41 = 0;
+	double X3 = 0;
+	double X4 = 0;
+
+	double SIN_TH1 = 0;
+	double COS_TH1 = 0;
+	double SIN_TH2 = 0;
+	double COS_TH2 = 0;
+	double SIN_GAM = 0;
+	double COS_GAM = 0;
+	double CTN_TH1 = 0;
+	double CTN_TH2 = 0;
+	double DELTA1 = 0;
+	double DELTA2 = 0;
+
+	//Note the checks are done with element aligned GP 1-2
+	//Generate vectors from G.P 1 to G.P 3 and from G.P. 2 to G.P. 4 (diagonals)
+	V13B = pVertex[3 - 1]->Get_Centroid() - pVertex[1 - 1]->Get_Centroid();
+	V24B = pVertex[4 - 1]->Get_Centroid() - pVertex[2 - 1]->Get_Centroid();
+	KVEC = V13B.Cross(V24B);
+	KVEC.Normalize();
+	//Calc initial elem x dir along side 1 - 2 of the elem projection onto the mean plane.
+	V12B = pVertex[2 - 1]->Get_Centroid() - pVertex[1 - 1]->Get_Centroid();
+	//HBAR is one half of the projection of V12B in z direction
+	HBAR = 0.5*V12B.Dot(KVEC); //measure of warping
+	dWarped = abs(HBAR);
+	//Now calculate initial x direction along side 1 - 2 of the elem projection onto the mean plane.
+	tmp = KVEC;
+	tmp *= 2 * HBAR;
+	IVEC = V12B;
+	IVEC -= tmp;
+	IVEC.Normalize();
+	//Calculate unit vector in initial elem.y direction(from KVEC x IVEC) :
+	JVEC = KVEC.Cross(IVEC);
+	JVEC.Normalize();
+	//Variables used in checking geometry
+	X12 = -V12B.Dot(IVEC); //-(V12B(1) * IVEC(1) + V12B(2) * IVEC(2) + V12B(3) * IVEC(3))
+	X13 = -V13B.Dot(IVEC); //-(V13B(1) * IVEC(1) + V13B(2) * IVEC(2) + V13B(3) * IVEC(3))
+	X24 = -V24B.Dot(IVEC); //-(V24B(1) * IVEC(1) + V24B(2) * IVEC(2) + V24B(3) * IVEC(3))
+	X14 = X12 + X24;
+	X23 = X13 - X12;
+	X34 = X14 - X13;
+	Y3 = V13B.Dot(JVEC); //(V13B(1) * JVEC(1) + V13B(2) * JVEC(2) + V13B(3) * JVEC(3))
+	Y4 = V24B.Dot(JVEC); //(V24B(1) * JVEC(1) + V24B(2) * JVEC(2) + V24B(3) * JVEC(3))
+	Y34 = Y3 - Y4;
+	L12 = abs(X12);
+	L23 = sqrt(X23 * X23 + Y3 * Y3);
+	L34 = sqrt(X34 * X34 + Y34 * Y34);
+	L41 = sqrt(X14 * X14 + Y4 * Y4);
+	X3 = -X13;
+	X4 = -X14;
+	//*********************************************
+	SIN_TH1 = Y4 / L41;
+	COS_TH1 = -X14 / L41;
+	SIN_TH2 = Y3 / L23;
+	COS_TH2 = X23 / L23;
+	SIN_GAM = (Y4 - Y3) / L34;
+	COS_GAM = (X3 - X4) / L34;
+	CTN_TH1 = COS_TH1 / SIN_TH1;
+	CTN_TH2 = COS_TH2 / SIN_TH2;
+	DELTA1 = SIN_TH2 * COS_GAM - COS_TH2 * SIN_GAM;
+	DELTA2 = SIN_TH1 * COS_GAM + COS_TH1 * SIN_GAM;
+
+	*BMEAN.mn(1, 1) = 1;
+	*BMEAN.mn(2, 2) = 1;
+	*BMEAN.mn(4, 3) = 1;
+	*BMEAN.mn(5, 4) = 1;
+	*BMEAN.mn(7, 5) = 1;
+	*BMEAN.mn(8, 6) = 1;
+	*BMEAN.mn(10, 7) = 1;
+	*BMEAN.mn(11, 8) = 1;
+	*BMEAN.mn(3, 1) = HBAR / L12;
+	*BMEAN.mn(3, 2) = -HBAR * (CTN_TH1 / L12 - 1 / (L41 * SIN_TH1));
+	*BMEAN.mn(3, 3) = -*BMEAN.mn(3, 1);
+	*BMEAN.mn(3, 4) = -HBAR * CTN_TH2 / L12;
+	*BMEAN.mn(3, 7) = -HBAR * SIN_GAM / (L41 * DELTA2);
+	*BMEAN.mn(3, 8) = -HBAR * COS_GAM / (L41 * DELTA2);
+
+	*BMEAN.mn(6, 1) = -*BMEAN.mn(3, 1);
+	*BMEAN.mn(6, 2) = HBAR * CTN_TH1 / L12;
+	*BMEAN.mn(6, 3) = *BMEAN.mn(3, 1);
+	*BMEAN.mn(6, 4) = HBAR * (CTN_TH2 / L12 - 1 / (L23 * SIN_TH2));
+	*BMEAN.mn(6, 5) = HBAR * SIN_GAM / (L23 * DELTA1);
+	*BMEAN.mn(6, 6) = HBAR * COS_GAM / (L23 * DELTA1);
+
+	*BMEAN.mn(9, 4) = HBAR / (L23 * SIN_TH2);
+	*BMEAN.mn(9, 5) = -HBAR * (SIN_GAM / L23 + SIN_TH2 / L34) / DELTA1;
+	*BMEAN.mn(9, 6) = -HBAR * (COS_GAM / L23 + COS_TH2 / L34) / DELTA1;
+	*BMEAN.mn(9, 7) = HBAR * SIN_TH1 / (L34 * DELTA2);
+	*BMEAN.mn(9, 8) = -HBAR * COS_TH1 / (L34 * DELTA2);
+
+	*BMEAN.mn(12, 2) = -HBAR / (L41 * SIN_TH1);
+	*BMEAN.mn(12, 5) = HBAR * SIN_TH2 / (L34 * DELTA1);
+	*BMEAN.mn(12, 6) = HBAR * COS_TH2 / (L34 * DELTA1);
+	*BMEAN.mn(12, 7) = -HBAR * (SIN_TH1 / L34 - SIN_GAM / L41) / DELTA2;
+	*BMEAN.mn(12, 8) = HBAR * (COS_TH1 / L34 + COS_GAM / L41) / DELTA2;
+	
+
+	BMEAN.diag();
+	return (BMEAN);
+}
+
 
 void E_Object4::MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
 	                   Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG)
@@ -17914,7 +18143,7 @@ void E_Object4::MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
 	*DNXSHG.mn(2, 2) = (-Y12 * N5Y + Y23 * N6Y) / 8;
 	*DNXSHG.mn(2, 3) = (-Y23 * N6Y + Y34 * N7Y) / 8;
 	*DNXSHG.mn(2, 4) = (-Y34 * N7Y + Y41 * N8Y) / 8;
-	DNXSHG.diag();
+
 	//Derivatives of NYSH wrt xi, eta:
 	*DNYSHG.mn(1, 1) = (-X41 * N8X + X12 * N5X) / 8;
 	*DNYSHG.mn(1, 2) = (-X12 * N5X + X23 * N6X) / 8;
@@ -17994,13 +18223,11 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 		bdb *= det;
 		KB += bdb;
     }
-	KB.diag();
 	BENSUM = 0;                                 //Add all diag terms from KB
 	for (i = 1; i < 8 + 1; i++)
 	{
 		BENSUM = BENSUM + *KB.mn(i, i);
 	}
-	KB.diag();
 	//SHEAR TERMS 
 	//CALL ORDER_GAUSS(IORDXX, SSS, HHH)
 	double SSI, SSJ;
@@ -18019,10 +18246,8 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 		fun = ShapeFun(Points, i);
 		deriv = ShapeDer(Points, i);
 		MIN4SH(SSI, SSJ, XSD, YSD, NXSH, NYSH, DNXSHG, DNYSHG);
-		DNXSHG.diag();
 		jac = deriv * coord;
 		jac = jac.InvertJac(det);
-		jac.diag();
 		DPSHX.clear();
 		DPSHX = jac * deriv;
 		DNXSHX.clear();
@@ -18060,7 +18285,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 	*IDB.nn(6) = 17;
 	*IDB.nn(7) = 22;
 	*IDB.nn(8) = 23;
-
+	KB.diag();
 	for (i = 1; i < 8 + 1; i++)
 	{
 		for (j = 1; j < 8 + 1; j++)
@@ -18089,7 +18314,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 			*KE.mn(*IDS.nn(i), *IDS.nn(j)) = *KE.mn(*IDS.nn(i), *IDS.nn(j)) + PHI_SQ * *KS.mn(i, j);
 		}
 	}
-	
+	KS.diag();
 
 	return (KE);
 }
@@ -18154,7 +18379,7 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 	Vec <double> YSD(4);
 	Mat XEL = getCoords_XEL();						//Local element coordinates
 	//WARNING TE is not nastran diagonal bisector trying as I have it
-	C3dMatrix TE = this->GetElSys();				//TE Element coord system
+	C3dMatrix TE = this->GetElSys();	//TE Element coord system
 	*XSD.nn(1) = *XEL.mn(1, 1) - *XEL.mn(2, 1);		//x coord diffs(in local elem coords)
 	*XSD.nn(2) = *XEL.mn(2, 1) - *XEL.mn(3, 1);
 	*XSD.nn(3) = *XEL.mn(3, 1) - *XEL.mn(4, 1);
@@ -18176,7 +18401,6 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 	Mat SHELL_T_TRIA = SHELL_T;
 	SHELL_D_TRIA *= dBRatio * dthk * dthk * dthk / 12;
 
-	SHELL_D.diag();
 	SHELL_A *= dthk;  //Shell_A need to multiplied by thk
 	*SHELL_T_TRIA.mn(1, 1) *= dSHRatio * dthk;
 	*SHELL_T_TRIA.mn(2, 2) *= dSHRatio * dthk;
@@ -18188,9 +18412,9 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 	KE += KBS;
 	for (i = 6; i <= 24; i += 6)
 	{
-		*KE.mn(i, i) = 1.0;  //DRILLING STIFFNES
+		*KE.mn(i, i) = .0001;  //DRILLING STIFFNES
 	}
-
+	KE.diag();
 	Mat TMAT(24, 24);
 
 	for (i = 1; i < 24; i += 3)
@@ -18207,13 +18431,14 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 		*TMAT.mn(i + 1, i + 2) = TE.m_12;
 		*TMAT.mn(i + 2, i + 2) = TE.m_22;
 	}
-	//TMAT.diag();
+	TMAT.diag();
 	Mat TMATT = TMAT;
 	TMATT.Transpose();
 	Mat T;
 	Mat TT;
 	T = KE * TMAT;
 	TT = TMATT * T;
+	TT.diag();
 	return (TT);
 }
 
@@ -19287,31 +19512,50 @@ return (vT);
 
 C3dMatrix E_Object4::GetElSys()
 {
-Mat fun;
-Mat FunPnt(1,2);
-*FunPnt.mn(1,1)=0;
-*FunPnt.mn(1,2)=0;
-fun=ShapeDer(FunPnt,1);
-C3dVector vX,vY,vT;
-vX.Set(0,0,0);
-vY.Set(0,0,0);
-int j=0;
-for (j=0;j<iNoNodes;j++)
-{
-   vX+=pVertex[j]->Get_Centroid()**fun.mn(1,j+1);
-   vY+=pVertex[j]->Get_Centroid()**fun.mn(2,j+1);
-}
-vX.Normalize();
-vY.Normalize();
-vT=vX.Cross(vY);
-vT.Normalize();
-vY=vT.Cross(vX);
-fun.clear();
-FunPnt.clear();
+//Mat fun;
+//Mat FunPnt(1,2);
+//*FunPnt.mn(1,1)=0;
+//*FunPnt.mn(1,2)=0;
+//fun=ShapeDer(FunPnt,1);
+//C3dVector vX,vY,vT;
+//vX.Set(0,0,0);
+//vY.Set(0,0,0);
+//int j=0;
+//for (j=0;j<iNoNodes;j++)
+//{
+//   vX+=pVertex[j]->Get_Centroid()**fun.mn(1,j+1);
+//   vY+=pVertex[j]->Get_Centroid()**fun.mn(2,j+1);
+//}
+//vX.Normalize();
+//vY.Normalize();
+//vT=vX.Cross(vY);
+//vT.Normalize();
+//vY=vT.Cross(vX);
+//fun.clear();
+//FunPnt.clear();
+//C3dMatrix vR;
+//vR.SetColVec(1,vX);
+//vR.SetColVec(2,vY);
+//vR.SetColVec(3,vT);
+//vR.Transpose();
+//
+//ERROR: QUAD MEMBRANE COOR TRAN TE
 C3dMatrix vR;
-vR.SetColVec(1,vX);
-vR.SetColVec(2,vY);
-vR.SetColVec(3,vT);
+C3dVector vX, vY, vT;
+C3dVector vN13, vN42,vN;
+vN13 = pVertex[2]->Get_Centroid();
+vN13-= pVertex[0]->Get_Centroid();
+vN13.Normalize();
+vN42 = pVertex[1]->Get_Centroid();
+vN42 -= pVertex[3]->Get_Centroid();
+vN42.Normalize();
+vX = vN13 + vN42;
+vX.Normalize();
+vN = vN42.Cross(vN13); vN.Normalize();
+vY= vN.Cross(vX);
+vR.SetColVec(1, vX);
+vR.SetColVec(2, vY);
+vR.SetColVec(3, vN);
 vR.Transpose();
 return (vR);
 }
@@ -24543,7 +24787,7 @@ void ME_Object::ExplicitSolTest(PropTable* PropsT, MatTable* MatT)
 			*x.nn(pN->dof[1]) += *xd.nn(pN->dof[1])*dT + *xdd.nn(pN->dof[1])*dT*dT;
 			*x.nn(pN->dof[2]) += *xd.nn(pN->dof[2])*dT + *xdd.nn(pN->dof[2])*dT*dT;
 		}
-		x.diag();
+
 		*u.nn(1) = 0;
 		*u.nn(2) = 0;
 		*u.nn(3) = 0;

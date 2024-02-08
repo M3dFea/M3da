@@ -10585,8 +10585,8 @@ if (pCurrentMesh!=NULL)
   int iC=pCurrentMesh->pSOLS->iCur;
   if (iC!=-1)
   {
-    if (pCurrentMesh->pSOLS->pSols[iC]->iType==0)
-      pCurrentMesh->IterSol3dLin(PropsT,MatT);
+	  if (pCurrentMesh->pSOLS->pSols[iC]->iType == 0)
+		  pCurrentMesh->IterSol3dLin(PropsT, MatT);
     else if (pCurrentMesh->pSOLS->pSols[iC]->iType==1)
       pCurrentMesh->IterSol1dSS(PropsT,MatT);
 	else if (pCurrentMesh->pSOLS->pSols[iC]->iType == 2)
