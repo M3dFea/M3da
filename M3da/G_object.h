@@ -3180,7 +3180,7 @@ public:
                         Mat& deriv);
    virtual Mat GetElNodalMass(PropTable* PropsT,MatTable* MatT);
    virtual Mat GetThermalStrainMat3d(PropTable* PropsT,MatTable* MatT,double dT);
-   virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
+   virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
    virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
    virtual int MaxBW();
    virtual Vec<int>GetSteerVec3d();
@@ -3333,7 +3333,7 @@ public:
   virtual int noDof();
   virtual void Info();
   virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
-  virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
+  virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
   virtual Vec<int> GetSteerVec3d();
   virtual Vec<int> GetSteerVec1d();
   C3dMatrix GetSpringSys(CoordSys* pC);
@@ -3388,7 +3388,7 @@ public:
   virtual int noDof();
   virtual int MaxBW();
   virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
-  virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
+  virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
   virtual Mat GetElNodalMass(PropTable* PropsT,MatTable* MatT);
   Mat GetThermalStrainMat3d(PropTable* PropsT,MatTable* MatT,double dT);
   virtual Vec<int> GetSteerVec3d();
@@ -3406,7 +3406,7 @@ virtual CString ToString();
 virtual void ExportNAS(FILE* pFile);
 virtual int noDof();
 virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
-virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
+virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
 virtual Vec<int> GetSteerVec3d();
 virtual Vec<int> GetSteerVec1d();
 virtual G_Object* Copy(G_Object* Parrent);
@@ -3456,7 +3456,7 @@ public:
    virtual void RepNodeInEl(Node* pThis,Node* pWith);
    virtual Mat GetElNodalMass(PropTable* PropsT, MatTable* MatT);
    virtual Vec<int> GetSteerVec3d();
-   virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT);
+   virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &bErr);
    virtual CString GetName();
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
@@ -3504,7 +3504,7 @@ public:
    Mat TMEM1_BM(int OPT, double AREA, double X2E, double X3E, double Y3E);
    Mat TMEM1_KE(int OPT, double AREA, double X2E, double X3E, double Y3E, Mat SHELL_A);
    Mat TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E, Mat SHELL_D, Mat SHELL_T);
-   virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
+   virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
    virtual BOOL NodeInEl(Node* pN);
    virtual void RepNodeInEl(Node* pThis,Node* pWith);
    virtual int noDof();
@@ -3598,7 +3598,7 @@ public:
 	//Constrained shape frunctions
 	void MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
 		       Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG);
-	virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
+	virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
 	virtual Mat GetStiffMat_Ex(PropTable* PropsT, MatTable* MatT);
 	Mat GetB_1pt(double &det);
 	virtual Vec<int>GetSteerVec3d();

@@ -11171,7 +11171,7 @@ if ((iType==91) || (iType==94))
 return (FS);
 }
 
-Mat E_Object::GetStiffMat(PropTable* PropsT,MatTable* MatT)
+Mat E_Object::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
 Mat bee;   //strain displacement matrix
 Mat dee;   //stress strain
@@ -11789,7 +11789,7 @@ return (KM);
 }
 
 
-Mat E_Object2::GetStiffMat(PropTable* PropsT,MatTable* MatT)
+Mat E_Object2::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
   double kx=1e3;
   double ky=1e3;
@@ -13350,7 +13350,7 @@ l=p2.Mag();
 return (KM);
 }
 
-Mat E_Object2R::GetStiffMat(PropTable* PropsT,MatTable* MatT)
+Mat E_Object2R::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
 double ea=10000;
 double eal=10000;
@@ -13930,7 +13930,7 @@ l=p2.Mag();
 return (KM);
 }
 
-Mat E_Object2B::GetStiffMat(PropTable* PropsT,MatTable* MatT)
+Mat E_Object2B::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
 int i, j;
 BOOL AX = FALSE;
@@ -14071,13 +14071,62 @@ a7=4.0*eiy/ell;a8=gj/ell;
 *KM.mn(3,11)=-a5;
 *KM.mn(11,3)=-a5;
 
-C3dMatrix r;
-r=GetElSys();
-Mat mr(3,3);
-*mr.mn(1,1)=r.m_00; *mr.mn(1,2)=r.m_01; *mr.mn(1,3)=r.m_02;
-*mr.mn(2,1)=r.m_10; *mr.mn(2,2)=r.m_11; *mr.mn(2,3)=r.m_12;
-*mr.mn(3,1)=r.m_20; *mr.mn(3,2)=r.m_21; *mr.mn(3,3)=r.m_22;
 
+//CALL OFFSETS vectors OffA OffB are in global
+//A minor loop within the major loop takes care ofMEand KE which gets post - multiplied by the offset matrix and pre - multiplied by
+//it's transpose. The offset matrices for each G.P. are a 6 x 6 matrix which is an identity matrix plus a small 3 x 3 submatrix
+//containing only 3 independent terms, and the processing takes advantage of thisand simplifies the matrix multiplications.
+//The offset matrix is called E for each G.P.but is never written out as a 6 x 6 matrix.
+
+//The general form of E for one grid point is :
+
+//| 1  0  0 | 0    DZ - DY |
+//| 0  1  0 | -DZ   0    DX |
+//| 0  0  1 | DY - DX   0 |
+//| -------- - | -------------- - |
+//| 0  0  0 | 1    0    0 |
+//| 0  0  0 | 0    1    0 |
+//| 0  0  0 | 0    0    1 |
+
+//where DX, DY and DZ are the 3 components of the offset of the element at a grid and are in global coords
+//With this E matrix, the transformed element matrices are(prime indicates matrix transposition) :
+//MEg = E'* MEe * E
+//KEg = E'* KEe * E
+//PTEg = E'* PTEe
+
+Mat off(12, 12);
+Mat offT;
+off.MakeUnit();
+*off.mn(1, 4) = 0;
+*off.mn(1, 5) = OffA.z;
+*off.mn(1, 6) = -OffA.y;
+*off.mn(2, 4) = -OffA.z;
+*off.mn(2, 5) = 0;
+*off.mn(2, 6) = OffA.x;
+*off.mn(3, 4) = OffA.y;
+*off.mn(3, 5) = -OffA.x;
+*off.mn(3, 6) = 0;
+
+*off.mn(7, 10) = 0;
+*off.mn(7, 11) = OffB.z;
+*off.mn(7, 12) = -OffB.y;
+*off.mn(8, 10) = -OffB.z;
+*off.mn(8, 11) = 0;
+*off.mn(8, 12) = OffB.x;
+*off.mn(9, 10) = OffB.y;
+*off.mn(9, 11) = -OffB.x;
+*off.mn(9, 12) = 0;
+off.diag();
+offT = off;
+offT.Transpose();
+//KEg = E'* KE * E
+
+C3dMatrix r;
+r = GetElSys();
+Mat mr(3, 3);
+*mr.mn(1, 1) = r.m_00; *mr.mn(1, 2) = r.m_01; *mr.mn(1, 3) = r.m_02;
+*mr.mn(2, 1) = r.m_10; *mr.mn(2, 2) = r.m_11; *mr.mn(2, 3) = r.m_12;
+*mr.mn(3, 1) = r.m_20; *mr.mn(3, 2) = r.m_21; *mr.mn(3, 3) = r.m_22;
 
 for (i=1;i<4;i++)
 {
@@ -14093,18 +14142,32 @@ for (i=1;i<4;i++)
      *tt.mn(i+9,j+9) = *mr.mn(i,j);
   }
 }
+
+
 tt.Transpose();
 Mat Kmt;
 Mat tKmt;
+
+//TRANSFORM KE TO GLOBAL
 Kmt=KM*t;
 tKmt=tt*Kmt;
-
 KM=tKmt;
+//OFFSETS
+if (bOpt == FALSE)
+{
+Mat dum1;
+dum1 = KM * off;
+KM.clear();
+KM = offT * dum1;
+}
+
+
 t.clear();
 tt.clear();
 Kmt.clear();
 tKmt.clear();
 mr.clear();
+KM.diag();
 return (KM);
 }
 
@@ -15806,7 +15869,7 @@ Mat E_Object3::TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E
 }
 
 // 06/01/2024 MIN3 IMPLEMENTATION 
-Mat E_Object3::GetStiffMat(PropTable* PropsT,MatTable* MatT)
+Mat E_Object3::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
 char S1[80];
 Mat KE;  
@@ -16603,7 +16666,7 @@ Vec<int> E_Object1::GetSteerVec3d()
   return(V);
 }
 
-Mat E_Object1::GetStiffMat(PropTable* PropsT, MatTable* MatT)
+Mat E_Object1::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
   Mat KM(3, 3);
   KM.MakeZero();
@@ -18259,7 +18322,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 	return (KE);
 }
 
-Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
+Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
 	//******************************************************************************************************************************
 	//MIN4 quadrilateral thick(Mindlin) plate bending plate element.This element is based on the following work :
@@ -24180,6 +24243,7 @@ return (iRC);
 void ME_Object::Test(PropTable* PropsT,MatTable* MatT)
 {
 int i,j,neq;
+BOOL bOpt, bErr;
 COleDateTime timeStart;
 timeStart = COleDateTime::GetCurrentTime();
 int Hour=timeStart.GetHour();
@@ -24238,7 +24302,7 @@ else
     
     if (pE->ChkNegJac()==FALSE)
     {
-      KME=pE->GetStiffMat(PropsT,MatT);
+      KME=pE->GetStiffMat(PropsT,MatT, bOpt, bErr);
       Steer=pE->GetSteerVec3d();
     }
     else
@@ -24246,7 +24310,7 @@ else
 
       pE=(E_Object*) pElems[i]->Copy(this);
       pE->Reverse();
-      KME=pE->GetStiffMat(PropsT,MatT);
+      KME=pE->GetStiffMat(PropsT,MatT,bOpt, bErr);
       Steer=pE->GetSteerVec3d();
       delete(pE);
       pE=NULL;
@@ -24424,6 +24488,7 @@ return (bRet);
 
 void ME_Object::IterSol3dLin(PropTable* PropsT,MatTable* MatT)
 {
+BOOL bOpt, bErr;
 CString sSol;
 CString sStep;
 int i,j,neq;
@@ -24486,14 +24551,14 @@ iStep=0;
       pE=pElems[i];
       if (pE->ChkNegJac()==FALSE)
       {
-        KME=pE->GetStiffMat(PropsT,MatT);
+        KME=pE->GetStiffMat(PropsT,MatT,FALSE, bErr);
         Steer=pE->GetSteerVec3d();
       }
       else
       {
 	    outtext1("ERROR: negative jacobian");
         pE->Reverse();
-        KME=pE->GetStiffMat(PropsT,MatT);
+        KME=pE->GetStiffMat(PropsT,MatT, FALSE, bErr);
         Steer=pE->GetSteerVec3d();
       }
       KM[iELCnt]=KME;
@@ -28475,6 +28540,7 @@ void ME_Object::TempBCSet(int iLC, CString sSol, CString sStep, Vec<int> &Steer,
 
 void ME_Object::TranslationalSpringForces(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp)
 {
+BOOL bOpt, bErr;
 int i,j,k,iNoNodes;
 double dof1;
 ResSet* ResS=new ResSet();
@@ -28532,7 +28598,7 @@ for(i=0;i<iElNo;i++)
     }
     if (pElems[i]->iLabel==84)
       aa++;
-      KM=pElems[i]->GetStiffMat(PropsT,MatT);
+      KM=pElems[i]->GetStiffMat(PropsT,MatT,TRUE, bErr);
     //KM.diag();
     //Res=KM*disp;
     C3dVector vFG;
@@ -28577,6 +28643,10 @@ else
 
 void ME_Object::StressesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp)
 {
+BOOL bOpt, bErr;
+C3dVector vOff1, vOff2;
+vOff1.Set(0, 0, 0);
+vOff2.Set(0, 0, 0);
 int i,j,k,iNoNodes;
 double dof1;
 ResSet* ResS=new ResSet();
@@ -28616,6 +28686,9 @@ for(i=0;i<iElNo;i++)
   iNoNodes=0;
   if (pElems[i]->iType==21)
   {
+	  E_Object2R* pE = (E_Object2R*)pElems[i];
+	  vOff1 = pE->OffA;
+	  vOff2 = pE->OffB;
     TMAT=pElems[i]->GetElSys();
     iNoNodes=2;
     disp.Create(12,1);
@@ -28632,8 +28705,19 @@ for(i=0;i<iElNo;i++)
         *disp.mn(6*j+(k+1),1)=dof1;
       }
     }
-    KM=pElems[i]->GetStiffMat(PropsT,MatT);
+
+	//account for offset in global disp
+	*disp.mn(1, 1) += +vOff1.z * *disp.mn(5, 1) - vOff1.y * *disp.mn(6, 1);
+	*disp.mn(2, 1) += -vOff1.z * *disp.mn(4, 1) + vOff1.x * *disp.mn(6, 1);
+	*disp.mn(3, 1) += +vOff1.y * *disp.mn(4, 1) - vOff1.x * *disp.mn(5, 1);
+
+	*disp.mn(7, 1) += +vOff2.z * *disp.mn(11, 1) - vOff2.y * *disp.mn(12, 1);
+	*disp.mn(8, 1) += -vOff2.z * *disp.mn(10, 1) + vOff2.x * *disp.mn(12, 1);
+	*disp.mn(9, 1) += +vOff2.y * *disp.mn(10, 1) - vOff2.x * *disp.mn(11, 1);
+	disp.diag();
+    KM=pElems[i]->GetStiffMat(PropsT,MatT,TRUE,bErr);
     Res=KM*disp;
+	Res.diag();
     TRA.x=*Res.mn(1,1);
     TRA.y=*Res.mn(2,1);
     TRA.z=*Res.mn(3,1);
