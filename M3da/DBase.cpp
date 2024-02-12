@@ -10585,12 +10585,12 @@ if (pCurrentMesh!=NULL)
   int iC=pCurrentMesh->pSOLS->iCur;
   if (iC!=-1)
   {
-	  if (pCurrentMesh->pSOLS->pSols[iC]->iType == 0)
-		  pCurrentMesh->IterSol3dLin(PropsT, MatT);
+	if (pCurrentMesh->pSOLS->pSols[iC]->iType == 0)
+	  pCurrentMesh->IterSol3dLin(PropsT, MatT);
     else if (pCurrentMesh->pSOLS->pSols[iC]->iType==1)
       pCurrentMesh->IterSol1dSS(PropsT,MatT);
 	else if (pCurrentMesh->pSOLS->pSols[iC]->iType == 2)
-	  pCurrentMesh->ExplicitSolTest(PropsT, MatT);
+		pCurrentMesh->Test(PropsT, MatT);  //pCurrentMesh->ExplicitSolTest(PropsT, MatT);
   }
 else
 {

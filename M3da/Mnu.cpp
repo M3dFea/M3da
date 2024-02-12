@@ -17629,7 +17629,7 @@ if (iStat == 1)
   outtext2("// ENTER SOLUTION TYPE");
   outtext2("// 0 LINEAR STATIC;");
   outtext2("// 1 STEADY STATE THERMAL (N/A);");
-  outtext2("// 2 LANCOZ (N/A);");
+  outtext2("// 2 Sparse;");
   SetFocus();
   iStat = 2;
   goto MenuEnd;
@@ -17637,7 +17637,7 @@ if (iStat == 1)
 if (iStat == 2)
 {
   iSol=atoi(CInMsg);
-  if ((iSol==0) || (iSol==1))
+  if ((iSol==0) || (iSol==1) || (iSol == 2))
   {
     iStat=3;
   }

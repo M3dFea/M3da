@@ -14078,59 +14078,6 @@ Mat mr(3,3);
 *mr.mn(2,1)=r.m_10; *mr.mn(2,2)=r.m_11; *mr.mn(2,3)=r.m_12;
 *mr.mn(3,1)=r.m_20; *mr.mn(3,2)=r.m_21; *mr.mn(3,3)=r.m_22;
 
-////**********Note sure about this yet*************
-//Not really end release just zeroing out the k values
-//if ((iDOFA & DOF_1) || (iDOFB & DOF_1)) //End A release
-//{
-//	outtext1("End A X release");
-//	*KM.mn(1, 1) = 0;
-//	*KM.mn(7, 7) = 0;
-//	*KM.mn(1, 7) = 0;
-//	*KM.mn(7, 1) = 0;
-//}
-//if ((iDOFA & DOF_2) || (iDOFB & DOF_2))//End A release
-//{
-//	outtext1("End A Y release");
-//	*KM.mn(2, 2) = 0;
-//	*KM.mn(8, 8) = 0;
-//	*KM.mn(2, 8) = 0;
-//	*KM.mn(8, 2) = 0;
-//}
-//if ((iDOFA & DOF_3) || (iDOFB & DOF_3)) //End A release
-//{
-//	outtext1("End A Z release");
-//	*KM.mn(3, 3) = 0;
-//	*KM.mn(9, 9) = 0;
-//	*KM.mn(3, 9) = 0;
-//	*KM.mn(9, 3) = 0;
-//}
-//if ((iDOFA & DOF_4) || (iDOFB & DOF_4))
-//{
-//	outtext1("End A RX release");
-//	*KM.mn(4, 4) = 0;
-//	*KM.mn(10, 10) = 0;
-//	*KM.mn(4, 10) = 0;
-//	*KM.mn(10, 4) = 0;
-//}
-//if ((iDOFA & DOF_5) || (iDOFB & DOF_5))
-//{
-//	outtext1("End A RY release");
-//	*KM.mn(5, 5) = 0;
-//	*KM.mn(11, 11) = 0;
-//	*KM.mn(5, 11) = 0;
-//	*KM.mn(11, 5) = 0;
-//}
-//if ((iDOFA & DOF_6) || (iDOFB & DOF_6))
-//{
-//	outtext1("End A RZ release");
-//	*KM.mn(6, 6) = 0;
-//	*KM.mn(12, 12) = 0;
-//	*KM.mn(6, 12) = 0;
-//	*KM.mn(12, 6) = 0;
-//
-//}
-//***********************************************
-
 
 for (i=1;i<4;i++)
 {
@@ -17813,7 +17760,7 @@ Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E
 	Vec<double> DetJ(4);
 	Mat BEE[4];
 	int GAUSS_PT = 0;
-	Points.diag();
+	//Points.diag();
 	for (i = 1; i < nip + 1; i++)            // for all integration points
 	{
 		GAUSS_PT = GAUSS_PT + 1;
@@ -17826,7 +17773,7 @@ Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E
 		deriv2 = jac * deriv;
 		bee = bmat(coord, deriv2, iS, iDof); //3*8 for 1 gauss pt
 		BEE[GAUSS_PT - 1] = bee;
-		BEE[GAUSS_PT - 1].diag();
+		//BEE[GAUSS_PT - 1].diag();
 		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
 	}
 	//reducing the shear terms??
@@ -17909,7 +17856,7 @@ Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E
 	BMEAN.clear();
 	ID.clear();
 	ID2.clear();
-	KMf.diag();
+	//KMf.diag();
 	return (KMf);
 }
 
@@ -18061,7 +18008,7 @@ Mat E_Object4::WARP_BMEAN(double& dWarped)
 	*BMEAN.mn(12, 8) = HBAR * (COS_TH1 / L34 + COS_GAM / L41) / DELTA2;
 	
 
-	BMEAN.diag();
+	//BMEAN.diag();
 	return (BMEAN);
 }
 
@@ -18278,7 +18225,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 	*IDB.nn(6) = 17;
 	*IDB.nn(7) = 22;
 	*IDB.nn(8) = 23;
-	KB.diag();
+	//KB.diag();
 	for (i = 1; i < 8 + 1; i++)
 	{
 		for (j = 1; j < 8 + 1; j++)
@@ -18307,7 +18254,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 			*KE.mn(*IDS.nn(i), *IDS.nn(j)) = *KE.mn(*IDS.nn(i), *IDS.nn(j)) + PHI_SQ * *KS.mn(i, j);
 		}
 	}
-	KS.diag();
+	//KS.diag();
 
 	return (KE);
 }
@@ -18417,7 +18364,7 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 	{
 		*KE.mn(i, i) = .0001;  //DRILLING STIFFNES
 	}
-	KE.diag();
+	//KE.diag();
 	Mat TMAT(24, 24);
 
 	for (i = 1; i < 24; i += 3)
@@ -18434,14 +18381,14 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
 		*TMAT.mn(i + 1, i + 2) = TE.m_12;
 		*TMAT.mn(i + 2, i + 2) = TE.m_22;
 	}
-	TMAT.diag();
+	//TMAT.diag();
 	Mat TMATT = TMAT;
 	TMATT.Transpose();
 	Mat T;
 	Mat TT;
 	T = KE * TMAT;
 	TT = TMATT * T;
-	TT.diag();
+	//TT.diag();
 	return (TT);
 }
 
@@ -24242,10 +24189,16 @@ char s1[80];
 int iLC=-1;
 CString sSol("");
 CString sStep("");
-
-
+bool bGo;
+BOOL bRS;
+double AA;
+int iStep = 0;
+cLinkedList* pLC = NULL;
+cLinkedListB* pBC = NULL;
+cLinkedListT* pTC = NULL;
 sprintf_s(s1,"%s %i:%i:%i\n","START TIME",Hour,Min,Sec);
 outtext1(s1);
+bGo = GetStepCasesLinStat(iStep, sSol, sStep, AA, pLC, pBC, pTC, bRS);
 for(i=0;i<iNdNo;i++)
 {
   for (j=0;j<6;j++)
@@ -24258,7 +24211,7 @@ for(i=0;i<iNdNo;i++)
 
 Mat KME;
 //Mat dee=DeeMat(100,0.29,6);
-this->ApplyRes(NULL);
+this->ApplyRes(pBC);
 neq=GenDofs();
 if (neq==0)
 {
@@ -24269,8 +24222,8 @@ else
 {
   Vec<double> FVec;
   Vec<int> Steer;
-  FVec = GetForceVec(NULL,neq);
-  GetPressureLoads(NULL,neq,FVec);
+  FVec = GetForceVec(pLC,neq);
+  GetPressureLoads(pLC,neq,FVec);
   int iBW=this->MaxBW();
 
   Vec <double> KM(neq*(iBW+1));
@@ -24437,7 +24390,7 @@ if (pSOLS->iCur!=-1)
   pCSol=pSOLS->pSols[pSOLS->iCur];
 
   dTol=pCSol->dTol;                       //solution tolerence
-  if ((pCSol->iType==0) || (pCSol->iType==1))
+  if ((pCSol->iType==0) || (pCSol->iType==1) || (pCSol->iType == 2))
   {
     iStep=pCSol->GetCurStep();
     if ((iStep<pCSol->iNo) && (iStep!=-1))
@@ -24460,7 +24413,7 @@ if (pSOLS->iCur!=-1)
   }
   else
   {
-     outtext1("ERROR: Only Linear Static Available.");
+     outtext1("ERROR: N/A.");
   }
 }
 
@@ -24490,6 +24443,7 @@ int iStep;
 cLinkedList* pLC=NULL;
 cLinkedListB* pBC=NULL;
 cLinkedListT* pTC=NULL;
+
 double dTol;
 BOOL bRS;
 iStep=0;
@@ -56822,7 +56776,7 @@ BOOL CSOLDialog::OnInitDialog()
   pT->ResetContent();
   pT->AddString("0: Lin Static");
   pT->AddString("1: SS Heat");
-  pT->AddString("2: Lanczos N/A");
+  pT->AddString("2: Sparse");
   CEdit* pTol=(CEdit*) GetDlgItem(IDC_TOL_TXT);
   pTol->SetWindowTextA("0.000000001");
   Refresh();
