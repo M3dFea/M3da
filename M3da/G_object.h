@@ -3357,7 +3357,7 @@ public:
   int iONID;
   int iDOFA;
   int iDOFB;
-
+  virtual void GetPinFlags(Vec<int> &PDOFS,int &iNoPINs);
   virtual void SetDOFStringA(CString sDOF);
   virtual void SetDOFStringB(CString sDOF);
   virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
@@ -3407,6 +3407,9 @@ virtual void ExportNAS(FILE* pFile);
 virtual int noDof();
 virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
 virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
+virtual void OffsetsToKG(Mat& off); //Offsets to global KE SYS
+virtual void PinFlgsToKE(Mat& KEL); //Pin Flags Element SYS
+virtual Mat KEToKGTransform();
 virtual Vec<int> GetSteerVec3d();
 virtual Vec<int> GetSteerVec1d();
 virtual G_Object* Copy(G_Object* Parrent);
