@@ -10526,6 +10526,46 @@ int E_Object::noDof()
 return(3);
 }
 
+//Offsets to global KE SYS for 1 grid with offset vOff
+//off matrix must be 6x6
+void E_Object::OffsetsTransform(Mat& off, C3dVector vOff)
+{
+	//CALL OFFSETS vectors OffA OffB are in global
+	//A minor loop within the major loop takes care ofMEand KE which gets post - multiplied by the offset matrix and pre - multiplied by
+	//it's transpose. The offset matrices for each G.P. are a 6 x 6 matrix which is an identity matrix plus a small 3 x 3 submatrix
+	//containing only 3 independent terms, and the processing takes advantage of thisand simplifies the matrix multiplications.
+	//The offset matrix is called E for each G.P.but is never written out as a 6 x 6 matrix.
+
+	//The general form of E for one grid point is :
+
+	//| 1  0  0 | 0    DZ - DY |
+	//| 0  1  0 | -DZ   0    DX |
+	//| 0  0  1 | DY - DX   0 |
+	//| -------- - | -------------- - |
+	//| 0  0  0 | 1    0    0 |
+	//| 0  0  0 | 0    1    0 |
+	//| 0  0  0 | 0    0    1 |
+
+	//where DX, DY and DZ are the 3 components of the offset of the element at a grid and are in global coords
+	//With this E matrix, the transformed element matrices are(prime indicates matrix transposition) :
+	//MEg = E'* MEe * E
+	//KEg = E'* KEe * E
+	//PTEg = E'* PTEe
+
+	off.MakeUnit();
+	*off.mn(1, 4) = 0;
+	*off.mn(1, 5) = vOff.z;
+	*off.mn(1, 6) = -vOff.y;
+	*off.mn(2, 4) = -vOff.z;
+	*off.mn(2, 5) = 0;
+	*off.mn(2, 6) = vOff.x;
+	*off.mn(3, 4) = vOff.y;
+	*off.mn(3, 5) = -vOff.x;
+	*off.mn(3, 6) = 0;
+
+}
+
+
 Mat E_Object::ShapeDer(Mat Points, int i)
 {
 Mat M(0,0);
@@ -10978,7 +11018,7 @@ if (PropsT!=NULL)
   }
   else if (iType==94)
   {
-    iDof=2; nip=4; iS=3;   //4 4 4 4 4 4  4 4 4 4  4 4  4 4
+    iDof=2; nip=4; iS=3;   
   }
   else if (iType==115)
   {
@@ -14277,7 +14317,8 @@ a7=4.0*eiy/ell;a8=gj/ell;
 
 
 //PROCESS PIN FLAGS
-PinFlgsToKE(KM);
+if ((iDOFA > 0) || (iDOFB > 0))
+   PinFlgsToKE(KM);
 //TRANSFORM KE TO GLOBAL
 t = KEToKGTransform();
 tt = t;
@@ -25787,9 +25828,9 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
                 *FVec.nn(iDD2)+=vFl.z;
             }
           }
-          else if ((pE->iType==11) || (pE->iType==21)) //this will be a 1DOF forcece vec for RODS AND BEAMS
-          {                                                // needs to be transfoemed to 3d
-            C3dMatrix M3=pE->GetElSys();                   // The element transformation matrix
+          else if (pE->iType==11) //ROD ELEMENTS
+          {                                               
+            C3dMatrix M3=pE->GetElSys();                   
             M3.Transpose();
             C3dVector vFl;
             C3dVector vFg;
@@ -25799,6 +25840,8 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
               vFg.y=0;
               vFg.z=0;
               vFl=M3*vFg;
+			  //NEED TODO OFFSET TRANSFORM
+
               int iDD0,iDD1,iDD2;
               iDD0=*vS.nn(i*iD+1);
               iDD1=*vS.nn(i*iD+2);
@@ -25811,6 +25854,89 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
                 *FVec.nn(iDD2)+=vFl.z;
             }
           }
+		  else if (pE->iType == 21) //BEAM ELEMENTS
+		  {
+			  E_Object2B* pB = (E_Object2B*)pE;
+			  if (pB->iLabel == 6)
+				  pB->iLabel = 6;
+			  C3dMatrix M3 = pE->GetElSys();
+			  M3.Transpose();
+			  C3dVector vFl;
+			  C3dVector vFg;
+			  Mat TOff;
+			  Mat vF(6,1);
+			  Mat vFoff(6, 1);
+			     //*************NODE 1*************
+			     i = 0;
+				  TOff.Create(6, 6);
+				  vFl.Set(*TF.mn(i + 1, 1), 0, 0);
+				  vFg = M3 * vFl;                    //IN GLONAL
+				  //NEED TODO OFFSET TRANSFORM
+				  vF.MakeZero();
+				  *vF.mn(1, 1) = vFg.x;
+				  *vF.mn(2, 1) = vFg.y;
+				  *vF.mn(3, 1) = vFg.z;
+				  pB->OffsetsTransform(TOff,pB->OffA); 
+				  vFoff = TOff * (vF);
+				  TOff.Transpose();
+				  vF = TOff * (vFoff);
+				  int iDD0, iDD1, iDD2, iDD3, iDD4, iDD5;
+				  iDD0 = *vS.nn(i * iD + 1);
+				  iDD1 = *vS.nn(i * iD + 2);
+				  iDD2 = *vS.nn(i * iD + 3);
+				  iDD3 = *vS.nn(i * iD + 4);
+				  iDD4 = *vS.nn(i * iD + 5);
+				  iDD5 = *vS.nn(i * iD + 6);
+				  if (iDD0 != -1)
+					  *FVec.nn(iDD0) += *vF.mn(1,1);
+				  if (iDD1 != -1)
+					  *FVec.nn(iDD1) += *vF.mn(2, 1);
+				  if (iDD2 != -1)
+					  *FVec.nn(iDD2) += *vF.mn(3, 1);
+				  if (iDD3 != -1)
+					  *FVec.nn(iDD3) += *vF.mn(4, 1);
+				  if (iDD4 != -1)
+					  *FVec.nn(iDD4) += *vF.mn(5, 1);
+				  if (iDD5 != -1)
+					  *FVec.nn(iDD5) += *vF.mn(6, 1);
+
+				  TOff.clear();
+				  //*************NODE 2*************
+				  i = 1;
+				  TOff.Create(6, 6);
+				  vFl.Set(*TF.mn(i + 1, 1), 0, 0);
+				  vFg = M3 * vFl;                    //IN GLONAL
+				  //NEED TODO OFFSET TRANSFORM
+				  vF.MakeZero();
+				  *vF.mn(1, 1) = vFg.x;
+				  *vF.mn(2, 1) = vFg.y;
+				  *vF.mn(3, 1) = vFg.z;
+				  pB->OffsetsTransform(TOff, pB->OffB);
+				  vFoff = TOff * (vF);
+				  TOff.Transpose();
+				  vF = TOff * (vFoff);
+				  iDD0 = *vS.nn(i * iD + 1);
+				  iDD1 = *vS.nn(i * iD + 2);
+				  iDD2 = *vS.nn(i * iD + 3);
+				  iDD3 = *vS.nn(i * iD + 4);
+				  iDD4 = *vS.nn(i * iD + 5);
+				  iDD5 = *vS.nn(i * iD + 6);
+				  if (iDD0 != -1)
+					  *FVec.nn(iDD0) += *vF.mn(1, 1);
+				  if (iDD1 != -1)
+					  *FVec.nn(iDD1) += *vF.mn(2, 1);
+				  if (iDD2 != -1)
+					  *FVec.nn(iDD2) += *vF.mn(3, 1);
+				  if (iDD3 != -1)
+					  *FVec.nn(iDD3) += *vF.mn(4, 1);
+				  if (iDD4 != -1)
+					  *FVec.nn(iDD4) += *vF.mn(5, 1);
+				  if (iDD5 != -1)
+					  *FVec.nn(iDD5) += *vF.mn(6, 1);
+				  TOff.clear();
+				  vF.clear();
+				  vFoff.clear();
+		  }
         }
       }
     pNext=(BCLD*) pNext->next;
@@ -28857,11 +28983,11 @@ for(i=0;i<iElNo;i++)
 	*disp.mn(7, 1) += +vOff2.z * *disp.mn(11, 1) - vOff2.y * *disp.mn(12, 1);
 	*disp.mn(8, 1) += -vOff2.z * *disp.mn(10, 1) + vOff2.x * *disp.mn(12, 1);
 	*disp.mn(9, 1) += +vOff2.y * *disp.mn(10, 1) - vOff2.x * *disp.mn(11, 1);
-	disp.diag();
+
 	//******************************************************
     KM=pElems[i]->GetStiffMat(PropsT,MatT,TRUE,bErr);
     Res=KM*disp;
-	Res.diag();
+
     TRA.x=*Res.mn(1,1);
     TRA.y=*Res.mn(2,1);
     TRA.z=*Res.mn(3,1);
@@ -28887,14 +29013,15 @@ for(i=0;i<iElNo;i++)
     //Need to transform to local
     Res12* pRes=new Res12;
     pRes->ID = pElems[i]->iLabel;
-    pRes->v[0]=(float) TRA.x+pElems[i]->dTemp;
+
+    pRes->v[0]=(float) (TRA.x+pElems[i]->dTemp);
     pRes->v[1]=(float) TRA.y;
     pRes->v[2]=(float) TRA.z;
     pRes->v[3]=(float) RRA.x;
     pRes->v[4]=(float) RRA.y;
     pRes->v[5]=(float) RRA.z;
 
-    pRes->v[6]=(float) TRB.x-pElems[i]->dTemp;
+    pRes->v[6]=(float) (TRB.x-pElems[i]->dTemp);
     pRes->v[7]=(float) TRB.y;
     pRes->v[8]=(float) TRB.z;
     pRes->v[9]=(float) RRB.x;

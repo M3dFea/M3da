@@ -3167,6 +3167,7 @@ public:
      virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
 	 virtual void ExportUNV(FILE* pFile);
      virtual void ExportNAS(FILE* pFile);
+	 virtual void OffsetsTransform(Mat& off, C3dVector vOff); //Offsets to global KE SYS
      virtual Mat Sample(int iNo);
 	 virtual Mat ShapeDer(Mat Points, int i);
 	 virtual Mat ShapeFun(Mat Points, int i);
@@ -3345,6 +3346,10 @@ public:
   virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
+//THIS IS A ROD ELEMENY ONLY HAS AXIAL K
+//NOTE should also have Torsional K but is
+//currently missing
+//no offset and no pin flag
 class E_Object2R : public E_Object2
 {
 DECLARE_DYNAMIC(E_Object2R)
