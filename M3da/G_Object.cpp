@@ -11800,7 +11800,9 @@ iCSYS= iMat;
 
 int E_Object2::noDof()
 {
-return(3);
+	int iDof = 3;
+
+return(iDof);
 }
 
 double E_Object2::getLen()
@@ -24571,7 +24573,7 @@ else
   bacsub(KM,FVec);
   outtext1("FINISHED SOLUTION");
   Displacements(iLC,sSol,sStep,Steer,FVec);
-  StressesBeam(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
+  ForcesBeam(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
   Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
   Stresses3d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
   KM.DeleteAll();
@@ -24890,7 +24892,7 @@ iStep=0;
     outtext1("FINISHED SOLUTION");
     Displacements(iStep, sSol, sStep,Steer,xnew);
     TranslationalSpringForces(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
-    StressesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
+    ForcesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
     Stresses2d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
     Stresses3d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
   }
@@ -28934,7 +28936,7 @@ else
 }
 }
 
-void ME_Object::StressesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp)
+void ME_Object::ForcesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp)
 {
 BOOL bOpt, bErr;
 C3dVector vOff1, vOff2;

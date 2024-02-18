@@ -4137,7 +4137,7 @@ void Displacements(int iLC, CString sSol, CString sStep, Vec<int> &Steer,Vec<dou
 void Temperatures(int iLC,CString sSol,CString sStep,Vec<int> &Steer,Vec<double> &Disp);
 void TempBCSet(int iLC, CString sSol, CString sStep, Vec<int> &Steer, Vec<double> &Disp);
 void TranslationalSpringForces(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
-void StressesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
+void ForcesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
 ResSet* Create2dStressResSet(CString sTitle, int iLC, CString sStep, CString sSol);
 ResSet* Create2dStrainResSet(CString sTitle, int iLC, CString sStep, CString sSol);
 void Add2dStressRes(ResSet* pSSet, int ID, Mat Res, Mat ResZ1, Mat ResZ2);
