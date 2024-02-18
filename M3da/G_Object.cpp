@@ -10526,6 +10526,96 @@ int E_Object::noDof()
 return(3);
 }
 
+//Transform nodal stiffness values from element local to global
+Mat E_Object::KEToKGTransform()
+{
+	Mat t(iNoNodes * 6, iNoNodes * 6);
+	int i, j, n;
+	C3dMatrix r;
+	r = GetElSys();
+	Mat mr(3, 3);
+	*mr.mn(1, 1) = r.m_00; *mr.mn(1, 2) = r.m_01; *mr.mn(1, 3) = r.m_02;
+	*mr.mn(2, 1) = r.m_10; *mr.mn(2, 2) = r.m_11; *mr.mn(2, 3) = r.m_12;
+	*mr.mn(3, 1) = r.m_20; *mr.mn(3, 2) = r.m_21; *mr.mn(3, 3) = r.m_22;
+
+	for (n = 0; n < iNoNodes*2; n++)
+	{
+		for (i = 1; i < 4; i++)
+		{
+			for (j = 1; j < 4; j++)
+			{
+				*t.mn(i+n*3, j+n*3) = *mr.mn(i, j);
+			}
+		}
+	}
+	mr.clear();
+	return (t);
+}
+
+//Check to see if element has offsets and are non zero in mag
+BOOL E_Object::HasOffsets()
+{
+	return (FALSE);
+}
+
+
+//Offsets to global KE SYS
+//only for 6 dof elements shells and beams
+void E_Object::OffsetsToKG(PropTable* PropsT, Mat& off)
+{
+	//CALL OFFSETS vectors OffA OffB are in global
+	//A minor loop within the major loop takes care ofMEand KE which gets post - multiplied by the offset matrix and pre - multiplied by
+	//it's transpose. The offset matrices for each G.P. are a 6 x 6 matrix which is an identity matrix plus a small 3 x 3 submatrix
+	//containing only 3 independent terms, and the processing takes advantage of thisand simplifies the matrix multiplications.
+	//The offset matrix is called E for each G.P.but is never written out as a 6 x 6 matrix.
+
+	//The general form of E for one grid point is :
+
+	//| 1  0  0 | 0    DZ - DY |
+	//| 0  1  0 | -DZ   0    DX |
+	//| 0  0  1 | DY - DX   0 |
+	//| -------- - | -------------- - |
+	//| 0  0  0 | 1    0    0 |
+	//| 0  0  0 | 0    1    0 |
+	//| 0  0  0 | 0    0    1 |
+
+	//where DX, DY and DZ are the 3 components of the offset of the element at a grid and are in global coords
+	//With this E matrix, the transformed element matrices are(prime indicates matrix transposition) :
+	//MEg = E'* MEe * E
+	//KEg = E'* KEe * E
+	//PTEg = E'* PTEe
+	int i;
+	int iD;
+	BOOL bOff;
+	C3dVector Off;
+	off.clear();
+	off.Create(iNoNodes * 6, iNoNodes * 6);
+	off.MakeUnit();
+	iD = 0;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		bOff=GetOffset(PropsT, i, Off);
+		*off.mn(1+iD, 4 + iD) = 0;
+		*off.mn(1 + iD, 5 + iD) = Off.z;
+		*off.mn(1 + iD, 6 + iD) = -Off.y;
+		*off.mn(2 + iD, 4 + iD) = -Off.z;
+		*off.mn(2 + iD, 5 + iD) = 0;
+		*off.mn(2 + iD, 6 + iD) = Off.x;
+		*off.mn(3 + iD, 4 + iD) = Off.y;
+		*off.mn(3 + iD, 5 + iD) = -Off.x;
+		*off.mn(3 + iD, 6 + iD) = 0;
+		iD += 6;
+	}
+}
+
+//returns the nodal offset if ther is one for node = iNode
+//if no offset for this element type returns FALSE
+BOOL E_Object::GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff)
+{
+	return (FALSE);
+}
+
+
 //Offsets to global KE SYS for 1 grid with offset vOff
 //off matrix must be 6x6
 void E_Object::OffsetsTransform(Mat& off, C3dVector vOff)
@@ -13974,6 +14064,28 @@ int E_Object2B::noDof()
 return (6);
 }
 
+BOOL E_Object2B::HasOffsets()
+{
+	BOOL brc = FALSE;
+	if ((OffA.Mag() > 0) || (OffB.Mag() > 0))
+		brc = true;
+	return (brc);
+}
+
+//to be superceeded
+BOOL E_Object2B::GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff)
+{
+	C3dVector vO;
+	BOOL brc = FALSE;
+	if (iNode == 0)  //OffA
+		vOff = OffA;
+	else if (iNode == 1)
+		vOff = OffB;
+	if (vOff.Mag() > 0)
+		brc = TRUE;
+	return (brc);
+}
+
 
 Mat E_Object2B::GetThermMat(PropTable* PropsT,MatTable* MatT)
 {
@@ -14039,51 +14151,7 @@ l=p2.Mag();
 return (KM);
 }
 
-void E_Object2B::OffsetsToKG(Mat& off) //Offsets to global KE SYS
-{
-	//CALL OFFSETS vectors OffA OffB are in global
-	//A minor loop within the major loop takes care ofMEand KE which gets post - multiplied by the offset matrix and pre - multiplied by
-	//it's transpose. The offset matrices for each G.P. are a 6 x 6 matrix which is an identity matrix plus a small 3 x 3 submatrix
-	//containing only 3 independent terms, and the processing takes advantage of thisand simplifies the matrix multiplications.
-	//The offset matrix is called E for each G.P.but is never written out as a 6 x 6 matrix.
 
-	//The general form of E for one grid point is :
-
-	//| 1  0  0 | 0    DZ - DY |
-	//| 0  1  0 | -DZ   0    DX |
-	//| 0  0  1 | DY - DX   0 |
-	//| -------- - | -------------- - |
-	//| 0  0  0 | 1    0    0 |
-	//| 0  0  0 | 0    1    0 |
-	//| 0  0  0 | 0    0    1 |
-
-	//where DX, DY and DZ are the 3 components of the offset of the element at a grid and are in global coords
-	//With this E matrix, the transformed element matrices are(prime indicates matrix transposition) :
-	//MEg = E'* MEe * E
-	//KEg = E'* KEe * E
-	//PTEg = E'* PTEe
-
-	off.MakeUnit();
-	*off.mn(1, 4) = 0;
-	*off.mn(1, 5) = OffA.z;
-	*off.mn(1, 6) = -OffA.y;
-	*off.mn(2, 4) = -OffA.z;
-	*off.mn(2, 5) = 0;
-	*off.mn(2, 6) = OffA.x;
-	*off.mn(3, 4) = OffA.y;
-	*off.mn(3, 5) = -OffA.x;
-	*off.mn(3, 6) = 0;
-
-	*off.mn(7, 10) = 0;
-	*off.mn(7, 11) = OffB.z;
-	*off.mn(7, 12) = -OffB.y;
-	*off.mn(8, 10) = -OffB.z;
-	*off.mn(8, 11) = 0;
-	*off.mn(8, 12) = OffB.x;
-	*off.mn(9, 10) = OffB.y;
-	*off.mn(9, 11) = -OffB.x;
-	*off.mn(9, 12) = 0;
-}
 
 void E_Object2B::PinFlgsToKE(Mat& KEL) //Pin Flags Element SYS
 {
@@ -14156,30 +14224,7 @@ void E_Object2B::PinFlgsToKE(Mat& KEL) //Pin Flags Element SYS
 	}
 }
 
-Mat E_Object2B::KEToKGTransform()
-{
-	Mat t(12, 12);
-	int i, j;
-	C3dMatrix r;
-	r = GetElSys();
-	Mat mr(3, 3);
-	*mr.mn(1, 1) = r.m_00; *mr.mn(1, 2) = r.m_01; *mr.mn(1, 3) = r.m_02;
-	*mr.mn(2, 1) = r.m_10; *mr.mn(2, 2) = r.m_11; *mr.mn(2, 3) = r.m_12;
-	*mr.mn(3, 1) = r.m_20; *mr.mn(3, 2) = r.m_21; *mr.mn(3, 3) = r.m_22;
 
-	for (i = 1; i < 4; i++)
-	{
-		for (j = 1; j < 4; j++)
-		{
-			*t.mn(i, j) = *mr.mn(i, j);
-			*t.mn(i + 3, j + 3) = *mr.mn(i, j);
-			*t.mn(i + 6, j + 6) = *mr.mn(i, j);
-			*t.mn(i + 9, j + 9) = *mr.mn(i, j);
-		}
-	}
-	mr.clear();
-	return (t);
-}
 
 
 Mat E_Object2B::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
@@ -14331,18 +14376,21 @@ KM=tKmt;
 //OFFSETS TO GLOBAL MAT
 if (bOpt == FALSE)
 {
-	Mat off(12, 12);
-	Mat offT;
-	Mat dum1;
-	OffsetsToKG(off);
-	offT = off;
-	offT.Transpose();
-	dum1 = KM * off;
-	KM.clear();
-	KM = offT * dum1;
-	dum1.clear();
-	off.clear();
-	offT.clear();
+	if (HasOffsets())
+	{
+		Mat off;
+		Mat offT;
+		Mat dum1;
+		OffsetsToKG(PropsT, off);
+		offT = off;
+		offT.Transpose();
+		dum1 = KM * off;
+		KM.clear();
+		KM = offT * dum1;
+		dum1.clear();
+		off.clear();
+		offT.clear();
+	}
 }
 
 t.clear();

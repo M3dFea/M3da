@@ -3193,6 +3193,11 @@ public:
    virtual Mat DeeBM(double E, double v, int iD);
    virtual Mat DeeSH(double E, double v, int iD);
    virtual int noDof();
+   //Transform nodal stiffness values from element local to global
+   virtual Mat KEToKGTransform();
+   virtual BOOL HasOffsets();
+   virtual void OffsetsToKG(PropTable* PropsT, Mat& off); //Offsets to global KE SYS
+   virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
    virtual BOOL ChkNegJac();
    virtual int GetfaceList(eFace* Faces[6]);
    virtual int GetLinkList(eEdge* Links[200]);
@@ -3410,13 +3415,13 @@ E_Object2B();
 virtual CString ToString();
 virtual void ExportNAS(FILE* pFile);
 virtual int noDof();
+virtual BOOL HasOffsets();
+virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
 virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
-virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
-virtual void OffsetsToKG(Mat& off); //Offsets to global KE SYS
 virtual void PinFlgsToKE(Mat& KEL); //Pin Flags Element SYS
-virtual Mat KEToKGTransform();
 virtual Vec<int> GetSteerVec3d();
 virtual Vec<int> GetSteerVec1d();
+virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
 virtual G_Object* Copy(G_Object* Parrent);
 virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
 virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
