@@ -3337,6 +3337,7 @@ public:
   virtual G_Object* GetNode(int i);
   virtual C3dMatrix GetElSys();
   virtual int noDof();
+  virtual double getLen();
   virtual void Info();
   virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
   virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);

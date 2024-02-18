@@ -2013,6 +2013,7 @@ return (vR);
 
 double G_Object::getLen()
 {
+
 return (0);
 }
 
@@ -11801,6 +11802,17 @@ int E_Object2::noDof()
 {
 return(3);
 }
+
+double E_Object2::getLen()
+{
+	double dRet = 0;
+	C3dVector vL;
+	vL = pVertex[1]->Get_Centroid();
+	vL-= pVertex[0]->Get_Centroid();
+	dRet = vL.Mag();
+	return (dRet);
+}
+
 
 void E_Object2::Info()
 {
@@ -25814,7 +25826,7 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
   E_Object* pE;
   int iNS;
   int iD;
-
+  int i,j;
   if ((PropsT==NULL) || (MatT==NULL))
   {
     outtext1("ERROR: Property or Mat Table Missing, Body Loads Not Calculated.");
@@ -25835,7 +25847,6 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
           TF=pE->GetThermalStrainMat3d(PropsT,MatT,dT);
           iNS=pE->iNoNodes;
           iD=pE->noDof();
-          int i;
           if ((pE->iType==115) || (pE->iType==111) || (pE->iType==112))
           {
             for (i=0;i<iNS;i++)
@@ -25902,7 +25913,7 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
                 *FVec.nn(iDD2)+=vFl.z;
             }
           }
-		  else if (pE->iType == 21) //BEAM ELEMENTS
+		  else if (pE->iType == 21) //BEAM ELEMENT THERMAL LOAD IS AXIAL
 		  {
 			  E_Object2B* pB = (E_Object2B*)pE;
 			  if (pB->iLabel == 6)
@@ -25925,9 +25936,9 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 				  *vF.mn(2, 1) = vFg.y;
 				  *vF.mn(3, 1) = vFg.z;
 				  pB->OffsetsTransform(TOff,pB->OffA); 
-				  vFoff = TOff * (vF);
 				  TOff.Transpose();
-				  vF = TOff * (vFoff);
+				  vFoff = TOff * (vF);
+
 				  int iDD0, iDD1, iDD2, iDD3, iDD4, iDD5;
 				  iDD0 = *vS.nn(i * iD + 1);
 				  iDD1 = *vS.nn(i * iD + 2);
@@ -25936,17 +25947,17 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 				  iDD4 = *vS.nn(i * iD + 5);
 				  iDD5 = *vS.nn(i * iD + 6);
 				  if (iDD0 != -1)
-					  *FVec.nn(iDD0) += *vF.mn(1,1);
+					  *FVec.nn(iDD0) += *vFoff.mn(1,1);
 				  if (iDD1 != -1)
-					  *FVec.nn(iDD1) += *vF.mn(2, 1);
+					  *FVec.nn(iDD1) += *vFoff.mn(2, 1);
 				  if (iDD2 != -1)
-					  *FVec.nn(iDD2) += *vF.mn(3, 1);
+					  *FVec.nn(iDD2) += *vFoff.mn(3, 1);
 				  if (iDD3 != -1)
-					  *FVec.nn(iDD3) += *vF.mn(4, 1);
+					  *FVec.nn(iDD3) += *vFoff.mn(4, 1);
 				  if (iDD4 != -1)
-					  *FVec.nn(iDD4) += *vF.mn(5, 1);
+					  *FVec.nn(iDD4) += *vFoff.mn(5, 1);
 				  if (iDD5 != -1)
-					  *FVec.nn(iDD5) += *vF.mn(6, 1);
+					  *FVec.nn(iDD5) += *vFoff.mn(6, 1);
 
 				  TOff.clear();
 				  //*************NODE 2*************
@@ -25960,9 +25971,8 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 				  *vF.mn(2, 1) = vFg.y;
 				  *vF.mn(3, 1) = vFg.z;
 				  pB->OffsetsTransform(TOff, pB->OffB);
-				  vFoff = TOff * (vF);
 				  TOff.Transpose();
-				  vF = TOff * (vFoff);
+				  vFoff = TOff * (vF);
 				  iDD0 = *vS.nn(i * iD + 1);
 				  iDD1 = *vS.nn(i * iD + 2);
 				  iDD2 = *vS.nn(i * iD + 3);
@@ -25970,17 +25980,17 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 				  iDD4 = *vS.nn(i * iD + 5);
 				  iDD5 = *vS.nn(i * iD + 6);
 				  if (iDD0 != -1)
-					  *FVec.nn(iDD0) += *vF.mn(1, 1);
+					  *FVec.nn(iDD0) += *vFoff.mn(1, 1);
 				  if (iDD1 != -1)
-					  *FVec.nn(iDD1) += *vF.mn(2, 1);
+					  *FVec.nn(iDD1) += *vFoff.mn(2, 1);
 				  if (iDD2 != -1)
-					  *FVec.nn(iDD2) += *vF.mn(3, 1);
+					  *FVec.nn(iDD2) += *vFoff.mn(3, 1);
 				  if (iDD3 != -1)
-					  *FVec.nn(iDD3) += *vF.mn(4, 1);
+					  *FVec.nn(iDD3) += *vFoff.mn(4, 1);
 				  if (iDD4 != -1)
-					  *FVec.nn(iDD4) += *vF.mn(5, 1);
+					  *FVec.nn(iDD4) += *vFoff.mn(5, 1);
 				  if (iDD5 != -1)
-					  *FVec.nn(iDD5) += *vF.mn(6, 1);
+					  *FVec.nn(iDD5) += *vFoff.mn(6, 1);
 				  TOff.clear();
 				  vF.clear();
 				  vFoff.clear();
@@ -28975,19 +28985,19 @@ ResS->sTitle = sSol;
 ResS->WID=8;
 
 ResS->sName="BEAM GRID PT REACTIONS";
-ResS->iNoV=12;
-ResS->lab[0]="END A FX";
-ResS->lab[1]="END A FY";
-ResS->lab[2]="END A FZ";
-ResS->lab[3]="END A BX";
-ResS->lab[4]="END A BY";
-ResS->lab[5]="END A BZ";
-ResS->lab[6]="END B FX";
-ResS->lab[7]="END B FY";
-ResS->lab[8]="END B FZ";
-ResS->lab[9]="END B BX";
-ResS->lab[10]="END B BY";
-ResS->lab[11]="END B BZ";
+ResS->iNoV=8;
+ResS->lab[0]="BM1A (bending moment, plane 1, end a)";
+ResS->lab[1]="BM2A (bending moment, plane 2, end a)";
+ResS->lab[2]="BM1B (bending moment, plane 1, end b)";
+ResS->lab[3]="BM2B (bending moment, plane 2, end b)";
+ResS->lab[4]="TS1 (plane 1 shear)";
+ResS->lab[5]="TS2 (plane 2 shear)";
+ResS->lab[6]="AF (axial force)";
+ResS->lab[7]="TRQ (torque)";
+//ResS->lab[8]="END B FZ";
+//ResS->lab[9]="END B BX";
+//ResS->lab[10]="END B BY";
+//ResS->lab[11]="END B BZ";
 
 Mat disp;
 Mat KM;
@@ -28997,14 +29007,16 @@ C3dVector TRA;
 C3dVector RRA;
 C3dVector TRB;
 C3dVector RRB;
+double dL = 0;
 for(i=0;i<iElNo;i++)
 {
   iNoNodes=0;
   if (pElems[i]->iType==21)
   {
-	  E_Object2R* pE = (E_Object2R*)pElems[i];
-	  vOff1 = pE->OffA;
-	  vOff2 = pE->OffB;
+	E_Object2R* pE = (E_Object2R*)pElems[i];
+	dL = pE->getLen();
+	vOff1 = pE->OffA;
+	vOff2 = pE->OffB;
     TMAT=pElems[i]->GetElSys();
     iNoNodes=2;
     disp.Create(12,1);
@@ -29031,7 +29043,6 @@ for(i=0;i<iElNo;i++)
 	*disp.mn(7, 1) += +vOff2.z * *disp.mn(11, 1) - vOff2.y * *disp.mn(12, 1);
 	*disp.mn(8, 1) += -vOff2.z * *disp.mn(10, 1) + vOff2.x * *disp.mn(12, 1);
 	*disp.mn(9, 1) += +vOff2.y * *disp.mn(10, 1) - vOff2.x * *disp.mn(11, 1);
-
 	//******************************************************
     KM=pElems[i]->GetStiffMat(PropsT,MatT,TRUE,bErr);
     Res=KM*disp;
@@ -29049,7 +29060,7 @@ for(i=0;i<iElNo;i++)
     RRB.x=*Res.mn(10,1);
     RRB.y=*Res.mn(11,1);
     RRB.z=*Res.mn(12,1);
-
+	//Transform global forces to element local
     TRA=TMAT*TRA;
     RRA=TMAT*RRA;
     TRB=TMAT*TRB;
@@ -29058,23 +29069,17 @@ for(i=0;i<iElNo;i++)
     KM.clear();
     Res.clear();
     disp.clear();
-    //Need to transform to local
-    Res12* pRes=new Res12;
+    //****************************************
+    Res8* pRes=new Res8;
     pRes->ID = pElems[i]->iLabel;
-
-    pRes->v[0]=(float) (TRA.x+pElems[i]->dTemp);
-    pRes->v[1]=(float) TRA.y;
-    pRes->v[2]=(float) TRA.z;
-    pRes->v[3]=(float) RRA.x;
-    pRes->v[4]=(float) RRA.y;
-    pRes->v[5]=(float) RRA.z;
-
-    pRes->v[6]=(float) (TRB.x-pElems[i]->dTemp);
-    pRes->v[7]=(float) TRB.y;
-    pRes->v[8]=(float) TRB.z;
-    pRes->v[9]=(float) RRB.x;
-    pRes->v[10]=(float) RRB.y;
-    pRes->v[11]=(float) RRB.z;
+	pRes->v[0] = (float) -RRA.z;							//M1a(bending moment, plane 1, end a for BAR)
+	pRes->v[1] = (float)  RRA.y;							//M2a(bending moment, plane 1, end b for BAR)
+	pRes->v[2] = (float) -RRA.z + dL * TRA.y;				//M1a(bending moment, plane 2, end a for BAR)
+	pRes->v[3] = (float)  RRA.y + dL * TRA.z;							//M2b(bending moment, plane 2, end b for BAR)
+	pRes->v[4] = (float)  TRB.y;							//V1(plane 1 shear for BAR)
+	pRes->v[5] = (float)  TRB.z;							//V2(plane 2 shear for BAR)
+	pRes->v[6] = (float)  (TRB.x - pElems[i]->dTemp);		//Fx(axial force for BAR or ROD)
+	pRes->v[7] = (float)  RRB.x;							//T(torque for BAR or ROD)
 
     ResS->Add(pRes);
   }
