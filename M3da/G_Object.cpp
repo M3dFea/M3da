@@ -25818,6 +25818,7 @@ void ME_Object::ReportQResultant(Vec<double> &QVec)
   outtext1(_T(s1));
 }
 
+
 void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pTC,int neq,Vec<double> &FVec)
 {
   BCLD* pNext;
@@ -25826,7 +25827,9 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
   E_Object* pE;
   int iNS;
   int iD;
-  int i,j;
+  int i,j,k;
+  BOOL bOff;
+  C3dVector vOff;
   if ((PropsT==NULL) || (MatT==NULL))
   {
     outtext1("ERROR: Property or Mat Table Missing, Body Loads Not Calculated.");
@@ -25925,8 +25928,12 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 			  Mat TOff;
 			  Mat vF(6,1);
 			  Mat vFoff(6, 1);
+
 			     //*************NODE 1*************
-			     i = 0;
+			  for (i = 0; i < iNS; i++)
+			  {
+				  vF.MakeZero();
+				  vFoff.MakeZero();
 				  TOff.Create(6, 6);
 				  vFl.Set(*TF.mn(i + 1, 1), 0, 0);
 				  vFg = M3 * vFl;                    //IN GLONAL
@@ -25935,65 +25942,25 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 				  *vF.mn(1, 1) = vFg.x;
 				  *vF.mn(2, 1) = vFg.y;
 				  *vF.mn(3, 1) = vFg.z;
-				  pB->OffsetsTransform(TOff,pB->OffA); 
-				  TOff.Transpose();
-				  vFoff = TOff * (vF);
-
-				  int iDD0, iDD1, iDD2, iDD3, iDD4, iDD5;
-				  iDD0 = *vS.nn(i * iD + 1);
-				  iDD1 = *vS.nn(i * iD + 2);
-				  iDD2 = *vS.nn(i * iD + 3);
-				  iDD3 = *vS.nn(i * iD + 4);
-				  iDD4 = *vS.nn(i * iD + 5);
-				  iDD5 = *vS.nn(i * iD + 6);
-				  if (iDD0 != -1)
-					  *FVec.nn(iDD0) += *vFoff.mn(1,1);
-				  if (iDD1 != -1)
-					  *FVec.nn(iDD1) += *vFoff.mn(2, 1);
-				  if (iDD2 != -1)
-					  *FVec.nn(iDD2) += *vFoff.mn(3, 1);
-				  if (iDD3 != -1)
-					  *FVec.nn(iDD3) += *vFoff.mn(4, 1);
-				  if (iDD4 != -1)
-					  *FVec.nn(iDD4) += *vFoff.mn(5, 1);
-				  if (iDD5 != -1)
-					  *FVec.nn(iDD5) += *vFoff.mn(6, 1);
-
-				  TOff.clear();
-				  //*************NODE 2*************
-				  i = 1;
-				  TOff.Create(6, 6);
-				  vFl.Set(*TF.mn(i + 1, 1), 0, 0);
-				  vFg = M3 * vFl;                    //IN GLONAL
-				  //NEED TODO OFFSET TRANSFORM
-				  vF.MakeZero();
-				  *vF.mn(1, 1) = vFg.x;
-				  *vF.mn(2, 1) = vFg.y;
-				  *vF.mn(3, 1) = vFg.z;
-				  pB->OffsetsTransform(TOff, pB->OffB);
-				  TOff.Transpose();
-				  vFoff = TOff * (vF);
-				  iDD0 = *vS.nn(i * iD + 1);
-				  iDD1 = *vS.nn(i * iD + 2);
-				  iDD2 = *vS.nn(i * iD + 3);
-				  iDD3 = *vS.nn(i * iD + 4);
-				  iDD4 = *vS.nn(i * iD + 5);
-				  iDD5 = *vS.nn(i * iD + 6);
-				  if (iDD0 != -1)
-					  *FVec.nn(iDD0) += *vFoff.mn(1, 1);
-				  if (iDD1 != -1)
-					  *FVec.nn(iDD1) += *vFoff.mn(2, 1);
-				  if (iDD2 != -1)
-					  *FVec.nn(iDD2) += *vFoff.mn(3, 1);
-				  if (iDD3 != -1)
-					  *FVec.nn(iDD3) += *vFoff.mn(4, 1);
-				  if (iDD4 != -1)
-					  *FVec.nn(iDD4) += *vFoff.mn(5, 1);
-				  if (iDD5 != -1)
-					  *FVec.nn(iDD5) += *vFoff.mn(6, 1);
-				  TOff.clear();
-				  vF.clear();
-				  vFoff.clear();
+				  vFoff = vF;
+				  bOff = pB->GetOffset(PropsT, i, vOff);
+				  if (bOff) //Element has non zeror offsets
+				  {
+					  pB->OffsetsTransform(TOff, vOff);
+					  TOff.Transpose();
+					  vFoff = TOff * (vF);
+				  }
+				  for (k = 1; k <= iD; k++)
+				  {
+					  int iDD0;
+					  iDD0 = *vS.nn(i * iD + k);
+					  if (iDD0 != -1)
+						  *FVec.nn(iDD0) += *vFoff.mn(k, 1);
+				  }
+			  }
+			TOff.clear();
+			vF.clear();
+			vFoff.clear();
 		  }
         }
       }
