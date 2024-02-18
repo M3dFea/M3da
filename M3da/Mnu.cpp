@@ -6987,6 +6987,11 @@ if (pNext==NULL)
 		  cDBase->iCurElemType = 137;
 		  outtext1("ROTATIONAL SPRING TYPE 137 SET.");
 		}
+		else if (CInMsg == "BUSH")
+		{
+			cDBase->iCurElemType = 138;
+			outtext1("BUSH SPRING TYPE 138 SET.");
+		}
 		else if (CInMsg ==  "SCELL")
 		{
 		  cDBase->iCurElemType = 1000;

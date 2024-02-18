@@ -10553,6 +10553,32 @@ Mat E_Object::KEToKGTransform()
 	return (t);
 }
 
+//Transform nodal stiffness values from element local to global
+//given a specifed definition system
+Mat E_Object::KEToKGTransform2(C3dMatrix mEL)
+{
+	Mat t(iNoNodes * 6, iNoNodes * 6);
+	int i, j, n;
+	C3dMatrix r;
+	r = mEL;
+	Mat mr(3, 3);
+	*mr.mn(1, 1) = r.m_00; *mr.mn(1, 2) = r.m_01; *mr.mn(1, 3) = r.m_02;
+	*mr.mn(2, 1) = r.m_10; *mr.mn(2, 2) = r.m_11; *mr.mn(2, 3) = r.m_12;
+	*mr.mn(3, 1) = r.m_20; *mr.mn(3, 2) = r.m_21; *mr.mn(3, 3) = r.m_22;
+
+	for (n = 0; n < iNoNodes * 2; n++)
+	{
+		for (i = 1; i < 4; i++)
+		{
+			for (j = 1; j < 4; j++)
+			{
+				*t.mn(i + n * 3, j + n * 3) = *mr.mn(i, j);
+			}
+		}
+	}
+	mr.clear();
+	return (t);
+}
 //Check to see if element has offsets and are non zero in mag
 BOOL E_Object::HasOffsets()
 {
@@ -11800,9 +11826,7 @@ iCSYS= iMat;
 
 int E_Object2::noDof()
 {
-	int iDof = 3;
-
-return(iDof);
+  return(3);
 }
 
 double E_Object2::getLen()
@@ -11970,6 +11994,36 @@ Mat E_Object2::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bE
   *KM.mn(1,1)=kx;*KM.mn(4,4)=kx;*KM.mn(1,4)=-kx;*KM.mn(4,1)=-kx;
   *KM.mn(2,2)=ky;*KM.mn(5,5)=ky;*KM.mn(2,5)=-ky;*KM.mn(5,2)=-ky;
   *KM.mn(3,3)=kz;*KM.mn(6,6)=kz;*KM.mn(3,6)=-kz;*KM.mn(6,3)=-kz;
+ /* KE(1, 1) = EPROP(1)                             !NB * **new 09 / 10 / 21. Big change.KE(before offsets) : just EPROP vals
+	  KE(2, 2) = EPROP(2)
+	  KE(3, 3) = EPROP(3)
+	  KE(4, 4) = EPROP(4)
+	  KE(5, 5) = EPROP(5)
+	  KE(6, 6) = EPROP(6)
+
+	  KE(7, 7) = KE(1, 1)
+	  KE(8, 8) = KE(2, 2)
+	  KE(9, 9) = KE(3, 3)
+	  KE(10, 10) = KE(4, 4)
+	  KE(11, 11) = KE(5, 5)
+	  KE(12, 12) = KE(6, 6)
+
+	  KE(1, 7) = -KE(1, 1)
+	  KE(2, 8) = -KE(2, 2)
+	  KE(3, 9) = -KE(3, 3)
+	  KE(4, 10) = -KE(4, 4)
+	  KE(5, 11) = -KE(5, 5)
+	  KE(6, 12) = -KE(6, 6)*/
+
+  //TRANSFORM KE TO GLOBAL
+  //t = KEToKGTransform();
+  //tt = t;
+  //tt.Transpose();
+  //Mat Kmt;
+  //Mat tKmt;
+  //Kmt = KM * t;
+  //tKmt = tt * Kmt;
+  //KM = tKmt;
 
   //TRANSFORM ELEMENT TO GLOBAL FROM LOCAL DEFINITION
   CoordSys* pCSYS=NULL;
@@ -12634,6 +12688,135 @@ void E_Object2::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 		if (pN != NULL)
 			pVertex[1] = pN;
 	}
+}
+
+//----------------------------------------------------------------------------
+//    B U S H  E L E M E N T   O B J E C T
+//----------------------------------------------------------------------------
+
+IMPLEMENT_DYNAMIC(E_Object2BUSH, CObject)
+
+int E_Object2BUSH::noDof()
+{
+	return(6);
+}
+
+Mat E_Object2BUSH::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr)
+{
+	double kx = 1e3;
+	double ky = 1e6;
+	double kz = 1e6;
+	double rx = 1e3;
+	double ry = 1e3;
+	double rz = 1e3;
+	char S1[80];
+	C3dMatrix r;
+	Mat TMat;
+	Mat TTMat(6, 6);
+	Mat Kmt;
+	Mat tKmt;
+	Mat t;
+	Mat tt;
+	Mat KEdum;
+	Property* pS = PropsT->GetItem(this->PID);
+	if (pS != NULL)
+	{
+		if (pS->iType == 136)
+		{
+			PSPRINGT* pSP = (PSPRINGT*)pS;
+			kx = pSP->dkx; ky = pSP->dky; kz = pSP->dkz;
+		}
+		else if (pS->iType == 137)
+		{
+			PSPRINGR* pSP = (PSPRINGR*)pS;
+			kx = pSP->dkx; ky = pSP->dky; kz = pSP->dkz;
+		}
+	}
+	else
+	{
+		sprintf_s(S1, "%s%i", "ERROR: No Property Found for Spring Element ", iLabel);
+		outtext1(S1);
+	}
+	Mat KE(12, 12);
+	KE *= 0;
+	//DEFUALT MATRIX GLOBAL
+
+	*KE.mn(1, 1) = kx;                             //NB * **new 09 / 10 / 21. Big change.KE(before offsets) : just EPROP vals
+	*KE.mn(2, 2) = ky;
+	*KE.mn(3, 3) = kz;
+	*KE.mn(4, 4) = rx;
+	*KE.mn(5, 5) = ry;
+	*KE.mn(6, 6) = rz;
+
+	*KE.mn(7, 7) = *KE.mn(1, 1);
+	*KE.mn(8, 8) = *KE.mn(2, 2);
+	*KE.mn(9, 9) = *KE.mn(3, 3);
+	*KE.mn(10, 10) = *KE.mn(4, 4);
+	*KE.mn(11, 11) = *KE.mn(5, 5);
+	*KE.mn(12, 12) = *KE.mn(6, 6);
+
+	*KE.mn(1, 7) = -*KE.mn(1, 1);
+	*KE.mn(2, 8) = -*KE.mn(2, 2);
+	*KE.mn(3, 9) = -*KE.mn(3, 3);
+	*KE.mn(4, 10) = -*KE.mn(4, 4);
+	*KE.mn(5, 11) = -*KE.mn(5, 5);
+	*KE.mn(6, 12) = -*KE.mn(6, 6);
+	//TRANSFORM KE TO GLOBAL
+	CoordSys* pCSYS = nullptr;
+	if (this->iCSYS != -1)
+	{
+		ME_Object* ME = (ME_Object*)this->pParent;
+		if (ME != NULL)
+		{
+			pCSYS = ME->GetSys(iCSYS);
+			if (pCSYS != NULL)
+			{
+				r = GetSpringSys(pCSYS);
+				t = KEToKGTransform2(r);
+				tt = t; tt.Transpose();
+				KEdum = KE * t;
+				KE = tt * KEdum;
+			}
+			else
+			{
+				sprintf_s(S1, "%s%i", "ERROR: Coordinate System Not Found for Spring Element ", iLabel);
+				outtext1(S1);
+				bErr = TRUE;
+			}
+		}
+		else
+		{
+			outtext1("ERROR: Orphaned Element.");
+			bErr = TRUE;
+		}
+	}
+	else
+	{
+		bErr = TRUE;
+	}
+	
+	 return (KE);
+}
+
+Vec<int> E_Object2BUSH::GetSteerVec3d()
+{
+	Vec<int> V(2 * 6);
+	*V.nn(1) = pVertex[0]->dof[0];
+	*V.nn(2) = pVertex[0]->dof[1];
+	*V.nn(3) = pVertex[0]->dof[2];
+	*V.nn(4) = pVertex[0]->dof[3];
+	*V.nn(5) = pVertex[0]->dof[4];
+	*V.nn(6) = pVertex[0]->dof[5];
+
+	*V.nn(7) = pVertex[1]->dof[0];
+	*V.nn(8) = pVertex[1]->dof[1];
+	*V.nn(9) = pVertex[1]->dof[2];
+	*V.nn(10) = pVertex[1]->dof[3];
+	*V.nn(11) = pVertex[1]->dof[4];
+	*V.nn(12) = pVertex[1]->dof[5];
+
+
+	return(V);
 }
 //----------------------------------------------------------------------------
 //    ROD E L E M E N T   O B J E C T
@@ -23039,6 +23222,9 @@ void ME_Object::Serialize(CArchive& ar,int iV)
 		  case 137:
             pElems[i] = new E_Object2;
             break;
+		  case 138:
+			  pElems[i] = new E_Object2BUSH;
+			  break;
       case 91:
             pElems[i] = new E_Object3;
             break;
@@ -24463,10 +24649,12 @@ case 161: iRC = 1; //SCALAR
     break;
 case 121: iRC = 2; //UNKNOWN 2
     break;
-case 136: iRC = 2; //UNKNOWN 2
+case 136: iRC = 2; //TSPRING
     break;
-case 137: iRC = 2; //UNKNOWN 2
+case 137: iRC = 2; //RSPRING
     break;
+case 138: iRC = 2; //BUSH
+	break;
 case 21: iRC = 2;  //BEAM 2
     break;
 case 11: iRC = 2;  //ROD 2
@@ -27374,6 +27562,14 @@ else if ((iType == 136) || (iType == 137))
   pERet= pEL2;
   iElNo++;
   }
+else if (iType == 138) 
+{
+	E_Object2BUSH* pEL2 = new E_Object2BUSH();
+	pEL2->Create(pInVertex, iLab, iCol, iType, iPID, iMatCys, iNo, this, NULL);
+	pElems[iElNo] = pEL2;
+	pERet = pEL2;
+	iElNo++;
+}
 else if (iType == 121) 
   {
   E_ObjectR2 *pEL2 = new E_ObjectR2();
@@ -38141,6 +38337,7 @@ void PBUSH::Serialize(CArchive& ar, int iV)
 		ar << dK4;
 		ar << dK5;
 		ar << dK6;
+		ar << dkcoeff
 	}
 	else
 	{
@@ -38152,6 +38349,7 @@ void PBUSH::Serialize(CArchive& ar, int iV)
 		ar >> dK4;
 		ar >> dK5;
 		ar >> dK6;
+		ar >> dkcoeff
 	}
 }
 

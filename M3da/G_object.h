@@ -1061,6 +1061,7 @@ public:
 	double dK4;
 	double dK5;
 	double dK6;
+	double dkcoeff;
 	PBUSH();
 	virtual void Serialize(CArchive& ar, int iV);
 	virtual PBUSH* Copy();
@@ -3195,6 +3196,7 @@ public:
    virtual int noDof();
    //Transform nodal stiffness values from element local to global
    virtual Mat KEToKGTransform();
+   virtual Mat KEToKGTransform2(C3dMatrix mEL);
    virtual BOOL HasOffsets();
    virtual void OffsetsToKG(PropTable* PropsT, Mat& off); //Offsets to global KE SYS
    virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
@@ -3352,6 +3354,14 @@ public:
   virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
+
+class E_Object2BUSH : public E_Object2
+{
+	DECLARE_DYNAMIC(E_Object2BUSH)
+	virtual int noDof();
+	virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
+	virtual Vec<int> GetSteerVec3d();
+};
 //THIS IS A ROD ELEMENY ONLY HAS AXIAL K
 //NOTE should also have Torsional K but is
 //currently missing

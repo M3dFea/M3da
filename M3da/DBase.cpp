@@ -20520,7 +20520,7 @@ int iCnt=0;
         {
           if (pSYS->pParent==pE->pParent)
           {
-            if ((pE->iType==136) || (pE->iType==137))
+            if ((pE->iType==136) || (pE->iType==137) || (pE->iType == 138))
             {
               E_Object2* pE2=(E_Object2*) pE;
               pE2->iCSYS=iSys;
