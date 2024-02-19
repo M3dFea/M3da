@@ -3339,6 +3339,7 @@ public:
   virtual G_Object* GetNode(int i);
   virtual C3dMatrix GetElSys();
   virtual int noDof();
+  virtual int MaxBW();
   virtual double getLen();
   virtual void Info();
   virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
@@ -3407,7 +3408,6 @@ public:
   C3dMatrix GetBeamTformB();
   virtual void Transform(C3dMatrix TMat);
   virtual int noDof();
-  virtual int MaxBW();
   virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
   virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
   virtual Mat GetElNodalMass(PropTable* PropsT,MatTable* MatT);

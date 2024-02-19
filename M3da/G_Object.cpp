@@ -11166,6 +11166,10 @@ if (PropsT!=NULL)
   {
     iDof = 3; nip = 0; iS = 0;
   }
+  else if (iType == 138)       //BUSH Spring zero vec
+  {
+	  iDof = 6; nip = 0; iS = 0;
+  }
 //*********************JUST FOR TEST*******************************
 Mat FS(iDof*iNoNodes,1);
 Mat S;
@@ -11836,6 +11840,42 @@ iCSYS= iMat;
 int E_Object2::noDof()
 {
   return(3);
+}
+
+//this can probably move to E_Object 
+int E_Object2::MaxBW()
+{
+	int i;
+	int j;
+
+	int MaxDof;
+	int MinDof;
+	MaxDof = 0;
+	MinDof = 99999999;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		for (j = 0; j < noDof(); j++)
+		{
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] > MaxDof))
+			{
+				MaxDof = pVertex[i]->dof[j];
+			}
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] < MinDof))
+			{
+				MinDof = pVertex[i]->dof[j];
+			}
+		}
+	}
+	int iRC;
+	if (MaxDof - MinDof < 0)
+	{
+		iRC = 0;
+	}
+	else
+	{
+		iRC = MaxDof - MinDof;
+	}
+	return (iRC);
 }
 
 double E_Object2::getLen()
@@ -12672,6 +12712,7 @@ int E_Object2BUSH::noDof()
 
 Mat E_Object2BUSH::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr)
 {
+	int i, j;
 	double kx = 1e9;
 	double ky = 1e9;
 	double kz = 1e9;
@@ -12726,6 +12767,14 @@ Mat E_Object2BUSH::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOO
 	*KE.mn(4, 10) = -*KE.mn(4, 4);
 	*KE.mn(5, 11) = -*KE.mn(5, 5);
 	*KE.mn(6, 12) = -*KE.mn(6, 6);
+	for (i = 1; i <= 12; i++)
+	{
+		for (j = 1; j <= 12; j++)
+		{
+			*KE.mn(j, i) = *KE.mn(i, j);
+		}
+	}
+
 	//TRANSFORM KE TO GLOBAL
 	CoordSys* pCSYS = nullptr;
 	if (this->iCSYS != -1)
@@ -13472,40 +13521,7 @@ int E_Object2R::noDof()
 return (3);
 }
 
-int E_Object2R::MaxBW()
-{
-int i;
-int j;
 
-int MaxDof;
-int MinDof;
-MaxDof=0;
-MinDof=99999999;
-for (i=0;i<iNoNodes;i++)
-{
-  for(j=0;j<noDof();j++)
-  {
-    if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j]>MaxDof))
-	  {
-       MaxDof=pVertex[i]->dof[j];
-    }
-	  if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] < MinDof))
-	  {
-       MinDof=pVertex[i]->dof[j];
-	  }
-  }
-}
-int iRC;
-if (MaxDof-MinDof<0)
-{
-  iRC=0;
-}
-else
-{
-  iRC=MaxDof-MinDof;
-}
-return (iRC);
-}
 
 
 Mat E_Object2R::GetElNodalMass(PropTable* PropsT,MatTable* MatT)
@@ -14556,7 +14572,6 @@ tt.clear();
 Kmt.clear();
 tKmt.clear();
 
-KM.diag();
 return (KM);
 }
 
@@ -18821,7 +18836,7 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &b
 	KE += KBS;
 	for (i = 6; i <= 24; i += 6)
 	{
-		*KE.mn(i, i) = .0001;  //DRILLING STIFFNES
+		*KE.mn(i, i) = 1.0;  //DRILLING STIFFNES
 	}
 	//KE.diag();
 	Mat TMAT(24, 24);
@@ -28697,7 +28712,7 @@ for (i=1;i<ndof+1;i++)
 	    {
         icd = *g.nn(j) - *g.nn(i) + 1;
         if ((icd - 1) >= 0)
-		    {
+		{
           ival = neq * (icd - 1) + *g.nn(i);
           *bk.nn(ival) = *bk.nn(ival) + *KM.mn(i, j);
         }

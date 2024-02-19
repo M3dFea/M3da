@@ -406,6 +406,7 @@ ON_COMMAND(ID_DIMENSIONTOOLS_DIAMETERDIM, &CM3daDoc::OnDimensiontoolsDiameterdim
 ON_COMMAND(ID_DIMENSIONTOOLS_ANGULARDIMBY3POINTS, &CM3daDoc::OnDimensiontoolsAngulardimby3points)
 ON_COMMAND(ID_DIMENSIONTOOLS_DRAGDIM, &CM3daDoc::OnDimensiontoolsDragdim)
 ON_COMMAND(ID_DIMENSIONTOOLS_CIRCLECENTREMARKER, &CM3daDoc::OnDimensiontoolsCirclecentremarker)
+ON_COMMAND(ID_ELEMENTTYPE_BUSH, &CM3daDoc::OnElementtypeBush)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6776,4 +6777,12 @@ void CM3daDoc::OnDimensiontoolsCirclecentremarker()
 	{
 		outtext1("Finish Current Operation.");
 	}
+}
+
+
+void CM3daDoc::OnElementtypeBush()
+{
+	// TODO: Add your command handler code here
+	outtextMSG2("ELTYPE");
+	outtextMSG2("BUSH");
 }

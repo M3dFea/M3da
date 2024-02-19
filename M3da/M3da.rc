@@ -296,6 +296,7 @@ BEGIN
                 MENUITEM "Wedge",                       ID_ELEMENTTYPE_WEDGE
                 MENUITEM "Brick",                       ID_ELEMENTTYPE_BRICK
                 MENUITEM "Rigid",                       ID_ELEMENTTYPE_RIGID
+                MENUITEM "BUSH",                        ID_ELEMENTTYPE_BUSH
             END
             MENUITEM "Beam Mesh on Curves",         ID_FEMTOOLS_MESHSIZEONCURVES
             MENUITEM "Mapped TRI Mesh",             ID_MESH_MAPPEDTRIMESH
@@ -1382,6 +1383,7 @@ END
 STRINGTABLE
 BEGIN
     ID_DIMENSIONTOOLS_CIRCLECENTREMARKER "Create circle centre marker."
+    ID_ELEMENTTYPE_BUSH     "BUSH 6 DOF Spring Element"
 END
 
 #endif    // English (United States) resources
