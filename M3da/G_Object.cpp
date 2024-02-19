@@ -10937,7 +10937,7 @@ if (Pr!=NULL)
   }
   else if (iType == 136)
   {
-      if ((Pr->iType==136) || (Pr->iType == 138))
+      if (Pr->iType==136)
       {
        PID=Pr->iID;
        bC=TRUE;
@@ -10946,12 +10946,21 @@ if (Pr!=NULL)
   }
   else if (iType == 137)
   {
-      if (Pr->iType==137) 
-      {
-       PID=Pr->iID;
-       bC=TRUE;
-       pPr=Pr;
-      }
+	  if (Pr->iType == 137)
+	  {
+		  PID = Pr->iID;
+		  bC = TRUE;
+		  pPr = Pr;
+	  }
+  }
+  else if (iType == 138)
+  {
+	  if (Pr->iType == 138)
+	  {
+		  PID = Pr->iID;
+		  bC = TRUE;
+		  pPr = Pr;
+	  }
   }
   else if (iType == 121) 
   {
@@ -11928,11 +11937,17 @@ Mat E_Object2::GetThermMat(PropTable* PropsT,MatTable* MatT)
   Property* pS=PropsT->GetItem(this->PID);
   if (pS!=NULL)
   {
-    if (pS->iType==136)
+    if (pS->iType==136) 
     {
       PSPRINGT* pSP=(PSPRINGT*) pS;
       K=pSP->dkcoeff;
     }
+	else if (pS->iType == 138)
+	{
+		PBUSH* pSP = (PBUSH*)pS;
+		K = pSP->dkcoeff;
+	}
+
   }
   else
   {
@@ -11994,38 +12009,7 @@ Mat E_Object2::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bE
   *KM.mn(1,1)=kx;*KM.mn(4,4)=kx;*KM.mn(1,4)=-kx;*KM.mn(4,1)=-kx;
   *KM.mn(2,2)=ky;*KM.mn(5,5)=ky;*KM.mn(2,5)=-ky;*KM.mn(5,2)=-ky;
   *KM.mn(3,3)=kz;*KM.mn(6,6)=kz;*KM.mn(3,6)=-kz;*KM.mn(6,3)=-kz;
- /* KE(1, 1) = EPROP(1)                             !NB * **new 09 / 10 / 21. Big change.KE(before offsets) : just EPROP vals
-	  KE(2, 2) = EPROP(2)
-	  KE(3, 3) = EPROP(3)
-	  KE(4, 4) = EPROP(4)
-	  KE(5, 5) = EPROP(5)
-	  KE(6, 6) = EPROP(6)
-
-	  KE(7, 7) = KE(1, 1)
-	  KE(8, 8) = KE(2, 2)
-	  KE(9, 9) = KE(3, 3)
-	  KE(10, 10) = KE(4, 4)
-	  KE(11, 11) = KE(5, 5)
-	  KE(12, 12) = KE(6, 6)
-
-	  KE(1, 7) = -KE(1, 1)
-	  KE(2, 8) = -KE(2, 2)
-	  KE(3, 9) = -KE(3, 3)
-	  KE(4, 10) = -KE(4, 4)
-	  KE(5, 11) = -KE(5, 5)
-	  KE(6, 12) = -KE(6, 6)*/
-
-  //TRANSFORM KE TO GLOBAL
-  //t = KEToKGTransform();
-  //tt = t;
-  //tt.Transpose();
-  //Mat Kmt;
-  //Mat tKmt;
-  //Kmt = KM * t;
-  //tKmt = tt * Kmt;
-  //KM = tKmt;
-
-  //TRANSFORM ELEMENT TO GLOBAL FROM LOCAL DEFINITION
+ 
   CoordSys* pCSYS=NULL;
   if (this->iCSYS!=-1)
   {
@@ -12058,13 +12042,6 @@ Mat E_Object2::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bE
       bFail=TRUE;
     }
   }
-  else
-  {
-    bFail=TRUE;
-  }
-
-
-  
 return (KM);
 }
 
@@ -12545,17 +12522,9 @@ void E_Object2::ExportNAS(FILE* pFile)
   else
 	  iCS = iCSYS;
 
-  if (iType == 136)
+  if (iType == 138)
   {
     fprintf(pFile, "%8s%8i%8i%8i%8i%8s%8s%8s%8i\n", "CBUSH   ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel,"","","", iCS);
-	//ME_Object* pM = (ME_Object*)this->pParent;
-	//fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1000.0", pVertex[0]->iLabel, "1", pVertex[1]->iLabel, "1");
-	//pM->iElementLab++;
-	//fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1.0E8", pVertex[0]->iLabel, "2", pVertex[1]->iLabel, "2");
-	//pM->iElementLab++;
-	//fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1000.0", pVertex[0]->iLabel, "3", pVertex[1]->iLabel, "3");
-	//pM->iElementLab++;
-
   }
 }
 
@@ -12703,12 +12672,12 @@ int E_Object2BUSH::noDof()
 
 Mat E_Object2BUSH::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr)
 {
-	double kx = 1e3;
-	double ky = 1e6;
-	double kz = 1e6;
-	double rx = 1e3;
-	double ry = 1e3;
-	double rz = 1e3;
+	double kx = 1e9;
+	double ky = 1e9;
+	double kz = 1e9;
+	double rx = 1e6;
+	double ry = 1e6;
+	double rz = 1e6;
 	char S1[80];
 	C3dMatrix r;
 	Mat TMat;
@@ -12721,15 +12690,11 @@ Mat E_Object2BUSH::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOO
 	Property* pS = PropsT->GetItem(this->PID);
 	if (pS != NULL)
 	{
-		if (pS->iType == 136)
+		if (pS->iType == 138)
 		{
-			PSPRINGT* pSP = (PSPRINGT*)pS;
-			kx = pSP->dkx; ky = pSP->dky; kz = pSP->dkz;
-		}
-		else if (pS->iType == 137)
-		{
-			PSPRINGR* pSP = (PSPRINGR*)pS;
-			kx = pSP->dkx; ky = pSP->dky; kz = pSP->dkz;
+			PBUSH* pSP = (PBUSH*)pS;
+			kx = pSP->dK1; ky = pSP->dK2; kz = pSP->dK3;
+			rx = pSP->dK4; ry = pSP->dK5; rz = pSP->dK6;
 		}
 	}
 	else
@@ -12790,11 +12755,7 @@ Mat E_Object2BUSH::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOO
 			bErr = TRUE;
 		}
 	}
-	else
-	{
-		bErr = TRUE;
-	}
-	
+
 	 return (KE);
 }
 
@@ -18591,7 +18552,7 @@ Mat E_Object4::QPLT2_KS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX)
 	Mat BS(2,12);
 	int J, JJ;
 	JJ = 0;
-
+	
 	for (J = 1; J < 4 + 1; J++)
 	{
 		JJ = JJ + 1;
@@ -18611,6 +18572,7 @@ Mat E_Object4::QPLT2_KS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX)
 
 Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD, Mat SHELL_D, Mat SHELL_T)
 {
+	char S1[80];
 	double BENSUM = 0;
 	double SHRSUM = 0;
 	Mat bee;   //strain displacement matrix
@@ -18699,12 +18661,18 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 
 	//Add all diagonal terms from KS for rotational DOF's to get SHRSUM
 	SHRSUM = *KS.mn(2, 2) + *KS.mn(3, 3) + *KS.mn(5, 5) + *KS.mn(6, 6) + *KS.mn(8, 8) + *KS.mn(9, 9) + *KS.mn(11, 11) + *KS.mn(12, 12);
+	if (abs(SHRSUM) < 0.00001)
+	{
+		sprintf_s(S1, "ERROR: SHRSUM TOO SMALL %g", SHRSUM);
+		outtext1(S1);
+	}
 
 //******** Shear Correction factor  **********
 	double CBMIN = 3.6; //for quad element - emprirical value??
 	double PSI_HAT = BENSUM / SHRSUM;
 	double DEN = 1 + CBMIN * PSI_HAT;
 	double PHI_SQ = CBMIN * PSI_HAT / DEN;
+
 //******** End Shear Correction factor  **********
 //populate the stiffness matrix
 	Vec<int> IDB(8);
@@ -18884,7 +18852,7 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &b
 }
 
 //01/02/2024 replacing with improved transverse shear above
-//Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
+//Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &bErr)
 //{
 //	Mat bee;   //strain displacement matrix
 //	int nip = 0;
@@ -24677,6 +24645,8 @@ void ME_Object::Test(PropTable* PropsT,MatTable* MatT)
 {
 int i,j,neq;
 BOOL bOpt, bErr;
+bOpt = FALSE;
+bErr = FALSE;
 COleDateTime timeStart;
 timeStart = COleDateTime::GetCurrentTime();
 int Hour=timeStart.GetHour();
@@ -25080,6 +25050,7 @@ iStep=0;
     outtext1("FINISHED SOLUTION");
     Displacements(iStep, sSol, sStep,Steer,xnew);
     TranslationalSpringForces(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
+	ForcesBUSH(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
     ForcesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
     Stresses2d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
     Stresses3d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
@@ -29131,6 +29102,111 @@ else
    delete(ResS);
 }
 }
+
+
+void ME_Object::ForcesBUSH(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp)
+{
+	BOOL bOpt, bErr;
+	int i, j, k, iNoNodes;
+	double dof1;
+	Mat disp;
+	Mat KM;
+	Mat Res;
+	Mat t;
+	Mat F;
+	Mat FG;
+	C3dMatrix r; 
+	CoordSys* pCSYS = nullptr;
+	ResSet* ResS = new ResSet();
+	ResS->ACODE = 11;
+	ResS->TCODE = 4;
+	ResS->TYPE = 0;
+	ResS->LC = iLC;
+	ResS->sSubTitle = sStep;
+	ResS->sTitle = sSol;
+	ResS->WID = 6;
+
+	ResS->sName = "BUSH FORCES/MOMENTS";
+	ResS->iNoV = 6;
+	ResS->lab[0] = "FX";
+	ResS->lab[1] = "FY";
+	ResS->lab[2] = "FZ";
+	ResS->lab[3] = "MX";
+	ResS->lab[4] = "MY";
+	ResS->lab[5] = "MZ";
+
+
+	int aa = 0;
+	for (i = 0; i < iElNo; i++)
+	{
+		iNoNodes = 0;
+		if (pElems[i]->iType == 138) 
+		{
+			E_Object2BUSH* pE2 = (E_Object2BUSH*)pElems[i];
+			iNoNodes = 2;
+			disp.Create(12, 1);
+			for (j = 0; j < iNoNodes; j++)
+			{
+				for (k = 0; k < 6; k++)
+				{
+					dof1 = 0;
+					Node* pN = (Node*)pElems[i]->GetNode(j);
+					if (pN->dof[k] > 0)
+					{
+						dof1 = GetDisp(pN->dof[k], Steer, Disp);
+					}
+					*disp.mn(6 * j + (k + 1), 1) = dof1;
+				}
+			}
+
+			KM = pElems[i]->GetStiffMat(PropsT, MatT, TRUE, bErr);
+			FG = KM * disp;
+			//TRANSFORM TO LOCAL
+			int iCS = pE2->iCSYS;
+			if (iCS != -1)
+			{
+					pCSYS = GetSys(iCS);
+					if (pCSYS != NULL)
+					{
+						r = pE2->GetSpringSys(pCSYS);
+						t = pE2->KEToKGTransform2(r);
+						t.Transpose();
+						F = t * FG;
+					}
+					else
+					{
+						bErr = TRUE;
+					}
+			}
+
+			Res6* pRes = new Res6;
+			pRes->ID = pElems[i]->iLabel;
+			pRes->v[0] = (float)*F.mn(7, 1);
+			pRes->v[1] = (float)*F.mn(8, 1);
+			pRes->v[2] = (float)*F.mn(9, 1);
+			pRes->v[3] = (float)*F.mn(10, 1);
+			pRes->v[4] = (float)*F.mn(11, 1);
+			pRes->v[5] = (float)*F.mn(12, 1);
+
+			ResS->Add(pRes);
+			KM.clear();
+			Res.clear();
+			disp.clear();
+			t.clear();
+			F.clear();
+		}
+	}
+	if (ResS->iCnt > 0)
+	{
+		ResultsSets[iNoRes] = ResS;
+		iNoRes++;
+	}
+	else
+	{
+		delete(ResS);
+	}
+}
+
 
 void ME_Object::ForcesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp)
 {
@@ -38304,9 +38380,10 @@ PBUSH::PBUSH()
 	dK1 = 0.0;
 	dK2 = 0.0;
 	dK3 = 0.0;
-	dK1 = 0.0;
-	dK2 = 0.0;
-	dK3 = 0.0;
+	dK4 = 0.0;
+	dK5 = 0.0;
+	dK6 = 0.0;
+	dkcoeff = 0;
 }
 
 PBUSH* PBUSH::Copy()
@@ -38337,7 +38414,7 @@ void PBUSH::Serialize(CArchive& ar, int iV)
 		ar << dK4;
 		ar << dK5;
 		ar << dK6;
-		ar << dkcoeff
+		ar << dkcoeff;
 	}
 	else
 	{
@@ -38349,7 +38426,7 @@ void PBUSH::Serialize(CArchive& ar, int iV)
 		ar >> dK4;
 		ar >> dK5;
 		ar >> dK6;
-		ar >> dkcoeff
+		ar >> dkcoeff;
 	}
 }
 
@@ -38396,7 +38473,8 @@ int PBUSH::GetVarHeaders(CString sVar[])
 	sVar[5] = "K4";
 	sVar[6] = "K5";
 	sVar[7] = "K6";
-	return(8);
+	sVar[8] = "Conduction Coefficeint (kcoePBUSHff)";
+	return(9);
 }
 
 
@@ -38427,6 +38505,9 @@ int PBUSH::GetVarValues(CString sVar[])
 	sprintf_s(S1, "%g", dK6);
 	sVar[iNo] = S1;
 	iNo++;
+	sprintf_s(S1, "%g", dkcoeff);
+	sVar[iNo] = S1;
+	iNo++;
 	return (iNo);
 }
 
@@ -38440,6 +38521,7 @@ void PBUSH::PutVarValues(int iNo, CString sVar[])
 	dK4 = atof(sVar[5]);
 	dK5 = atof(sVar[6]);
 	dK6 = atof(sVar[7]);
+	dkcoeff = atof(sVar[8]);
 }
 
 void PBUSH::ExportNAS(FILE* pFile)
