@@ -13518,7 +13518,7 @@ OffB=TMat*OffB;
 
 int E_Object2R::noDof()
 {
-return (3);
+return (6);
 }
 
 
@@ -13727,16 +13727,16 @@ Mat E_Object2R::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &b
 {
 double ea=10000;
 double eal=10000;
-double x1,y1,z1,x2,y2,z2;
-double ell;
+double jg = 10000;
+double jgl = 10000;
 int MID=-1;
 char S1[80];
-Mat KM(6,6);
-Mat t(6,6);
-Mat tt(6,6);
-KM.MakeZero();
-t.MakeZero();
-tt.MakeZero();
+Mat KE(12,12);
+Mat KEdum;
+Mat t;
+Mat tt;
+C3dVector vN1, vN2;
+KE.MakeZero();
 
 Property* pS=PropsT->GetItem(PID);
 if (pS!=NULL)
@@ -13761,6 +13761,7 @@ if ((pS!=NULL) && (pM!=NULL))
     PROD* pB=(PROD*) pS;
     MAT1* pM1=(MAT1*) pM;
     ea=pB->A*pM1->dE;
+	jg= pB->J*pM1->dG;
   }
   else
   {
@@ -13776,66 +13777,52 @@ else
 
 
 
-x1=pVertex[0]->Pt_Point->x;
-y1=pVertex[0]->Pt_Point->y;
-z1=pVertex[0]->Pt_Point->z;
-x2=pVertex[1]->Pt_Point->x;
-y2=pVertex[1]->Pt_Point->y;
-z2=pVertex[1]->Pt_Point->z;
-x1-=x2;y1-=y2;z1-=z2;
-ell=pow(x1*x1+y1*y1+z1*z1,0.5);
-eal=ea/ell;
+vN1 = pVertex[0]->Get_Centroid();
+vN2 = pVertex[1]->Get_Centroid();
+vN2 -= vN1;
+double ell = vN2.Mag(); //Element length
 
-*KM.mn(1,1)=eal;
-*KM.mn(4,4)=eal;
-*KM.mn(1,4)=-eal;
-*KM.mn(4,1)=-eal;
-//KM.diag();
-C3dMatrix r;
-r=GetElSys();
-Mat mr(3,3);
-*mr.mn(1,1)=r.m_00; *mr.mn(1,2)=r.m_01; *mr.mn(1,3)=r.m_02;
-*mr.mn(2,1)=r.m_10; *mr.mn(2,2)=r.m_11; *mr.mn(2,3)=r.m_12;
-*mr.mn(3,1)=r.m_20; *mr.mn(3,2)=r.m_21; *mr.mn(3,3)=r.m_22;
-
-
-int i,j;
-for (i=1;i<4;i++)
+if (ell > 0)
 {
-  for (j=1;j<4;j++)
-  {
-     *t.mn(i,j) = *mr.mn(i,j);
-     *t.mn(i+3,j+3) = *mr.mn(i,j);
-     *tt.mn(i,j) = *mr.mn(i,j);
-     *tt.mn(i+3,j+3) = *mr.mn(i,j);
-  }
+	eal = ea / ell;
+	jgl = jg / ell;
 }
-tt.Transpose();
-Mat Kmt;
-Mat tKmt;
-Kmt=KM*t;
-tKmt=tt*Kmt;
+*KE.mn(1, 1) = eal;
+*KE.mn(1, 7) = -eal;
+*KE.mn(7, 1) = *KE.mn(1, 7);
+*KE.mn(4, 4) = jgl;
+*KE.mn(4, 10) = -jgl;
+*KE.mn(10, 4) = *KE.mn(4, 10);
+*KE.mn(7, 7) = eal;
+*KE.mn(10, 10) = jgl;
+//TRANSFORM KE TO GLOBAL
+CoordSys * pCSYS = nullptr;
 
-KM=tKmt;
-t.clear();
-tt.clear();
-Kmt.clear();
-tKmt.clear();
-mr.clear();
-return (KM);
+C3dMatrix r = this->GetElSys();
+t = KEToKGTransform2(r);
+tt = t; tt.Transpose();
+KEdum = KE * t;
+KE = tt * KEdum;
+
+return (KE);
 }
 
 Vec<int> E_Object2R::GetSteerVec3d()
 {
-Vec<int> V(2*3);
-*V.nn(1)=pVertex[0]->dof[0];
-*V.nn(2)=pVertex[0]->dof[1];
-*V.nn(3)=pVertex[0]->dof[2];
-*V.nn(4)=pVertex[1]->dof[0];
-*V.nn(5)=pVertex[1]->dof[1];
-*V.nn(6)=pVertex[1]->dof[2];
-
-return(V);
+	Vec<int> V(2 * 6);
+	*V.nn(1) = pVertex[0]->dof[0];
+	*V.nn(2) = pVertex[0]->dof[1];
+	*V.nn(3) = pVertex[0]->dof[2];
+	*V.nn(4) = pVertex[0]->dof[3];
+	*V.nn(5) = pVertex[0]->dof[4];
+	*V.nn(6) = pVertex[0]->dof[5];
+	*V.nn(7) = pVertex[1]->dof[0];
+	*V.nn(8) = pVertex[1]->dof[1];
+	*V.nn(9) = pVertex[1]->dof[2];
+	*V.nn(10) = pVertex[1]->dof[3];
+	*V.nn(11) = pVertex[1]->dof[4];
+	*V.nn(12) = pVertex[1]->dof[5];
+	return(V);
 }
 
 Vec<int> E_Object2R::GetSteerVec1d()
@@ -18562,6 +18549,7 @@ void E_Object4::MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
 	*DNYSHG.mn(2, 4) = (-X34 * N7Y + X41 * N8Y) / 8;
 }
 
+//Think this is B matix for transverse shear
 Mat E_Object4::QPLT2_KS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX)
 {
 	Mat BS(2,12);
@@ -18614,6 +18602,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 	nip = 4;
 	Points = Sample(nip);
 	Mat coord = getCoords3d();
+	//bending
 	for (i = 1; i < nip + 1; i++)
 	{
 		det = 0;
@@ -18622,7 +18611,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 		jac = deriv * coord;
         jac = jac.InvertJac(det);
 		deriv2 = jac * deriv;
-		bee = BBMIN4(deriv2); //3*8 mine was 3*12??
+		bee = BBMIN4(deriv2); //B MAT for bending
 		bT = bee;
 		bT.Transpose();
 		db = SHELL_D * bee;
@@ -18644,6 +18633,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 	Mat DNXSHG(2,4);
 	Mat DNYSHG(2,4);
 	Points.clear();
+	//Transverse Shear
 	nip = 9;  //NINE INTEGRATION POINTS
 	Points = Sample(nip);
 	for (i = 1; i < nip + 1; i++)
@@ -18663,7 +18653,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 		DNYSHX.clear();
 		DNYSHX = jac * DNYSHG;
 		BS.clear();
-		BS=QPLT2_KS(fun, DPSHX, DNXSHX, DNYSHX);
+		BS=QPLT2_KS(fun, DPSHX, DNXSHX, DNYSHX);  //B MAT for Transverse SHEAR
 		bT = BS;
 		bT.Transpose();
 		db = SHELL_T * BS;
@@ -18671,7 +18661,6 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 		det *= *Points.mn(i, 3);  //DET * weight
 		bdb *= det;
 		KS += bdb;
-
 	}
 
 	//Add all diagonal terms from KS for rotational DOF's to get SHRSUM
@@ -18829,33 +18818,18 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &b
 	*SHELL_T_TRIA.mn(1, 1) *= dSHRatio * dthk;
 	*SHELL_T_TRIA.mn(2, 2) *= dSHRatio * dthk;
 	//For QUAD generate the membrane stiffness
-	Mat KE; //Membrane strain / disp matrix 3*24
+	Mat KE; 
 	KE = QMEM1_BM(3, AREA, XSD, YSD,SHELL_A); //OPT 3 = K mat
 	Mat KBS;
+	//bending and trnasverse shear
 	KBS = QPLT2_KE(3, AREA, XSD, YSD, SHELL_D_TRIA, SHELL_T_TRIA);
 	KE += KBS;
 	for (i = 6; i <= 24; i += 6)
 	{
 		*KE.mn(i, i) = 1.0;  //DRILLING STIFFNES
 	}
-	//KE.diag();
-	Mat TMAT(24, 24);
-
-	for (i = 1; i < 24; i += 3)
-	{
-		*TMAT.mn(i, i) = TE.m_00;
-		*TMAT.mn(i + 1, i) = TE.m_10;
-		*TMAT.mn(i + 2, i) = TE.m_20;
-
-		*TMAT.mn(i, i + 1) = TE.m_01;
-		*TMAT.mn(i + 1, i + 1) = TE.m_11;
-		*TMAT.mn(i + 2, i + 1) = TE.m_21;
-
-		*TMAT.mn(i, i + 2) = TE.m_02;
-		*TMAT.mn(i + 1, i + 2) = TE.m_12;
-		*TMAT.mn(i + 2, i + 2) = TE.m_22;
-	}
-	//TMAT.diag();
+	Mat TMAT;
+	TMAT = KEToKGTransform2(TE);  //20/02/2024 changed to this new function to get TMAT
 	Mat TMATT = TMAT;
 	TMATT.Transpose();
 	Mat T;
@@ -23591,6 +23565,13 @@ void ME_Object::ExportNASExec(FILE* pFile, SecTable* pS)
 		}
 		else if (pSOLS->pSols[iC]->iType == 2)
 		{
+			//SOL 101
+			fprintf(pFile, "%s\n", "SOL 101");
+			fprintf(pFile, "%s\n", "CEND");
+			ExportNASCase101(pFile, pS);
+		}
+		else if (pSOLS->pSols[iC]->iType == 3)
+		{
 			fprintf(pFile, "%s\n", "SOL 103");
 			fprintf(pFile, "%s\n", "CEND");
 			fprintf(pFile, "%s\n", "$ERROR CASE CONTROL NOT IMPLEMENTED YET");
@@ -24746,6 +24727,7 @@ else
   bacsub(KM,FVec);
   outtext1("FINISHED SOLUTION");
   Displacements(iLC,sSol,sStep,Steer,FVec);
+  ForcesRod(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
   ForcesBeam(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
   Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
   Stresses3d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
@@ -25066,7 +25048,8 @@ iStep=0;
     Displacements(iStep, sSol, sStep,Steer,xnew);
     TranslationalSpringForces(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
 	ForcesBUSH(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
-    ForcesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
+	ForcesRod(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
+	ForcesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
     Stresses2d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
     Stresses3d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
   }
@@ -29222,10 +29205,109 @@ void ME_Object::ForcesBUSH(int iLC, CString sSol, CString sStep, PropTable* Prop
 	}
 }
 
+void ME_Object::ForcesRod(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp)
+{
+	BOOL bOpt, bErr;
+	bOpt = FALSE;
+	bErr = FALSE;
+	int i, j, k, iNoNodes;
+	double dof1;
+	Mat disp;
+	Mat KM;
+	Mat Res;
+	C3dMatrix TMAT;
+	C3dVector TRA;
+	C3dVector RRA;
+	C3dVector TRB;
+	C3dVector RRB;
+	double dL = 0;
+
+	ResSet* ResS = new ResSet();
+	ResS->ACODE = 11;
+	ResS->TCODE = 4;
+	ResS->TYPE = 0;
+	ResS->LC = iLC;
+	ResS->sSubTitle = sStep;
+	ResS->sTitle = sSol;
+	ResS->WID = 2;
+	ResS->sName = "ROD FORCES";
+	ResS->iNoV = 2;
+	ResS->lab[0] = "AF (axial force)";
+	ResS->lab[1] = "TRQ (torque)";
+
+	for (i = 0; i < iElNo; i++)
+	{
+		iNoNodes = 0;
+		if (pElems[i]->iType == 11)
+		{
+			E_Object2R* pE = (E_Object2R*)pElems[i];
+			TMAT = pElems[i]->GetElSys();
+			iNoNodes = 2;
+			disp.Create(12, 1);
+			for (j = 0; j < iNoNodes; j++)
+			{
+				for (k = 0; k < 6; k++)
+				{
+					dof1 = 0;
+					Node* pN = (Node*)pElems[i]->GetNode(j);
+					if (pN->dof[k] > 0)
+					{
+						dof1 = GetDisp(pN->dof[k], Steer, Disp);
+					}
+					*disp.mn(6 * j + (k + 1), 1) = dof1;
+				}
+			}
+
+			KM = pElems[i]->GetStiffMat(PropsT, MatT, TRUE, bErr);
+			Res = KM * disp;
+
+			TRA.x = *Res.mn(1, 1);
+			TRA.y = *Res.mn(2, 1);
+			TRA.z = *Res.mn(3, 1);
+			RRA.x = *Res.mn(4, 1);
+			RRA.y = *Res.mn(5, 1);
+			RRA.z = *Res.mn(6, 1);
+
+			TRB.x = *Res.mn(7, 1);
+			TRB.y = *Res.mn(8, 1);
+			TRB.z = *Res.mn(9, 1);
+			RRB.x = *Res.mn(10, 1);
+			RRB.y = *Res.mn(11, 1);
+			RRB.z = *Res.mn(12, 1);
+			//Transform global forces to element local
+			TRA = TMAT * TRA;
+			RRA = TMAT * RRA;
+			TRB = TMAT * TRB;
+			RRB = TMAT * RRB;
+
+			KM.clear();
+			Res.clear();
+			disp.clear();
+			//****************************************
+			Res2* pRes = new Res2;
+			pRes->ID = pElems[i]->iLabel;
+			pRes->v[0] = (float)(TRB.x - pElems[i]->dTemp);		//Fx(axial force for BAR or ROD)
+			pRes->v[1] = (float)RRB.x;							//T(torque for BAR or ROD)
+			ResS->Add(pRes);
+		}
+	}
+	if (ResS->iCnt > 0)
+	{
+		ResultsSets[iNoRes] = ResS;
+		iNoRes++;
+	}
+	else
+	{
+		delete(ResS);
+	}
+}
+
 
 void ME_Object::ForcesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp)
 {
 BOOL bOpt, bErr;
+bOpt = FALSE;
+bErr = FALSE;
 C3dVector vOff1, vOff2;
 vOff1.Set(0, 0, 0);
 vOff2.Set(0, 0, 0);
@@ -29631,9 +29713,10 @@ for(i=0;i<iElNo;i++)
 			 *disp3dR.mn(k + 1, j + 1) = dofR; // Nodal Rotations
 		 }
 	 }
+	 //WILL NEED TO MODIFY DICPLACEMENT TO ACCOUNT FOR OFFSET
+	 // BE DONE
 	 C3dMatrix M = pElems[i]->GetElSys();
-
-	 //displacement in plain of element
+	 //TRANSFORM GLOBAL DISPS TO LOCAL ELEMENT
 	 for (j = 0; j < iNoNodes; j++)
 	 {
 		 //Translations
@@ -29665,12 +29748,14 @@ for(i=0;i<iElNo;i++)
 	 jac = deriv * coord;
 	 jac = jac.InvertJac(det);
 	 deriv2 = jac * deriv;
+
 	 //Bending Strain Components curvatures k11,k22,k12
 	 //1 pt at el centre
 	 C3dMatrix Bb;
 	 C3dVector d;
 	 C3dVector Curv;
 	 Curv.Set(0, 0, 0);
+	 //BENDING TERMS Bb is BENDING B MATRIX
 	 for (k = 1; k < iNoNodes+1; k++)
 	 {
 	   Bb.m_00 = 0;
@@ -29703,14 +29788,13 @@ for(i=0;i<iElNo;i++)
 	//RX = *db.mn(4, 1);
 	//RY = *db.mn(5, 1);
 	//RXY = *db.mn(6, 1);
-	SXY *= 0.5; //Not sure about
+	SXY *= 0.5; //Not sure about ENGINEERING SHEAR STRAIN!!
     Res10* pResStrn=new Res10;
 	pResStrn->ID = pElems[i]->iLabel;
 	pResStrn->v[0]=(float) SX;
 	pResStrn->v[1]=(float) SY;
 	pResStrn->v[2]=(float) SXY;
 	cS = (SX + SY)*0.5;
-	
 	Mag = pow((SX - cS)*(SX - cS) + (SXY*SXY), 0.5);
 	pResStrn->v[3] = (float)(cS + Mag);
 	pResStrn->v[4] = (float)(cS - Mag);
@@ -29725,9 +29809,7 @@ for(i=0;i<iElNo;i++)
 	pResStrn->v[8] = (float)(cS + Mag);
 	pResStrn->v[9] = (float)(cS - Mag);
 	//Principals 
-
 	ResStrn->Add(pResStrn);
-
     *db.mn(1,1)-=pElems[i]->dTemp;   //Subtract thermal strains 
     *db.mn(2,1)-=pElems[i]->dTemp;   //Subtract thermal strains
 	//Z1 bending Stress (Top surface Z2 is thick/2 z1 is -thick/2)
@@ -29735,11 +29817,11 @@ for(i=0;i<iElNo;i++)
 	*mStrn.mn(1, 1) += 0.5*Curv.x*dthk;   
 	*mStrn.mn(2, 1) += 0.5*Curv.y*dthk;
 	*mStrn.mn(3, 1) += 0.5*Curv.z*dthk;			//Engininerring Strain to Strain????
-    ResZ1=dee* mStrn;                        //Calculare Stresses
+    ResZ1=dee* mStrn;                        //Calculate Stresses
 	mStrn.clear();
 	//Z2 bending Stress (Bot surface Z1 is -thick/2 z1 is -thick/2)
 	mStrn = db;
-	*mStrn.mn(1, 1) -= 0.5*Curv.x*dthk;   //Subtract thermal strains 
+	*mStrn.mn(1, 1) -= 0.5*Curv.x*dthk;   
 	*mStrn.mn(2, 1) -= 0.5*Curv.y*dthk;
 	*mStrn.mn(3, 1) -= 0.5*Curv.z*dthk;
 	ResZ2 = dee * mStrn;                        //Calculare Stresses
