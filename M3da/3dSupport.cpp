@@ -2081,7 +2081,7 @@ for (i=0;i<m;i++)
 {
   for (j=0;j<n;j++)
   {
-  fprintf(pFile,"%f,",*mn(i+1,j+1));
+  fprintf(pFile,"%g,",*mn(i+1,j+1));
   }
 fprintf(pFile,"\n");
 }

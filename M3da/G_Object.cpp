@@ -2239,8 +2239,6 @@ void BackGround::OglDrawW(int iDspFlgs, double dS1, double dS2) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glEnable(GL_TEXTURE_2D);
 		glEnable(GL_NORMALIZE);
-		double dDec1;
-		double dRA1;
 		C3dVector n0;
 		C3dVector n1;
 		C3dVector n2;
@@ -2419,8 +2417,6 @@ void Node::ExportNAS(FILE* pFile, CoordSys* pD)
    //New to handle the DEF system eventually
 	//ME_Object* ME = (ME_Object*) pParent;
 	C3dVector pt(Pt_Point->x, Pt_Point->y, Pt_Point->z);
-	int i;
-	int iDefCYS[10];
 	int iN = 0;
 	int iRID;
 	iRID = this->DefSys;
@@ -10643,6 +10639,7 @@ BOOL E_Object::GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff)
 }
 
 
+
 //Offsets to global KE SYS for 1 grid with offset vOff
 //off matrix must be 6x6
 void E_Object::OffsetsTransform(Mat& off, C3dVector vOff)
@@ -10809,6 +10806,10 @@ double E_Object::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   return(0);
 }
 
+double E_Object::GetPHI_SQ()
+{
+	return(1.0);
+}
 
 C3dMatrix E_Object::GetElSys()
 {
@@ -10998,7 +10999,6 @@ return (bC);
 
 void E_Object::Info()
 {
-  char S1[80];
   //sprintf_s(S1,"%s%i%s%i%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour," PID; ",PID," ELTYPE; ",iType);
   //outtext1(S1); 
   G_Object::Info();
@@ -11784,6 +11784,25 @@ Mat E_Object::DeeSH(double E, double v, int iD)
 	*ESH.mn(2, 2) = G;
 	return (ESH);
 }
+
+Mat E_Object::BEE_BM_Recovery()
+{
+	Mat dum;
+	return (dum);
+}
+
+Mat E_Object::BEE_BB_Recovery()
+{
+	Mat dum;
+	return (dum);
+}
+
+Mat E_Object::BEE_TS_Recovery()
+{
+	Mat dum;
+	return (dum);
+}
+
 //********************************************************************************
 // THERMAL CONDUCTIVITY MATRIX K
 //********************************************************************************
@@ -14390,7 +14409,6 @@ void E_Object2B::PinFlgsToKE(Mat& KEL) //Pin Flags Element SYS
 
 Mat E_Object2B::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
-int i, j;
 BOOL AX = FALSE;
 BOOL BX = FALSE;
 Mat KM(12,12);
@@ -15870,15 +15888,24 @@ return(6);
 }
 
 //07/01/2024 MIN3 IMPLEMENTATION
-Mat E_Object3::TMEM1_BM(int OPT, double AREA, double X2E, double X3E, double Y3E)
+Mat E_Object3::TMEM1_BEE(int OPT)
 {
 	//Membrane strain / displacement for 1 point CTRIA element
+	Mat BM(3, 18);
+	BM.MakeZero();
 	double C01 = 0;
 	double C02 = 0;
 	double C03 = 0;
 	double C04 = 0;
-	
-	Mat BM(3,18);
+	Mat XEL = getCoords_XEL();       //Local element coordinates
+//Calculate element geometry parameters from data block XEL
+//XEL is local element coods
+	double X2E = *XEL.mn(2, 1);
+	double X3E = *XEL.mn(3, 1);
+	double Y3E = *XEL.mn(3, 2);
+	double AREA = X2E * Y3E / 2.0;
+
+
 	C01 = 1 / X2E;
 	C02 = 1 / Y3E;
 	C03 = (X3E - X2E) * C01 * C02;
@@ -15894,9 +15921,201 @@ Mat E_Object3::TMEM1_BM(int OPT, double AREA, double X2E, double X3E, double Y3E
 	*BM.mn(3, 7) = -C04;
 	*BM.mn(3, 8) = C01;
 	*BM.mn(3, 13) = C02;
-
+	XEL.clear();
 	return (BM);
 }
+
+//BEE Matrix for transverse shear (strain / displacement matrix)
+//one integration point befined by XI;
+Mat E_Object3::TPLT2_BEE_TS(int OPT, Vec<double>& XI)
+{
+	int j;
+	Mat BS(2,9);
+
+	BS.MakeZero();
+	Vec<double> A(3);
+	Vec<double> B(3);
+	Mat XEL = getCoords_XEL();       //Local element coordinates
+	//Calculate element geometry parameters from data block XEL
+	//XEL is local element coods
+
+	double X2E = *XEL.mn(2, 1);
+	double X3E = *XEL.mn(3, 1);
+	double Y3E = *XEL.mn(3, 2);
+	double AREA = X2E * Y3E / 2.0;
+	*A.nn(1) = X3E - X2E;
+	*A.nn(2) = -X3E;
+	*A.nn(3) = X2E;
+	*B.nn(1) = -Y3E;
+	*B.nn(2) = Y3E;
+	*B.nn(3) = 0;
+	double A4 = 4 * AREA;
+	for (j = 1; j <= 3; j++)
+	{
+		*BS.mn(1, j) = *B.nn(j) / (2 * AREA);
+		*BS.mn(2, j) = *A.nn(j) / (2 * AREA);
+	}
+
+	*BS.mn(1, 4) = -(*B.nn(1) * (*XI.nn(2) * *B.nn(3) - *XI.nn(3) * *B.nn(2)) / A4);
+	*BS.mn(1, 5) = -(*B.nn(2) * (-*XI.nn(1) * *B.nn(3) + *XI.nn(3) * *B.nn(1)) / A4);
+	*BS.mn(1, 6) = -(*B.nn(3) * (*XI.nn(1) * *B.nn(2) - *XI.nn(2) * *B.nn(1)) / A4);
+
+	*BS.mn(1, 7) = (*XI.nn(1) * (A4 - *B.nn(2) * *A.nn(3) + *B.nn(3) * *A.nn(2)) + *B.nn(1) * (-*XI.nn(2) * *A.nn(3) + *XI.nn(3) * *A.nn(2))) / A4;
+	*BS.mn(1, 8) = (*XI.nn(2) * (A4 + *B.nn(1) * *A.nn(3) - *B.nn(3) * *A.nn(1)) + *B.nn(2) * (*XI.nn(1) * *A.nn(3) - *XI.nn(3) * *A.nn(1))) / A4;
+	*BS.mn(1, 9) = (*XI.nn(3) * (A4 + *B.nn(2) * *A.nn(1) - *B.nn(1) * *A.nn(2)) + *B.nn(3) * (-*XI.nn(1) * *A.nn(2) + *XI.nn(2) * *A.nn(1))) / A4;
+
+	*BS.mn(2, 4) = -(*XI.nn(1) * (A4 + *A.nn(2) * *B.nn(3) - *A.nn(3) * *B.nn(2)) + *A.nn(1) * (*XI.nn(2) * *B.nn(3) - *XI.nn(3) * *B.nn(2))) / A4;
+	*BS.mn(2, 5) = -(*XI.nn(2) * (A4 - *A.nn(1) * *B.nn(3) + *A.nn(3) * *B.nn(1)) + *A.nn(2) * (-*XI.nn(1) * *B.nn(3) + *XI.nn(3) * *B.nn(1))) / A4;
+	*BS.mn(2, 6) = -(*XI.nn(3) * (A4 - *A.nn(2) * *B.nn(1) + *A.nn(1) * *B.nn(2)) + *A.nn(3) * (*XI.nn(1) * *B.nn(2) - *XI.nn(2) * *B.nn(1))) / A4;
+
+	*BS.mn(2, 7) = *A.nn(1) * (-*XI.nn(2) * *A.nn(3) + *XI.nn(3) * *A.nn(2)) / A4;
+	*BS.mn(2, 8) = *A.nn(2) * (*XI.nn(1) * *A.nn(3) - *XI.nn(3) * *A.nn(1)) / A4;
+	*BS.mn(2, 9) = *A.nn(3) * (-*XI.nn(1) * *A.nn(2) + *XI.nn(2) * *A.nn(1)) / A4;
+	A.clear();
+	B.clear();
+	XEL.clear();
+	//reorder
+
+	return (BS);
+}
+
+Mat E_Object3::BEE_BM_Recovery()
+{
+	Mat BEE;
+	BEE = TMEM1_BEE(3);
+	return (BEE);
+}
+
+Mat E_Object3::BEE_BB_Recovery()
+{
+	int i, J, JJ;
+	int iDof;
+
+	Mat BB(3, 3 * iNoNodes);
+	Mat BB2(3, 6 * iNoNodes);
+	Vec <int> IDS(18);
+	BB.MakeZero();
+	BB2.MakeZero();
+
+	//****************************************************************************
+	//                            M Y   C A L C U L A T I O N
+	//****************************************************************************
+
+	Mat coord;    //Nodal Coordinates
+	Mat deriv;    //shape function derivatives
+	Mat Points;   //sample points
+	Mat deriv2;   //derivative of shape functions
+	Mat jac;
+	double det = 0;
+	coord = getCoords3d();       //Coords in element CSYS this case actually 2d
+	Points = Sample(1);
+	deriv = ShapeDer(Points, 1);  //2x4 shape fuction derivatives
+	jac = deriv * coord;
+	jac = jac.InvertJac(det);
+	deriv2 = jac * deriv;
+
+	//Bending Strain Components curvatures k11,k22,k12
+	//1 pt at el centre
+
+	BB.MakeZero();
+	C3dMatrix Bb;
+	int k;
+	//BENDING TERMS Bb is BENDING B MATRIX
+	int inc = 0;
+	double tmp;
+	for (k = 1; k < iNoNodes + 1; k++)
+	{
+		Bb.m_00 = 0;
+		Bb.m_01 = 0;
+		Bb.m_02 = -*deriv2.mn(1, k);
+		Bb.m_10 = 0;
+		Bb.m_11 = *deriv2.mn(2, k);
+		Bb.m_12 = 0;
+		Bb.m_20 = 0;
+		Bb.m_21 = *deriv2.mn(1, k);
+		Bb.m_22 = -*deriv2.mn(2, k);
+
+		*BB.mn(1, inc + 1) = 0;
+		*BB.mn(1, inc + 2) = 0;
+		*BB.mn(1, inc + 3) = -*deriv2.mn(1, k);		tmp = -*deriv2.mn(1, k);
+		*BB.mn(2, inc + 1) = 0;
+		*BB.mn(2, inc + 2) = *deriv2.mn(2, k);		tmp = *deriv2.mn(2, k);
+		*BB.mn(2, inc + 3) = 0;
+		*BB.mn(3, inc + 1) = 0;
+		*BB.mn(3, inc + 2) = *deriv2.mn(1, k);		tmp = *deriv2.mn(1, k);
+		*BB.mn(3, inc + 3) = -*deriv2.mn(2, k);		tmp = -*deriv2.mn(2, k);
+		inc += 3;
+	}
+
+	*IDS.nn(1) = 3;
+	*IDS.nn(2) = 4;
+	*IDS.nn(3) = 5;
+	*IDS.nn(4) = 9;
+	*IDS.nn(5) = 10;
+	*IDS.nn(6) = 11;
+	*IDS.nn(7) = 15;
+	*IDS.nn(8) = 16;
+	*IDS.nn(9) = 17;
+	for (i = 1; i <= 9; i++)
+	{
+		*BB2.mn(1, *IDS.nn(i)) = *BB.mn(1, i);
+		*BB2.mn(2, *IDS.nn(i)) = *BB.mn(2, i);
+		*BB2.mn(3, *IDS.nn(i)) = *BB.mn(3, i);
+	}
+
+	BB.clear();
+	coord.clear();;
+	deriv.clear();;
+	Points.clear();;
+	deriv2.clear();;
+	jac.clear();;
+	//**********************************************************
+
+
+	BB.clear();
+	IDS.clear();
+	return (BB2);
+}
+
+Mat E_Object3::BEE_TS_Recovery()
+{
+	int i;
+	Mat BS; 
+	Mat BS2(2,18);
+	Vec <int> IDS(18);
+	Vec <double> XI(3);
+	*XI.nn(1) = 0.3333333;
+	*XI.nn(2) = 0.3333333;
+	*XI.nn(3) = 0.3333333;
+	BS = TPLT2_BEE_TS(3, XI);
+	//INTEGER(LONG), PARAMETER::ID(9) = (/ 3, &!ID(1) = 3 means virgin 9x9 elem DOF 1 is MYSTRAN 18x18 elem DOF  3
+	//	9, &!ID(2) = 9 means virgin 9x9 elem DOF 2 is MYSTRAN 18x18 elem DOF  9
+	//	15, &!ID(3) = 15 means virgin 9x9 elem DOF 3 is MYSTRAN 18x18 elem DOF 15
+	//	4, &!ID(4) = 4 means virgin 9x9 elem DOF 4 is MYSTRAN 18x18 elem DOF  4
+	//	10, &!ID(5) = 10 means virgin 9x9 elem DOF 5 is MYSTRAN 18x18 elem DOF 10
+	//	16, &!ID(6) = 16 means virgin 9x9 elem DOF 6 is MYSTRAN 18x18 elem DOF 16
+	//	5, &!ID(7) = 5 means virgin 9x9 elem DOF 7 is MYSTRAN 18x18 elem DOF  5
+	//	11, &!ID(8) = 11 means virgin 9x9 elem DOF 8 is MYSTRAN 18x18 elem DOF 11
+	//	17 / ) !ID(9) = 17 mea
+	*IDS.nn(1) = 3;
+	*IDS.nn(2) = 9;
+	*IDS.nn(3) = 15;
+	*IDS.nn(4) = 4;
+	*IDS.nn(5) = 10;
+	*IDS.nn(6) = 16;
+	*IDS.nn(7) = 5;
+	*IDS.nn(8) = 11;
+	*IDS.nn(9) = 17;
+	for (i = 1; i <= 9; i++)
+	{
+		*BS2.mn(1, *IDS.nn(i)) = *BS.mn(1, i);
+		*BS2.mn(2, *IDS.nn(i)) = *BS.mn(2, i);
+	}
+	BS.clear();
+	return(BS2);
+}
+
+
 
 Mat E_Object3::TMEM1_KE(int OPT, double AREA, double X2E, double X3E, double Y3E,Mat SHELL_A)
 {
@@ -15905,7 +16124,7 @@ Mat E_Object3::TMEM1_KE(int OPT, double AREA, double X2E, double X3E, double Y3E
 	Mat KE;
 	Mat BMT;
 	Mat db;
-	Mat BM = TMEM1_BM(3, AREA, X2E, X3E, Y3E);
+	Mat BM = TMEM1_BEE(3);
 	BMT = BM;
 	BMT.Transpose();
 	db = SHELL_A * BM;
@@ -16217,7 +16436,7 @@ Mat E_Object3::TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E
 	double CBMIN = 2.0; //for tri element - emprirical value??
 	double PSI_HAT = BENSUM / SHRSUM;
 	double DEN = 1 + CBMIN * PSI_HAT;
-	double PHI_SQ = CBMIN * PSI_HAT / DEN;
+	PHI_SQ = CBMIN * PSI_HAT / DEN;
 	//********************************************
 	for (I = 1; I < 9 + 1; I++)
 	{
@@ -16343,10 +16562,8 @@ Y3E = *XEL.mn(3, 2);
 AREA = X2E * Y3E / 2.0;
 //**********************************************************************************************************************************
 //For TRIA3 generate the membrane stiffness
-Mat BM; //Membrane strain / disp matrix 3*24
-//TMEM1 actuall calcate alot more like Mass Matrix and KE
-//just not sure hpw to organise at the moment
-BM = TMEM1_BM(3, AREA, X2E, X3E, Y3E); //OPT 3 = K mat
+//Mat BM; //Membrane strain / disp matrix 3*24
+//BM = TMEM1_BEE(3, AREA, X2E, X3E, Y3E); //OPT 3 = K mat
 //******************************************************
 //NOTE BOTH SHELL_A & SHELL_D need transforming to material direction
 Mat SHELL_D_TRIA = SHELL_D;
@@ -16963,6 +17180,12 @@ Mat E_Object3::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 	AA.clear();
 	NS.clear();
 	return (NM);
+}
+
+
+double E_Object3::GetPHI_SQ()
+{
+	return(PHI_SQ);
 }
 
 //*********************************
@@ -18163,7 +18386,7 @@ Mat E_Object4::getCoords_XEL()
 
 const double MXWARP = 0.0000001;
 //Calculate KE for bembrane 
-Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E, Mat SHELL_A)
+Mat E_Object4::QMEM1_KE(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E, Mat SHELL_A)
 {
 	//NOTE THIS IS NOT USING REDUCED INTEGRATION AS IN MYSTRAN
 	int i,j,k;
@@ -18209,8 +18432,6 @@ Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E
 	C3dMatrix M3 = this->GetElSys();    //Element Coordinate system
 	Points = Sample(nip);               //sample points for integration
     //Membraine stiffness calculation
-	//with reduced integration for shear terms
-	//NOTE GAUSS PT COULD BE IN WRONG ORDER??
 	Vec<double> DetJ(4);
 	Mat BEE[4];
 	int GAUSS_PT = 0;
@@ -18250,15 +18471,6 @@ Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E
 
 	for (i = 1; i < nip + 1; i++)            // for all integration points
 	{
-		//below commented out if for full inegration
-		//det = 0;
-		//fun = ShapeFun(Points, i);
-		//deriv = ShapeDer(Points, i);
-		//jac = deriv * coord;
-		//jac = jac.InvertJac(det);
-		//deriv2 = jac * deriv;
-		//bee = bmat(coord, deriv2, iS, iDof);
-
 		bee=BEE[i - 1];
 		bT = bee;
 		bT.Transpose();
@@ -18270,8 +18482,6 @@ Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E
 		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
 		bT.clear(); db.clear(); bdb.clear(); bee.clear(); jac.clear();
 	}
-
-
 	double dWarp;
 	Mat BMEAN = WARP_BMEAN(dWarp);
 	Mat BMEANT;
@@ -18314,7 +18524,7 @@ Mat E_Object4::QMEM1_BM(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E
 	return (KMf);
 }
 
-Mat E_Object4::BBMIN4(Mat deriv)
+Mat E_Object4::QPLT2_BEE_DD(Mat deriv)
 {
 	Mat BB(3 , 8);
 	int JJ = 0;
@@ -18342,7 +18552,6 @@ Mat E_Object4::BBMIN4(Mat deriv)
 //!splits the angle between the diagonals.
 Mat E_Object4::WARP_BMEAN(double& dWarped)
 {
-	int i, j;
 	Mat BMEAN(12,8);
 	C3dVector V13B;
 	C3dVector V24B;
@@ -18467,8 +18676,8 @@ Mat E_Object4::WARP_BMEAN(double& dWarped)
 }
 
 
-void E_Object4::MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
-	                   Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG)
+void E_Object4::MIN4_SHPF(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
+	                     Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG)
 {
 	//XSD(4)            !1 - D arrays of differences in x side dimensions(local)
 	//YSD(4)            !1 - D arrays of differences in y side dimensions(local)
@@ -18550,7 +18759,7 @@ void E_Object4::MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
 }
 
 //Think this is B matix for transverse shear
-Mat E_Object4::QPLT2_KS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX)
+Mat E_Object4::QPLT2_BEE_TS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX)
 {
 	Mat BS(2,12);
 	int J, JJ;
@@ -18572,6 +18781,244 @@ Mat E_Object4::QPLT2_KS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX)
 	}
 	return (BS);
 }
+
+Mat E_Object4::BEE_BM_Recovery()
+{
+	int i;
+	Vec <int> IDS(18);
+	Mat BM;
+	Mat BM2(3, 6 * iNoNodes);
+	Mat coord;    //Nodal Coordinates
+	Mat deriv;    //shape function derivatives
+	Mat Points;   //sample points
+	Mat deriv2;   //derivative of shape functions
+	Mat jac;
+	double det = 0;
+	coord =getCoords3d();       //Coords in element CSYS this case actually 2d
+	Points = Sample(1);         //Only 1 integration point at centre of element
+	det = 0;
+	deriv = ShapeDer(Points, 1);  //2x4 shape fuction derivatives
+	jac = deriv * coord;
+	jac = jac.InvertJac(det);
+	deriv2 = jac * deriv;
+	BM = bmat(coord, deriv2, 3, 2);
+	*IDS.nn(1) = 1;
+	*IDS.nn(2) = 2;
+	*IDS.nn(3) = 7;
+	*IDS.nn(4) = 8;
+	*IDS.nn(5) = 13;
+	*IDS.nn(6) = 14;
+	*IDS.nn(7) = 19;
+	*IDS.nn(8) = 20;
+	for (i = 1; i <= 8; i++)
+	{
+		*BM2.mn(1, *IDS.nn(i)) = *BM.mn(1, i);
+		*BM2.mn(2, *IDS.nn(i)) = *BM.mn(2, i);
+		*BM2.mn(3, *IDS.nn(i)) = *BM.mn(3, i);
+	}
+
+
+	return (BM2);
+}
+
+Mat E_Object4::BEE_BB_Recovery()
+{
+	int i, J, JJ;
+	int iDof;
+
+	Mat BB(3, 3 * iNoNodes);
+	Mat BB2(3, 6 * iNoNodes);
+	Vec <int> IDS(12);
+	BB.MakeZero();
+	BB2.MakeZero();
+
+	//****************************************************************************
+	//                            M Y   C A L C U L A T I O N
+	//****************************************************************************
+
+	Mat coord;    //Nodal Coordinates
+	Mat deriv;    //shape function derivatives
+	Mat Points;   //sample points
+	Mat deriv2;   //derivative of shape functions
+	Mat jac;
+	double det = 0;
+	coord = getCoords3d();       //Coords in element CSYS this case actually 2d
+	Points = Sample(1);
+	deriv = ShapeDer(Points, 1);  //2x4 shape fuction derivatives
+	jac = deriv * coord;
+	jac = jac.InvertJac(det);
+	deriv2 = jac * deriv;
+
+	//Bending Strain Components curvatures k11,k22,k12
+	//1 pt at el centre
+
+	BB.MakeZero();
+	C3dMatrix Bb;
+	int k;
+	//BENDING TERMS Bb is BENDING B MATRIX
+	int inc = 0;
+	double tmp;
+	for (k = 1; k < iNoNodes + 1; k++)
+	{
+		Bb.m_00 = 0;
+		Bb.m_01 = 0;
+		Bb.m_02 = -*deriv2.mn(1, k);
+		Bb.m_10 = 0;
+		Bb.m_11 = *deriv2.mn(2, k);
+		Bb.m_12 = 0;
+		Bb.m_20 = 0;
+		Bb.m_21 = *deriv2.mn(1, k);
+		Bb.m_22 = -*deriv2.mn(2, k);
+
+		*BB.mn(1, inc + 1) = 0;
+		*BB.mn(1, inc + 2) = 0;
+		*BB.mn(1, inc + 3) = -*deriv2.mn(1, k);		tmp = -*deriv2.mn(1, k);
+		*BB.mn(2, inc + 1) = 0;
+		*BB.mn(2, inc + 2) = *deriv2.mn(2, k);		tmp = *deriv2.mn(2, k);
+		*BB.mn(2, inc + 3) = 0;
+		*BB.mn(3, inc + 1) = 0;
+		*BB.mn(3, inc + 2) = *deriv2.mn(1, k);		tmp = *deriv2.mn(1, k);
+		*BB.mn(3, inc + 3) = -*deriv2.mn(2, k);		tmp = -*deriv2.mn(2, k);
+		inc += 3;
+	}
+
+	*IDS.nn(1) = 3;
+	*IDS.nn(2) = 4;
+	*IDS.nn(3) = 5;
+	*IDS.nn(4) = 9;
+	*IDS.nn(5) = 10;
+	*IDS.nn(6) = 11;
+	*IDS.nn(7) = 15;
+	*IDS.nn(8) = 16;
+	*IDS.nn(9) = 17;
+	*IDS.nn(10) = 21;
+	*IDS.nn(11) = 22;
+	*IDS.nn(12) = 23;
+	for (i = 1; i <= 12; i++)
+	{
+		*BB2.mn(1, *IDS.nn(i)) = *BB.mn(1, i);
+		*BB2.mn(2, *IDS.nn(i)) = *BB.mn(2, i);
+		*BB2.mn(3, *IDS.nn(i)) = *BB.mn(3, i);
+	}
+
+	BB.clear();
+	coord.clear();;
+	deriv.clear();;
+	Points.clear();;
+	deriv2.clear();;
+	jac.clear();;
+	//**********************************************************
+
+
+	BB.clear();
+	IDS.clear();
+	return (BB2);
+}
+
+//Bee matrix for recovering transverse shear results
+//average of 4 guass points 
+//will also need PGI_SQ to calc results so will need
+//to save id on call to GetStiffMat
+Mat E_Object4::BEE_TS_Recovery()
+{
+	Vec<int> IDS(12);
+	int i;
+	double det;
+	Mat BS;
+	Mat BS2(2, 12);
+	Mat BST(2,24);
+	Mat Points;
+	Mat fun;
+	Mat jac;
+	Mat deriv;
+	double SSI, SSJ;
+	Vec<double> NXSH(4);
+	Vec<double> NYSH(4);
+	Mat DPSHX;
+	Mat DNXSHX;
+	Mat DNYSHX;
+	Mat DNXSHG(2, 4);
+	Mat DNYSHG(2, 4);
+	Points.clear();
+	Vec <double> XSD(4);
+	Vec <double> YSD(4);
+	Mat XEL = getCoords_XEL();						//Local element coordinates
+	//WARNING TE is not nastran diagonal bisector trying as I have it
+	C3dMatrix TE = this->GetElSys();	//TE Element coord system
+	*XSD.nn(1) = *XEL.mn(1, 1) - *XEL.mn(2, 1);		//x coord diffs(in local elem coords)
+	*XSD.nn(2) = *XEL.mn(2, 1) - *XEL.mn(3, 1);
+	*XSD.nn(3) = *XEL.mn(3, 1) - *XEL.mn(4, 1);
+	*XSD.nn(4) = *XEL.mn(4, 1) - *XEL.mn(1, 1);
+	*YSD.nn(1) = *XEL.mn(1, 2) - *XEL.mn(2, 2);		//y coord diffs(in local elem coords)
+	*YSD.nn(2) = *XEL.mn(2, 2) - *XEL.mn(3, 2);
+	*YSD.nn(3) = *XEL.mn(3, 2) - *XEL.mn(4, 2);
+	*YSD.nn(4) = *XEL.mn(4, 2) - *XEL.mn(1, 2);
+	//Note my area is not calculated by numerial integration
+
+
+	//Transverse Shear average of 4 points
+	int nip = 4;  //4 INTEGRATION POINTS
+	Points = Sample(nip);
+	Mat coord = getCoords3d();
+	BS2.MakeZero();
+	for (i = 1; i < nip + 1; i++)
+	{
+		SSI = *Points.mn(i, 1);
+		SSJ = *Points.mn(i, 2);
+		det = 0;
+		fun.clear();
+		fun = ShapeFun(Points, i);
+		deriv.clear();
+		deriv = ShapeDer(Points, i);
+		MIN4_SHPF(SSI, SSJ, XSD, YSD, NXSH, NYSH, DNXSHG, DNYSHG);
+		jac = deriv * coord;
+		jac = jac.InvertJac(det);
+		DPSHX.clear();
+		DPSHX = jac * deriv;
+		DNXSHX.clear();
+		DNXSHX = jac * DNXSHG;
+		DNYSHX.clear();
+		DNYSHX = jac * DNYSHG;
+		BS.clear();
+		BS = QPLT2_BEE_TS(fun, DPSHX, DNXSHX, DNYSHX);  //B MAT for Transverse SHEAR
+		BS *= 0.25;
+		BS2 += BS;
+	}
+	BS.clear();
+	Points.clear();
+	coord.clear();
+	fun.clear();
+	deriv.clear();
+	XEL.clear();
+    XSD.clear();
+    YSD.clear();
+	DPSHX.clear();
+	DNXSHX.clear();
+	DNYSHX.clear();
+	//THESE MAY BE WRONG ORDER???
+	*IDS.nn(1) = 3;
+	*IDS.nn(2) = 4;
+	*IDS.nn(3) = 5;
+	*IDS.nn(4) = 9;
+    *IDS.nn(5) = 10;
+	*IDS.nn(6) = 11;
+	*IDS.nn(7) = 15;
+	*IDS.nn(8) = 16;
+    *IDS.nn(9) = 17;
+	*IDS.nn(10) = 21;
+	*IDS.nn(11) = 22;
+	*IDS.nn(12) = 23;
+	for (i = 1; i <= 12; i++)
+	{
+		*BST.mn(1, *IDS.nn(i)) = *BS2.mn(1, i);
+		*BST.mn(2, *IDS.nn(i)) = *BS2.mn(2, i);
+	}
+	IDS.clear();
+	BS.clear();
+	BS2.clear();
+	return (BST);
+}
+
 
 Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD, Mat SHELL_D, Mat SHELL_T)
 {
@@ -18611,7 +19058,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 		jac = deriv * coord;
         jac = jac.InvertJac(det);
 		deriv2 = jac * deriv;
-		bee = BBMIN4(deriv2); //B MAT for bending
+		bee = QPLT2_BEE_DD(deriv2); //B MAT for bending
 		bT = bee;
 		bT.Transpose();
 		db = SHELL_D * bee;
@@ -18643,7 +19090,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 		det = 0;
 		fun = ShapeFun(Points, i);
 		deriv = ShapeDer(Points, i);
-		MIN4SH(SSI, SSJ, XSD, YSD, NXSH, NYSH, DNXSHG, DNYSHG);
+		MIN4_SHPF(SSI, SSJ, XSD, YSD, NXSH, NYSH, DNXSHG, DNYSHG);
 		jac = deriv * coord;
 		jac = jac.InvertJac(det);
 		DPSHX.clear();
@@ -18653,7 +19100,7 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 		DNYSHX.clear();
 		DNYSHX = jac * DNYSHG;
 		BS.clear();
-		BS=QPLT2_KS(fun, DPSHX, DNXSHX, DNYSHX);  //B MAT for Transverse SHEAR
+		BS= QPLT2_BEE_TS(fun, DPSHX, DNXSHX, DNYSHX);  //B MAT for Transverse SHEAR
 		bT = BS;
 		bT.Transpose();
 		db = SHELL_T * BS;
@@ -18675,7 +19122,8 @@ Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD,
 	double CBMIN = 3.6; //for quad element - emprirical value??
 	double PSI_HAT = BENSUM / SHRSUM;
 	double DEN = 1 + CBMIN * PSI_HAT;
-	double PHI_SQ = CBMIN * PSI_HAT / DEN;
+	PHI_SQ = CBMIN * PSI_HAT / DEN;
+
 
 //******** End Shear Correction factor  **********
 //populate the stiffness matrix
@@ -18819,15 +19267,13 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &b
 	*SHELL_T_TRIA.mn(2, 2) *= dSHRatio * dthk;
 	//For QUAD generate the membrane stiffness
 	Mat KE; 
-	KE = QMEM1_BM(3, AREA, XSD, YSD,SHELL_A); //OPT 3 = K mat
+	KE = QMEM1_KE(3, AREA, XSD, YSD,SHELL_A); //OPT 3 = K mat
 	Mat KBS;
 	//bending and trnasverse shear
 	KBS = QPLT2_KE(3, AREA, XSD, YSD, SHELL_D_TRIA, SHELL_T_TRIA);
 	KE += KBS;
 	for (i = 6; i <= 24; i += 6)
-	{
 		*KE.mn(i, i) = 1.0;  //DRILLING STIFFNES
-	}
 	Mat TMAT;
 	TMAT = KEToKGTransform2(TE);  //20/02/2024 changed to this new function to get TMAT
 	Mat TMATT = TMAT;
@@ -18836,7 +19282,19 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &b
 	Mat TT;
 	T = KE * TMAT;
 	TT = TMATT * T;
-	//TT.diag();
+	//Need to clean up
+	SHELL_A.clear();
+	SHELL_D.clear();
+	SHELL_T.clear();
+	SHELL_D_TRIA.clear();
+	SHELL_T_TRIA.clear();
+	XEL.clear();
+	KE.clear();
+	KBS.clear();
+	T.clear();
+	TMAT.clear();
+	TMATT.clear();
+
 	return (TT);
 }
 
@@ -20383,6 +20841,12 @@ Mat E_Object4::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 	NS.clear();
 	return (NM);
 }
+
+double E_Object4::GetPHI_SQ()
+{
+	return(PHI_SQ);
+}
+
 //----------------------------------------------------------------------------
 //    E L E M E N T   O B J E C T
 //----------------------------------------------------------------------------
@@ -21613,7 +22077,6 @@ double MinDist = 1e36;
 double dDist;
 int i;
 G_ObjectD Ret;
-G_Object* pO;
 Ret.Dist = MinDist;
 Ret.pObj = this;
 Ret.Z = 0;
@@ -23884,12 +24347,11 @@ void ME_Object::ResSetScale(CString sSeq, double dS)
 	
 
 	int i;
-	int j;
 	iRS = atoi(ExtractSubString2(1, sSeq));
 	iVAR = atoi(ExtractSubString2(2, sSeq));
 	iOPT = atoi(ExtractSubString2(3, sSeq));
 
-	double dVal;
+
 	ResSet* pC = NULL;
 	pC = ResultsSets[iRS];
 	if (pC != NULL)
@@ -24728,9 +25190,13 @@ else
   outtext1("FINISHED SOLUTION");
   Displacements(iLC,sSol,sStep,Steer,FVec);
   ForcesRod(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
+  ForcesBUSH(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
   ForcesBeam(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
-  Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
+  //Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
+  RecoverShell(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
   Stresses3d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
+  outtext1("FINISHED SOLUTION");
+
   KM.DeleteAll();
   Steer.DeleteAll();
 }
@@ -25050,7 +25516,8 @@ iStep=0;
 	ForcesBUSH(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
 	ForcesRod(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
 	ForcesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
-    Stresses2d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
+	//Stresses2d(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
+    RecoverShell(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
     Stresses3d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
   }
   PrintTime("END TIME: ");
@@ -28803,6 +29270,29 @@ dret=*Disp.nn(iDof);
 return(dret);
 }
 
+Mat ME_Object::GetNodalDispVec(E_Object* pE, Vec<int>& Steer, Vec<double>& Disp)
+{
+	int i, j;
+	int iDof, iNoNds, iPos;
+	iDof = pE->noDof();
+	iNoNds = pE->iNoNodes;
+	Mat DispG(iDof* iNoNds,1);
+	DispG.MakeZero();
+	iPos = 1;
+	for (i = 0; i < iNoNds; i++)
+	{
+	   for (j = 0; j < iDof; j++)
+	   {
+         Node* pN = (Node*) pE->GetNode(i);
+		 if (pN->dof[j] > 0)
+		 {
+		   *DispG.mn(iPos,1) = GetDisp(pN->dof[j], Steer, Disp);
+		 }
+		 iPos++;
+	  }
+    }
+	return(DispG);
+}
 
 void ME_Object::Displacements(int iLC, CString sSol, CString sStep, Vec<int> &Steer,Vec<double> &Disp)
 {
@@ -29481,6 +29971,45 @@ ResSet* ME_Object::Create2dStrainResSet(CString sTitle, int iLC, CString sStep, 
 	return (ResStrn);
 }
 
+ResSet* ME_Object::Create2dForceResSet(CString sTitle, int iLC, CString sStep, CString sSol)
+{
+	ResSet* ResS = new ResSet();
+	ResS->ACODE = 11;
+	ResS->TCODE = 4;
+	ResS->TYPE = 0;
+	ResS->LC = iLC;
+	ResS->sSubTitle = sStep;
+	ResS->sTitle = sSol;
+	ResS->WID = 8;
+
+	ResS->sName = sTitle;
+	ResS->iNoV = 8;
+	ResS->lab[0] = "Nxx: Normal x Force";
+	ResS->lab[1] = "Nyy: Normal y Force";
+	ResS->lab[2] = "Nxy: Shear xy Force";
+	ResS->lab[3] = "Mxx: Moment x Plane";
+	ResS->lab[4] = "Myy: Moment y Plane";
+	ResS->lab[5] = "Mxy: Twist Mom xy";
+	ResS->lab[6] = "Qx : Transv Shear x";
+	ResS->lab[7] = "Qy : Transv Shear y";
+
+
+	ResSet* ResSt = new ResSet();
+	ResDef* pVT;
+	pVT = new ResDef();
+	pVT->sResType = sTitle + "(Flux Mid)";
+	pVT->iResType = 3;        //2d Tensor
+	pVT->iLoc = 1;            //Element Centroid(cys global)
+	pVT->iComponents[0] = 0;
+	pVT->iComponents[1] = 1;
+	pVT->iComponents[2] = 2;
+
+	pVT->iCompNo = 3;
+	pVT->GenDefualtHeaders();
+	ResS->AddResDef(pVT);
+	return (ResS);
+}
+
 ResSet* ME_Object::Create2dStressResSet(CString sTitle,int iLC,CString sStep,CString sSol)
 {
 	ResSet* ResS = new ResSet();
@@ -29517,7 +30046,7 @@ ResSet* ME_Object::Create2dStressResSet(CString sTitle,int iLC,CString sStep,CSt
 	ResS->lab[18] = "Min Prin (Z2 Top)";
 	ResS->lab[19] = "Max Shear (Z2 Top)";
 	ResS->lab[20] = "Von Mises (Z2 Top)";
-	ResSet* ResSt = new ResSet();
+	//ResSet* ResSt = new ResSet();
 	ResDef* pVT;
 	pVT = new ResDef();
 	pVT->sResType = sTitle + "(Mid)";
@@ -29635,7 +30164,8 @@ Mat ResZ2;
 Mat disp; 
 Mat disp3d; 
 Mat disp3dR;
-
+Mat MAT_TS;
+double dSHRatio = 1;
 C3dVector v; C3dVector R;
 int n;
 double det;
@@ -29677,12 +30207,15 @@ for(i=0;i<iElNo;i++)
     MID=pS->GetDefMatID();
   }
   Material* pM=MatT->GetItem(MID);
+  
 //Get Shell thickness
 
  if (((pElems[i]->iType==91) || (pElems[i]->iType==94)) && (pS!=NULL))
  {
    PSHELL* pSh = (PSHELL*) pS;
    dthk=pSh->dT;
+   dSHRatio = pSh->dTST;
+   
  }
 
  if ((pM!=NULL) && (pM->iType = 1))
@@ -29690,6 +30223,8 @@ for(i=0;i<iElNo;i++)
    MAT1* pIsen = (MAT1*) pM;
    dE=pIsen->dE;
    dv=pIsen->dNU;
+   MAT_TS = pM->DeeSH();
+
  }
  //************START OF CALCULATION************
  if (iNoNodes > 0)
@@ -29713,34 +30248,43 @@ for(i=0;i<iElNo;i++)
 			 *disp3dR.mn(k + 1, j + 1) = dofR; // Nodal Rotations
 		 }
 	 }
+
 	 //WILL NEED TO MODIFY DICPLACEMENT TO ACCOUNT FOR OFFSET
 	 // BE DONE
 	 C3dMatrix M = pElems[i]->GetElSys();
 	 //TRANSFORM GLOBAL DISPS TO LOCAL ELEMENT
+	 int iNoNds = pElems[i]->iNoNodes;
+	 Mat DispTS(iNoNds*6,1);
 	 for (j = 0; j < iNoNodes; j++)
 	 {
 		 //Translations
-		 v.x = *disp3d.mn(1, j + 1);
+		 v.x = *disp3d.mn(1, j + 1);  
 		 v.y = *disp3d.mn(2, j + 1);
 		 v.z = *disp3d.mn(3, j + 1);
 		 v = M.Mult(v);
 		 n = 1 + j * 2;
-		 *disp.mn(n, 1) = v.x;
+		 *disp.mn(n, 1) = v.x;			//Displecement vector for membarne
 		 *disp.mn(n + 1, 1) = v.y;
-		 //Rotations
-		 R.x = *disp3dR.mn(1, j + 1);  //Theta global X
-		 R.y = *disp3dR.mn(2, j + 1);  //Theta global Y
-		 R.z = *disp3dR.mn(3, j + 1);  //Theta global Z
+		 //Rotations					//Diplacements for bending and TShear
+		 R.x = *disp3dR.mn(1, j + 1);	//Theta global X
+		 R.y = *disp3dR.mn(2, j + 1);	//Theta global Y
+		 R.z = *disp3dR.mn(3, j + 1);	//Theta global Z
 		 R = M.Mult(R);
 		 //update the plate bending / shear disp vector
 		 *disp3dR.mn(1, j + 1) = v.z;   // Z displacement
 		 *disp3dR.mn(2, j + 1) = R.x;   // theta X
 		 *disp3dR.mn(3, j + 1) = R.y;   // theta Y (disregard theta Z)
+		 //full TS local element disp vector
+		 *DispTS.mn(j * 6 + 1, 1) = v.x;
+		 *DispTS.mn(j * 6 + 2, 1) = v.y;
+		 *DispTS.mn(j * 6 + 3, 1) = v.z;
+		 *DispTS.mn(j * 6 + 4, 1) = R.x;
+		 *DispTS.mn(j * 6 + 5, 1) = R.y;
+		 *DispTS.mn(j * 6 + 6, 1) = R.z;
 	 }
 	 disp3d.clear();
 	 dee = pElems[i]->DeeMat(dE, dv, 3);
 	 coord = pElems[i]->getCoords3d();       //Coords in element CSYS this case actually 2d
-	 Mat NdDisp(iNoNodes, 2);
 	 Points = pElems[i]->Sample(nip);         //Only 1 integration point at centre of element
 	 det = 0;
 	 fun = pElems[i]->ShapeFun(Points, 1);    //1x4 shape fuction values at el centre
@@ -29775,12 +30319,16 @@ for(i=0;i<iElNo;i++)
 	 
 
 	//Out of Plain Shear Strain Components gamma1, gamma2
+	Mat BEE_TS = pElems[i]->BEE_TS_Recovery();
+	Mat STRAIN_TV = BEE_TS * DispTS;
+	Mat STRESS_TV = MAT_TS * STRAIN_TV;
+	STRESS_TV *= pElems[i]->GetPHI_SQ();
+	//NOTE FOR TRANSVERSE FORCES * by dSHRatio
+	//end shear strains
 
-	 disp3dR.clear();
+	disp3dR.clear();
 	//in plane components x,y,xy
-
     bee=pElems[i]->bmat(coord, deriv2,3,2);
-	//bee.diag();
     db=bee*disp;
 	SX=*db.mn(1,1);
     SY=*db.mn(2,1);
@@ -29810,13 +30358,14 @@ for(i=0;i<iElNo;i++)
 	pResStrn->v[9] = (float)(cS - Mag);
 	//Principals 
 	ResStrn->Add(pResStrn);
+	//THERMAL STRAINS REMOVED
     *db.mn(1,1)-=pElems[i]->dTemp;   //Subtract thermal strains 
     *db.mn(2,1)-=pElems[i]->dTemp;   //Subtract thermal strains
 	//Z1 bending Stress (Top surface Z2 is thick/2 z1 is -thick/2)
 	mStrn = db;
 	*mStrn.mn(1, 1) += 0.5*Curv.x*dthk;   
 	*mStrn.mn(2, 1) += 0.5*Curv.y*dthk;
-	*mStrn.mn(3, 1) += 0.5*Curv.z*dthk;			//Engininerring Strain to Strain????
+	*mStrn.mn(3, 1) += 0.5*Curv.z*dthk;		 //Engininerring Strain to Strain????
     ResZ1=dee* mStrn;                        //Calculate Stresses
 	mStrn.clear();
 	//Z2 bending Stress (Bot surface Z1 is -thick/2 z1 is -thick/2)
@@ -29844,8 +30393,217 @@ if (ResS->iCnt>0)
 {ResultsSets[iNoRes] = ResS; iNoRes++;}
 else
 {delete(ResS);}
-
 }
+
+// was Stresses2d
+//rewriten for shell strains stress and engineering forces including
+//transverse shear
+void ME_Object::RecoverShell(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp)
+{
+	//ALL THESE MATS NEED TO BE CLEARED!!!
+
+	Mat mStrn;
+	Mat Res;
+	Mat ResZ1;
+	Mat ResZ2;
+
+	Mat DispGlobal;  //Global displacements
+	Mat DispEl;      //local element displacements
+	Mat TMAT;              //transfomation mat global to local
+	Mat MAT_TS;
+	Mat MAT_BM;
+	Mat MAT_BB;
+	double dSHRatio = 1;
+	double dthk = 0.001;
+	double cS;
+	double Mag;
+	int MID = -1;
+	int i; int j; int k;
+	double SX, SY, SXY, RX, RY, RXY, TX, TY, BX, BY, BXY;
+	ResSet* ResF;
+	ResSet* ResS;                        //Mid Stress Results Set
+	ResSet* ResStrn;                     //Strain (dir & cur) Results Set
+	ResF = Create2dForceResSet("2d EL FORCES", iLC, sStep, sSol);
+	ResS = Create2dStressResSet("2d EL STRESSES", iLC, sStep, sSol);
+	ResStrn = Create2dStrainResSet("2d EL STRAINS (Mid)", iLC, sStep, sSol);
+
+	SX = 0; SY = 0, SXY = 0; RX = 0; RY = 0; RXY = 0;
+	int iNoNodes = 0;
+	for (i = 0; i < iElNo; i++)
+	{
+		//If its a shell element then process
+		if ((pElems[i]->iType == 91) || (pElems[i]->iType == 94))
+		{
+			Property* pS = PropsT->GetItem(pElems[i]->PID);
+			if (pS != NULL)
+			{
+				MID = pS->GetDefMatID();
+			}
+			Material* pM = MatT->GetItem(MID);
+			//Get Shell thickness
+			if (((pElems[i]->iType == 91) || (pElems[i]->iType == 94)) && (pS != NULL))
+			{
+				PSHELL* pSh = (PSHELL*)pS;
+				dthk = pSh->dT;
+				dSHRatio = pSh->dTST;
+			}
+			
+			if ((pM != NULL) && (pM->iType = 1))
+			{
+				MAT1* pIsen = (MAT1*)pM;
+				MAT_TS = pM->DeeSH();
+				MAT_BM = pM->DeeMEM();
+				MAT_BB = pM->DeeBM();
+			}
+			//************START OF CALCULATION************
+
+			DispGlobal = GetNodalDispVec(pElems[i], Steer, Disp);
+			TMAT = pElems[i]->KEToKGTransform();
+			TMAT.Transpose();
+			DispEl = TMAT * DispGlobal;
+			//WILL NEED TO MODIFY DICPLACEMENT TO ACCOUNT FOR OFFSET
+			//************** Membrane Components ********************
+			Mat BEE_BM = pElems[i]->BEE_BM_Recovery();
+			Mat STRAIN_BM = BEE_BM * DispEl;
+			Mat STRESS_BM = MAT_BM * STRAIN_BM;
+			//*********** End of Membrane Components ****************
+			//**************  Bending Components ********************
+			Mat BEE_BB = pElems[i]->BEE_BB_Recovery();
+			Mat STRAIN_BB = BEE_BB * DispEl;
+			//NOT SURE WHY I HAVE TO *-1!!??????????????????????????????
+			//STRAIN_BB *= -1; Mystran gives -ve BB ???????????????
+			*STRAIN_BB.mn(3, 1) *= 0.5;
+			Mat STRESS_BB = MAT_BB * STRAIN_BB;
+			//************ End of Bending Components *****************
+			//**************Transverse Shear Components***************
+			Mat BEE_TS = pElems[i]->BEE_TS_Recovery();
+			Mat STRAIN_TV = BEE_TS * DispEl;
+			Mat STRESS_TV = MAT_TS * STRAIN_TV;
+			STRESS_TV *= pElems[i]->GetPHI_SQ();
+			//        NOTE FOR TRANSVERSE FORCES * by dSHRatio
+			//************End of Transverse Shear Components**********
+			// 
+			//***********  R E P O R T    R E SU L T S ***************
+			//                   S T R A I N S
+			SX = *STRAIN_BM.mn(1,1);
+			SY = *STRAIN_BM.mn(2, 1);
+			SXY = *STRAIN_BM.mn(3, 1);
+			SXY *= 0.5;					//Not sure about ENGINEERING SHEAR STRAIN!!
+			RX = *STRAIN_BB.mn(1, 1);  //not sure why we have a -
+			RY = *STRAIN_BB.mn(2, 1);
+			RXY = *STRAIN_BB.mn(3, 1);
+			TX = *STRESS_TV.mn(1, 1);
+			TY = *STRESS_TV.mn(2, 1);
+
+			Res10* pResStrn = new Res10;
+			pResStrn->ID = pElems[i]->iLabel;
+			pResStrn->v[0] = (float) SX;
+			pResStrn->v[1] = (float) SY;
+			pResStrn->v[2] = (float) SXY;
+			cS = (SX + SY) * 0.5;
+			Mag = pow((SX - cS) * (SX - cS) + (SXY * SXY), 0.5);
+			pResStrn->v[3] = (float) (cS + Mag);
+			pResStrn->v[4] = (float) (cS - Mag);
+			pResStrn->v[5] = (float) RX;
+			pResStrn->v[6] = (float) RY;
+			pResStrn->v[7] = (float) RXY;
+
+			BX = *STRAIN_BB.mn(1, 1);
+			BY = *STRAIN_BB.mn(2, 1);
+			BXY = *STRAIN_BB.mn(3, 1);
+			cS = (BX + BY) * 0.5;
+			Mag = pow((BX - cS) * (BX - cS) + (BXY * BXY), 0.5);
+			pResStrn->v[8] = (float)(cS + Mag);
+			pResStrn->v[9] = (float)(cS - Mag);
+
+			ResStrn->Add(pResStrn);
+			//THERMAL STRAINS REMOVED
+			*STRAIN_BM.mn(1,1) -= pElems[i]->dTemp;   //Subtract thermal strains ;
+			*STRAIN_BM.mn(2, 1) -= pElems[i]->dTemp;   //Subtract thermal strains ;
+			//Z1 bending Stress (Top surface Z2 is thick/2 z1 is -thick/2)
+			mStrn = STRAIN_BM;
+			*mStrn.mn(1, 1) += 0.5 * *STRAIN_BB.mn(1, 1) * dthk;
+			*mStrn.mn(2, 1) += 0.5 * *STRAIN_BB.mn(2, 1) * dthk;
+			*mStrn.mn(3, 1) += 0.5 * *STRAIN_BB.mn(3, 1) * dthk;		  //Engininerring Strain to Strain????
+			ResZ1 = MAT_BM * mStrn;                        //Calculate Stresses
+			mStrn.clear();
+			//Z2 bending Stress (Bot surface Z1 is -thick/2 z1 is -thick/2)
+			mStrn = STRAIN_BM;
+			*mStrn.mn(1, 1) -= 0.5 * *STRAIN_BB.mn(1, 1) *dthk;
+			*mStrn.mn(2, 1) -= 0.5 * *STRAIN_BB.mn(2, 1) *dthk;
+			*mStrn.mn(3, 1) -= 0.5 * *STRAIN_BB.mn(3, 1) *dthk;		  //Engininerring Strain to Strain????
+			ResZ2 = MAT_BM * mStrn;                          //Calculare Stresses
+			mStrn.clear();
+			//Mid bending Stress (Bot surface Z1 is thick/2 z1 is -thick/2)
+			mStrn = STRAIN_BM;
+			Res = MAT_BM * mStrn;
+			Add2dStressRes(ResS, pElems[i]->iLabel, Res, ResZ1, ResZ2);
+			//add element forces
+			Res8* pRes = new Res8;
+			pRes->ID = pElems[i]->iLabel;
+			pRes->v[0] = (float)(*Res.mn(1, 1) * dthk);
+			pRes->v[1] = (float)(*Res.mn(2, 1) * dthk);
+			pRes->v[2] = (float)(*Res.mn(3, 1) * dthk);
+
+			pRes->v[3] = (float)(*STRESS_BB.mn(1, 1) * dthk * dthk * dthk / 12);
+			pRes->v[4] = (float)(*STRESS_BB.mn(2, 1) * dthk * dthk * dthk / 12);
+			pRes->v[5] = (float)(*STRESS_BB.mn(3, 1) * dthk * dthk * dthk / 12);
+
+			pRes->v[6] = (float) (TX*dthk*dSHRatio);
+			pRes->v[7] = (float) (TY*dthk*dSHRatio);
+			ResF->Add(pRes);
+			Res.clear();
+			ResZ1.clear();
+			ResZ2.clear();
+			mStrn.clear();
+
+
+            DispGlobal.clear();
+			DispEl.clear();
+			TMAT.clear();
+
+			MAT_TS.clear();
+			BEE_TS.clear();
+			STRAIN_TV.clear();
+			STRESS_TV.clear();
+
+			MAT_BB.clear();
+			BEE_BB.clear();
+			STRAIN_BB.clear();
+			STRESS_BB.clear();
+
+			MAT_BM.clear();
+			BEE_BM.clear();
+			STRAIN_BM.clear();
+			STRESS_BM.clear();
+		}
+	}
+	if (ResF->iCnt > 0)
+	{
+		ResultsSets[iNoRes] = ResF; iNoRes++;
+	}
+	else
+	{
+		delete(ResStrn);
+	}
+	if (ResStrn->iCnt > 0)
+	{
+		ResultsSets[iNoRes] = ResStrn; iNoRes++;
+	}
+	else
+	{
+		delete(ResStrn);
+	}
+	if (ResS->iCnt > 0)
+	{
+		ResultsSets[iNoRes] = ResS; iNoRes++;
+	}
+	else
+	{
+		delete(ResS);
+	}
+}
+
 
 C3dVector ME_Object::EigenVector3d(int iEID,C3dVector rX, C3dVector rY, C3dVector rZ, double lambda)
 {
@@ -58136,7 +58894,6 @@ void CEntEditDialog::Build(BOOL isPCOMPG)
 	double dT;
 	double dS;
 	int iM;
-	Property* pP;
 	if (isPCOMPG)
 	{
 		PCOMPG* pP = (PCOMPG*)pEnt;

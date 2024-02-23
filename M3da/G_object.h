@@ -3161,6 +3161,7 @@ public:
      Res* pResV;
      Property* pPr;
      E_Object();
+
      virtual void Create(int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
      virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
      virtual G_Object* Copy(G_Object* Parrent);
@@ -3193,6 +3194,9 @@ public:
    virtual Mat DeeMat(double E, double v,int iD);
    virtual Mat DeeBM(double E, double v, int iD);
    virtual Mat DeeSH(double E, double v, int iD);
+   virtual Mat BEE_BM_Recovery();
+   virtual Mat BEE_BB_Recovery();
+   virtual Mat BEE_TS_Recovery();
    virtual int noDof();
    //Transform nodal stiffness values from element local to global
    virtual Mat KEToKGTransform();
@@ -3215,6 +3219,7 @@ public:
    virtual C3dVector GetFirstEdge();
    virtual double QualAspect();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetPHI_SQ();
 };
 
 
@@ -3492,10 +3497,11 @@ class E_Object3 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object3 )
 public:
-	int iNoRemesh;	  //Added tempoary for tet mesh generation debugging 
+   int iNoRemesh;	  //Added tempoary for tet mesh generation debugging 
    int iMCys;
    double MAng;
    double dZOFFS;
+   double PHI_SQ = 0;
    E_Object3();
    ~E_Object3();
    Node* pVertex[3];
@@ -3524,8 +3530,15 @@ public:
    virtual Vec<int> GetSteerVec3d();
    virtual Vec<int> GetSteerVec1d();
    int MaxBW();
+   
+   //BEE MATS Strain / Displacement
+   Mat TMEM1_BEE(int OPT);
+   Mat TPLT2_BEE_TS(int OPT, Vec<double>& XI);
+
+   virtual Mat BEE_BM_Recovery();
+   virtual Mat BEE_BB_Recovery();
+   virtual Mat BEE_TS_Recovery();
    //MIN3 Membrane stiffness returns BIG_BM
-   Mat TMEM1_BM(int OPT, double AREA, double X2E, double X3E, double Y3E);
    Mat TMEM1_KE(int OPT, double AREA, double X2E, double X3E, double Y3E, Mat SHELL_A);
    Mat TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E, Mat SHELL_D, Mat SHELL_T);
    virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
@@ -3555,6 +3568,7 @@ public:
    virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
    double GetArea2d();
    virtual Mat GetElNodalMass(PropTable* PropsT, MatTable* MatT);
+   virtual double GetPHI_SQ();
 };
 
 class E_CellS : public E_Object
@@ -3584,6 +3598,7 @@ public:
 	int iMCys;
 	double MAng;
 	double dZOFFS;
+	double PHI_SQ = 0;
 	Node* pVertex[4];
 	E_Object4();
 	~E_Object4();
@@ -3614,14 +3629,17 @@ public:
 	Mat getCoords_XEL();
 	//MIN4 Membrane stiffness 
 	//UBROUTINE QMEM1 ( OPT, IORD, RED_INT_SHEAR, AREA, XSD, YSD, BIG_BM )
-	Mat QMEM1_BM(int OPT, double AREA, Vec<double> X2E, Vec<double>  X3E, Mat SHELL_A);
+	Mat QMEM1_KE(int OPT, double AREA, Vec<double> X2E, Vec<double>  X3E, Mat SHELL_A);
 	Mat QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD, Mat SHELL_D, Mat SHELL_T);
-	Mat QPLT2_KS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX);
-	Mat BBMIN4(Mat deriv);
+	Mat QPLT2_BEE_TS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX);
+	Mat QPLT2_BEE_DD(Mat deriv); //Bending
 	Mat WARP_BMEAN(double& dWarped);
+	virtual Mat BEE_BM_Recovery();
+	virtual Mat BEE_BB_Recovery();
+	virtual Mat BEE_TS_Recovery();
 	//Constrained shape frunctions
-	void MIN4SH(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
-		       Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG);
+	void MIN4_SHPF(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
+		           Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG);
 	virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
 	virtual Mat GetStiffMat_Ex(PropTable* PropsT, MatTable* MatT);
 	Mat GetB_1pt(double &det);
@@ -3650,6 +3668,7 @@ public:
 	virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
 	double GetArea2d();
 	virtual Mat GetElNodalMass(PropTable* PropsT, MatTable* MatT);
+	virtual double GetPHI_SQ();
 };
 
 
@@ -4143,6 +4162,7 @@ void banred(Vec<double> &bk,int neq);
 void bacsub(Vec<double> &bk, Vec<double> &Loads);
 void RadiationLoss(Vec<int> &Steer, Vec<double> &T, Vec<double> &Q);
 double GetDisp(int iDof,Vec<int> &Steer,Vec<double> &Disp);
+Mat GetNodalDispVec(E_Object* pE, Vec<int>& Steer, Vec<double>& Disp);
 void Displacements(int iLC, CString sSol, CString sStep, Vec<int> &Steer,Vec<double> &Disp);
 void Temperatures(int iLC,CString sSol,CString sStep,Vec<int> &Steer,Vec<double> &Disp);
 void TempBCSet(int iLC, CString sSol, CString sStep, Vec<int> &Steer, Vec<double> &Disp);
@@ -4150,10 +4170,12 @@ void TranslationalSpringForces(int iLC, CString sSol, CString sStep, PropTable* 
 void ForcesRod(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp);
 void ForcesBUSH(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp);
 void ForcesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
+ResSet* Create2dForceResSet(CString sTitle, int iLC, CString sStep, CString sSol);
 ResSet* Create2dStressResSet(CString sTitle, int iLC, CString sStep, CString sSol);
 ResSet* Create2dStrainResSet(CString sTitle, int iLC, CString sStep, CString sSol);
 void Add2dStressRes(ResSet* pSSet, int ID, Mat Res, Mat ResZ1, Mat ResZ2);
 void Stresses2d(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
+void RecoverShell(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp);
 void Stresses3d(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
 BOOL NodeInEl(Node* pN);
 BOOL ElemInBCSet(E_Object* pN);
