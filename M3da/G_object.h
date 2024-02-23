@@ -3203,6 +3203,7 @@ public:
    virtual Mat KEToKGTransform2(C3dMatrix mEL);
    virtual BOOL HasOffsets();
    virtual void OffsetsToKG(PropTable* PropsT, Mat& off); //Offsets to global KE SYS
+   virtual void DispOffsets(PropTable* PropsT, Mat& disp);
    virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
    virtual BOOL ChkNegJac();
    virtual int GetfaceList(eFace* Faces[6]);
@@ -3569,6 +3570,8 @@ public:
    double GetArea2d();
    virtual Mat GetElNodalMass(PropTable* PropsT, MatTable* MatT);
    virtual double GetPHI_SQ();
+   virtual BOOL HasOffsets();
+   virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
 };
 
 class E_CellS : public E_Object
@@ -3669,6 +3672,8 @@ public:
 	double GetArea2d();
 	virtual Mat GetElNodalMass(PropTable* PropsT, MatTable* MatT);
 	virtual double GetPHI_SQ();
+	virtual BOOL HasOffsets();
+	virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
 };
 
 

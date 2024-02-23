@@ -10631,6 +10631,30 @@ void E_Object::OffsetsToKG(PropTable* PropsT, Mat& off)
 	}
 }
 
+//Process the global soloution dispacements fot the offset
+void E_Object::DispOffsets(PropTable* PropsT, Mat& disp)
+{
+	int i;
+	int iInc=0;
+	BOOL bOff;
+	C3dVector vOff;
+
+
+		for (i = 0; i < iNoNodes; i++)
+		{
+			bOff = GetOffset(PropsT, i, vOff);
+			*disp.mn(iInc + 1, 1) += +vOff.z * *disp.mn(iInc + 5, 1) - vOff.y * *disp.mn(iInc + 6, 1);
+			*disp.mn(iInc + 2, 1) += -vOff.z * *disp.mn(iInc + 4, 1) + vOff.x * *disp.mn(iInc + 6, 1);
+			*disp.mn(iInc + 3, 1) += +vOff.y * *disp.mn(iInc + 4, 1) - vOff.x * *disp.mn(iInc + 5, 1);
+			iInc += 6;
+		}
+		
+		   //*disp.mn(7, 1) += +vOff2.z * *disp.mn(11, 1) - vOff2.y * *disp.mn(12, 1);
+		   //*disp.mn(8, 1) += -vOff2.z * *disp.mn(10, 1) + vOff2.x * *disp.mn(12, 1);
+		   //*disp.mn(9, 1) += +vOff2.y * *disp.mn(10, 1) - vOff2.x * *disp.mn(11, 1);
+
+}
+
 //returns the nodal offset if ther is one for node = iNode
 //if no offset for this element type returns FALSE
 BOOL E_Object::GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff)
@@ -16606,7 +16630,22 @@ for (i = 6; i <= 18; i += 6)
 	Mat TT;
 	T = KE * TMAT;
 	TT = TMATT * T;
-
+	//OFFSETS
+	if (HasOffsets())
+	{
+		Mat off;
+		Mat offT;
+		Mat dum1;
+		OffsetsToKG(PropsT, off);
+		offT = off;
+		offT.Transpose();
+		dum1 = TT * off;
+		TT.clear();
+		TT = offT * dum1;
+		dum1.clear();
+		off.clear();
+		offT.clear();
+	}
 return (TT);
 }
 
@@ -17187,6 +17226,30 @@ double E_Object3::GetPHI_SQ()
 {
 	return(PHI_SQ);
 }
+
+BOOL E_Object3::HasOffsets()
+{
+	BOOL brc = FALSE;
+	if (dZOFFS !=0)
+		brc = TRUE;
+	return (brc);
+}
+
+BOOL E_Object3::GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff)
+{
+	BOOL brc = FALSE;
+	C3dVector vN;
+	vOff = Get_Normal();
+	//if its a pocmp wll have to include below
+	//vOff *= dZOFFS + dPCompOff;
+	//assuming its a PSHELL for now
+	vOff *= dZOFFS;
+	if (vOff.Mag() > 0)
+		brc = TRUE;
+	return (brc);
+
+}
+
 
 //*********************************
 IMPLEMENT_DYNAMIC( E_Object1, CObject )
@@ -19294,7 +19357,23 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &b
 	T.clear();
 	TMAT.clear();
 	TMATT.clear();
-
+	//OFFSETS
+	if (HasOffsets())
+	{
+		Mat off;
+		Mat offT;
+		Mat dum1;
+		OffsetsToKG(PropsT, off);
+		offT = off;
+		offT.Transpose();
+		dum1 = TT * off;
+		TT.clear();
+		TT = offT * dum1;
+		dum1.clear();
+		off.clear();
+		offT.clear();
+	}
+	
 	return (TT);
 }
 
@@ -20845,6 +20924,29 @@ Mat E_Object4::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
 double E_Object4::GetPHI_SQ()
 {
 	return(PHI_SQ);
+}
+
+BOOL E_Object4::HasOffsets()
+{
+	BOOL brc = FALSE;
+	if (dZOFFS != 0)
+		brc = TRUE;
+	return (brc);
+}
+
+BOOL E_Object4::GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff)
+{
+	BOOL brc = FALSE;
+	C3dVector vN;
+	vOff = Get_Normal();
+	//if its a pocmp wll have to include below
+	//vOff *= dZOFFS + dPCompOff;
+	//assuming its a PSHELL for now
+	vOff *= dZOFFS;
+	if (vOff.Mag() > 0)
+		brc = TRUE;
+	return (brc);
+
 }
 
 //----------------------------------------------------------------------------
@@ -29864,13 +29966,15 @@ for(i=0;i<iElNo;i++)
 
 	//account for offset in global disp
 	//move disp from grid to offset node
-	*disp.mn(1, 1) += +vOff1.z * *disp.mn(5, 1) - vOff1.y * *disp.mn(6, 1);
-	*disp.mn(2, 1) += -vOff1.z * *disp.mn(4, 1) + vOff1.x * *disp.mn(6, 1);
-	*disp.mn(3, 1) += +vOff1.y * *disp.mn(4, 1) - vOff1.x * *disp.mn(5, 1);
+	if (pElems[i]->HasOffsets())
+		pElems[i]->DispOffsets(PropsT, disp);
+	//*disp.mn(1, 1) += +vOff1.z * *disp.mn(5, 1) - vOff1.y * *disp.mn(6, 1);
+	//*disp.mn(2, 1) += -vOff1.z * *disp.mn(4, 1) + vOff1.x * *disp.mn(6, 1);
+	//*disp.mn(3, 1) += +vOff1.y * *disp.mn(4, 1) - vOff1.x * *disp.mn(5, 1);
 
-	*disp.mn(7, 1) += +vOff2.z * *disp.mn(11, 1) - vOff2.y * *disp.mn(12, 1);
-	*disp.mn(8, 1) += -vOff2.z * *disp.mn(10, 1) + vOff2.x * *disp.mn(12, 1);
-	*disp.mn(9, 1) += +vOff2.y * *disp.mn(10, 1) - vOff2.x * *disp.mn(11, 1);
+	//*disp.mn(7, 1) += +vOff2.z * *disp.mn(11, 1) - vOff2.y * *disp.mn(12, 1);
+	//*disp.mn(8, 1) += -vOff2.z * *disp.mn(10, 1) + vOff2.x * *disp.mn(12, 1);
+	//*disp.mn(9, 1) += +vOff2.y * *disp.mn(10, 1) - vOff2.x * *disp.mn(11, 1);
 	//******************************************************
     KM=pElems[i]->GetStiffMat(PropsT,MatT,TRUE,bErr);
     Res=KM*disp;
@@ -30458,11 +30562,14 @@ void ME_Object::RecoverShell(int iLC, CString sSol, CString sStep, PropTable* Pr
 			//************START OF CALCULATION************
 
 			DispGlobal = GetNodalDispVec(pElems[i], Steer, Disp);
-			TMAT = pElems[i]->KEToKGTransform();
+			//WILL NEED TO MODIFY DICPLACEMENT TO ACCOUNT FOR OFFSET
+            if (pElems[i]->HasOffsets())
+             	pElems[i]->DispOffsets(PropsT, DispGlobal);
+      		TMAT = pElems[i]->KEToKGTransform();
 			TMAT.Transpose();
 			DispEl = TMAT * DispGlobal;
-			//WILL NEED TO MODIFY DICPLACEMENT TO ACCOUNT FOR OFFSET
-			//************** Membrane Components ********************
+
+
 			Mat BEE_BM = pElems[i]->BEE_BM_Recovery();
 			Mat STRAIN_BM = BEE_BM * DispEl;
 			Mat STRESS_BM = MAT_BM * STRAIN_BM;
@@ -30584,7 +30691,7 @@ void ME_Object::RecoverShell(int iLC, CString sSol, CString sStep, PropTable* Pr
 	}
 	else
 	{
-		delete(ResStrn);
+		delete(ResF);
 	}
 	if (ResStrn->iCnt > 0)
 	{
