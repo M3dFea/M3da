@@ -1224,6 +1224,8 @@ void DBase::Serialize(CArchive& ar)
 		ar << gTXT_HEIGHT;
 		ar << gDIM_RADSZ;
 		ar << gDIM_SIZE;
+		ar << gDRILL_KS;
+		ar << gRIGID_MULTIPLIER;
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
 		ar<<DB_ObjectCount;
@@ -1298,6 +1300,11 @@ void DBase::Serialize(CArchive& ar)
 		if (iVER <= -70)
 		{
 			ar >> gDIM_SIZE;
+		}
+		if (iVER <= -72)
+		{
+			ar >> gDRILL_KS;
+			ar >> gRIGID_MULTIPLIER;
 		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);
@@ -19603,6 +19610,36 @@ void DBase::EditObject()
 	}
 
 }
+
+
+void DBase::EditGlobals()
+{
+	//need to create a dummy G_Object with all
+	//global values in
+	G_ObjectDUM* pO = new G_ObjectDUM();
+
+	if (pO != NULL)
+	{
+		CEntEditDialog Dlg;
+		//PropTable* PropsT
+		Dlg.PT = PropsT;
+		Dlg.pO = pO;
+		Dlg.DoModal();
+		S_Count--;
+		InvalidateOGL();
+		ReGen();
+		delete (pO);
+
+	}
+	else
+	{
+
+	}
+
+}
+
+
+
 
 void DBase::ListMat(int MID, BOOL bPID)
 {

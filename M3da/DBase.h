@@ -731,6 +731,7 @@ void EditMat(int MID, BOOL bPID);
 void EditProp(int PID);
 void ListProp(int PID);
 void EditObject();
+void EditGlobals();
 void lMeasure(C3dVector v1,C3dVector v2);
 void AMeasure(C3dVector v1, C3dVector v2, C3dVector v3);
 void CurvesToSurface(ObjList* OL1,ObjList* OL2);

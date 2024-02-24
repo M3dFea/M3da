@@ -131,6 +131,7 @@ BEGIN
         MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
         MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
         MENUITEM "Toggle on/off undo",          ID_EDIT_TOGGLEON
+        MENUITEM "Global Preferences",          ID_EDIT_GLOBALPREFERENCES
     END
     POPUP "&View"
     BEGIN
@@ -1384,6 +1385,7 @@ STRINGTABLE
 BEGIN
     ID_DIMENSIONTOOLS_CIRCLECENTREMARKER "Create circle centre marker."
     ID_ELEMENTTYPE_BUSH     "BUSH 6 DOF Spring Element"
+    ID_EDIT_GLOBALPREFERENCES "Edit global stored parameters"
 END
 
 #endif    // English (United States) resources

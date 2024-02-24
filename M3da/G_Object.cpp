@@ -18,6 +18,8 @@ double gWP_SIZE = 12;
 double gBM_SIZE = 2;
 double gTXT_SIZE = 2;
 double gDIM_SIZE = 0.5;
+double gDRILL_KS = 1.0;    
+double gRIGID_MULTIPLIER = 1.0; 
 //END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -16604,7 +16606,7 @@ KEP = TPLT2_KE(3, AREA, X2E, X3E, Y3E, SHELL_D_TRIA, SHELL_T_TRIA);
 KE += KEP;
 for (i = 6; i <= 18; i += 6)
 	{
-		*KE.mn(i, i) = 1.0;  //DRILLING STIFFNES
+		*KE.mn(i, i) = gDRILL_KS;  //DRILLING STIFFNES
 	}
 
 	Mat TMAT(18, 18);
@@ -19336,7 +19338,7 @@ Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &b
 	KBS = QPLT2_KE(3, AREA, XSD, YSD, SHELL_D_TRIA, SHELL_T_TRIA);
 	KE += KBS;
 	for (i = 6; i <= 24; i += 6)
-		*KE.mn(i, i) = 1.0;  //DRILLING STIFFNES
+		*KE.mn(i, i) = gDRILL_KS;  //DRILLING STIFFNES
 	Mat TMAT;
 	TMAT = KEToKGTransform2(TE);  //20/02/2024 changed to this new function to get TMAT
 	Mat TMATT = TMAT;
@@ -30562,7 +30564,7 @@ void ME_Object::RecoverShell(int iLC, CString sSol, CString sStep, PropTable* Pr
 			//************START OF CALCULATION************
 
 			DispGlobal = GetNodalDispVec(pElems[i], Steer, Disp);
-			//WILL NEED TO MODIFY DICPLACEMENT TO ACCOUNT FOR OFFSET
+			//WE NEED TO MODIFY DICPLACEMENT TO ACCOUNT FOR OFFSET
             if (pElems[i]->HasOffsets())
              	pElems[i]->DispOffsets(PropsT, DispGlobal);
       		TMAT = pElems[i]->KEToKGTransform();
@@ -60712,4 +60714,104 @@ void CGraphDialog::OnBnClickedLog()
 	pDrg->InvalidateRect(rc, 1);
 	UpdateWindow();
 	GDIDraw();
+}
+
+
+// Create Shade Representation of object
+
+IMPLEMENT_DYNAMIC(G_ObjectDUM, CObject)
+
+CString G_ObjectDUM::GetName()
+{
+	return("Variables");
+}
+
+int G_ObjectDUM::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo++] = "double gPT_SIZE";
+	sVar[iNo++] = "double gND_SIZE";
+	sVar[iNo++] = "double gLM_SIZE";
+	sVar[iNo++] = "double gEL_SIZE";
+	sVar[iNo++] = "double gED_SIZE";
+	sVar[iNo++] = "double gFC_SIZE";
+	sVar[iNo++] = "double gWP_SIZE";
+	sVar[iNo++] = "double gBM_SIZE";
+	sVar[iNo++] = "double gTXT_SIZE";
+	sVar[iNo++] = "double gDIM_FILSZ";
+	sVar[iNo++] = "double gDIM_OFFSZ";
+	sVar[iNo++] = "double gTXT_HEIGHT";
+	sVar[iNo++] = "double gDIM_RADSZ";
+	sVar[iNo++] = "double gDIM_CVORD";
+	sVar[iNo++] = "double gDIM_SIZE";
+	sVar[iNo++] = "double gDRILL_KS";
+	sVar[iNo++] = "double gRIGID_MULTIPLIER";
+
+	return iNo;
+}
+
+
+int G_ObjectDUM::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+
+	sprintf_s(S1, "%g", gPT_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gND_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gLM_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gEL_SIZE);
+	sVar[iNo++] = S1;;
+	sprintf_s(S1, "%g", gED_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gFC_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gWP_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gBM_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gTXT_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDIM_FILSZ);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDIM_OFFSZ);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gTXT_HEIGHT);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDIM_RADSZ);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDIM_CVORD);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDIM_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDRILL_KS);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gRIGID_MULTIPLIER);
+	sVar[iNo++] = S1;
+
+	return (iNo);
+}
+
+void G_ObjectDUM::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int iC = 0;
+	gPT_SIZE = atof(sVar[iC++]);
+	gND_SIZE = atof(sVar[iC++]);
+	gLM_SIZE = atof(sVar[iC++]);
+	gEL_SIZE = atof(sVar[iC++]);
+	gED_SIZE = atof(sVar[iC++]);
+	gFC_SIZE = atof(sVar[iC++]);
+	gWP_SIZE = atof(sVar[iC++]);
+	gBM_SIZE = atof(sVar[iC++]);
+	gTXT_SIZE = atof(sVar[iC++]);
+	gDIM_FILSZ = atof(sVar[iC++]);
+	gDIM_OFFSZ = atof(sVar[iC++]);
+	gTXT_HEIGHT = atof(sVar[iC++]);
+	gDIM_RADSZ = atof(sVar[iC++]);
+	gDIM_CVORD = atof(sVar[iC++]);
+	gDIM_SIZE = atof(sVar[iC++]);
+	gDRILL_KS = atof(sVar[iC++]);
+	gRIGID_MULTIPLIER = atof(sVar[iC++]);
 }

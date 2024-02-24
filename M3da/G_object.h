@@ -1699,6 +1699,18 @@ public:
   virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
 };
 
+//Base Class of graphics objects
+class G_ObjectDUM : public G_Object
+{
+	DECLARE_DYNAMIC(G_ObjectDUM)
+
+public:
+	virtual CString GetName();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+};
+
 class cLinkedList : public G_Object
 {
 DECLARE_DYNAMIC(cLinkedList)
@@ -3783,6 +3795,7 @@ public:
 	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
+//RBE2 Element
 class E_ObjectR : public E_Object
 {
 DECLARE_DYNAMIC( E_ObjectR)

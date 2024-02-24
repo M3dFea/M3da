@@ -624,13 +624,14 @@
 #define ID_DIMENSIONTOOLS_CIRCLECENTREMARKER 33444
 #define ID_BUTTON33445                  33445
 #define ID_ELEMENTTYPE_BUSH             33446
+#define ID_EDIT_GLOBALPREFERENCES       33447
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        369
-#define _APS_NEXT_COMMAND_VALUE         33447
+#define _APS_NEXT_COMMAND_VALUE         33448
 #define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           314
 #endif
