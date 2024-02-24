@@ -19,7 +19,7 @@ double gBM_SIZE = 2;
 double gTXT_SIZE = 2;
 double gDIM_SIZE = 0.5;
 double gDRILL_KS = 1.0;    
-double gRIGID_MULTIPLIER = 1.0; 
+double gRIGID_MULTIPLIER = 10000.0; 
 double gVSTIFF_KS = 1.0e10;        //Big K value for restraints
 double gDEF_E = 70.0e9;            //defualt material youngs mod
 double gDEF_V = 0.33;              //Poisson ratio
@@ -25436,7 +25436,7 @@ else
   ForcesRod(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
   ForcesBUSH(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
   ForcesBeam(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
-  //Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
+  Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
   RecoverShell(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
   Stresses3d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
   outtext1("FINISHED SOLUTION");
@@ -25760,7 +25760,7 @@ iStep=0;
 	ForcesBUSH(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
 	ForcesRod(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
 	ForcesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
-	//Stresses2d(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
+	Stresses2d(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
     RecoverShell(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
     Stresses3d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
   }
@@ -30708,7 +30708,7 @@ void ME_Object::RecoverShell(int iLC, CString sSol, CString sStep, PropTable* Pr
             if (pElems[i]->HasOffsets())
              	pElems[i]->DispOffsets(PropsT, DispGlobal);
       		TMAT = pElems[i]->KEToKGTransform();
-			TMAT.Transpose();
+			//TMAT.Transpose();
 			DispEl = TMAT * DispGlobal;
 
 
