@@ -26,3 +26,7 @@ extern Symbol* pSymTable[10000];
 extern double gDIM_SIZE;
 extern double gDRILL_KS;          //K value for shell drilling
 extern double gRIGID_MULTIPLIER;  //multiplier to factor psuedo rigid elemenys K values
+extern double gVSTIFF_KS;
+extern double gDEF_E;
+extern double gDEF_V;
+extern double gSTIFF_BDIA;

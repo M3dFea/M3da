@@ -20,6 +20,10 @@ double gTXT_SIZE = 2;
 double gDIM_SIZE = 0.5;
 double gDRILL_KS = 1.0;    
 double gRIGID_MULTIPLIER = 1.0; 
+double gVSTIFF_KS = 1.0e10;        //Big K value for restraints
+double gDEF_E = 70.0e9;            //defualt material youngs mod
+double gDEF_V = 0.33;              //Poisson ratio
+double gSTIFF_BDIA = 0.1;          //stiff beam dia used for out psuedo RBE2
 //END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -14458,50 +14462,58 @@ if (pS!=NULL)
   MID=pS->GetDefMatID();
 }
 Material* pM=MatT->GetItem(MID);
-if (pS==NULL)
+if (bOpt == 2)
 {
-  sprintf_s(S1,"ERROR: PROPERTY NOT FOUND FOR EL %i",iLabel);
-  outtext1(S1);
-}
-if (pM==NULL)
-{  
-  sprintf_s(S1,"ERROR: MATERIAL NOT FOUND FOR EL %i",iLabel);
-  outtext1(S1); 
-}
-if ((pS!=NULL) && (pM!=NULL))
-{
-  if (pS->iType==5)
-  {
-	PBARL* pB=(PBARL*) pS;
-	MAT1* pM1=(MAT1*) pM;
-	ea=pB->A*pM1->dE;
-	eiy=pB->Iyy*pM1->dE;
-	eiz=pB->Izz*pM1->dE;
-	double g;
-	g=pM1->dE/(2*(1+pM1->dNU));
-	gj=g*pB->J;
-  }
-  else if (pS->iType == 4)
-  {
-	PBAR* pB = (PBAR*)pS;
-	MAT1* pM1 = (MAT1*)pM;
-	ea = pB->dA*pM1->dE;
-	eiy = pB->dI1*pM1->dE;
-	eiz = pB->dI2*pM1->dE;
-	double g;
-	g = pM1->dE / (2 * (1 + pM1->dNU));
-	gj = g * pB->dJ;
-  }
-  else
-  {
-    sprintf_s(S1,"ERROR: INVALID PROPERTY FOR EL %i",iLabel);
-    outtext1(S1);
-  }
+	//for psuedo rigid element
+	CalcDefStiffProps(ea, eiy, eiz, gj);
 }
 else
 {
-  sprintf_s(S1,"ERROR: UNABLE TO CALCULATE PROPERTIES FOR EL %i",iLabel);
-  outtext1(S1); 
+	if (pS == NULL)
+	{
+		sprintf_s(S1, "ERROR: PROPERTY NOT FOUND FOR EL %i", iLabel);
+		outtext1(S1);
+	}
+	if (pM == NULL)
+	{
+		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
+		outtext1(S1);
+	}
+	if ((pS != NULL) && (pM != NULL))
+	{
+		if (pS->iType == 5)
+		{
+			PBARL* pB = (PBARL*)pS;
+			MAT1* pM1 = (MAT1*)pM;
+			ea = pB->A * pM1->dE;
+			eiy = pB->Iyy * pM1->dE;
+			eiz = pB->Izz * pM1->dE;
+			double g;
+			g = pM1->dE / (2 * (1 + pM1->dNU));
+			gj = g * pB->J;
+		}
+		else if (pS->iType == 4)
+		{
+			PBAR* pB = (PBAR*)pS;
+			MAT1* pM1 = (MAT1*)pM;
+			ea = pB->dA * pM1->dE;
+			eiy = pB->dI1 * pM1->dE;
+			eiz = pB->dI2 * pM1->dE;
+			double g;
+			g = pM1->dE / (2 * (1 + pM1->dNU));
+			gj = g * pB->dJ;
+		}
+		else
+		{
+			sprintf_s(S1, "ERROR: INVALID PROPERTY FOR EL %i", iLabel);
+			outtext1(S1);
+		}
+	}
+	else
+	{
+		sprintf_s(S1, "ERROR: UNABLE TO CALCULATE PROPERTIES FOR EL %i", iLabel);
+		outtext1(S1);
+	}
 }
 //Get nodal coords
 vN1 = pVertex[0]->Get_Centroid();
@@ -14711,6 +14723,26 @@ void E_Object2B::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 	iDOFB = GetDOFInt(sVar[6]);
 
 }
+
+void E_Object2B::CalcDefStiffProps(double& ea, double& eiy, double& eiz, double& gj)
+{
+
+	double DEF_G;
+	double Area = 1;
+	double R = gSTIFF_BDIA / 2;
+	double Izz, Iyy, J;
+	DEF_G = gDEF_E / (2 * (1 + gDEF_V));
+	Area = Pi * R * R ;
+
+	Izz = Pi * R * R * R * R / 4;
+	Iyy = Izz;
+	J = Pi * R * R * R * R / 2;
+	ea = gDEF_E * Area * gRIGID_MULTIPLIER;
+	eiz = gDEF_E * Izz * gRIGID_MULTIPLIER;
+	eiy = gDEF_E * Iyy * gRIGID_MULTIPLIER;
+	gj = DEF_G * J * gRIGID_MULTIPLIER;
+}
+
 
 IMPLEMENT_DYNAMIC( E_Object3, CObject )
 //----------------------------------------------------------------------------
@@ -21383,11 +21415,118 @@ return (vT);
 }
 
 
+int E_ObjectR::noDof()
+{
+	return(6);
+}
+
+int E_ObjectR::MaxBW()
+{
+	int i;
+	int j;
+
+	int MaxDof;
+	int MinDof;
+	MaxDof = 0;
+	MinDof = 99999999;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		for (j = 0; j < noDof(); j++)
+		{
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] > MaxDof))
+			{
+				MaxDof = pVertex[i]->dof[j];
+			}
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] < MinDof))
+			{
+				MinDof = pVertex[i]->dof[j];
+			}
+		}
+	}
+	int iRC;
+	if (MaxDof - MinDof < 0)
+	{
+		iRC = 0;
+	}
+	else
+	{
+		iRC = MaxDof - MinDof;
+	}
+	return (iRC);
+}
+
+Vec<int> E_ObjectR::GetSteerVec3d()
+{
+	int i;
+	int iOff = 0;
+	Vec<int> V(6*iNoNodes);
+	for (i = 0; i < iNoNodes; i++)
+	{
+		*V.nn(1 + iOff) = pVertex[i]->dof[0];
+		*V.nn(2 + iOff) = pVertex[i]->dof[1];
+		*V.nn(3 + iOff) = pVertex[i]->dof[2];
+		*V.nn(4 + iOff) = pVertex[i]->dof[3];
+		*V.nn(5 + iOff) = pVertex[i]->dof[4];
+		*V.nn(6 + iOff) = pVertex[i]->dof[5];
+		iOff += 6;
+	}
+
+
+
+	return(V);
+}
 
 
 
 
-
+Mat E_ObjectR::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr)
+{
+	Mat KM(6*iNoNodes, 6*iNoNodes);
+	KM.MakeZero();
+	Mat KMB;
+	Node* pNDs[200];
+	Vec<int> Steer(12);
+	*Steer.nn(1) = 1;
+	*Steer.nn(2) = 2;
+	*Steer.nn(3) = 3;
+	*Steer.nn(4) = 4;
+	*Steer.nn(5) = 5;
+	*Steer.nn(6) = 6;
+	//second node
+	*Steer.nn(7) = 7;
+	*Steer.nn(8) = 8;
+	*Steer.nn(9) = 9;
+	*Steer.nn(10) = 10;
+	*Steer.nn(11) = 11;
+	*Steer.nn(12) = 12;
+	int i,j,k;
+	//virtual void Create(Node * pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object * Parrent, Property * inPr);
+	E_Object2B* pEB = new E_Object2B();
+	pNDs[0] = pVertex[0];
+	for (k = 1; k < iNoNodes; k++)
+	{
+		pNDs[k] = pVertex[0];
+		pEB->Create(pVertex, k, 1, 21, -1, -1, 2, nullptr, nullptr);
+		KMB = pEB->GetStiffMat(PropsT, MatT, 2, bOpt);
+		for (i = 1; i <= 12; i++)
+		{
+			for (j = 1; j <= 12; j++)
+			{
+				*KM.mn(*Steer.nn(i), *Steer.nn(j)) += *KMB.mn(i, j);
+			}
+		}
+		KMB.clear();
+		*Steer.nn(7) += 6;
+		*Steer.nn(8) += 6;
+		*Steer.nn(9) += 6;
+		*Steer.nn(10) += 6;
+		*Steer.nn(11) += 6;
+		*Steer.nn(12) += 6;
+	}
+	Steer.clear();
+	delete (pEB);
+	return (KM);
+}
 
 IMPLEMENT_DYNAMIC( E_ObjectR2, CObject )
 
@@ -60729,24 +60868,27 @@ CString G_ObjectDUM::GetName()
 int G_ObjectDUM::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
-	sVar[iNo++] = "double gPT_SIZE";
-	sVar[iNo++] = "double gND_SIZE";
-	sVar[iNo++] = "double gLM_SIZE";
-	sVar[iNo++] = "double gEL_SIZE";
-	sVar[iNo++] = "double gED_SIZE";
-	sVar[iNo++] = "double gFC_SIZE";
-	sVar[iNo++] = "double gWP_SIZE";
-	sVar[iNo++] = "double gBM_SIZE";
-	sVar[iNo++] = "double gTXT_SIZE";
-	sVar[iNo++] = "double gDIM_FILSZ";
-	sVar[iNo++] = "double gDIM_OFFSZ";
-	sVar[iNo++] = "double gTXT_HEIGHT";
-	sVar[iNo++] = "double gDIM_RADSZ";
-	sVar[iNo++] = "double gDIM_CVORD";
-	sVar[iNo++] = "double gDIM_SIZE";
-	sVar[iNo++] = "double gDRILL_KS";
-	sVar[iNo++] = "double gRIGID_MULTIPLIER";
-
+	sVar[iNo++] = "gPT_SIZE";
+	sVar[iNo++] = "gND_SIZE";
+	sVar[iNo++] = "gLM_SIZE";
+	sVar[iNo++] = "gEL_SIZE";
+	sVar[iNo++] = "gED_SIZE";
+	sVar[iNo++] = "gFC_SIZE";
+	sVar[iNo++] = "gWP_SIZE";
+	sVar[iNo++] = "gBM_SIZE";
+	sVar[iNo++] = "gTXT_SIZE";
+	sVar[iNo++] = "gDIM_FILSZ";
+	sVar[iNo++] = "gDIM_OFFSZ";
+	sVar[iNo++] = "gTXT_HEIGHT";
+	sVar[iNo++] = "gDIM_RADSZ";
+	sVar[iNo++] = "gDIM_CVORD";
+	sVar[iNo++] = "gDIM_SIZE";
+	sVar[iNo++] = "gDRILL_KS";
+	sVar[iNo++] = "gRIGID_MULTIPLIER";
+	sVar[iNo++] = "gVSTIFF_KS, K for Restraints";
+	sVar[iNo++] = "gDEF_E Defualt Material E";
+	sVar[iNo++] = "gDEF_V Defualt Material v";
+	sVar[iNo++] = "gSTIFF_BDIA Stiff Beam Dia";
 	return iNo;
 }
 
@@ -60791,6 +60933,15 @@ int G_ObjectDUM::GetVarValues(CString sVar[])
 	sprintf_s(S1, "%g", gRIGID_MULTIPLIER);
 	sVar[iNo++] = S1;
 
+	sprintf_s(S1, "%g", gVSTIFF_KS);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDEF_E);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDEF_V);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gSTIFF_BDIA);
+	sVar[iNo++] = S1;
+
 	return (iNo);
 }
 
@@ -60814,4 +60965,8 @@ void G_ObjectDUM::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 	gDIM_SIZE = atof(sVar[iC++]);
 	gDRILL_KS = atof(sVar[iC++]);
 	gRIGID_MULTIPLIER = atof(sVar[iC++]);
+	gVSTIFF_KS = atof(sVar[iC++]);
+	gDEF_E = atof(sVar[iC++]);
+	gDEF_V = atof(sVar[iC++]);
+	gSTIFF_BDIA = atof(sVar[iC++]);
 }

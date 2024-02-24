@@ -3458,6 +3458,7 @@ CString GetName();
 virtual int GetVarHeaders(CString sVar[]);
 virtual int GetVarValues(CString sVar[]);
 virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+void CalcDefStiffProps(double &ea, double& eiy, double& eiz, double& gj);
 };
 
 
@@ -3827,6 +3828,12 @@ public:
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
    virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+   //24/02/2024 PSEUDO RBE2 REPRESENTED WITH STIFF BARS
+   virtual int noDof();
+   virtual int MaxBW();
+   virtual Vec<int> GetSteerVec3d();
+   virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
+
 };
 
 
