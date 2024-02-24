@@ -21471,8 +21471,6 @@ Vec<int> E_ObjectR::GetSteerVec3d()
 		iOff += 6;
 	}
 
-
-
 	return(V);
 }
 
@@ -21499,19 +21497,22 @@ Mat E_ObjectR::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& b
 	*Steer.nn(10) = 10;
 	*Steer.nn(11) = 11;
 	*Steer.nn(12) = 12;
-	int i,j,k;
+	double a, b;
+	int i,j, k;
 	//virtual void Create(Node * pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object * Parrent, Property * inPr);
 	E_Object2B* pEB = new E_Object2B();
 	pNDs[0] = pVertex[0];
 	for (k = 1; k < iNoNodes; k++)
 	{
-		pNDs[k] = pVertex[0];
-		pEB->Create(pVertex, k, 1, 21, -1, -1, 2, nullptr, nullptr);
-		KMB = pEB->GetStiffMat(PropsT, MatT, 2, bOpt);
+		pNDs[1] = pVertex[k];
+		pEB->Create(pNDs, k, 1, 21, 2, -1, 2, nullptr, nullptr);
+		KMB = pEB->GetStiffMat(PropsT, MatT, 0, bOpt);
 		for (i = 1; i <= 12; i++)
 		{
 			for (j = 1; j <= 12; j++)
 			{
+				a = *Steer.nn(i);
+				b = *Steer.nn(j);
 				*KM.mn(*Steer.nn(i), *Steer.nn(j)) += *KMB.mn(i, j);
 			}
 		}
