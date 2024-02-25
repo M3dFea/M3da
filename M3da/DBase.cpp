@@ -1230,6 +1230,8 @@ void DBase::Serialize(CArchive& ar)
 		ar << gDEF_E;
 		ar << gDEF_V;
 		ar << gSTIFF_BDIA;
+		ar << gDEF_CTE;
+		ar << gDEF_THERM_LNK;
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
 		ar<<DB_ObjectCount;
@@ -1313,6 +1315,8 @@ void DBase::Serialize(CArchive& ar)
 			ar >> gDEF_E;
 			ar >> gDEF_V;
 			ar >> gSTIFF_BDIA;
+			ar >> gDEF_CTE;
+			ar >> gDEF_THERM_LNK;
 		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);

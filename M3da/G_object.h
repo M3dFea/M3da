@@ -3802,10 +3802,11 @@ class E_ObjectR : public E_Object
 DECLARE_DYNAMIC( E_ObjectR)
 public:
    Node* pVertex[200];
-
+   Vec<double> dTemps; //Thermal strains
    int iDOF;
    double dALPHA;
    E_ObjectR();
+   ~E_ObjectR();
    virtual void Create(Node* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
    virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
@@ -3833,6 +3834,7 @@ public:
    virtual int MaxBW();
    virtual Vec<int> GetSteerVec3d();
    virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
+   virtual Mat GetThermalStrainMat3d(PropTable* PropsT, MatTable* MatT, double dT);
 
 };
 

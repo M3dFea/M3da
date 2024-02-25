@@ -24,6 +24,8 @@ double gVSTIFF_KS = 1.0e10;        //Big K value for restraints
 double gDEF_E = 70.0e9;            //defualt material youngs mod
 double gDEF_V = 0.33;              //Poisson ratio
 double gSTIFF_BDIA = 0.1;          //stiff beam dia used for out psuedo RBE2
+double gDEF_CTE = 23.0e-6;
+double gDEF_THERM_LNK = 1.0e9;
 //END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -20995,9 +20997,13 @@ G_Object();
 iDOF=DOF_ALL;
 PID=999;
 PIDunv=999;
-dALPHA=0;
+dALPHA = gDEF_CTE;;
 }
 
+E_ObjectR::~E_ObjectR()
+{
+	dTemps.clear();
+}
 void E_ObjectR::Create(Node* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
@@ -21007,6 +21013,7 @@ for (i=0;i<iNoNodes;i++)
     pVertex[i] = pInVertex[i];
    }
 iDOF=DOF_ALL;
+dALPHA = gDEF_CTE;;
 }
 
 void E_ObjectR::RepNodeInEl(Node* pThis,Node* pWith)
@@ -21506,7 +21513,7 @@ Mat E_ObjectR::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& b
 	{
 		pNDs[1] = pVertex[k];
 		pEB->Create(pNDs, k, 1, 21, 2, -1, 2, nullptr, nullptr);
-		KMB = pEB->GetStiffMat(PropsT, MatT, 0, bOpt);
+		KMB = pEB->GetStiffMat(PropsT, MatT, 2, bErr);
 		for (i = 1; i <= 12; i++)
 		{
 			for (j = 1; j <= 12; j++)
@@ -21527,6 +21534,44 @@ Mat E_ObjectR::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& b
 	Steer.clear();
 	delete (pEB);
 	return (KM);
+}
+
+
+Mat E_ObjectR::GetThermalStrainMat3d(PropTable* PropsT, MatTable* MatT, double dT)
+{
+	int k;
+	double L = 1;
+	double Area = 1;
+	C3dMatrix M3;
+	C3dVector vFl;
+	C3dVector vFg;
+	Node* pNDs[200];
+	Mat FS(iNoNodes,3);
+	Area = Pi * gSTIFF_BDIA * gSTIFF_BDIA / 4;
+	//gDEF_CTE = atof(sVar[iC++]);
+	double dF;
+	E_Object2B* pEB = new E_Object2B();
+	pNDs[0] = pVertex[0];
+	for (k = 1; k < iNoNodes; k++)
+	{
+		pNDs[1] = pVertex[k];
+		pEB->Create(pNDs, k, 1, 21, 2, -1, 2, nullptr, nullptr);
+		M3 = pEB->GetElSys();
+		M3.Transpose();
+		L = pEB->getLen();
+		dF = Area * gDEF_E * gDEF_CTE * dT * gRIGID_MULTIPLIER;
+		vFl.x = dF; vFl.y = 0; vFl.z = 0;
+		vFg = M3 * vFl;
+		*FS.mn(1, 1) += -vFg.x;
+		*FS.mn(1, 2) += -vFg.y;
+		*FS.mn(1, 3) += -vFg.z;
+		*FS.mn(k + 1, 1) += vFg.x;
+		*FS.mn(k + 1, 2) += vFg.y;
+		*FS.mn(k + 1, 3) += vFg.z;
+		//dTemps = dF;
+	}
+	delete (pEB);
+	return (FS);
 }
 
 IMPLEMENT_DYNAMIC( E_ObjectR2, CObject )
@@ -26700,22 +26745,26 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
   int i,j,k;
   BOOL bOff;
   C3dVector vOff;
-  if ((PropsT==NULL) || (MatT==NULL))
+  C3dVector vFl;
+  C3dVector vFg;
+  C3dMatrix M3;
+
+  if (PropsT == nullptr || MatT == nullptr)
   {
-    outtext1("ERROR: Property or Mat Table Missing, Body Loads Not Calculated.");
+	  outtext1("ERROR: Property or Mat Table Missing, Body Loads Not Calculated.");
+	  return;
   }
-  else if (pTC!=NULL)
-  {
+
     pNext=(BCLD*) pTC->Head;
-    while (pNext!=NULL)
+    while (pNext!= nullptr)
     {
       if (pNext->iObjType==325)
       { 
-        Temperature* pT=(Temperature*) pNext;
-        double dT=pT->dV;
-        pE=(E_Object*) pNext->pObj;
-        if (pE!=NULL)
-        {
+          Temperature* pT=(Temperature*) pNext;
+          double dT=pT->dV;
+		  pE=(E_Object*) pNext->pObj;
+		  M3 = pE->GetElSys();
+		  M3.Transpose();
           vS=pE->GetSteerVec3d();
           TF=pE->GetThermalStrainMat3d(PropsT,MatT,dT);
           iNS=pE->iNoNodes;
@@ -26736,70 +26785,75 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
                 *FVec.nn(iDD2)+=*TF.mn(i*iD+3,1);
             }
           }
-          else if ((pE->iType==91) || (pE->iType==94)) //this will be a 2DOF forcece vec
-          {                                                // needs to be transfoemed to 3d
-            C3dMatrix M3=pE->GetElSys();                   // The element transformation matrix
-            M3.Transpose();
-            C3dVector vFl;
-            C3dVector vFg;
+          else if ((pE->iType==91) || (pE->iType==94)) 
+          {                                              
             for (i=0;i<iNS;i++)                            //For each node 
             {
-              vFg.x=*TF.mn(i*2+1,1);
-              vFg.y=*TF.mn(i*2+2,1);
-              vFg.z=0;
-              vFl=M3*vFg;
+              vFl.x=*TF.mn(i*2+1,1);
+              vFl.y=*TF.mn(i*2+2,1);
+              vFl.z=0;
+              vFg=M3*vFl;
               int iDD0,iDD1,iDD2;
               iDD0=*vS.nn(i*iD+1);
               iDD1=*vS.nn(i*iD+2);
               iDD2=*vS.nn(i*iD+3);
               if (iDD0!=-1)
-                *FVec.nn(iDD0)+=vFl.x;
+                *FVec.nn(iDD0)+=vFg.x;
               if (iDD1!=-1)
-                *FVec.nn(iDD1)+=vFl.y;
+                *FVec.nn(iDD1)+=vFg.y;
               if (iDD2!=-1)
-                *FVec.nn(iDD2)+=vFl.z;
+                *FVec.nn(iDD2)+=vFg.z;
             }
           }
-          else if (pE->iType==11) //ROD ELEMENTS
+          else if (pE->iType==11)  //for rod and psuedo rbe2
           {                                               
-            C3dMatrix M3=pE->GetElSys();                   
-            M3.Transpose();
-            C3dVector vFl;
-            C3dVector vFg;
+
             for (i=0;i<iNS;i++)                            //For each node 
             {
-              vFg.x=*TF.mn(i+1,1);
-              vFg.y=0;
-              vFg.z=0;
-              vFl=M3*vFg;
-			  //NEED TODO OFFSET TRANSFORM
-
+              vFl.x=*TF.mn(i+1,1);
+              vFl.y=0;
+              vFl.z=0;
+              vFg=M3*vFl;
               int iDD0,iDD1,iDD2;
               iDD0=*vS.nn(i*iD+1);
               iDD1=*vS.nn(i*iD+2);
               iDD2=*vS.nn(i*iD+3);
               if (iDD0!=-1)
-                *FVec.nn(iDD0)+=vFl.x;
+                *FVec.nn(iDD0)+=vFg.x;
               if (iDD1!=-1)
-                *FVec.nn(iDD1)+=vFl.y;
+                *FVec.nn(iDD1)+=vFg.y;
               if (iDD2!=-1)
-                *FVec.nn(iDD2)+=vFl.z;
+                *FVec.nn(iDD2)+=vFg.z;
             }
           }
+		  else if (pE->iType == 122)  //for rod and psuedo rbe2
+		  {
+
+			  for (i = 0; i < iNS; i++)                            //For each node 
+			  {
+				  //For the PSEUDO RBE2 forces allready in element
+				  vFg.x = *TF.mn(i + 1, 1);
+				  vFg.y = *TF.mn(i + 1, 2);;
+				  vFg.z = *TF.mn(i + 1, 3);;
+
+				  int iDD0, iDD1, iDD2;
+				  iDD0 = *vS.nn(i * iD + 1);
+				  iDD1 = *vS.nn(i * iD + 2);
+				  iDD2 = *vS.nn(i * iD + 3);
+				  if (iDD0 != -1)
+					  *FVec.nn(iDD0) += vFg.x;
+				  if (iDD1 != -1)
+					  *FVec.nn(iDD1) += vFg.y;
+				  if (iDD2 != -1)
+					  *FVec.nn(iDD2) += vFg.z;
+			  }
+		  }
 		  else if (pE->iType == 21) //BEAM ELEMENT THERMAL LOAD IS AXIAL
 		  {
 			  E_Object2B* pB = (E_Object2B*)pE;
-			  if (pB->iLabel == 6)
-				  pB->iLabel = 6;
-			  C3dMatrix M3 = pE->GetElSys();
-			  M3.Transpose();
-			  C3dVector vFl;
-			  C3dVector vFg;
 			  Mat TOff;
 			  Mat vF(6,1);
 			  Mat vFoff(6, 1);
-
-			     //*************NODE 1*************
 			  for (i = 0; i < iNS; i++)
 			  {
 				  vF.MakeZero();
@@ -26828,15 +26882,14 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 						  *FVec.nn(iDD0) += *vFoff.mn(k, 1);
 				  }
 			  }
-			TOff.clear();
-			vF.clear();
-			vFoff.clear();
+			  TOff.clear();
+			  vF.clear();
+			  vFoff.clear();
 		  }
-        }
       }
     pNext=(BCLD*) pNext->next;
     }
-  }
+
 }
 
 void ME_Object::ZeroThermalStrains()
@@ -60890,6 +60943,10 @@ int G_ObjectDUM::GetVarHeaders(CString sVar[])
 	sVar[iNo++] = "gDEF_E Defualt Material E";
 	sVar[iNo++] = "gDEF_V Defualt Material v";
 	sVar[iNo++] = "gSTIFF_BDIA Stiff Beam Dia";
+	sVar[iNo++] = "gDEF_CTE Defualt Material CTE";
+	sVar[iNo++] = "gDEF_THERM_LNK Defualt Thermal Link Coef";
+
+
 	return iNo;
 }
 
@@ -60942,6 +60999,10 @@ int G_ObjectDUM::GetVarValues(CString sVar[])
 	sVar[iNo++] = S1;
 	sprintf_s(S1, "%g", gSTIFF_BDIA);
 	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDEF_CTE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDEF_THERM_LNK);
+	sVar[iNo++] = S1;
 
 	return (iNo);
 }
@@ -60970,4 +61031,6 @@ void G_ObjectDUM::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 	gDEF_E = atof(sVar[iC++]);
 	gDEF_V = atof(sVar[iC++]);
 	gSTIFF_BDIA = atof(sVar[iC++]);
+	gDEF_CTE = atof(sVar[iC++]);
+	gDEF_THERM_LNK = atof(sVar[iC++]);
 }
