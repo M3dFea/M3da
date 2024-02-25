@@ -25438,6 +25438,8 @@ else
   Vec<int> Steer;
   FVec = GetForceVec(pLC,neq);
   GetPressureLoads(pLC,neq,FVec);
+  if (pTC != NULL)
+	  GetThermalLoads(PropsT, MatT, pTC, neq, FVec);    //Add Thermal loads
   int iBW=this->MaxBW();
 
   Vec <double> KM(neq*(iBW+1));
