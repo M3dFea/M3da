@@ -25481,7 +25481,7 @@ else
   ForcesRod(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
   ForcesBUSH(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
   ForcesBeam(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
-  Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
+  //Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
   RecoverShell(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
   Stresses3d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
   outtext1("FINISHED SOLUTION");
@@ -25805,7 +25805,7 @@ iStep=0;
 	ForcesBUSH(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
 	ForcesRod(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
 	ForcesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
-	Stresses2d(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
+	//Stresses2d(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
     RecoverShell(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
     Stresses3d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
   }
@@ -26786,23 +26786,38 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
             }
           }
           else if ((pE->iType==91) || (pE->iType==94)) 
-          {                                              
+          {    
+			Mat TOff(6, 6);
+			Mat vF(6, 1);
+			Mat vFoff;
             for (i=0;i<iNS;i++)                            //For each node 
             {
-              vFl.x=*TF.mn(i*2+1,1);
-              vFl.y=*TF.mn(i*2+2,1);
-              vFl.z=0;
-              vFg=M3*vFl;
-              int iDD0,iDD1,iDD2;
-              iDD0=*vS.nn(i*iD+1);
-              iDD1=*vS.nn(i*iD+2);
-              iDD2=*vS.nn(i*iD+3);
-              if (iDD0!=-1)
-                *FVec.nn(iDD0)+=vFg.x;
-              if (iDD1!=-1)
-                *FVec.nn(iDD1)+=vFg.y;
-              if (iDD2!=-1)
-                *FVec.nn(iDD2)+=vFg.z;
+				vFoff.clear();		//Offset
+				vF.MakeZero();		//Offset
+				TOff.MakeZero();	//Offset
+				vFl.Set(*TF.mn(i * 2 + 1, 1), *TF.mn(i * 2 + 2, 1), 0);
+				vFg=M3*vFl;
+				//NEED TODO OFFSET TRANSFORM
+				*vF.mn(1, 1) = vFg.x;
+				*vF.mn(2, 1) = vFg.y;
+				*vF.mn(3, 1) = vFg.z;
+				vFoff = vF;
+				bOff = pE->GetOffset(PropsT, i, vOff);
+				if (bOff) //Element has non zeror offsets
+				{
+					vFoff.clear();
+					pE->OffsetsTransform(TOff, vOff);
+					TOff.Transpose();
+					vFoff = TOff * (vF);
+				}
+
+				for (k = 1; k <= iD; k++)
+				{
+					int iDD0;
+					iDD0 = *vS.nn(i * iD + k);
+					if (iDD0 != -1)
+						*FVec.nn(iDD0) += *vFoff.mn(k, 1);
+				}
             }
           }
           else if (pE->iType==11)  //for rod and psuedo rbe2
@@ -26810,9 +26825,7 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 
             for (i=0;i<iNS;i++)                            //For each node 
             {
-              vFl.x=*TF.mn(i+1,1);
-              vFl.y=0;
-              vFl.z=0;
+			  vFl.Set(*TF.mn(i + 1, 1), 0, 0);
               vFg=M3*vFl;
               int iDD0,iDD1,iDD2;
               iDD0=*vS.nn(i*iD+1);
@@ -26832,10 +26845,7 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 			  for (i = 0; i < iNS; i++)                            //For each node 
 			  {
 				  //For the PSEUDO RBE2 forces allready in element
-				  vFg.x = *TF.mn(i + 1, 1);
-				  vFg.y = *TF.mn(i + 1, 2);;
-				  vFg.z = *TF.mn(i + 1, 3);;
-
+				  vFg.Set(*TF.mn(i + 1, 1), *TF.mn(i + 1, 2), *TF.mn(i + 1, 3));
 				  int iDD0, iDD1, iDD2;
 				  iDD0 = *vS.nn(i * iD + 1);
 				  iDD1 = *vS.nn(i * iD + 2);
@@ -26851,18 +26861,17 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 		  else if (pE->iType == 21) //BEAM ELEMENT THERMAL LOAD IS AXIAL
 		  {
 			  E_Object2B* pB = (E_Object2B*)pE;
-			  Mat TOff;
+			  Mat TOff(6,6);
 			  Mat vF(6,1);
-			  Mat vFoff(6, 1);
+			  Mat vFoff;
 			  for (i = 0; i < iNS; i++)
 			  {
+				  vFoff.clear();
 				  vF.MakeZero();
-				  vFoff.MakeZero();
-				  TOff.Create(6, 6);
+				  TOff.MakeZero();
 				  vFl.Set(*TF.mn(i + 1, 1), 0, 0);
 				  vFg = M3 * vFl;                    //IN GLONAL
 				  //NEED TODO OFFSET TRANSFORM
-				  vF.MakeZero();
 				  *vF.mn(1, 1) = vFg.x;
 				  *vF.mn(2, 1) = vFg.y;
 				  *vF.mn(3, 1) = vFg.z;
@@ -26870,6 +26879,7 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 				  bOff = pB->GetOffset(PropsT, i, vOff);
 				  if (bOff) //Element has non zeror offsets
 				  {
+					  vFoff.clear();
 					  pB->OffsetsTransform(TOff, vOff);
 					  TOff.Transpose();
 					  vFoff = TOff * (vF);
@@ -26881,6 +26891,7 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 					  if (iDD0 != -1)
 						  *FVec.nn(iDD0) += *vFoff.mn(k, 1);
 				  }
+				  
 			  }
 			  TOff.clear();
 			  vF.clear();
@@ -30773,7 +30784,7 @@ void ME_Object::RecoverShell(int iLC, CString sSol, CString sStep, PropTable* Pr
 			Mat BEE_BB = pElems[i]->BEE_BB_Recovery();
 			Mat STRAIN_BB = BEE_BB * DispEl;
 			//NOT SURE WHY I HAVE TO *-1!!??????????????????????????????
-			//STRAIN_BB *= -1; Mystran gives -ve BB ???????????????
+			//STRAIN_BB *= -1; //Mystran gives -ve BB ???????????????
 			*STRAIN_BB.mn(3, 1) *= 0.5;
 			Mat STRESS_BB = MAT_BB * STRAIN_BB;
 			//************ End of Bending Components *****************
