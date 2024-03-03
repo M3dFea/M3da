@@ -17483,6 +17483,7 @@ void NASReadSPC(NasCard& oC,
 	            ME_Object* pM,
 	            int iF)
 {
+	char S1[200];
 	cLinkedListB* pBCSET = nullptr;
 	Node* pN = nullptr;
 	int iID;
@@ -17497,13 +17498,14 @@ void NASReadSPC(NasCard& oC,
 	iID = atoi(oC.GetField(0));
 	iND = atoi(oC.GetField(1));
 	sDOF = oC.GetField(2);
-	dEnf = atof(oC.GetField(3));
+	dEnf = atofNAS(oC.GetField(3));
 
 	//if it exists get the BC Set else create one
 	pBCSET = pM->GetBC(iID);
 	if (pBCSET == nullptr)
 	{
-		iSet = pM->CreateBC(iID, "BC SET :");
+		sprintf_s(S1, "BC SET : %i", iID);
+		iSet = pM->CreateBC(iID, S1);
 		pBCSET = pM->GetBC(iID);
 	}
 	pN = pM->GetNode(iND);
@@ -17535,6 +17537,7 @@ void NASReadFORCE(NasCard& oC,
 	              ME_Object* pM,
 	              int iF)
 {
+	char S1[200];
 	cLinkedList* pLCSET = nullptr;
 	Node* pN = nullptr;
 	int iID;
@@ -17549,15 +17552,16 @@ void NASReadFORCE(NasCard& oC,
 	iID = atoi(oC.GetField(0));
 	iND = atoi(oC.GetField(1));
 	iCID = atoi(oC.GetField(2));
-	dS = atof(oC.GetField(3));
-	F.x = atof(oC.GetField(4));
-	F.y = atof(oC.GetField(5));
-	F.z = atof(oC.GetField(6));
+	dS = atofNAS(oC.GetField(3));
+	F.x = atofNAS(oC.GetField(4));
+	F.y = atofNAS(oC.GetField(5));
+	F.z = atofNAS(oC.GetField(6));
 	//if it exists get the BC Set else create one
 	pLCSET = pM->GetLC(iID);
 	if (pLCSET == nullptr)
 	{
-		iSet = pM->CreateLC(iID, "LC SET :");
+		sprintf_s(S1, "LC SET : %i", iID);
+		iSet = pM->CreateLC(iID, S1);
 		pLCSET = pM->GetLC(iID);
 	}
 	pN = pM->GetNode(iND);
@@ -17580,6 +17584,7 @@ void NASReadMOMENT(NasCard& oC,
 	ME_Object* pM,
 	int iF)
 {
+	char S1[200];
 	cLinkedList* pLCSET = nullptr;
 	Node* pN = nullptr;
 	int iID;
@@ -17594,15 +17599,16 @@ void NASReadMOMENT(NasCard& oC,
 	iID = atoi(oC.GetField(0));
 	iND = atoi(oC.GetField(1));
 	iCID = atoi(oC.GetField(2));
-	dS = atof(oC.GetField(3));
-	F.x = atof(oC.GetField(4));
-	F.y = atof(oC.GetField(5));
-	F.z = atof(oC.GetField(6));
+	dS = atofNAS(oC.GetField(3));
+	F.x = atofNAS(oC.GetField(4));
+	F.y = atofNAS(oC.GetField(5));
+	F.z = atofNAS(oC.GetField(6));
 	//if it exists get the BC Set else create one
 	pLCSET = pM->GetLC(iID);
 	if (pLCSET == nullptr)
 	{
-		iSet = pM->CreateLC(iID, "LC SET :");
+		sprintf_s(S1, "LC SET : %i", iID);
+		iSet = pM->CreateLC(iID, S1);
 		pLCSET = pM->GetLC(iID);
 	}
 	pN = pM->GetNode(iND);
@@ -17626,6 +17632,7 @@ void NASReadPLOAD(NasCard& oC,
 	ME_Object* pM,
 	int iF)
 {
+	char S1[200];
 	cLinkedList* pLCSET = nullptr;
 	E_Object* pE = nullptr;
 	int iID;
@@ -17637,7 +17644,7 @@ void NASReadPLOAD(NasCard& oC,
 	double dPr = 0;
 	C3dVector vP;
 	iID = atoi(oC.GetField(0));
-	dPr = atof(oC.GetField(1));
+	dPr = atofNAS(oC.GetField(1));
 	iN1 = atoi(oC.GetField(2));
 	iN2 = atoi(oC.GetField(3));
 	iN3 = atoi(oC.GetField(4));
@@ -17646,7 +17653,8 @@ void NASReadPLOAD(NasCard& oC,
 	pLCSET = pM->GetLC(iID);
 	if (pLCSET == nullptr)
 	{
-		iSet = pM->CreateLC(iID, "LC SET :");
+		sprintf_s(S1, "LC SET : %i", iID);
+		iSet = pM->CreateLC(iID, S1);
 		pLCSET = pM->GetLC(iID);
 	}
 	//pE=pM->FindElement()
