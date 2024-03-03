@@ -8,6 +8,7 @@
 #include <fstream>  // Include the necessary header file
 #include <string>
 #include <atlstr.h>
+
 #pragma warning(disable:4477)
 BOOL gORTHO;
 BOOL gDSP_CPTS = FALSE;
@@ -15401,7 +15402,7 @@ if (this->pCurrentMesh!=NULL)
     {
     fprintf(pFile2,"%s\n","$**********************************************************");
     fprintf(pFile2,"%s\n","$      NASTRAN DECK EXPORTED FROM M3D");
-    fprintf(pFile2,"%s\n","$      VERSION 6.3");
+    fprintf(pFile2,"%s\n","$      VERSION 7.2");
     fprintf(pFile2,"%s\n","$      www.M3dFea.com");
     fprintf(pFile2,"%s %i:%i:%i\n","$      DATE",Day,Mon,Year);
     fprintf(pFile2,"%s %i:%i:%i\n","$      TIME",Hour,Min,Sec);
@@ -17478,6 +17479,192 @@ pR->iFile = iF;
 return (pR);
 }
 
+void NASReadSPC(NasCard& oC,
+	            ME_Object* pM,
+	            int iF)
+{
+	cLinkedListB* pBCSET = nullptr;
+	Node* pN = nullptr;
+	int iID;
+	int iND;
+	double dEnf;
+	int iSet;
+	CString sDOF;
+	BOOL xon, yon, zon, rxon, ryon, rzon;
+	xon = FALSE; yon = FALSE; zon = FALSE;
+	rxon = FALSE; ryon = FALSE; rzon = FALSE;
+
+	iID = atoi(oC.GetField(0));
+	iND = atoi(oC.GetField(1));
+	sDOF = oC.GetField(2);
+	dEnf = atof(oC.GetField(3));
+
+	//if it exists get the BC Set else create one
+	pBCSET = pM->GetBC(iID);
+	if (pBCSET == nullptr)
+	{
+		iSet = pM->CreateBC(iID, "BC SET :");
+		pBCSET = pM->GetBC(iID);
+	}
+	pN = pM->GetNode(iND);
+	if ((pN != nullptr) && (pBCSET != nullptr))
+	{
+		if (sDOF.Find("1", 0))
+			xon = TRUE;
+		if (sDOF.Find("2", 0))
+			yon = TRUE;
+		if (sDOF.Find("3", 0))
+			zon = TRUE;
+		if (sDOF.Find("4", 0))
+			rxon = TRUE;
+		if (sDOF.Find("5", 0))
+			ryon = TRUE;
+		if (sDOF.Find("6", 0))
+			rzon = TRUE;
+		G_Object* cAddedR = pM->AddRestraint(pN, xon, yon, zon, rxon, ryon, rzon, iID);
+
+	}
+	else
+	{
+		outtext1("ERROR: In Creating SPC.");
+		return;
+	}	
+}
+
+void NASReadFORCE(NasCard& oC,
+	              ME_Object* pM,
+	              int iF)
+{
+	cLinkedList* pLCSET = nullptr;
+	Node* pN = nullptr;
+	int iID;
+	int iND;
+	int iCID = 0;
+	double dS = 0;
+	C3dMatrix TMat;
+	TMat.MakeUnit();
+	C3dVector F;
+	F.Set(0, 0, 0);
+	int iSet;
+	iID = atoi(oC.GetField(0));
+	iND = atoi(oC.GetField(1));
+	iCID = atoi(oC.GetField(2));
+	dS = atof(oC.GetField(3));
+	F.x = atof(oC.GetField(4));
+	F.y = atof(oC.GetField(5));
+	F.z = atof(oC.GetField(6));
+	//if it exists get the BC Set else create one
+	pLCSET = pM->GetLC(iID);
+	if (pLCSET == nullptr)
+	{
+		iSet = pM->CreateLC(iID, "LC SET :");
+		pLCSET = pM->GetLC(iID);
+	}
+	pN = pM->GetNode(iND);
+	if ((pN != nullptr) && (pLCSET != nullptr))
+	{
+		if (pN->OutSys != 0)
+		{
+			TMat = pM->GetNodalSys(pN);
+		}
+		G_Object* cAddedF = pM->AddForce((Node*)pN, TMat * F, iID);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating FORCE.");
+		return;
+	}
+}
+
+void NASReadMOMENT(NasCard& oC,
+	ME_Object* pM,
+	int iF)
+{
+	cLinkedList* pLCSET = nullptr;
+	Node* pN = nullptr;
+	int iID;
+	int iND;
+	int iCID = 0;
+	double dS = 0;
+	C3dMatrix TMat;
+	TMat.MakeUnit();
+	C3dVector F;
+	F.Set(0, 0, 0);
+	int iSet;
+	iID = atoi(oC.GetField(0));
+	iND = atoi(oC.GetField(1));
+	iCID = atoi(oC.GetField(2));
+	dS = atof(oC.GetField(3));
+	F.x = atof(oC.GetField(4));
+	F.y = atof(oC.GetField(5));
+	F.z = atof(oC.GetField(6));
+	//if it exists get the BC Set else create one
+	pLCSET = pM->GetLC(iID);
+	if (pLCSET == nullptr)
+	{
+		iSet = pM->CreateLC(iID, "LC SET :");
+		pLCSET = pM->GetLC(iID);
+	}
+	pN = pM->GetNode(iND);
+	if ((pN != nullptr) && (pLCSET != nullptr))
+	{
+		if (pN->OutSys != 0)
+		{
+			TMat = pM->GetNodalSys(pN);
+		}
+		G_Object* cAddedF = pM->AddMoment((Node*)pN, TMat * F, iID);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating MOMENT.");
+		return;
+	}
+}
+
+
+void NASReadPLOAD(NasCard& oC,
+	ME_Object* pM,
+	int iF)
+{
+	cLinkedList* pLCSET = nullptr;
+	E_Object* pE = nullptr;
+	int iID;
+	int iN1 = -1;
+	int iN2 = -1;
+	int iN3 = -1;
+	int iN4 = -1;
+	int iSet;
+	double dPr = 0;
+	C3dVector vP;
+	iID = atoi(oC.GetField(0));
+	dPr = atof(oC.GetField(1));
+	iN1 = atoi(oC.GetField(2));
+	iN2 = atoi(oC.GetField(3));
+	iN3 = atoi(oC.GetField(4));
+	iN4 = atoi(oC.GetField(5));
+	//if it exists get the BC Set else create one
+	pLCSET = pM->GetLC(iID);
+	if (pLCSET == nullptr)
+	{
+		iSet = pM->CreateLC(iID, "LC SET :");
+		pLCSET = pM->GetLC(iID);
+	}
+	//pE=pM->FindElement()
+	pE = pM->GetShellFromNodes(iN1, iN2, iN3);
+	if ((pE != nullptr) && (pLCSET != nullptr))
+	{
+		vP = pE->Get_Normal();
+		vP *= dPr;
+		G_Object* PLoad = pM->AddPressure((E_Object*)pE, vP, iID);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating PLOAD.");
+		return;
+	}
+}
+
+
 
 void NASReadPSHELL(NasCard& oC,
                    PropTable* pM,
@@ -18233,6 +18420,8 @@ else if ((s8 == "SPCD    ") || (s8 == "SPCD*   "))
   brc = TRUE;
 else if ((s8 == "RBE2    ") || (s8 == "RBE2*   ")) 
   brc = TRUE;
+else if ((s8 == "SPC     ") || (s8 == "SPC*    "))
+brc = TRUE;
 return (brc);
 };
 
@@ -18325,6 +18514,14 @@ else if ((s8 == "CBAR    ") || (s8 == "CBAR*   "))
   brc = TRUE;
 else if ((s8 == "CBEAM   ") || (s8 == "CBEAM*  ")) 
   brc = TRUE;
+else if ((s8 == "SPC     ") || (s8 == "SPC*    "))
+brc = TRUE;
+else if ((s8 == "FORCE   ") || (s8 == "FORCE*  "))
+brc = TRUE;
+else if ((s8 == "MOMENT  ") || (s8 == "MOMENT* "))
+brc = TRUE;
+else if ((s8 == "PLOAD   ") || (s8 == "PLOAD*  "))
+brc = TRUE;
 return (brc);
 };
 
@@ -18595,7 +18792,15 @@ if (pFile!=NULL)
 		 vUP=CalcBeamUpVec(EB,iONID,pUp);
          SetBeamOffs(EB,OffA,OffB);
          EB->vUp=vUP;
-	  }
+	  }  //LOADS AND BOUNDARY CONDITIONS
+	  else if ((sKwrd.Find("SPC") == 0))
+		 NASReadSPC(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("FORCE") == 0))
+		  NASReadFORCE(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("MOMENT") == 0))
+		  NASReadMOMENT(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("PLOAD") == 0))
+		  NASReadPLOAD(oCard, pME, iCurFileNo);
 
     }
     datline = datlineNxt;

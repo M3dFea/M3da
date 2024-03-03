@@ -12023,10 +12023,10 @@ Mat E_Object2::GetSpringTMat(CoordSys* pCSYS)
 Mat E_Object2::GetThermMat(PropTable* PropsT,MatTable* MatT)
 {
   char S1[80];
-  double K;
+  double K = 0;
   int iDof=1;
   Property* pS=PropsT->GetItem(this->PID);
-  if (pS!=NULL)
+  if (pS!=nullptr)
   {
     if (pS->iType==136) 
     {
@@ -21462,6 +21462,20 @@ int E_ObjectR::MaxBW()
 	return (iRC);
 }
 
+Vec<int> E_ObjectR::GetSteerVec1d()
+{
+	int i;
+	int iOff = 0;
+	Vec<int> V(1 * iNoNodes);
+	for (i = 0; i < iNoNodes; i++)
+	{
+		*V.nn(1 + i) = pVertex[i]->dof[0];
+	}
+
+	return(V);
+}
+
+
 Vec<int> E_ObjectR::GetSteerVec3d()
 {
 	int i;
@@ -21482,7 +21496,41 @@ Vec<int> E_ObjectR::GetSteerVec3d()
 }
 
 
+Mat E_ObjectR::GetThermMat(PropTable* PropsT, MatTable* MatT)
+{
+	Mat KM(1 * iNoNodes, 1 * iNoNodes);
+	KM.MakeZero();
+	Mat KMB(2,2);
+	Node* pNDs[200];
+	Vec<int> Steer(12);
+	*Steer.nn(1) = 1;
+	*Steer.nn(2) = 2;
 
+	double a, b;
+	int i, j, k;
+	//virtual void Create(Node * pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object * Parrent, Property * inPr);
+	*KMB.mn(1, 1) = gDEF_THERM_LNK;
+	*KMB.mn(2, 1) = -gDEF_THERM_LNK;
+	*KMB.mn(1, 2) = -gDEF_THERM_LNK;
+	*KMB.mn(2, 2) = gDEF_THERM_LNK;
+	for (k = 1; k < iNoNodes; k++)
+	{	
+		for (i = 1; i <= 2; i++)
+		{
+			for (j = 1; j <= 2; j++)
+			{
+				a = *Steer.nn(i);
+				b = *Steer.nn(j);
+				*KM.mn(*Steer.nn(i), *Steer.nn(j)) += *KMB.mn(i, j);
+			}
+		}
+		*Steer.nn(2) += 1;
+	}
+	//KM.diag();
+	Steer.clear();
+	KMB.clear();
+	return (KM);
+}
 
 Mat E_ObjectR::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr)
 {
@@ -21572,6 +21620,26 @@ Mat E_ObjectR::GetThermalStrainMat3d(PropTable* PropsT, MatTable* MatT, double d
 	}
 	delete (pEB);
 	return (FS);
+}
+
+double E_ObjectR::GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp)
+{
+	double dTemp = 0;
+	int iDOFID;
+	double T;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		T = 0;;
+		iDOFID = this->pVertex[j]->dof[iDof];
+		if (iDOFID > 0)
+		{
+			T = *Disp.nn(iDOFID);
+		}
+		dTemp += T;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
 }
 
 IMPLEMENT_DYNAMIC( E_ObjectR2, CObject )
@@ -28684,6 +28752,28 @@ for (iCnt = 0; iCnt < iElNo;iCnt++)
 return (pRetPt);
 }
 	
+E_Object* ME_Object::GetShellFromNodes(int n1, int n2, int n3)
+{
+	int iCnt;
+	BOOL bIS = FALSE;
+	E_Object* pRetPt = nullptr;
+
+	for (iCnt = 0; iCnt < iElNo; iCnt++)
+	{
+		if ((pElems[iCnt]->iType == 92) ||
+			(pElems[iCnt]->iType == 94))
+		{
+			if ((pElems[iCnt]->NodeInEl(this->GetNode(n1))) &&
+				(pElems[iCnt]->NodeInEl(this->GetNode(n2))) &&
+				(pElems[iCnt]->NodeInEl(this->GetNode(n3))))
+			{
+				pRetPt = pElems[iCnt];
+				break;
+			}
+		}
+	}
+	return (pRetPt);
+}
 
 // contour map
 //float Texture17[30][3] =

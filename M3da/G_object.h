@@ -3832,9 +3832,12 @@ public:
    //24/02/2024 PSEUDO RBE2 REPRESENTED WITH STIFF BARS
    virtual int noDof();
    virtual int MaxBW();
+   virtual Vec<int> GetSteerVec1d();
    virtual Vec<int> GetSteerVec3d();
+   virtual Mat GetThermMat(PropTable* PropsT, MatTable* MatT);
    virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
    virtual Mat GetThermalStrainMat3d(PropTable* PropsT, MatTable* MatT, double dT);
+   double GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp);
 
 };
 
@@ -4092,7 +4095,7 @@ public:
    void CoordToGlocal();
    void UpdatePropRef(PropTable* pT);
    ME_Object* GetMesh();    //GetPtr to this
-
+   E_Object* GetShellFromNodes(int n1, int n2, int n3);
    int NodeToGlobal(C3dVector &vRet,int iDef);
    void GlobalToLocal(C3dVector& vRet, int iDef);
    C3dVector CartToCylCYS(CoordSys* pCy, C3dVector pP);
