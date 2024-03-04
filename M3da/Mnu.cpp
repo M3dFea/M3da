@@ -9931,9 +9931,9 @@ if (CInMsg == "C") //Common Options
 if (iStat == 0)
 {
   cDBase->FILTER.Clear();
-  cDBase->FILTER.SetFilter(3);
+  cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("// PICK ELEMENTS");
+  outtext2("// PICK NODES");
   iStat=1;
 }
 if (iStat == 1)

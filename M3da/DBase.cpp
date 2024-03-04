@@ -2052,20 +2052,20 @@ else
 }
 }
 
-void DBase::AddTemperature(ObjList* Elements,double T)
+void DBase::AddTemperature(ObjList* Nodes,double T)
 {
 int i;
 if (pCurrentMesh->iCurTSet!=-1)
 {
-  for (i=0;i<Elements->iNo;i++)
+  for (i=0;i< Nodes->iNo;i++)
   { 
-   if (Elements->Objs[i]->iObjType==3)
+   if (Nodes->Objs[i]->iObjType==1)
    {
-     E_Object* pE = (E_Object*) Elements->Objs[i];
-     ME_Object* ME= (ME_Object*) pE->pParent;
+     Node* pN = (Node*)Nodes->Objs[i];
+     ME_Object* ME= (ME_Object*) pN->pParent;
      G_Object* cAddedT;
-     cAddedT = ME->AddTemperature((E_Object*) pE, T,-1);
-     if (cAddedT!=NULL)
+     cAddedT = ME->AddTemperature((Node*) pN, T,-1);
+     if (cAddedT!=nullptr)
      {
         Dsp_Add(cAddedT);
         AddTempGraphics(cAddedT);
@@ -15418,8 +15418,8 @@ if (this->pCurrentMesh!=NULL)
     MatT->ExportNAS(pFile2, iFile);
     fprintf(pFile2,"%s\n","$******************* PROPERTIES ***************************");
 	PropsT->ExportNAS(pFile2, iFile);
-
     pCurrentMesh->ExportNAS(pFile2,pSecs,iFile);
+	pCurrentMesh->ExportNAS_SETS(pFile2, pSecs, iFile);
 	if (iFile == -1)
 	   fprintf(pFile2, "%s\n", "ENDDATA");
     }
@@ -17672,6 +17672,42 @@ void NASReadPLOAD(NasCard& oC,
 	}
 }
 
+void NASReadTEMP(NasCard& oC,
+	             ME_Object* pM,
+	             int iF)
+{
+	char S1[200];
+	cLinkedList* pTSET = nullptr;
+	Node* pN = nullptr;
+	int iSID = -1;
+	int iID = -1;
+	int iSet = -1;
+	double dT = 0;
+	C3dVector vP;
+	iSID = atoi(oC.GetField(0));
+	iID = atoi(oC.GetField(1));
+	dT = atofNAS(oC.GetField(2));
+
+	//if it exists get the BC Set else create one
+	pTSET = pM->GetTSET(iSID);
+	if (pTSET == nullptr)
+	{
+		sprintf_s(S1, "TSET : %i", iID);
+		iSet = pM->CreateTSET(iID, S1);
+		pTSET = pM->GetLC(iID);
+	}
+	//pE=pM->FindElement()
+	pN = pM->GetNode(iID);
+	if ((pN != nullptr) && (pTSET != nullptr))
+	{
+		G_Object* pT = pM->AddTemperature(pN,dT, iSet);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating TEMP.");
+		return;
+	}
+}
 
 
 void NASReadPSHELL(NasCard& oC,
@@ -18530,6 +18566,8 @@ else if ((s8 == "MOMENT  ") || (s8 == "MOMENT* "))
 brc = TRUE;
 else if ((s8 == "PLOAD   ") || (s8 == "PLOAD*  "))
 brc = TRUE;
+else if ((s8 == "TEMP    ") || (s8 == "TEMP*   "))
+brc = TRUE;
 return (brc);
 };
 
@@ -18809,7 +18847,8 @@ if (pFile!=NULL)
 		  NASReadMOMENT(oCard, pME, iCurFileNo);
 	  else if ((sKwrd.Find("PLOAD") == 0))
 		  NASReadPLOAD(oCard, pME, iCurFileNo);
-
+	  else if ((sKwrd.Find("TEMP") == 0))
+		  NASReadTEMP(oCard, pME, iCurFileNo);
     }
     datline = datlineNxt;
   } 

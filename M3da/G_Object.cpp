@@ -6397,6 +6397,18 @@ double E_Object38::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   return(dTemp);
 }
 
+
+double E_Object38::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
 C3dVector E_Object38::Get_Centroid()
 {
 Mat fun;
@@ -7446,6 +7458,19 @@ double E_Object36::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   return(dTemp);
 }
 
+double E_Object36::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
+
 C3dVector E_Object36::Get_Centroid()
 {
 Mat fun;
@@ -8037,6 +8062,19 @@ double E_Object34::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   fun.clear();
   FunPnt.clear();
   return(dTemp);
+}
+
+
+double E_Object34::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
 }
 
 double E_Object34::TetCollapse()
@@ -9244,6 +9282,19 @@ double E_Object310::GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp)
 	FunPnt.clear();
 	return(dTemp);
 }
+
+double E_Object310::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
 
 double E_Object310::TetCollapse()
 {
@@ -10836,6 +10887,11 @@ double E_Object::QualAspect()
 double E_Object::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
 {
   return(0);
+}
+
+double E_Object::GetElCentriodVal()
+{
+	return(0);
 }
 
 double E_Object::GetPHI_SQ()
@@ -12540,6 +12596,20 @@ double E_Object2::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   dTemp /= iNoNodes;
   return(dTemp);
 }
+
+
+double E_Object2::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
 
 C3dVector E_Object2::Get_Centroid()
 {
@@ -15453,6 +15523,19 @@ double E_Object3::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   FunPnt.clear();
   return(dTemp);
 }
+
+double E_Object3::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
 
 C3dVector E_Object3::Get_Centroid()
 {
@@ -20401,6 +20484,20 @@ double E_Object4::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   return(dTemp);
 }
 
+
+double E_Object4::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
+
 C3dVector E_Object4::Get_Centroid()
 {
 Mat fun;
@@ -21641,6 +21738,21 @@ double E_ObjectR::GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp)
 	dTemp /= iNoNodes;
 	return(dTemp);
 }
+
+
+double E_ObjectR::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
+
 
 IMPLEMENT_DYNAMIC( E_ObjectR2, CObject )
 
@@ -24456,42 +24568,78 @@ for (i=0;i<iElNo;i++)
 	if ((iFileNo == -1) || (pElems[i]->iFile == iFileNo))
 	  pElems[i]->ExportNAS(pFile);
 }
-fprintf(pFile, "%s\n", "$********************LOADING*******************************");
-for (i=0;i<iNoLCs;i++)
-{
-  cLinkedList* pCLC = LCS[i];
-  fprintf(pFile, "$%s\n", pCLC->sTitle);
-  if (pCLC!=NULL)
-  {
-    BCLD* pNext;
-    pNext = (BCLD*) pCLC->Head;
-    while (pNext != NULL)
-    {
-	  if ((iFileNo == -1) || (pNext->iFile == iFileNo))
-         pNext->ExportNAS(pFile);	
-	  pNext = (BCLD*) pNext->next;
-    }
-  }
-}
-fprintf(pFile, "%s\n", "$********************RESTRAINTS*******************************");
-for (i = 0; i < iNoBCs; i++)
-{
-	cLinkedList* pCBC = BCS[i];
-	fprintf(pFile, "$%s\n", pCBC->sTitle);
-	if (pCBC != NULL)
-	{
-		BCLD* pNext;
-		pNext = (BCLD*)pCBC->Head;
-		while (pNext != NULL)
-		{
-			if ((iFileNo == -1) || (pNext->iFile == iFileNo))
-			  pNext->ExportNAS(pFile);
-			pNext = (BCLD*)pNext->next;
-		}
-	}
-}
+
 
 }
+
+void ME_Object::ExportNAS_SETS(FILE* pFile, SecTable* pS, int iFileNo)
+{
+	NEList*  LCS = new NEList(); 
+	NEList* BCS = new NEList(); ;
+	NEList* TS = new NEList(); ;
+	int i;
+	int iC = pSOLS->iCur;
+	Solution* pSOL = pSOLS->pSols[iC];
+	int iNoSteps = pSOL->iNo;
+	for (i = 0; i < iNoSteps; i++)
+	{
+		if ((pSOL->LS[i] > 0) && (!LCS->IsIn(pSOL->LS[i])))
+		{
+			    LCS->Add(pSOL->LS[i], 1);
+				cLinkedList* pCLC = GetLC(pSOL->LS[i]);
+				if (pCLC != nullptr)
+				{
+					fprintf(pFile, "$%s\n", pCLC->sTitle);
+					BCLD* pNext;
+					pNext = (BCLD*)pCLC->Head;
+					while (pNext != NULL)
+					{
+						if ((iFileNo == -1) || (pNext->iFile == iFileNo))
+							pNext->ExportNAS(pFile);
+						pNext = (BCLD*)pNext->next;
+					}
+				}
+		}
+		if ((pSOL->BS[i] > 0) && (!BCS->IsIn(pSOL->BS[i])))
+		{
+			    BCS->Add(pSOL->BS[i], 1);
+				cLinkedList* pCBC = GetBC(pSOL->BS[i]);
+				if (pCBC != nullptr)
+				{
+					fprintf(pFile, "$%s\n", pCBC->sTitle);
+					BCLD* pNext;
+					pNext = (BCLD*)pCBC->Head;
+					while (pNext != NULL)
+					{
+						if ((iFileNo == -1) || (pNext->iFile == iFileNo))
+							pNext->ExportNAS(pFile);
+						pNext = (BCLD*)pNext->next;
+					}
+				}
+		}
+		if ((pSOL->TS[i] > 0) && (!TS->IsIn(pSOL->TS[i])))
+		{
+			    TS->Add(pSOL->TS[i], 1);
+				cLinkedList* pTSET = GetTSET(pSOL->TS[i]);
+				if (pTSET != nullptr)
+				{
+					fprintf(pFile, "$%s\n", pTSET->sTitle);
+					BCLD* pNext;
+					pNext = (BCLD*)pTSET->Head;
+					while (pNext != NULL)
+					{
+						if ((iFileNo == -1) || (pNext->iFile == iFileNo))
+							pNext->ExportNAS(pFile);
+						pNext = (BCLD*)pNext->next;
+					}
+				}
+		}
+}
+	delete (LCS);
+	delete (BCS);
+	delete (TS);
+}
+
 
 ResSet* ME_Object::GetResultsSet(int iSet)
 {
@@ -25507,9 +25655,13 @@ else
   FVec = GetForceVec(pLC,neq);
   GetPressureLoads(pLC,neq,FVec);
   if (pTC != NULL)
-	  GetThermalLoads(PropsT, MatT, pTC, neq, FVec);    //Add Thermal loads
+  {
+	  //convert nodal temps to element centroid
+	  cLinkedList* pTC_ELEM;
+	  pTC_ELEM = TSetNodaltoElement(pTC, 0);
+	  GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
+  }
   int iBW=this->MaxBW();
-
   Vec <double> KM(neq*(iBW+1));
   LocalRes(neq,Steer,KM);
   outtext1("STARTING ASSY");
@@ -25750,7 +25902,7 @@ iStep=0;
   outtext1(s1);
   if (neq!=0)
   {
-    ZeroThermalStrains();
+    ZeroThermalStrains(0.0);
     BuildForceVector(PropsT,MatT,pLC,pTC,neq,FVec);
     bGo=TRUE;
   }
@@ -26469,7 +26621,7 @@ if (pSet!=NULL)
 return (pF);
 }
 
-G_Object* ME_Object::AddTemperature(E_Object* pInE,double inT,int inSetID)
+G_Object* ME_Object::AddTemperature(Node* pN,double inT,int inSetID)
 {
 cLinkedList* pSet=NULL;
 Temperature* pT=NULL;
@@ -26491,10 +26643,10 @@ else if (inSetID!=-1)
 if (pSet!=NULL)
 {
   pT=new Temperature();
-  pT->Create(pInE,
-	  	       pSet,
-	  	       inT,
-	 	         ID);
+  pT->Create(pN,
+	  	     pSet,
+	  	     inT,
+	 	     ID);
   pSet->Add(pT);
 }
 return (pT);
@@ -26704,8 +26856,14 @@ void ME_Object::BuildForceVector(PropTable* PropsT,MatTable* MatT,cLinkedList* p
     GetRotAccelLoads(PropsT, MatT, pLC, neq, FVec);      //Add In all Rotational Body loads
   }
   ReportFResultant(FVec);
-  if (pTC!=NULL)
-    GetThermalLoads(PropsT,MatT,pTC,neq,FVec);    //Add Thermal loads
+  if (pTC != NULL)
+  {
+	  //convert nodal temps to element centroid
+	  cLinkedList* pTC_ELEM;
+	  pTC_ELEM = TSetNodaltoElement(pTC, 0);
+	  GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
+  }
+
 }
 
 
@@ -26803,6 +26961,41 @@ void ME_Object::ReportQResultant(Vec<double> &QVec)
   outtext1(_T(s1));
 }
 
+//recently changed temperature to be on node as in nastran
+//we need element temps to cal force so creating the original 
+//element based temps
+cLinkedList* ME_Object::TSetNodaltoElement(cLinkedList* pTC_Nodal, double defT)
+{
+	double dT;
+	int i;
+	cLinkedList* pTC_Elem = new cLinkedList();
+	BCLD* pNext;
+	SetDefNodeTemp(defT); //just using dTemp to cal average element T from modes
+	pNext = (BCLD*)pTC_Nodal->Head;
+	while (pNext != nullptr)
+	{
+		if (pNext->iObjType == 325)
+		{
+			Temperature* pT = (Temperature*)pNext;
+			if (pT->pObj->iObjType == 1)
+			{
+				Node* pN = (Node*)pT->pObj;
+				pN->dTemp = pT->dV;
+			}
+		}
+		pNext = (BCLD*)pNext->next;
+	}
+	
+	//for all elements get centroid temperatre and add to pTC_Elem
+	for (i = 0; i < iElNo; i++)
+	{
+		dT = pElems[i]->GetElCentriodVal();
+		Temperature* pT = new Temperature();
+		pT->Create(pElems[i], pTC_Elem, dT, pTC_Nodal->iLabel);
+		pTC_Elem->Add(pT);
+	}
+	return (pTC_Elem);
+}
 
 void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pTC,int neq,Vec<double> &FVec)
 {
@@ -26973,14 +27166,24 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
 
 }
 
-void ME_Object::ZeroThermalStrains()
+void ME_Object::ZeroThermalStrains(double dVal)
 {
   int i;
   for (i=0;i<iElNo;i++)
   {
-    pElems[i]->dTemp=0;
+    pElems[i]->dTemp = dVal;
   }
 }
+
+void ME_Object::SetDefNodeTemp(double dVal)
+{
+	int i;
+	for (i = 0; i < iNdNo; i++)
+	{
+		pNodes[i]->dTemp = dVal;
+	}
+}
+
 
 void ME_Object::GetAccelLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,int neq,Vec<double> &FVec)
 {
@@ -29873,17 +30076,17 @@ void ME_Object::TempBCSet(int iLC, CString sSol, CString sStep, Vec<int> &Steer,
   int i;
   int iTS;
   int iTSetID;
-  E_Object* pE;
+  Node* pN;
   double dTemp;
   iTSetID = NestTSetID();
   iTS = CreateTSET(iTSetID, sStep);
   cLinkedListT* pTS =  GetTSET(iTSetID);
-  for (i = 0; i<iElNo; i++)
+  for (i = 0; i < iNdNo; i++)
   {
-    pE = pElems[i];
-    dTemp = pE->GetCentriodVal(0, Steer, Disp);
+	pN = pNodes[i];
+    dTemp = *Disp.nn(pN->dof[0]);
     Temperature* pT = new Temperature();
-    pT->Create(pE, pTS, dTemp, pTS->iLabel);
+    pT->Create(pN, pTS, dTemp, pTS->iLabel);
     pTS->Add(pT);
   }
 }
@@ -42909,8 +43112,9 @@ int Pressure::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
-
-	sprintf_s(S1, "%g", F.x);
+	double dP;
+	dP = F.Mag();
+	sprintf_s(S1, "%g", dP);
 	sVar[iNo] = S1;
 	iNo++;
 
@@ -42919,9 +43123,12 @@ int Pressure::GetVarValues(CString sVar[])
 
 void Pressure::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 {
+	double dPo,dP;
 
 	ME_Object* pMe = (ME_Object*)this->pParent;
-	F.x = atof(sVar[0]);
+	dP = atof(sVar[0]);
+	F.Normalize();
+	F*= dP;
 }
 
 //*********************************************************************************
@@ -42949,22 +43156,22 @@ dV=0;
 Temperature::~Temperature()
 {
 SetID=-1;
-pObj=NULL;
+pObj=nullptr;
 }
 
-void Temperature::Create(G_Object* pInE,
-				                 G_Object* Parrent,
-				                 double inV,
-				                 int inSetID)
+void Temperature::Create(G_Object* pInN,
+				         G_Object* Parrent,
+				         double inV,
+				         int inSetID)
 {
 Drawn=0;
 Selectable=1; 
 Visable=1;
 iObjType=325;
-iLabel=pInE->iLabel;
+iLabel=pInN->iLabel;
 iColour=4;
 pParent=Parrent;
-pObj= pInE;
+pObj= pInN;
 SetID=inSetID;
 dV=inV;
 if (pObj!=NULL)
@@ -43010,14 +43217,17 @@ void Temperature::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 	}
 	else
 	{
-	  G_Object::Serialize(ar,iV);
-    ar>>SetID;
-    ar>>dV;
-	  DSP_Point.Serialize(ar,iV);
-    Point.Serialize(ar,iV);
-    ar>>iE;
-    pObj = MESH->GetElement(iE);
-	  pParent=MESH;
+	   G_Object::Serialize(ar,iV);
+       ar>>SetID;
+       ar>>dV;
+	   DSP_Point.Serialize(ar,iV);
+       Point.Serialize(ar,iV);
+       ar>>iE;
+	   if (iV <= -73)  //have moved to temps on node 
+		 pObj = MESH->GetNode(iE);
+	   else
+         pObj = MESH->GetElement(iE);
+	   pParent=MESH;
 	}
 }
 
@@ -43030,7 +43240,7 @@ void Temperature::ExportUNV(FILE* pFile)
 void Temperature::ExportNAS(FILE* pFile)
 {
 
-//fprintf(pFile,"%8s%8s%8i%8s%8s%8s%8s%8s\n","FORCE   ","       1",pObj->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
+fprintf(pFile,"%8s%8i%8i%8s\n","TEMP    ", SetID,pObj->iLabel,e8(dV));
 }
 
 

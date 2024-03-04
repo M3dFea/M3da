@@ -1966,6 +1966,7 @@ public:
    Res* pResV;
    Res* pResD;
    Ndata* pN;
+   double dTemp; //temporary value not saved
    virtual void Create(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut,G_Object* Parrent);
    virtual C3dVector MinPt(C3dVector inPt);
    virtual void Clear();
@@ -3232,6 +3233,7 @@ public:
    virtual C3dVector GetFirstEdge();
    virtual double QualAspect();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetElCentriodVal();
    virtual double GetPHI_SQ();
 };
 
@@ -3274,6 +3276,7 @@ public:
    virtual G_Object* GetNode(int i);
    virtual void Reverse();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetElCentriodVal();
    virtual CString GetName();
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
@@ -3315,10 +3318,12 @@ public:
    virtual G_Object* GetNode(int i);
    virtual void Reverse();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetElCentriodVal();
    virtual CString GetName();
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
    virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+   
 };
 
 
@@ -3367,6 +3372,7 @@ public:
   C3dMatrix GetSpringSys(CoordSys* pC);
   Mat GetSpringTMat(CoordSys* pCSYS);
   double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+  virtual double GetElCentriodVal();
   virtual CString GetName();
   virtual int GetVarHeaders(CString sVar[]);
   virtual int GetVarValues(CString sVar[]);
@@ -3572,6 +3578,7 @@ public:
    virtual void GetBoundingBox(C3dVector& vll,C3dVector& vur);
    virtual double QualAspect();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   double GetElCentriodVal();
    //These were comented out not sure why
    //so we carefull
    void TranslateAVF(C3dVector vIn);
@@ -3678,6 +3685,7 @@ public:
 	virtual C3dVector GetFirstEdge();
 	virtual double QualAspect();
 	virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+	virtual double GetElCentriodVal();
 	virtual CString GetName();
 	virtual int GetVarHeaders(CString sVar[]);
 	virtual int GetVarValues(CString sVar[]);
@@ -3735,7 +3743,8 @@ public:
    double area(int n1, int n2, int n3);
    double longEdge();
    double TetCollapse();
-   double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetElCentriodVal();
    virtual CString GetName();
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
@@ -3789,7 +3798,8 @@ public:
 	double area(int n1, int n2, int n3);
 	double longEdge();
 	double TetCollapse();
-	double GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp);
+	virtual double GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp);
+	virtual double GetElCentriodVal();
 	virtual CString GetName();
 	virtual int GetVarHeaders(CString sVar[]);
 	virtual int GetVarValues(CString sVar[]);
@@ -3837,7 +3847,8 @@ public:
    virtual Mat GetThermMat(PropTable* PropsT, MatTable* MatT);
    virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
    virtual Mat GetThermalStrainMat3d(PropTable* PropsT, MatTable* MatT, double dT);
-   double GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp);
+   virtual double GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp);
+   virtual double GetElCentriodVal();
 
 };
 
@@ -4136,6 +4147,7 @@ public:
    void ExportUNV(FILE* pFile,SecTable* pS);
    void ExportNASExec(FILE* pFile, SecTable* pS);
    void ExportNASCase101(FILE* pFile, SecTable* pS);
+   void ExportNAS_SETS(FILE* pFile, SecTable* pS, int iFileNo);
    void ExportNAS(FILE* pFile,SecTable* pS,int iFileNo);
    void ExportRes(FILE* pFile);
    void ExportSec(FILE* pFile,int id,CString Name, double w,double h,double t);
@@ -4146,7 +4158,7 @@ public:
    G_Object* AddTemperatureBC(Node* pInNode,double inT,int inSetID);
    G_Object* AddAccel(E_Object* pInE,C3dVector vA,int inSetID);
    G_Object* AddRotAccel(E_Object* pE, C3dVector vAxisD, C3dVector vAxisC, double dw, int inSetID);
-   G_Object* AddTemperature(E_Object* pInE,double inT,int inSetID);
+   G_Object* AddTemperature(Node* pN,double inT,int inSetID);
    G_Object* AddForce(Node* pInNode,C3dVector inF,int inSetID);
    G_Object* AddMoment(Node* pInNode,C3dVector inF,int inSetID);
    G_Object* AddPressure(E_Object* pInE,C3dVector inF,int inSetID);
@@ -4177,7 +4189,9 @@ void BuildForceVector(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,cLinkedL
 void GetAccelLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,int neq,Vec<double> &FVec);
 void GetRotAccelLoads(PropTable* PropsT, MatTable* MatT, cLinkedList* pLC, int neq, Vec<double> &FVec);
 void GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pTC,int neq,Vec<double> &FVec);
-void ZeroThermalStrains();
+cLinkedList* TSetNodaltoElement(cLinkedList* pTC_Nodal, double defT);
+void ZeroThermalStrains(double dVal);
+void SetDefNodeTemp(double dVal);
 void Test(PropTable* PropsT,MatTable* MatT);
 void PrintTime(CString cS);
 void ZeroDOF();
@@ -4709,10 +4723,10 @@ public:
    C3dVector DSP_Point;
    C3dVector Point;
 
-   virtual void Create(G_Object* pInE,
-	                     G_Object* Parrent,
-					             double inV,
-					             int inSetID);
+   virtual void Create(G_Object* pInN,
+	                   G_Object* Parrent,
+					   double inV,
+					   int inSetID);
 
    virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);

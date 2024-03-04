@@ -7,7 +7,7 @@
 
 //Note the version number has to be negative
 //so we can maintain compatability with older files
-const int VERSION_NO=-72;
+const int VERSION_NO=-73;
 const int MAX_GPS = 1000;
 const int MAX_TEMPGRP = 10000;
 
@@ -385,7 +385,7 @@ void AddFluxQ(ObjList* Nodes,double T);
 void AddTemperatureBC(ObjList* Nodes,double T);
 void AddAccel(ObjList* Elements,C3dVector vA);
 void AddRotAccel(ObjList* Elements, double dw, C3dVector vAP1, C3dVector vAP2);
-void AddTemperature(ObjList* Elements,double T);
+void AddTemperature(ObjList* Nodes,double T);
 void AddForce(ObjList* Nodes,C3dVector F);
 void AddMoment(ObjList* Nodes,C3dVector F);
 void AddPressure(ObjList* Nodes,C3dVector F);
