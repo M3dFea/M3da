@@ -3131,6 +3131,8 @@ virtual void ExportNAS(FILE* pFile);
 virtual void RelTo(G_Object* pThis,ObjList* pList,int iType);
 };
 
+
+
 class CoordSys : public G_Object
 {
 DECLARE_DYNAMIC(CoordSys)
@@ -4159,6 +4161,8 @@ public:
    G_Object* AddAccel(E_Object* pInE,C3dVector vA,int inSetID);
    G_Object* AddRotAccel(E_Object* pE, C3dVector vAxisD, C3dVector vAxisC, double dw, int inSetID);
    G_Object* AddTemperature(Node* pN,double inT,int inSetID);
+   G_Object* AddTempD(double inT, int inSetID);
+   G_Object* AddGRAV(int inSetID, int iCID, double dScl, C3dVector vV);
    G_Object* AddForce(Node* pInNode,C3dVector inF,int inSetID);
    G_Object* AddMoment(Node* pInNode,C3dVector inF,int inSetID);
    G_Object* AddPressure(E_Object* pInE,C3dVector inF,int inSetID);
@@ -4854,6 +4858,35 @@ virtual int GetVarValues(CString sVar[]);
 virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
 };
 
+//Borh TEMPD and GRAV nastran cards fall out sid the way 
+//m3d is designed so have to make them work
+class TEMPD : public BCLD
+{
+	double dTempD;				//defualt temperature
+	DECLARE_DYNAMIC(TEMPD)
+	virtual void Create(G_Object* Parrent, int SetID, double dTIn);
+	virtual void Serialize(CArchive& ar, int iV, ME_Object* MESH);
+	virtual void ExportNAS(FILE* pFile);
+	//virtual int GetVarHeaders(CString sVar[]);
+	//virtual int GetVarValues(CString sVar[]);
+	//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+};
+
+class GRAV : public BCLD
+{
+	int iCID;
+	double dScl;
+	C3dVector vV;
+	DECLARE_DYNAMIC(GRAV)
+	virtual void Create(G_Object* Parrent, int inSID, int inCID, double indScl, C3dVector invV);
+	virtual void Serialize(CArchive& ar, int iV, ME_Object* MESH);
+	virtual void ExportNAS(FILE* pFile);
+	//virtual int GetVarHeaders(CString sVar[]);
+	//virtual int GetVarValues(CString sVar[]);
+	//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+};
+
+
 
 class Restraint : public BCLD
 {
@@ -4891,6 +4924,12 @@ public:
    virtual int GetVarValues(CString sVar[]);
    virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
+
+
+
+
+
+
 
 
 // Results Vector Display Object

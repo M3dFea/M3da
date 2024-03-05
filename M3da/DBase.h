@@ -597,6 +597,7 @@ GLuint S_loadBMP(CString sFile, CString inName);
 //*******************************************************************************
 ME_Object* ImportUNV(FILE* pFile,CString inName);
 ME_Object* ImportNAS(FILE* pFile,CString inName,BOOL ReLab);
+void ImportNASTRAN_SOL(CString inName, ME_Object* pME);
 void ImportNASTRANFirstPass(CString inName, ME_Object* pME,NEList* PIDs,NEList* MATs);
 void ImportNASTRANGRID(CString inName, ME_Object* pME);
 void ImportNASTRANELEM(CString inName, ME_Object* pME,NEList* PIDs);

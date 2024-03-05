@@ -32,3 +32,4 @@ extern double gDEF_V;
 extern double gSTIFF_BDIA;
 extern double gDEF_CTE;
 extern double gDEF_THERM_LNK;
+extern double gDEF_SOL_TOL;

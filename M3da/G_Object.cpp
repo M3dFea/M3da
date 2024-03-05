@@ -26,6 +26,7 @@ double gDEF_V = 0.33;              //Poisson ratio
 double gSTIFF_BDIA = 0.1;          //stiff beam dia used for out psuedo RBE2
 double gDEF_CTE = 23.0e-6;
 double gDEF_THERM_LNK = 1.0e9;
+double gDEF_SOL_TOL = 1e-9;
 //END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
@@ -866,6 +867,12 @@ void cLinkedList::Serialize(CArchive& ar,int iV,ME_Object* MESH)
     case 329:
       pO = new RotationLoad;
       break;
+	case 330:
+		pO = new TEMPD;
+		break;
+	case 331:
+		pO = new GRAV;
+		break;
     }
       pO->Serialize(ar,iV,MESH);
       pO->pParent=this;
@@ -16693,6 +16700,9 @@ int i;
 	{
 		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
 		outtext1(S1);
+		bErr = TRUE;
+		return (KE);
+
 	}
 
 Mat XEL = getCoords_XEL();       //Local element coordinates
@@ -25818,9 +25828,9 @@ pLC=NULL;
 pBC=NULL;
 pTC=NULL;
 bRS=TRUE;
-int iLC;
-int iBC;
-int iTC;
+int iLC = -1;
+int iBC = -1;
+int iTC = -1;
 char S1[200];
 sSol="NULL";
 sStep="NULL";
@@ -26621,6 +26631,61 @@ if (pSet!=NULL)
 return (pF);
 }
 
+G_Object* ME_Object::AddTempD(double inT, int inSetID)
+{
+	cLinkedList* pSet = NULL;
+	TEMPD* pT = nullptr;
+	int ID;
+	if ((inSetID == -1) && (iCurTSet == -1))
+	{
+		outtext1("ERROR: No Temperature Set Active.");
+	}
+	else if ((inSetID == -1) && (iCurTSet != -1))
+	{
+		pSet = TSETS[iCurTSet];
+	}
+	else if (inSetID != -1)
+	{
+		pSet = GetTSET(inSetID);
+	}
+	if (pSet != nullptr)
+	{
+		pT = new TEMPD();
+		pT->Create(this, inSetID, inT);
+		pSet->Add(pT);
+	}
+	return (pT);
+}
+
+G_Object* ME_Object::AddGRAV(int inSetID, int iCID, double dScl, C3dVector vV)
+{
+	cLinkedList* pSet = NULL;
+	GRAV* pT = nullptr;
+	int ID;
+	if ((inSetID == -1) && (iCurLC == -1))
+	{
+		outtext1("ERROR: No Temperature Set Active.");
+	}
+	else if ((inSetID == -1) && (iCurLC != -1))
+	{
+		pSet = LCS[iCurLC];
+		ID = pSet->iLabel;
+	}
+	else if (inSetID != -1)
+	{
+		pSet = GetLC(inSetID);
+		ID = pSet->iLabel;
+	}
+	if (pSet != nullptr)
+	{
+		pT = new GRAV();
+		pT->Create(this, inSetID,  iCID,  dScl,  vV);
+		pSet->Add(pT);
+	}
+	return (pT);
+}
+
+
 G_Object* ME_Object::AddTemperature(Node* pN,double inT,int inSetID)
 {
 cLinkedList* pSet=NULL;
@@ -26862,6 +26927,8 @@ void ME_Object::BuildForceVector(PropTable* PropsT,MatTable* MatT,cLinkedList* p
 	  cLinkedList* pTC_ELEM;
 	  pTC_ELEM = TSetNodaltoElement(pTC, 0);
 	  GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
+	  pTC_ELEM->Clear();
+	  delete (pTC_ELEM);
   }
 
 }
@@ -44121,6 +44188,109 @@ void Force::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 	F.z = atof(sVar[2]);
 }
 
+IMPLEMENT_DYNAMIC(TEMPD, CObject)
+
+void TEMPD::Create(G_Object* Parrent, int inSetID, double inDT)
+{
+	Drawn = 0;
+	Selectable = 0;
+	Visable = 0;
+	iObjType = 330;
+	iLabel = -1;
+	pParent = Parrent;
+	pObj = nullptr;
+	SetID = inSetID;
+	dTempD = inDT;
+}
+
+void TEMPD::Serialize(CArchive& ar, int iV, ME_Object* MESH)
+
+{
+	int iNd;
+	if (ar.IsStoring())
+	{
+		G_Object::Serialize(ar, iV);
+		ar << SetID;
+		ar << dTempD;
+	}
+	else
+	{
+		G_Object::Serialize(ar, iV);
+		ar >> SetID;
+		ar >> dTempD;
+		pObj = nullptr;
+		pParent = MESH;
+	}
+}
+
+
+void TEMPD::ExportNAS(FILE* pFile)
+{
+fprintf(pFile, "%8s%8i%8s\n", "TEMPD   ", SetID, e8(dTempD));
+}
+
+
+IMPLEMENT_DYNAMIC(GRAV, CObject)
+
+void GRAV::Create(G_Object* Parrent, int inSID, int inCID, double indScl, C3dVector invV)
+{
+	Drawn = 0;
+	Selectable = 0;
+	Visable = 0;
+	iObjType = 331;
+	iLabel = -1;
+	pParent = Parrent;
+	pObj = nullptr;
+	SetID = inSID;
+	iCID = inCID;
+	dScl = indScl;
+	vV = invV;
+}
+
+void GRAV::Serialize(CArchive& ar, int iV, ME_Object* MESH)
+
+{
+	int iNd;
+	if (ar.IsStoring())
+	{
+		G_Object::Serialize(ar, iV);
+		ar << SetID;
+		ar << iCID;
+		ar << dScl;
+		ar << vV.x;
+		ar << vV.y;
+		ar << vV.z;
+	}
+	else
+	{
+		G_Object::Serialize(ar, iV);
+		ar >> SetID;
+		ar >> iCID;
+		ar >> dScl;
+		ar >> vV.x;
+		ar >> vV.y;
+		ar >> vV.z;
+		pObj = nullptr;
+		pParent = MESH;
+	}
+}
+
+
+void GRAV::ExportNAS(FILE* pFile)
+{
+	fprintf(pFile, "%8s%8i%8i%8s%8s%8s%8s\n", "GRAV    ", SetID,iCID, e8(dScl),e8(vV.x), e8(vV.y), e8(vV.z));
+}
+
+
+
+
+//virtual int GetVarHeaders(CString sVar[]);
+//virtual int GetVarValues(CString sVar[]);
+//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+
+
+
+
 IMPLEMENT_DYNAMIC( Restraint, CObject )
 
 void Restraint::Create(G_Object* pInNode,
@@ -44158,7 +44328,7 @@ void Restraint::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 	{
 	  G_Object::Serialize(ar,iV);
 	  ar<<SetID;
-    ar << pObj->iLabel;
+      ar<<pObj->iLabel;
 	  ar<<REST[0];
 	  ar<<REST[1];
 	  ar<<REST[2];
@@ -57905,7 +58075,7 @@ void PropTable::Serialize(CArchive& ar,int iV)
   {
     int iE;
     ar >> iNo;
-	  for (i=0;i<iNo;i++)
+	for (i=0;i<iNo;i++)
     {
       ar>>iE;
       switch(iE) 
@@ -58905,7 +59075,9 @@ BOOL CSOLDialog::OnInitDialog()
   pT->AddString("1: SS Heat");
   pT->AddString("2: Sparse");
   CEdit* pTol=(CEdit*) GetDlgItem(IDC_TOL_TXT);
-  pTol->SetWindowTextA("0.000000001");
+  CString str;
+  str.Format(_T("%g"), gDEF_SOL_TOL);
+  pTol->SetWindowTextA(str);
   Refresh();
 
 
@@ -61258,7 +61430,7 @@ int G_ObjectDUM::GetVarHeaders(CString sVar[])
 	sVar[iNo++] = "gSTIFF_BDIA Stiff Beam Dia";
 	sVar[iNo++] = "gDEF_CTE Defualt Material CTE";
 	sVar[iNo++] = "gDEF_THERM_LNK Defualt Thermal Link Coef";
-
+	sVar[iNo++] = "gDEF_SOL_TOL Defualt Iterative Solver Tolerence";
 
 	return iNo;
 }
@@ -61316,7 +61488,9 @@ int G_ObjectDUM::GetVarValues(CString sVar[])
 	sVar[iNo++] = S1;
 	sprintf_s(S1, "%g", gDEF_THERM_LNK);
 	sVar[iNo++] = S1;
-
+	sprintf_s(S1, "%g", gDEF_SOL_TOL);
+	sVar[iNo++] = S1;
+	
 	return (iNo);
 }
 
@@ -61346,4 +61520,5 @@ void G_ObjectDUM::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 	gSTIFF_BDIA = atof(sVar[iC++]);
 	gDEF_CTE = atof(sVar[iC++]);
 	gDEF_THERM_LNK = atof(sVar[iC++]);
+	gDEF_SOL_TOL = atof(sVar[iC++]);
 }

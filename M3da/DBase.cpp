@@ -1233,6 +1233,8 @@ void DBase::Serialize(CArchive& ar)
 		ar << gSTIFF_BDIA;
 		ar << gDEF_CTE;
 		ar << gDEF_THERM_LNK;
+		ar << gDEF_SOL_TOL;
+
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
 		ar<<DB_ObjectCount;
@@ -1318,6 +1320,10 @@ void DBase::Serialize(CArchive& ar)
 			ar >> gSTIFF_BDIA;
 			ar >> gDEF_CTE;
 			ar >> gDEF_THERM_LNK;
+		}
+		if (iVER <= -73)
+		{
+			ar >> gDEF_SOL_TOL;
 		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);
@@ -17692,9 +17698,9 @@ void NASReadTEMP(NasCard& oC,
 	pTSET = pM->GetTSET(iSID);
 	if (pTSET == nullptr)
 	{
-		sprintf_s(S1, "TSET : %i", iID);
-		iSet = pM->CreateTSET(iID, S1);
-		pTSET = pM->GetLC(iID);
+		sprintf_s(S1, "TSET : %i", iSID);
+		iSet = pM->CreateTSET(iSID, S1);
+		pTSET = pM->GetTSET(iSID);
 	}
 	//pE=pM->FindElement()
 	pN = pM->GetNode(iID);
@@ -17709,6 +17715,79 @@ void NASReadTEMP(NasCard& oC,
 	}
 }
 
+void NASReadTEMPD(NasCard& oC,
+	ME_Object* pM,
+	int iF)
+{
+	char S1[200];
+	cLinkedList* pTSET = nullptr;
+	//Node* pN = nullptr;
+	int iSID = -1;
+	int iSet = -1;
+	//int iID = -1;
+	double dT = 0;
+	iSID = atoi(oC.GetField(0));
+
+	dT = atofNAS(oC.GetField(1));
+
+	////if it exists get the BC Set else create one
+	pTSET = pM->GetTSET(iSID);
+	if (pTSET == nullptr)
+	{
+		sprintf_s(S1, "TEMPD : %i", iSID);
+		iSet = pM->CreateTSET(iSID, S1);
+		pTSET = pM->GetTSET(iSID);
+	}
+
+	if (pTSET != nullptr)
+	{
+		G_Object* pT = pM->AddTempD(dT, iSID);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating TEMPD.");
+		return;
+	}
+}
+
+
+void NASReadGRAV(NasCard& oC,
+	             ME_Object* pM,
+	             int iF)
+{
+	char S1[200];
+	cLinkedList* pLSET = nullptr;
+	int iSID = -1;
+	int iCID = -1;
+	int iSet = -1;
+	double dScl = 0;
+	C3dVector vV;
+	iSID = atoi(oC.GetField(0));
+	iCID = atoi(oC.GetField(1));
+	dScl = atofNAS(oC.GetField(2));
+	vV.x = atofNAS(oC.GetField(3));
+	vV.y = atofNAS(oC.GetField(4));
+	vV.z = atofNAS(oC.GetField(5));
+
+	////if it exists get the BC Set else create one
+	pLSET = pM->GetLC(iSID);
+	if (pLSET == nullptr)
+	{
+		sprintf_s(S1, "GRAV : %i", iSID);
+		iSet = pM->CreateLC(iSID, S1);
+		pLSET = pM->GetLC(iSID);
+	}
+
+	if (pLSET != nullptr)
+	{
+		G_Object* pT = pM->AddGRAV(iSID, iCID, dScl,vV);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating GRAV.");
+		return;
+	}
+}
 
 void NASReadPSHELL(NasCard& oC,
                    PropTable* pM,
@@ -18568,8 +18647,143 @@ else if ((s8 == "PLOAD   ") || (s8 == "PLOAD*  "))
 brc = TRUE;
 else if ((s8 == "TEMP    ") || (s8 == "TEMP*   "))
 brc = TRUE;
+else if ((s8 == "TEMPD   ") || (s8 == "TEMPD*  "))
+brc = TRUE;
+else if ((s8 == "GRAV    ") || (s8 == "GRAV*   "))
+brc = TRUE;
 return (brc);
 };
+
+//chatgpt written
+int ExtractIntegerFromCString(const CString& str) {
+	// Find the position of the first digit
+	int startIndex = str.FindOneOf(_T("0123456789"));
+
+	if (startIndex != -1) 
+	{
+		// Extract the substring containing the number
+		CString numStr = str.Mid(startIndex);
+		// Convert CString to integer
+		int num = _tstoi(numStr);
+		return num;
+	}
+	else 
+	{
+		// Return a default value or handle the case as needed
+		return -1; // Or any other suitable default value
+	}
+}
+
+void DBase::ImportNASTRAN_SOL(CString inName, ME_Object* pME)
+{
+	BOOL bSOL101 = FALSE;
+	BOOL bSBUB = FALSE;
+	BOOL bret = FALSE;
+	int iSUBID = -1;
+	int iSUB = -1;
+	int iLC = -1;;
+	int iBC = -1;;
+	int iTS = -1;
+	char s1[200];
+	int iCurFileNo = -1;
+	FILE* pFile;
+	CString datline;
+	CString datlineNxt;
+	CString sInc;
+	CString sKwrd;
+	CString sKeyWrd;
+	CString sTit;
+	NasCard oCard;
+	BOOL bDone = FALSE;
+	CoordSys* pRet;
+	pFile = fopen(inName, "r");
+	if (pFile != NULL)
+	{
+		iCurFileNo = GetFileByNo(inName);
+		if (iCurFileNo == -1)
+		{
+			sFiles[iFileNo] = inName;
+			iCurFileNo = iFileNo;
+			iFileNo++;
+		}
+		do
+		{
+			if (feof(pFile))
+			{
+				bDone = TRUE;
+			}
+			else
+			{
+				fgets(s1, 200, pFile);
+				datlineNxt = s1;
+			}
+
+			if (IsInclude(datline) == TRUE)
+			{
+				sInc = GetIncName(datline);
+				ImportNASTRAN_SOL(sInc, pME);
+			}
+			sKwrd = datline;
+			if (sKwrd.Find("BEGIN BULK") > -1)
+			{
+				bDone = TRUE;
+				if (bSOL101)
+				{
+					sTit.Format(_T("SUBCASE %d"), iSUBID);
+					pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
+					bret = pME->pSOLS->SetCurStep(iSUBID-1);
+				}
+			}
+			if ((sKwrd.Find("SOL") > -1) && (sKwrd.Find("101") > -1))
+			{
+				//Linear static solve
+				bSOL101 = TRUE;
+				pME->pSOLS->AddSolution(0,"SOL 101 STATICS", gDEF_SOL_TOL);
+				outtext1("Solution Added and Set as Active.");
+			}
+			if (bSOL101)  //look for subcases
+			{
+				if (sKwrd.Find("SUBCASE") > -1)  //create new step
+				{
+					iSUBID = ExtractIntegerFromCString(sKwrd);
+					int iLC = -1;;
+					int iBC = -1;;
+					int iTS = -1;
+					if (!bSBUB)
+					{
+						bSBUB = TRUE;
+					}
+					else
+					{
+						bSBUB = FALSE;
+						if (bSOL101)
+						{
+							sTit.Format(_T("SUBCASE %d"), iSUBID);
+							pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
+							bret = pME->pSOLS->SetCurStep(iSUBID-1);
+						}
+					}
+				}
+				else if ((sKwrd.Find("LOAD") > -1) && (sKwrd.Find("OLOAD") == -1))
+				{
+					iLC = ExtractIntegerFromCString(sKwrd);
+				}
+				else if ((sKwrd.Find("SPC") > -1))
+				{
+					iBC = ExtractIntegerFromCString(sKwrd);
+				}
+				else if ((sKwrd.Find("TEMP") > -1))
+				{
+					iTS = ExtractIntegerFromCString(sKwrd);
+				}
+			}
+
+			datline = datlineNxt;
+		} while (bDone == FALSE);
+		fclose(pFile);
+	}
+
+}
 
 void DBase::ImportNASTRANFirstPass(CString inName, ME_Object* pME,NEList* PIDs,NEList* MATs)
 {
@@ -18847,8 +19061,12 @@ if (pFile!=NULL)
 		  NASReadMOMENT(oCard, pME, iCurFileNo);
 	  else if ((sKwrd.Find("PLOAD") == 0))
 		  NASReadPLOAD(oCard, pME, iCurFileNo);
-	  else if ((sKwrd.Find("TEMP") == 0))
+	  else if ((sKwrd.Find("TEMP ") == 0))
 		  NASReadTEMP(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("TEMPD") == 0))
+		  NASReadTEMPD(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("GRAV") == 0))
+		  NASReadGRAV(oCard, pME, iCurFileNo);
     }
     datline = datlineNxt;
   } 
@@ -18879,6 +19097,7 @@ RetMesh->TempList = new ObjTempList();
 NEList* newPids = new NEList();
 NEList* newMats = new NEList();
 //*************************************************************************
+ImportNASTRAN_SOL(sF, RetMesh);
 ImportNASTRANFirstPass(sF,RetMesh,newPids,newMats);
 ImportNASTRANGRID(sF,RetMesh);
 ImportNASTRANELEM(sF,RetMesh,newPids);
@@ -18922,6 +19141,7 @@ RetMesh->TempList = new ObjTempList();
 NEList* newPids = new NEList();
 NEList* newMats = new NEList();
 //*************************************************************************
+ImportNASTRAN_SOL(sF, RetMesh);
 ImportNASTRANFirstPass(sF,RetMesh,newPids,newMats);
 ImportNASTRANGRID(sF,RetMesh);
 ImportNASTRANELEM(sF,RetMesh,newPids);
