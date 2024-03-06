@@ -4185,7 +4185,7 @@ int LocalResCount();
 void LocalRes(int neq,Vec<int> &Steer,Vec<double> &KMA);
 void GenLocalResraints(Mat *KM,Vec<int> *G, int &iELCnt);
 void LocalResIter(Restraint* pR,Vec<int> &SteerT,Mat &KMAT,Vec<int> &SteerB,Mat &KMAB);
-Vec<double> GetForceVec(cLinkedList* pLC,int neq);
+void GetForceVec(cLinkedList* pLC,int neq, Vec<double>& FVec);
 Vec <double> GetTempVec(cLinkedList* pTS,int neq);
 void ReportQResultant(Vec<double> &QVec);
 void ReportFResultant(Vec<double> &FVec);

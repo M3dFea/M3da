@@ -26417,7 +26417,9 @@ else
   {
     TVec=GetTempVec(pBC, neq);
     //TVec.diag();
-    QVec=GetForceVec(pLC, neq);
+	QVec.Size(neq);
+	QVec.Zero();
+    GetForceVec(pLC, neq, QVec);
     //QVec.diag();
     ReportQResultant(QVec);
     //BuildForceVector(PropsT,MatT,pLC,pTC,neq,QVec);
@@ -26929,9 +26931,11 @@ return (pF);
 
 void ME_Object::BuildForceVector(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,cLinkedList* pTC,int neq,Vec<double> &FVec)
 {
+  FVec.Size(neq);
+  FVec.Zero();
   if (pLC!=NULL)
   {
-    FVec = GetForceVec(pLC,neq);                  //Get all external forces
+    GetForceVec(pLC,neq, FVec);                  //Get all external forces
     GetPressureLoads(pLC,neq,FVec);               //Add in all Surface pressure loads
 	//****************** IS THRE A NASTRAN GRAV CARD **************************
 	GRAV* pGRAV = nullptr;
@@ -27592,10 +27596,9 @@ return (TVec);
 }
 
 
-Vec <double> ME_Object::GetForceVec(cLinkedList* pLC,int neq)
+void  ME_Object::GetForceVec(cLinkedList* pLC,int neq, Vec<double>& FVec)
 {
-Vec <double> FVec(neq);
-FVec.Zero();
+
 if (pLC != nullptr)
 {
 	BCLD* pNext;
@@ -27648,7 +27651,7 @@ if (pLC != nullptr)
 		pNext = (BCLD*)pNext->next;
 	}
 }
-return (FVec);
+
 }
 
 
