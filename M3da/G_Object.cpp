@@ -867,10 +867,10 @@ void cLinkedList::Serialize(CArchive& ar,int iV,ME_Object* MESH)
     case 329:
       pO = new RotationLoad;
       break;
-	case 330:
+	case 331:
 		pO = new TEMPD;
 		break;
-	case 331:
+	case 332:
 		pO = new GRAV;
 		break;
     }
@@ -1119,7 +1119,8 @@ iType[27] =(327);	//T BC
 iType[28] =(328);	//ACCEL LOAD
 iType[29] =(329);	//ROTATION ACCEL LOAD
 iType[30] =(330);	//RESULTS VECTOR
-
+iType[31] = (331);	//TEMPD
+iType[32] = (332);	//GRAV
 sType[0] = "POINT";
 sType[1] = "NODE";
 sType[2] = "LINE NOT USED";
@@ -1151,7 +1152,9 @@ sType[27] ="TEMP BC T";
 sType[28] ="ACCEL BODY LOAD";
 sType[29] = "ROTATIONAL BODY LOAD";
 sType[30] = "RESULTS VECTOR";
-iNoOfType=31;
+sType[31] = "TEMPD CARD";
+sType[32] = "GRAV CARD";
+iNoOfType=33;
 
 //USED IN ASTRIUMS QUANTA PROGRAM
 //iType[17] =(500); //WG DEF
@@ -25668,7 +25671,10 @@ else
   {
 	  //convert nodal temps to element centroid
 	  cLinkedList* pTC_ELEM;
-	  pTC_ELEM = TSetNodaltoElement(pTC, 0);
+	  double dDefT = 0;
+	  BOOL bTEMPD = FALSE;
+	  bTEMPD = TSEThasTEMPD(pTC, dDefT);
+	  pTC_ELEM = TSetNodaltoElement(pTC, dDefT);
 	  GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
   }
   int iBW=this->MaxBW();
@@ -26651,7 +26657,7 @@ G_Object* ME_Object::AddTempD(double inT, int inSetID)
 	if (pSet != nullptr)
 	{
 		pT = new TEMPD();
-		pT->Create(this, inSetID, inT);
+		pT->Create(this->Get_Centroid(), pSet, inSetID, inT);
 		pSet->Add(pT);
 	}
 	return (pT);
@@ -26679,7 +26685,7 @@ G_Object* ME_Object::AddGRAV(int inSetID, int iCID, double dScl, C3dVector vV)
 	if (pSet != nullptr)
 	{
 		pT = new GRAV();
-		pT->Create(this, inSetID,  iCID,  dScl,  vV);
+		pT->Create(this->Get_Centroid(), pSet, inSetID,  iCID,  dScl,  vV);
 		pSet->Add(pT);
 	}
 	return (pT);
@@ -26917,18 +26923,28 @@ void ME_Object::BuildForceVector(PropTable* PropsT,MatTable* MatT,cLinkedList* p
   {
     FVec = GetForceVec(pLC,neq);                  //Get all external forces
     GetPressureLoads(pLC,neq,FVec);               //Add in all Surface pressure loads
+	//****************** IS THRE A NASTRAN GRAV CARD **************************
+	GRAV* pGRAV = nullptr;
+	pGRAV = LSEThasGRAV(pLC);
+	if (pGRAV != nullptr)
+	{
+		GetGRAVLoads(PropsT, MatT, pGRAV, neq, FVec);	//need to gen nastrn style grave loads
+	}
+	//*************************************************************************
     GetAccelLoads(PropsT,MatT,pLC,neq,FVec);      //Add In all Body loads
     GetRotAccelLoads(PropsT, MatT, pLC, neq, FVec);      //Add In all Rotational Body loads
   }
   ReportFResultant(FVec);
+
   if (pTC != NULL)
   {
 	  //convert nodal temps to element centroid
 	  cLinkedList* pTC_ELEM;
-	  pTC_ELEM = TSetNodaltoElement(pTC, 0);
+	  double dDefT = 0;
+	  BOOL bTEMPD = FALSE;
+	  bTEMPD = TSEThasTEMPD(pTC, dDefT);
+	  pTC_ELEM = TSetNodaltoElement(pTC, dDefT);
 	  GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
-	  pTC_ELEM->Clear();
-	  delete (pTC_ELEM);
   }
 
 }
@@ -27026,6 +27042,46 @@ void ME_Object::ReportQResultant(Vec<double> &QVec)
   }
   sprintf_s(s1,"%s: %f\n","Q",Q);
   outtext1(_T(s1));
+}
+
+GRAV* ME_Object::LSEThasGRAV(cLinkedList* pLC)
+{
+	GRAV* pGRAV = nullptr;
+	BCLD* pNext;
+	//Search for TEMPD Card
+	pNext = (BCLD*) pLC->Head;
+	while (pNext != nullptr)
+	{
+		if (pNext->iObjType == 332)
+		{
+			pGRAV = (GRAV*) pNext;
+			break;
+		}
+		pNext = (BCLD*)pNext->next;
+	}
+
+	return (pGRAV);
+}
+
+BOOL ME_Object::TSEThasTEMPD(cLinkedList* pTC, double& defT)
+{
+	BOOL brc = FALSE;
+	BCLD* pNext;
+	//Search for TEMPD Card
+	pNext = (BCLD*)pTC->Head;
+	while (pNext != nullptr)
+	{
+		if (pNext->iObjType == 331)
+		{
+			TEMPD* pTD = (TEMPD*)pNext;
+			defT = pTD->dTempD;
+			brc = TRUE;
+			break;
+		}
+		pNext = (BCLD*)pNext->next;
+	}
+
+	return (brc);
 }
 
 //recently changed temperature to be on node as in nastran
@@ -27250,6 +27306,61 @@ void ME_Object::SetDefNodeTemp(double dVal)
 		pNodes[i]->dTemp = dVal;
 	}
 }
+
+void ME_Object::GetGRAVLoads(PropTable* PropsT, MatTable* MatT, GRAV* pGrav, int neq, Vec<double>& FVec)
+{
+	E_Object* pE;
+	Mat MM;
+	Vec<int> vS;
+	int iNS;
+	int iD;
+	int i;
+	C3dVector vAC;
+#
+	if (pGrav->iCID > 0)
+	{
+		outtext1("ERROR: Only GRAV loads in Basic Cartesian Support at Present.");
+		return;
+	}
+	vAC = pGrav->vV;
+	vAC *= pGrav->dScl;  //Acceleration vector in global
+
+	if ((PropsT == NULL) || (MatT == NULL))
+	{
+		outtext1("ERROR: Property or Mat Table Missing, Body Loads Not Calculated.");
+	}
+	else 
+	{
+		for (i = 0; i < iElNo; i++)
+		{
+			pE = pElems[i];
+			if (pE != NULL)
+			{
+				vS = pE->GetSteerVec3d();
+				MM = pE->GetElNodalMass(PropsT, MatT);
+				iNS = pE->iNoNodes;
+				iD = pE->noDof();
+				int i;
+				for (i = 0; i < iNS; i++)
+				{
+					int iDD0, iDD1, iDD2;
+					iDD0 = *vS.nn(i * iD + 1);
+					iDD1 = *vS.nn(i * iD + 2);
+					iDD2 = *vS.nn(i * iD + 3);
+					double dTTT = *MM.mn(i + 1, 1);
+					if (iDD0 != -1)
+						*FVec.nn(iDD0) += *MM.mn(i + 1, 1) * vAC.x;
+					if (iDD1 != -1)
+						*FVec.nn(iDD1) += *MM.mn(i + 1, 1) * vAC.y;
+					if (iDD2 != -1)
+						*FVec.nn(iDD2) += *MM.mn(i + 1, 1) * vAC.z;
+				}
+			}
+		}
+	}
+
+}
+
 
 
 void ME_Object::GetAccelLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,int neq,Vec<double> &FVec)
@@ -43179,9 +43290,7 @@ int Pressure::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
-	double dP;
-	dP = F.Mag();
-	sprintf_s(S1, "%g", dP);
+	sprintf_s(S1, "%g", F.x);
 	sVar[iNo] = S1;
 	iNo++;
 
@@ -43195,7 +43304,7 @@ void Pressure::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 	ME_Object* pMe = (ME_Object*)this->pParent;
 	dP = atof(sVar[0]);
 	F.Normalize();
-	F*= dP;
+	F.x = dP;
 }
 
 //*********************************************************************************
@@ -44190,17 +44299,19 @@ void Force::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 
 IMPLEMENT_DYNAMIC(TEMPD, CObject)
 
-void TEMPD::Create(G_Object* Parrent, int inSetID, double inDT)
+void TEMPD::Create(C3dVector vC, G_Object* Parrent, int inSetID, double inDT)
 {
 	Drawn = 0;
 	Selectable = 0;
 	Visable = 0;
-	iObjType = 330;
+	iObjType = 331;
+	iColour = 4;
 	iLabel = -1;
 	pParent = Parrent;
 	pObj = nullptr;
 	SetID = inSetID;
 	dTempD = inDT;
+	Point = vC;
 }
 
 void TEMPD::Serialize(CArchive& ar, int iV, ME_Object* MESH)
@@ -44212,12 +44323,18 @@ void TEMPD::Serialize(CArchive& ar, int iV, ME_Object* MESH)
 		G_Object::Serialize(ar, iV);
 		ar << SetID;
 		ar << dTempD;
+		ar << Point.x;
+		ar << Point.y;
+		ar << Point.z;
 	}
 	else
 	{
 		G_Object::Serialize(ar, iV);
 		ar >> SetID;
 		ar >> dTempD;
+		ar >> Point.x;
+		ar >> Point.y;
+		ar >> Point.z;
 		pObj = nullptr;
 		pParent = MESH;
 	}
@@ -44229,22 +44346,85 @@ void TEMPD::ExportNAS(FILE* pFile)
 fprintf(pFile, "%8s%8i%8s\n", "TEMPD   ", SetID, e8(dTempD));
 }
 
+void TEMPD::OglDraw(int iDspFlgs, double dS1, double dS2)
+{
+	OglDrawW(iDspFlgs, dS1, dS2);
+}
+
+void TEMPD::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+
+	dS1 *= 5;
+	if ((iDspFlgs & DSP_BC) > 0)
+	{
+		Selectable = 1;
+		glColor3fv(cols[iColour]);
+		glLineWidth(10.0);
+		glBegin(GL_LINES);
+		glVertex3f((float)Point.x - 0.2 * dS1, (float)Point.y - 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x + 0.2 * dS1, (float)Point.y - 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x + 0.2 * dS1, (float)Point.y - 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x - 0.2 * dS1, (float)Point.y - 0.2 * dS1, (float)Point.z);
+		glEnd();
+		glLineWidth(2.0);
+		char sLab[20];
+		sprintf_s(sLab, "TEMPD %3.0f", dTempD);
+		OglString(iDspFlgs, Point.x, Point.y, Point.z, &sLab[0]);
+	}
+	else
+	{
+		Selectable = 0;
+	}
+}
+
+C3dVector TEMPD::Get_Centroid()
+{
+	return (Point);
+}
+
+int TEMPD::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo++] = "DEF TEMP";
+	return iNo;
+}
+
+
+int TEMPD::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+
+	sprintf_s(S1, "%g", dTempD);
+	sVar[iNo++] = S1;
+	return (iNo);
+}
+
+void TEMPD::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int i = 0;
+	dTempD = atof(sVar[i++]);
+}
 
 IMPLEMENT_DYNAMIC(GRAV, CObject)
 
-void GRAV::Create(G_Object* Parrent, int inSID, int inCID, double indScl, C3dVector invV)
+void GRAV::Create(C3dVector vC, G_Object* Parrent, int inSID, int inCID, double indScl, C3dVector invV)
 {
 	Drawn = 0;
 	Selectable = 0;
 	Visable = 0;
-	iObjType = 331;
+	iObjType = 332;
 	iLabel = -1;
-	pParent = Parrent;
+	iColour = 66;
+	pParent = Parrent;  //parent is the set obj
 	pObj = nullptr;
 	SetID = inSID;
 	iCID = inCID;
 	dScl = indScl;
 	vV = invV;
+	Point = vC;
 }
 
 void GRAV::Serialize(CArchive& ar, int iV, ME_Object* MESH)
@@ -44260,6 +44440,9 @@ void GRAV::Serialize(CArchive& ar, int iV, ME_Object* MESH)
 		ar << vV.x;
 		ar << vV.y;
 		ar << vV.z;
+		ar << Point.x;
+		ar << Point.y;
+		ar << Point.z;
 	}
 	else
 	{
@@ -44270,6 +44453,9 @@ void GRAV::Serialize(CArchive& ar, int iV, ME_Object* MESH)
 		ar >> vV.x;
 		ar >> vV.y;
 		ar >> vV.z;
+		ar >> Point.x;
+		ar >> Point.y;
+		ar >> Point.z;
 		pObj = nullptr;
 		pParent = MESH;
 	}
@@ -44281,8 +44467,81 @@ void GRAV::ExportNAS(FILE* pFile)
 	fprintf(pFile, "%8s%8i%8i%8s%8s%8s%8s\n", "GRAV    ", SetID,iCID, e8(dScl),e8(vV.x), e8(vV.y), e8(vV.z));
 }
 
+void GRAV::OglDraw(int iDspFlgs, double dS1, double dS2)
+{
+	OglDrawW(iDspFlgs, dS1, dS2);
+}
+
+void GRAV::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	dS1 *= 5;
+	if ((iDspFlgs & DSP_BC) > 0)
+	{
+		Selectable = 1;
+		glColor3fv(cols[iColour]);
+		glLineWidth(10.0);
+		glBegin(GL_LINES);
+		glVertex3f((float)Point.x - 0.15 * dS1, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x + 0.15 * dS1, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x + 0.15 * dS1, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x, (float)Point.y - 0.5 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x, (float)Point.y - 0.5 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x - 0.15 * dS1, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glEnd();
+		glLineWidth(2.0);
+		char sLab[20];
+		sprintf_s(sLab,"GRAV %3.0f",vV.Mag()*dScl);
+		OglString(iDspFlgs,Point.x,Point.y,Point.z,&sLab[0]);
+	}
+	else
+	{
+		Selectable = 0;
+	}
+}
+
+C3dVector GRAV::Get_Centroid()
+{
+	return (Point);
+}
+
+int GRAV::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo++] = "CID";
+	sVar[iNo++] = "ScaleF";
+	sVar[iNo++] = "X";
+	sVar[iNo++] = "Y";
+	sVar[iNo++] = "Z";
+	return iNo;
+}
 
 
+int GRAV::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", iCID);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", dScl);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", vV.x);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", vV.y);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", vV.z);
+	sVar[iNo++] = S1;
+	return (iNo);
+}
+
+void GRAV::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int i = 0;
+	iCID = atoi(sVar[i++]);
+	dScl = atof(sVar[i++]);
+	vV.x = atof(sVar[i++]);
+	vV.y = atof(sVar[i++]);
+	vV.z = atof(sVar[i++]);
+}
 
 //virtual int GetVarHeaders(CString sVar[]);
 //virtual int GetVarValues(CString sVar[]);

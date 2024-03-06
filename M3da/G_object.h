@@ -198,6 +198,7 @@ const float cols[167][3] ={{0.0f,0.0f,0.0f},
 const int MAX_RESSETS=50000;
 class Part;
 class Graph;
+class GRAV;
 class ME_Object;
 class NLine;
 class NCurve;
@@ -4191,8 +4192,14 @@ void ReportFResultant(Vec<double> &FVec);
 void GetPressureLoads(cLinkedList* pLC,int neq,Vec<double> &FVec);
 void BuildForceVector(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,cLinkedList* pTC,int neq,Vec<double> &FVec);
 void GetAccelLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,int neq,Vec<double> &FVec);
+
+void GetGRAVLoads(PropTable* PropsT, MatTable* MatT, GRAV* pGrav, int neq, Vec<double>& FVec);
+
+
 void GetRotAccelLoads(PropTable* PropsT, MatTable* MatT, cLinkedList* pLC, int neq, Vec<double> &FVec);
 void GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pTC,int neq,Vec<double> &FVec);
+BOOL TSEThasTEMPD(cLinkedList* pTC, double& defT);
+GRAV* LSEThasGRAV(cLinkedList* pLC);
 cLinkedList* TSetNodaltoElement(cLinkedList* pTC_Nodal, double defT);
 void ZeroThermalStrains(double dVal);
 void SetDefNodeTemp(double dVal);
@@ -4862,28 +4869,37 @@ virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
 //m3d is designed so have to make them work
 class TEMPD : public BCLD
 {
-	double dTempD;				//defualt temperature
 	DECLARE_DYNAMIC(TEMPD)
-	virtual void Create(G_Object* Parrent, int SetID, double dTIn);
+	C3dVector Point;
+	double dTempD;				//defualt temperature
+	virtual void Create(C3dVector vC, G_Object* Parrent, int SetID, double dTIn);
 	virtual void Serialize(CArchive& ar, int iV, ME_Object* MESH);
 	virtual void ExportNAS(FILE* pFile);
-	//virtual int GetVarHeaders(CString sVar[]);
-	//virtual int GetVarValues(CString sVar[]);
-	//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual C3dVector Get_Centroid();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 class GRAV : public BCLD
 {
+	DECLARE_DYNAMIC(GRAV)
+	C3dVector Point;
 	int iCID;
 	double dScl;
 	C3dVector vV;
-	DECLARE_DYNAMIC(GRAV)
-	virtual void Create(G_Object* Parrent, int inSID, int inCID, double indScl, C3dVector invV);
+
+	virtual void Create(C3dVector vC,G_Object* Parrent, int inSID, int inCID, double indScl, C3dVector invV);
 	virtual void Serialize(CArchive& ar, int iV, ME_Object* MESH);
 	virtual void ExportNAS(FILE* pFile);
-	//virtual int GetVarHeaders(CString sVar[]);
-	//virtual int GetVarValues(CString sVar[]);
-	//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual C3dVector Get_Centroid();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 

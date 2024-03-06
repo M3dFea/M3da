@@ -17667,8 +17667,8 @@ void NASReadPLOAD(NasCard& oC,
 	pE = pM->GetShellFromNodes(iN1, iN2, iN3);
 	if ((pE != nullptr) && (pLCSET != nullptr))
 	{
-		vP = pE->Get_Normal();
-		vP *= dPr;
+		//presure is stored in vector x only
+		vP.x = dPr; vP.y = 0; vP.z = 0;
 		G_Object* PLoad = pM->AddPressure((E_Object*)pE, vP, iID);
 	}
 	else
@@ -18674,15 +18674,27 @@ int ExtractIntegerFromCString(const CString& str) {
 	}
 }
 
-void DBase::ImportNASTRAN_SOL(CString inName, ME_Object* pME)
-{
+bool hasNoCharactersBeforeKeyword(const CString& str, const CString& keyword) {
+	// Find the position of the keyword in the string
+	int keywordPos = str.Find(keyword);
+	if (keywordPos == -1) 
+	{
+		// Keyword not found in the string
+		return false;
+	}
+
+	// Check if there are only spaces or no characters before the keyword
+	return std::all_of(str.GetString(), str.GetString() + keywordPos, [](TCHAR c) { return std::isspace(c); });
+}
+
+//this is the chatgpt simplified version - old version below
+void DBase::ImportNASTRAN_SOL(CString inName, ME_Object* pME) {
 	BOOL bSOL101 = FALSE;
 	BOOL bSBUB = FALSE;
 	BOOL bret = FALSE;
 	int iSUBID = -1;
-	int iSUB = -1;
-	int iLC = -1;;
-	int iBC = -1;;
+	int iLC = -1;
+	int iBC = -1;
 	int iTS = -1;
 	char s1[200];
 	int iCurFileNo = -1;
@@ -18690,100 +18702,202 @@ void DBase::ImportNASTRAN_SOL(CString inName, ME_Object* pME)
 	CString datline;
 	CString datlineNxt;
 	CString sInc;
-	CString sKwrd;
+	CString sLine;
 	CString sKeyWrd;
 	CString sTit;
 	NasCard oCard;
 	BOOL bDone = FALSE;
-	CoordSys* pRet;
 	pFile = fopen(inName, "r");
-	if (pFile != NULL)
-	{
+
+	if (pFile != NULL) {
 		iCurFileNo = GetFileByNo(inName);
-		if (iCurFileNo == -1)
-		{
+		if (iCurFileNo == -1) {
 			sFiles[iFileNo] = inName;
 			iCurFileNo = iFileNo;
 			iFileNo++;
 		}
-		do
-		{
-			if (feof(pFile))
-			{
+
+		do {
+			if (feof(pFile)) {
 				bDone = TRUE;
 			}
-			else
-			{
+			else {
 				fgets(s1, 200, pFile);
 				datlineNxt = s1;
 			}
 
-			if (IsInclude(datline) == TRUE)
-			{
+			if (IsInclude(datline)) {
 				sInc = GetIncName(datline);
 				ImportNASTRAN_SOL(sInc, pME);
 			}
-			sKwrd = datline;
-			if (sKwrd.Find("BEGIN BULK") > -1)
-			{
+
+			sLine = datline;
+			sKeyWrd = "BEGIN BULK";
+			if ((sLine.Find(sKeyWrd) > -1) && hasNoCharactersBeforeKeyword(sLine, sKeyWrd)) {
 				bDone = TRUE;
-				if (bSOL101)
-				{
+				if (bSOL101) {
 					sTit.Format(_T("SUBCASE %d"), iSUBID);
 					pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
-					bret = pME->pSOLS->SetCurStep(iSUBID-1);
+					bret = pME->pSOLS->SetCurStep(iSUBID - 1);
 				}
 			}
-			if ((sKwrd.Find("SOL") > -1) && (sKwrd.Find("101") > -1))
-			{
+
+			sKeyWrd = "SOL";
+			if ((sLine.Find(sKeyWrd) > -1) && (sLine.Find("101") > -1) && hasNoCharactersBeforeKeyword(sLine, sKeyWrd)) {
 				//Linear static solve
 				bSOL101 = TRUE;
-				pME->pSOLS->AddSolution(0,"SOL 101 STATICS", gDEF_SOL_TOL);
+				pME->pSOLS->AddSolution(0, "SOL 101 STATICS", gDEF_SOL_TOL);
 				outtext1("Solution Added and Set as Active.");
 			}
-			if (bSOL101)  //look for subcases
-			{
-				if (sKwrd.Find("SUBCASE") > -1)  //create new step
-				{
-					iSUBID = ExtractIntegerFromCString(sKwrd);
-					int iLC = -1;;
-					int iBC = -1;;
-					int iTS = -1;
-					if (!bSBUB)
-					{
-						bSBUB = TRUE;
+
+			if (bSOL101) {
+				if ((sLine.Find("SUBCASE") > -1) && hasNoCharactersBeforeKeyword(sLine, "SUBCASE")) {
+					iSUBID = ExtractIntegerFromCString(sLine);
+					iLC = iBC = iTS = -1; // Resetting the values
+					if (bSBUB) {
+						sTit.Format(_T("SUBCASE %d"), iSUBID);
+						pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
+						bret = pME->pSOLS->SetCurStep(iSUBID - 1);
 					}
-					else
-					{
-						bSBUB = FALSE;
-						if (bSOL101)
-						{
-							sTit.Format(_T("SUBCASE %d"), iSUBID);
-							pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
-							bret = pME->pSOLS->SetCurStep(iSUBID-1);
-						}
-					}
+					bSBUB = !bSBUB;
 				}
-				else if ((sKwrd.Find("LOAD") > -1) && (sKwrd.Find("OLOAD") == -1))
-				{
-					iLC = ExtractIntegerFromCString(sKwrd);
+				else if ((sLine.Find("LOAD") > -1) && hasNoCharactersBeforeKeyword(sLine, "LOAD")) {
+					iLC = ExtractIntegerFromCString(sLine);
 				}
-				else if ((sKwrd.Find("SPC") > -1))
-				{
-					iBC = ExtractIntegerFromCString(sKwrd);
+				else if ((sLine.Find("SPC") > -1) && hasNoCharactersBeforeKeyword(sLine, "SPC")) {
+					iBC = ExtractIntegerFromCString(sLine);
 				}
-				else if ((sKwrd.Find("TEMP") > -1))
-				{
-					iTS = ExtractIntegerFromCString(sKwrd);
+				else if ((sLine.Find("TEMP") > -1) && hasNoCharactersBeforeKeyword(sLine, "TEMP")) {
+					iTS = ExtractIntegerFromCString(sLine);
 				}
 			}
 
 			datline = datlineNxt;
-		} while (bDone == FALSE);
+		} while (!bDone);
+
 		fclose(pFile);
 	}
-
 }
+
+
+//void DBase::ImportNASTRAN_SOL(CString inName, ME_Object* pME)
+//{
+//	BOOL bSOL101 = FALSE;
+//	BOOL bSBUB = FALSE;
+//	BOOL bret = FALSE;
+//	int iSUBID = -1;
+//	int iSUB = -1;
+//	int iLC = -1;;
+//	int iBC = -1;;
+//	int iTS = -1;
+//	char s1[200];
+//	int iCurFileNo = -1;
+//	FILE* pFile;
+//	CString datline;
+//	CString datlineNxt;
+//	CString sInc;
+//	CString sLine;
+//	CString sKeyWrd;
+//	CString sTit;
+//	NasCard oCard;
+//	BOOL bDone = FALSE;
+//	CoordSys* pRet;
+//	pFile = fopen(inName, "r");
+//	if (pFile != NULL)
+//	{
+//		iCurFileNo = GetFileByNo(inName);
+//		if (iCurFileNo == -1)
+//		{
+//			sFiles[iFileNo] = inName;
+//			iCurFileNo = iFileNo;
+//			iFileNo++;
+//		}
+//		do
+//		{
+//			if (feof(pFile))
+//			{
+//				bDone = TRUE;
+//			}
+//			else
+//			{
+//				fgets(s1, 200, pFile);
+//				datlineNxt = s1;
+//			}
+//
+//			if (IsInclude(datline) == TRUE)
+//			{
+//				sInc = GetIncName(datline);
+//				ImportNASTRAN_SOL(sInc, pME);
+//			}
+//			sLine = datline;
+//			sKeyWrd = "BEGIN BULK";
+//			if ((sLine.Find(sKeyWrd) > -1) && 
+//				hasNoCharactersBeforeKeyword(sLine, sKeyWrd))
+//			{
+//				bDone = TRUE;
+//				if (bSOL101)
+//				{
+//					sTit.Format(_T("SUBCASE %d"), iSUBID);
+//					pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
+//					bret = pME->pSOLS->SetCurStep(iSUBID-1);
+//				}
+//			}
+//			sKeyWrd = "SOL";
+//			if ((sLine.Find(sKeyWrd) > -1) && (sLine.Find("101") > -1) &&
+//				hasNoCharactersBeforeKeyword(sLine, sKeyWrd))
+//			{
+//				//Linear static solve
+//				bSOL101 = TRUE;
+//				pME->pSOLS->AddSolution(0,"SOL 101 STATICS", gDEF_SOL_TOL);
+//				outtext1("Solution Added and Set as Active.");
+//			}
+//			if (bSOL101)  //look for subcases
+//			{
+//				if ((sLine.Find("SUBCASE") > -1)  &&
+//					hasNoCharactersBeforeKeyword(sLine, "SUBCASE"))
+//				{
+//					iSUBID = ExtractIntegerFromCString(sLine);
+//					int iLC = -1;;
+//					int iBC = -1;;
+//					int iTS = -1;
+//					if (!bSBUB)
+//					{
+//						bSBUB = TRUE;
+//					}
+//					else
+//					{
+//						bSBUB = FALSE;
+//						if (bSOL101)
+//						{
+//							sTit.Format(_T("SUBCASE %d"), iSUBID);
+//							pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
+//							bret = pME->pSOLS->SetCurStep(iSUBID-1);
+//						}
+//					}
+//				}
+//				else if ((sLine.Find("LOAD") > -1) && 
+//					      hasNoCharactersBeforeKeyword(sLine, "LOAD"))
+//				{
+//					iLC = ExtractIntegerFromCString(sLine);
+//				}
+//				else if ((sLine.Find("SPC") > -1) &&
+//					      hasNoCharactersBeforeKeyword(sLine, "SPC"))
+//				{
+//					iBC = ExtractIntegerFromCString(sLine);
+//				}
+//				else if ((sLine.Find("TEMP") > -1) &&
+//					      hasNoCharactersBeforeKeyword(sLine, "TEMP"))
+//				{
+//					iTS = ExtractIntegerFromCString(sLine);
+//				}
+//			}
+//
+//			datline = datlineNxt;
+//		} while (bDone == FALSE);
+//		fclose(pFile);
+//	}
+//
+//}
 
 void DBase::ImportNASTRANFirstPass(CString inName, ME_Object* pME,NEList* PIDs,NEList* MATs)
 {
