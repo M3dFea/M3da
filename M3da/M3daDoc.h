@@ -557,6 +557,8 @@ public:
   afx_msg void OnDimensiontoolsCirclecentremarker();
   afx_msg void OnElementtypeBush();
   afx_msg void OnEditGlobalpreferences();
+  afx_msg void OnLoadsbcCreatetempd();
+  afx_msg void OnLoadsbcCreategrav();
 };
 
 

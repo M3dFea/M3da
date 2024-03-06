@@ -612,6 +612,13 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zGRAV_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+
 class zRACR_Mnu : public zMnu
 {
 public:
@@ -622,6 +629,12 @@ class zTCR_Mnu: public zMnu
 {
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zTEMPD_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
 class zTBCR_Mnu: public zMnu

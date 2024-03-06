@@ -511,13 +511,17 @@ BEGIN
         MENUITEM "List Boundary Sets",          ID_LOADSBC_LISTBOUNDARYSETS
         MENUITEM "List Temperature Sets",       ID_LOADSBC_LISTTEMPERATURESETS
         MENUITEM SEPARATOR
-        MENUITEM "Create Force",                ID_SOLVER_CREATEFORCE
-        MENUITEM "Create Moment",               ID_ANALYSIS_CREATEMOMENT
+        POPUP "Create Moment"
+        BEGIN
+            MENUITEM "Create Force",                ID_SOLVER_CREATEFORCE
+        END
         MENUITEM "Create Pressure",             ID_ANALYSIS_CREATEPRESSURE
         MENUITEM "Create Acceleration Body Load", ID_LOADSBC_CREATEACCELERATIONBODYLOAD
         MENUITEM "Create Rotational Body Load", ID_LOADSBC_CREATEROTATIONALBODYLOAD
         MENUITEM "Create Structural Temp",      ID_LOADSBC_CREATESTRUCTURALTEMP
         MENUITEM "Create Restraint",            ID_SOLVER_CREATERESTRAINT
+        MENUITEM "Create TEMPD (NAS Card)",     ID_LOADSBC_CREATETEMPD
+        MENUITEM "Create GRAV (NAS Card)",      ID_LOADSBC_CREATEGRAV
         MENUITEM SEPARATOR
         MENUITEM "Create Thermal Temp BC",      ID_LOADSBC_CREATETHERMALTEMPBC
         MENUITEM "Create Thermal Nett Flux Load", ID_LOADSBC_CREATETHERMALNETTFLUXLOAD
@@ -1386,6 +1390,8 @@ BEGIN
     ID_DIMENSIONTOOLS_CIRCLECENTREMARKER "Create circle centre marker."
     ID_ELEMENTTYPE_BUSH     "BUSH 6 DOF Spring Element"
     ID_EDIT_GLOBALPREFERENCES "Edit global stored parameters"
+    ID_LOADSBC_CREATETEMPD  "Create defualt model structural temperature."
+    ID_LOADSBC_CREATEGRAV   "Create Nastran GRAV card."
 END
 
 #endif    // English (United States) resources

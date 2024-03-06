@@ -386,6 +386,8 @@ void AddTemperatureBC(ObjList* Nodes,double T);
 void AddAccel(ObjList* Elements,C3dVector vA);
 void AddRotAccel(ObjList* Elements, double dw, C3dVector vAP1, C3dVector vAP2);
 void AddTemperature(ObjList* Nodes,double T);
+void AddTEMPD(double T);
+void AddGrav(double dScl, C3dVector Vec);
 void AddForce(ObjList* Nodes,C3dVector F);
 void AddMoment(ObjList* Nodes,C3dVector F);
 void AddPressure(ObjList* Nodes,C3dVector F);

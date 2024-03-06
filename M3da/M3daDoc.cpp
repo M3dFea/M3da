@@ -408,6 +408,8 @@ ON_COMMAND(ID_DIMENSIONTOOLS_DRAGDIM, &CM3daDoc::OnDimensiontoolsDragdim)
 ON_COMMAND(ID_DIMENSIONTOOLS_CIRCLECENTREMARKER, &CM3daDoc::OnDimensiontoolsCirclecentremarker)
 ON_COMMAND(ID_ELEMENTTYPE_BUSH, &CM3daDoc::OnElementtypeBush)
 ON_COMMAND(ID_EDIT_GLOBALPREFERENCES, &CM3daDoc::OnEditGlobalpreferences)
+ON_COMMAND(ID_LOADSBC_CREATETEMPD, &CM3daDoc::OnLoadsbcCreatetempd)
+ON_COMMAND(ID_LOADSBC_CREATEGRAV, &CM3daDoc::OnLoadsbcCreategrav)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6793,4 +6795,36 @@ void CM3daDoc::OnEditGlobalpreferences()
 {
 	// TODO: Add your command handler code here
 	cDBase->EditGlobals();
+}
+
+
+void CM3daDoc::OnLoadsbcCreatetempd()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("TEMPD");
+		sLastcmd = "TEMPD";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnLoadsbcCreategrav()
+{
+	// TODO: Add your command handler code here
+	if (pMnu->isNULL())
+	{
+		SetModifiedFlag(); CheckPoint(); bFinalChkPt = FALSE;
+		outtextMSG2("GRAV");
+		sLastcmd = "GRAV";
+	}
+	else
+	{
+		outtext1("Finish Current Operation.");
+	}
 }

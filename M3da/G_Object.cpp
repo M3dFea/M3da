@@ -25665,18 +25665,27 @@ else
 {
   Vec<double> FVec;
   Vec<int> Steer;
-  FVec = GetForceVec(pLC,neq);
-  GetPressureLoads(pLC,neq,FVec);
-  if (pTC != NULL)
+
+  if (neq != 0)
   {
-	  //convert nodal temps to element centroid
-	  cLinkedList* pTC_ELEM;
-	  double dDefT = 0;
-	  BOOL bTEMPD = FALSE;
-	  bTEMPD = TSEThasTEMPD(pTC, dDefT);
-	  pTC_ELEM = TSetNodaltoElement(pTC, dDefT);
-	  GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
+	  ZeroThermalStrains(0.0);
+	  BuildForceVector(PropsT, MatT, pLC, pTC, neq, FVec);
+	  bGo = TRUE;
   }
+
+  //FVec = GetForceVec(pLC,neq);
+  //GetPressureLoads(pLC,neq,FVec);
+  //if (pTC != NULL)
+  //{
+	 // //convert nodal temps to element centroid
+	 // cLinkedList* pTC_ELEM;
+	 // double dDefT = 0;
+	 // BOOL bTEMPD = FALSE;
+	 // bTEMPD = TSEThasTEMPD(pTC, dDefT);
+	 // pTC_ELEM = TSetNodaltoElement(pTC, dDefT);
+	 // GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
+  //}
+
   int iBW=this->MaxBW();
   Vec <double> KM(neq*(iBW+1));
   LocalRes(neq,Steer,KM);
@@ -25715,13 +25724,13 @@ else
   outtext1("STARTING BACK SUBSTITUTION");
   bacsub(KM,FVec);
   outtext1("FINISHED SOLUTION");
-  Displacements(iLC,sSol,sStep,Steer,FVec);
-  ForcesRod(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
-  ForcesBUSH(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
-  ForcesBeam(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
+  Displacements(iStep,sSol,sStep,Steer,FVec);
+  ForcesRod(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+  ForcesBUSH(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+  ForcesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,FVec);
   //Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
-  RecoverShell(iLC, sSol, sStep, PropsT, MatT, Steer, FVec);
-  Stresses3d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
+  RecoverShell(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+  Stresses3d(iStep, sSol, sStep, PropsT,MatT,Steer,FVec);
   outtext1("FINISHED SOLUTION");
 
   KM.DeleteAll();
@@ -26659,6 +26668,7 @@ G_Object* ME_Object::AddTempD(double inT, int inSetID)
 		pT = new TEMPD();
 		pT->Create(this->Get_Centroid(), pSet, inSetID, inT);
 		pSet->Add(pT);
+		outtext1("TEMPD Created.");
 	}
 	return (pT);
 }
@@ -26933,8 +26943,9 @@ void ME_Object::BuildForceVector(PropTable* PropsT,MatTable* MatT,cLinkedList* p
 	//*************************************************************************
     GetAccelLoads(PropsT,MatT,pLC,neq,FVec);      //Add In all Body loads
     GetRotAccelLoads(PropsT, MatT, pLC, neq, FVec);      //Add In all Rotational Body loads
+	ReportFResultant(FVec);
   }
-  ReportFResultant(FVec);
+  
 
   if (pTC != NULL)
   {
@@ -27584,54 +27595,58 @@ return (TVec);
 Vec <double> ME_Object::GetForceVec(cLinkedList* pLC,int neq)
 {
 Vec <double> FVec(neq);
-BCLD* pNext;
-pNext=(BCLD*) pLC->Head;
-while (pNext!=NULL)
+FVec.Zero();
+if (pLC != nullptr)
 {
-  if (pNext->iObjType==321)
-  {
-     Node* pNode = (Node*) pNext->pObj;
-     Force* pF=(Force*) pNext;
-     if (pNode->dof[0]>0)
-	   {
-       *FVec.nn(pNode->dof[0])=pF->F.x;
-	   }
-	   if (pNode->dof[1]>0)
-	   {
-       *FVec.nn(pNode->dof[1])=pF->F.y;
-	   }
-	   if (pNode->dof[2]>0)
-	   {
-       *FVec.nn(pNode->dof[2])=pF->F.z;
-	   }
-  }
-  else if (pNext->iObjType==323)
-  {
-     Node* pNode = (Node*) pNext->pObj;
-     Moment* pF=(Moment*) pNext;
-     if (pNode->dof[3]>0)
-	   {
-       *FVec.nn(pNode->dof[3])=pF->F.x;
-	   }
-	   if (pNode->dof[4]>0)
-	   {
-       *FVec.nn(pNode->dof[4])=pF->F.y;
-	   }
-	   if (pNode->dof[5]>0)
-	   {
-       *FVec.nn(pNode->dof[5])=pF->F.z;
-	   }
-  }
-  else if (pNext->iObjType==326)
-  {
-     Node* pNode = (Node*) pNext->pObj;
-     FluxLoad* pF=(FluxLoad*) pNext;
-     if (pNode->dof[0]>0)
-	   {
-         *FVec.nn(pNode->dof[0])=pF->dV;
-	   }
-  }
-pNext=(BCLD*) pNext->next;
+	BCLD* pNext;
+	pNext = (BCLD*)pLC->Head;
+	while (pNext != NULL)
+	{
+		if (pNext->iObjType == 321)
+		{
+			Node* pNode = (Node*)pNext->pObj;
+			Force* pF = (Force*)pNext;
+			if (pNode->dof[0] > 0)
+			{
+				*FVec.nn(pNode->dof[0]) = pF->F.x;
+			}
+			if (pNode->dof[1] > 0)
+			{
+				*FVec.nn(pNode->dof[1]) = pF->F.y;
+			}
+			if (pNode->dof[2] > 0)
+			{
+				*FVec.nn(pNode->dof[2]) = pF->F.z;
+			}
+		}
+		else if (pNext->iObjType == 323)
+		{
+			Node* pNode = (Node*)pNext->pObj;
+			Moment* pF = (Moment*)pNext;
+			if (pNode->dof[3] > 0)
+			{
+				*FVec.nn(pNode->dof[3]) = pF->F.x;
+			}
+			if (pNode->dof[4] > 0)
+			{
+				*FVec.nn(pNode->dof[4]) = pF->F.y;
+			}
+			if (pNode->dof[5] > 0)
+			{
+				*FVec.nn(pNode->dof[5]) = pF->F.z;
+			}
+		}
+		else if (pNext->iObjType == 326)
+		{
+			Node* pNode = (Node*)pNext->pObj;
+			FluxLoad* pF = (FluxLoad*)pNext;
+			if (pNode->dof[0] > 0)
+			{
+				*FVec.nn(pNode->dof[0]) = pF->dV;
+			}
+		}
+		pNext = (BCLD*)pNext->next;
+	}
 }
 return (FVec);
 }
@@ -44543,9 +44558,7 @@ void GRAV::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 	vV.z = atof(sVar[i++]);
 }
 
-//virtual int GetVarHeaders(CString sVar[]);
-//virtual int GetVarValues(CString sVar[]);
-//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+
 
 
 

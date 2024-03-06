@@ -2086,6 +2086,53 @@ else
 }
 }
 
+void DBase::AddTEMPD(double T)
+{
+	int i;
+	int iSID = -1;
+	double dT;
+	BOOL bIsTempD = FALSE;
+	cLinkedList* pS = nullptr;
+	if (pCurrentMesh->iCurTSet != -1)
+	{
+		iSID = pCurrentMesh->GetTSETID(pCurrentMesh->iCurTSet);
+		pS = pCurrentMesh->GetTSET(iSID);
+		bIsTempD = pCurrentMesh->TSEThasTEMPD(pS, dT);
+		if (bIsTempD)
+			outtext1("ERROR: TEMPD card already exists.");
+		else
+		   G_Object* pT = pCurrentMesh->AddTempD(T, iSID);
+	}
+	else
+	{
+		outtext1("ERROR: No Temperature Set is Active.");
+	}
+}
+
+void DBase::AddGrav(double dScl, C3dVector Vec)
+{
+	int i;
+	int iSID = -1;
+	double dT;
+	GRAV* pGrav = nullptr;
+	cLinkedList* pS = nullptr;
+	if (pCurrentMesh->iCurLC != -1)
+	{
+		iSID = pCurrentMesh->GetLCID(pCurrentMesh->iCurLC);
+		pS = pCurrentMesh->GetLC(iSID);
+		pGrav = pCurrentMesh->LSEThasGRAV(pS);
+		if (pGrav!=nullptr)
+			outtext1("ERROR: GRAV card already exists in this Load Set.");
+		else
+		    G_Object* pT = pCurrentMesh->AddGRAV(iSID, 0, dScl, Vec);
+	}
+	else
+	{
+		outtext1("ERROR: No Load Set is Active.");
+	}
+}
+
+
 
 void DBase::AddRotAccel(ObjList* Elements, double dw, C3dVector vAP1, C3dVector vAP2)
 {
@@ -15118,7 +15165,17 @@ void DBase::DeleteObj()
 					Dsp_RemGP(S_Buff[iCO]);
 				}
 			} 
-			else if ((S_Buff[iCO]->iObjType==321) || (S_Buff[iCO]->iObjType==322) || (S_Buff[iCO]->iObjType==323) || (S_Buff[iCO]->iObjType==324) || (S_Buff[iCO]->iObjType==325) || (S_Buff[iCO]->iObjType==326) || (S_Buff[iCO]->iObjType==327) || (S_Buff[iCO]->iObjType==328))
+			else if ((S_Buff[iCO]->iObjType==321) || 
+				(S_Buff[iCO]->iObjType==322) || 
+				(S_Buff[iCO]->iObjType==323) || 
+				(S_Buff[iCO]->iObjType==324) || 
+				(S_Buff[iCO]->iObjType==325) || 
+				(S_Buff[iCO]->iObjType==326) || 
+				(S_Buff[iCO]->iObjType==327) || 
+				(S_Buff[iCO]->iObjType==328) || 
+				(S_Buff[iCO]->iObjType==329) ||
+				(S_Buff[iCO]->iObjType==331) ||
+				(S_Buff[iCO]->iObjType==332))
 			{
 				ME_Object* Me = (ME_Object*) S_Buff[iCO]->pParent->pParent;
 				if (Me->DeleteBC((BCLD*) S_Buff[iCO])==TRUE)
