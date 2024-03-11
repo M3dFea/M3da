@@ -23,6 +23,7 @@ extern int iNoSymbols;
 extern double dAveW;
 extern double dAveH;
 extern Symbol* pSymTable[10000];
+extern int gDIM_PREC;
 extern double gDIM_SIZE;
 extern double gDRILL_KS;          //K value for shell drilling
 extern double gRIGID_MULTIPLIER;  //multiplier to factor psuedo rigid elemenys K values

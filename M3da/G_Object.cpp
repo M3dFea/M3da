@@ -17,6 +17,7 @@ double gFC_SIZE = 3;
 double gWP_SIZE = 12;
 double gBM_SIZE = 2;
 double gTXT_SIZE = 2;
+int gDIM_PREC = 2;
 double gDIM_SIZE = 0.5;
 double gDRILL_KS = 1.0;    
 double gRIGID_MULTIPLIER = 10000.0; 
@@ -5807,7 +5808,7 @@ gret->pResV = NULL;
 return (gret);
 }
 
-G_Object* E_Object38::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object38::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object38* gret = new E_Object38;
@@ -6799,7 +6800,7 @@ pVertex[4]=NULL;
 pVertex[5]=NULL;
 }
 
-void E_Object36::Create(Node* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_Object36::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -6958,7 +6959,7 @@ gret->pResV = NULL;
 return (gret);
 }
 
-G_Object* E_Object36::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object36::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object36* gret = new E_Object36;
@@ -8298,7 +8299,7 @@ return (gret);
 }
 
 
-G_Object* E_Object34::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object34::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object34* gret = new E_Object34;
@@ -9538,7 +9539,7 @@ G_Object* E_Object310::CopyAppend(int iSInd, ME_Object* Target, ME_Object* Sourc
 }
 
 
-G_Object* E_Object310::Copy2(G_Object* Parrent, Node* pInVertex[200], int inPID, int inMID, int inPIDunv)
+G_Object* E_Object310::Copy2(G_Object* Parrent, Node* pInVertex[MaxSelNodes], int inPID, int inMID, int inPIDunv)
 {
 	ME_Object* MESH = (ME_Object*)Parrent;
 	E_Object310* gret = new E_Object310;
@@ -10909,6 +10910,84 @@ double E_Object::GetPHI_SQ()
 	return(1.0);
 }
 
+void E_Object::GetPinFlags(Vec<int>& PDOFS, int& iNoPINs)
+{
+
+}
+
+
+ void E_Object::PinFlgsToKE(Mat& KEL)
+{
+	 Vec<int> DOFPIN;
+	 int NUM_PFLAG_DOFS;
+	 int PDOF;
+	 //get the DOF to release
+	 GetPinFlags(DOFPIN, NUM_PFLAG_DOFS);
+	 int I, J, K;
+	 int iNDof = iNoNodes * 6;
+
+	 //!Check to make sure that the diagonal stiffness for the pin flagged DOF's are not zero
+
+	 //	IERROR = 0
+	 //	DO I = 1, NUM_PFLAG_DOFS
+	 //	ZERO_STIFF(I) = 'N'
+	 //	PDOF = DOFPIN(I)
+	 //	IF(DABS(KE(PDOF, PDOF)) <= EPS1) THEN
+	 //	IERROR = IERROR + 1
+	 //	WARN_ERR = WARN_ERR + 1
+	 //	WRITE(ERR, 1921) PDOF, TYPE, EID
+	 //	IF(SUPWARN == 'N') THEN
+	 //	WRITE(F06, 1921) PDOF, TYPE, EID
+	 //	ENDIF
+	 //	ZERO_STIFF(I) = 'Y'
+	 //	ENDIF
+	 //	ENDDO
+	 //	IF(IERROR > 0) THEN
+	 //	RETURN
+	 //	ENDIF
+
+	 //	!Process pin flags in KE
+	 //DOFPIN.diag();
+	 for (I = 1; I < NUM_PFLAG_DOFS; I++)
+	 {
+		 //	i_do : DO I = 1, NUM_PFLAG_DOFS
+		 //	IF(ZERO_STIFF(I) == 'N') THEN
+		 PDOF = *DOFPIN.nn(I);
+
+		 for (J = 1; J <= iNDof; J++)
+		 {
+			 if (J != PDOF)
+			 {
+				 for (K = 1; K <= iNDof; K++)
+				 {
+					 if (K != PDOF)
+					 {
+						 //	IF(DABS(KE(PDOF, PDOF)) > EPS1) THEN
+						 *KEL.mn(J, K) = *KEL.mn(J, K) - *KEL.mn(PDOF, K) * *KEL.mn(J, PDOF) / *KEL.mn(PDOF, PDOF);
+						 //	ELSE
+						 //	WRITE(ERR, 1937) TYPE, EID, PDOF
+						 //	WRITE(F06, 1937) TYPE, EID, PDOF
+						 //	NUM_EMG_FATAL_ERRS = NUM_EMG_FATAL_ERRS + 1
+						 //	FATAL_ERR = FATAL_ERR + 1
+						 //	CYCLE i_do
+						 //	ENDIF
+					 }
+				 }
+			 }
+		 }
+
+		 //	!Set row and column PDOF(pin flagged) to zero
+
+		 for (J = 1; J <= iNDof; J++)
+		 {
+			 *KEL.mn(PDOF, J) = 0;
+			 *KEL.mn(J, PDOF) = 0;
+		 }
+
+		 //	ENDIF
+	 }
+}
+
 C3dMatrix E_Object::GetElSys()
 {
 C3dMatrix vR;
@@ -11781,7 +11860,7 @@ return (gret);
 }
 
 
-G_Object* E_Object::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 
 E_Object* gret = new E_Object;
@@ -11940,7 +12019,7 @@ pVertex[0]=NULL;
 pVertex[1]=NULL;
 }
 
-void E_Object2::Create(Node* pInVertex[200], int iLab,int iCol,int iType, int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_Object2::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType, int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -12373,7 +12452,7 @@ return (gret);
 }
 
 
-G_Object* E_Object2::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object2::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object2* gret = new E_Object2;
@@ -12981,7 +13060,7 @@ pVertex[0]=NULL;
 pVertex[1]=NULL;
 }
 
-void E_Object2R::Create(Node* pInVertex[200], int iLab,int iCol,int iType, int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_Object2R::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType, int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -13236,7 +13315,7 @@ return (gret);
 }
 
 
-G_Object* E_Object2R::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object2R::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object2R* gret = new E_Object2R;
@@ -14179,7 +14258,7 @@ return (gret);
 }
 
 
-G_Object* E_Object2B::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object2B::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object2B* gret = new E_Object2B;
@@ -14445,79 +14524,6 @@ return (KM);
 
 
 
-void E_Object2B::PinFlgsToKE(Mat& KEL) //Pin Flags Element SYS
-{
-	Vec<int> DOFPIN;
-	int NUM_PFLAG_DOFS;
-	int PDOF;
-	GetPinFlags(DOFPIN, NUM_PFLAG_DOFS);
-	int I, J, K;
-
-
-	//!Check to make sure that the diagonal stiffness for the pin flagged DOF's are not zero
-
-	//	IERROR = 0
-	//	DO I = 1, NUM_PFLAG_DOFS
-	//	ZERO_STIFF(I) = 'N'
-	//	PDOF = DOFPIN(I)
-	//	IF(DABS(KE(PDOF, PDOF)) <= EPS1) THEN
-	//	IERROR = IERROR + 1
-	//	WARN_ERR = WARN_ERR + 1
-	//	WRITE(ERR, 1921) PDOF, TYPE, EID
-	//	IF(SUPWARN == 'N') THEN
-	//	WRITE(F06, 1921) PDOF, TYPE, EID
-	//	ENDIF
-	//	ZERO_STIFF(I) = 'Y'
-	//	ENDIF
-	//	ENDDO
-	//	IF(IERROR > 0) THEN
-	//	RETURN
-	//	ENDIF
-
-	//	!Process pin flags in KE
-
-	for (I = 1; I < NUM_PFLAG_DOFS; I++)
-	{
-		//	i_do : DO I = 1, NUM_PFLAG_DOFS
-		//	IF(ZERO_STIFF(I) == 'N') THEN
-		PDOF = *DOFPIN.nn(I);
-		for (J = 1; J <= 12; J++)
-		{
-			if (J != PDOF)
-			{
-				for (K = 1; K <= 12; K++)
-				{
-					if (K != PDOF)
-					{
-						//	IF(DABS(KE(PDOF, PDOF)) > EPS1) THEN
-						*KEL.mn(J, K) = *KEL.mn(J, K) - *KEL.mn(PDOF, K) * *KEL.mn(J, PDOF) / *KEL.mn(PDOF, PDOF);
-						//	ELSE
-						//	WRITE(ERR, 1937) TYPE, EID, PDOF
-						//	WRITE(F06, 1937) TYPE, EID, PDOF
-						//	NUM_EMG_FATAL_ERRS = NUM_EMG_FATAL_ERRS + 1
-						//	FATAL_ERR = FATAL_ERR + 1
-						//	CYCLE i_do
-						//	ENDIF
-					}
-				}
-			}
-		}
-
-		//	!Set row and column PDOF(pin flagged) to zero
-
-		for (J = 1; J <= 12; J++)
-		{
-			*KEL.mn(PDOF, J) = 0;
-			*KEL.mn(J, PDOF) = 0;
-		}
-
-		//	ENDIF
-
-	}
-}
-
-
-
 
 Mat E_Object2B::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
@@ -14658,12 +14664,13 @@ a7=4.0*eiy/ell;a8=gj/ell;
 *KM.mn(3,11)=-a5;
 *KM.mn(11,3)=-a5;
 //***************************************************************
-
-
-//PROCESS PIN FLAGS
+//                    PROCESS PIN FLAGS
+//***************************************************************
 if ((iDOFA > 0) || (iDOFB > 0))
    PinFlgsToKE(KM);
-//TRANSFORM KE TO GLOBAL
+//***************************************************************
+//                  TRANSFORM KE TO GLOBAL
+//***************************************************************
 t = KEToKGTransform();
 tt = t;
 tt.Transpose();
@@ -14672,7 +14679,9 @@ Mat tKmt;
 Kmt=KM*t;
 tKmt=tt*Kmt;
 KM=tKmt;
-//OFFSETS TO GLOBAL MAT
+//***************************************************************
+//                   OFFSETS TO GLOBAL MAT
+//***************************************************************
 if (bOpt == FALSE)
 {
 	if (HasOffsets())
@@ -14846,7 +14855,7 @@ this->pParent=NULL;
 iNoRemesh = 0;		  //tempoary for tet mesh gen debug.
 }
 
-void E_Object3::Create(Node* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int inMCys,double inMAng,G_Object* Parrent,Property* inPr)
+void E_Object3::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int inMCys,double inMAng,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 iMCys=inMCys;
@@ -15043,7 +15052,7 @@ gret->pResV = NULL;
 return (gret);
 }
 
-G_Object* E_Object3::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object3::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object3* gret = new E_Object3;
@@ -17397,7 +17406,7 @@ E_Object1::~E_Object1()
 pVertex=NULL;
 }
 
-void E_Object1::Create(Node* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_Object1::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 pVertex = pInVertex[0];
@@ -17664,7 +17673,7 @@ return (gret);
 
 
 
-G_Object* E_Object1::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object1::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object1* gret = new E_Object1;
@@ -18013,7 +18022,7 @@ return (gret);
 }
 
 
-G_Object* E_CellS::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_CellS::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_CellS* gret = new E_CellS;
@@ -19787,7 +19796,7 @@ return(6);
 }
 
 
-void E_Object4::Create(Node* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int inMCys,double inMAng,G_Object* Parrent,Property* inPr)
+void E_Object4::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int inMCys,double inMAng,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 iMCys= inMCys;
@@ -19966,7 +19975,7 @@ return (gret);
 }
 
 
-G_Object* E_Object4::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object4::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object4* gret = new E_Object4;
@@ -21114,7 +21123,7 @@ E_ObjectR::~E_ObjectR()
 {
 	dTemps.clear();
 }
-void E_ObjectR::Create(Node* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_ObjectR::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -21248,7 +21257,7 @@ gret->pResV = NULL;
 return (gret);
 }
 
-G_Object* E_ObjectR::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_ObjectR::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 int i;
 ME_Object* MESH =(ME_Object*) Parrent;
@@ -21448,11 +21457,11 @@ void E_ObjectR::OglDraw(int iDspFlgs,double dS1,double dS2)
 int i;
 char sLab[20];
 BOOL bD = FALSE;
-C3dVector d[200];
+C3dVector d[MaxSelNodes];
 double S=1.0;
 double dFS = 1.0;
 
-for (i = 0; i < 200; i++)
+for (i = 0; i < MaxSelNodes; i++)
 {
 	d[i].x = 0; d[i].y = 0; d[i].z = 0;
 }
@@ -21618,7 +21627,7 @@ Mat E_ObjectR::GetThermMat(PropTable* PropsT, MatTable* MatT)
 
 	double a, b;
 	int i, j, k;
-	//virtual void Create(Node * pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object * Parrent, Property * inPr);
+	//virtual void Create(Node * pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object * Parrent, Property * inPr);
 	*KMB.mn(1, 1) = gDEF_THERM_LNK;
 	*KMB.mn(2, 1) = -gDEF_THERM_LNK;
 	*KMB.mn(1, 2) = -gDEF_THERM_LNK;
@@ -21644,6 +21653,7 @@ Mat E_ObjectR::GetThermMat(PropTable* PropsT, MatTable* MatT)
 
 Mat E_ObjectR::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr)
 {
+	CString sRel = "";
 	Mat KM(6*iNoNodes, 6*iNoNodes);
 	KM.MakeZero();
 	Mat KMB;
@@ -21664,13 +21674,14 @@ Mat E_ObjectR::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& b
 	*Steer.nn(12) = 12;
 	double a, b;
 	int i,j, k;
-	//virtual void Create(Node * pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object * Parrent, Property * inPr);
+	//virtual void Create(Node * pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object * Parrent, Property * inPr);
 	E_Object2B* pEB = new E_Object2B();
 	pNDs[0] = pVertex[0];
 	for (k = 1; k < iNoNodes; k++)
 	{
 		pNDs[1] = pVertex[k];
 		pEB->Create(pNDs, k, 1, 21, 2, -1, 2, nullptr, nullptr);
+
 		KMB = pEB->GetStiffMat(PropsT, MatT, 2, bErr);
 		for (i = 1; i <= 12; i++)
 		{
@@ -21689,6 +21700,18 @@ Mat E_ObjectR::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& b
 		*Steer.nn(11) += 6;
 		*Steer.nn(12) += 6;
 	}
+
+//***************************************************************
+//                    PROCESS PIN FLAGS
+//***************************************************************
+	sRel = GetDofRelString();
+	//This is not working
+	//pEB->SetDOFStringA("");     //end release
+	//pEB->SetDOFStringB(sRel);   //end release
+	//NEED TO SETUP PIN FLAGS
+	if (iDOF > 0)
+		PinFlgsToKE(KM); 
+
 	Steer.clear();
 	delete (pEB);
 	return (KM);
@@ -21765,6 +21788,77 @@ double E_ObjectR::GetElCentriodVal()
 	return(dTemp);
 }
 
+CString E_ObjectR::GetDofRelString()
+{
+	CString sRel = "";
+
+	if (!(iDOF & DOF_1))
+	{
+		sRel = sRel + "1";
+	}
+	if (!(iDOF & DOF_2))
+	{
+		sRel = sRel + "2";
+	}
+	if (!(iDOF & DOF_3))
+	{
+		sRel = sRel + "3";
+	}
+	if (!(iDOF & DOF_4))
+	{
+		sRel = sRel + "4";
+	}
+	if (!(iDOF & DOF_5))
+	{
+		sRel = sRel + "5";
+	}
+	if (!(iDOF & DOF_6))
+	{
+		sRel = sRel + "6";
+	}
+	return (sRel);
+}
+
+//These are the DOF to releae fro this RBE
+void E_ObjectR::GetPinFlags(Vec<int>& PDOFS, int& iNoPINs)
+{
+	iNoPINs = 1;  //1 indeded
+	PDOFS.Size((iNoNodes-1)*6);
+	int iD = 6;
+	int i;
+	for (i = 1; i < iNoNodes; i++)
+	{
+		if (!(iDOF & DOF_1))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 1;
+		}
+		if (!(iDOF & DOF_2))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 2;
+		}
+		if (!(iDOF & DOF_3))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 3;
+		}
+		if (!(iDOF & DOF_4))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 4;
+		}
+		if (!(iDOF & DOF_5))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 5;
+		}
+		if (!(iDOF & DOF_6))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 6;
+		}
+		iD += 6;
+	}
+
+
+}
+
+
 
 
 IMPLEMENT_DYNAMIC( E_ObjectR2, CObject )
@@ -21780,7 +21874,7 @@ dALPHA=0;
 PIDunv=999;
 }
 
-void E_ObjectR2::Create(Node* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_ObjectR2::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -21881,7 +21975,7 @@ gret->pResV = NULL;
 return (gret);
 }
 
-G_Object* E_ObjectR2::Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_ObjectR2::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 int i;
 ME_Object* MESH =(ME_Object*) Parrent;
@@ -22628,6 +22722,7 @@ void Solution::AddStep(CString sT,int idLS,int idBS,int idTS,BOOL bRS)
     TS[iNo]=idTS; 
     RS[iNo]=bRS;
     sStepTitle[iNo]=sT;
+	iCur = iNo;
     iNo++;
   }
   else
@@ -25605,7 +25700,7 @@ case 11: iRC = 2;  //ROD 2
     break;
 case 22: iRC = 2;    //UNKNOWN 2
     break;
-case 122: iRC = 200; //RIGID 200
+case 122: iRC = 2000; //RIGID 200
     break;
 case 1000: iRC = 4; //STAGGERED CELL
     break;
@@ -25642,106 +25737,113 @@ cLinkedListT* pTC = NULL;
 sprintf_s(s1,"%s %i:%i:%i\n","START TIME",Hour,Min,Sec);
 outtext1(s1);
 bGo = GetStepCasesLinStat(iStep, sSol, sStep, AA, pLC, pBC, pTC, bRS);
-for(i=0;i<iNdNo;i++)
+if (iStep == -1)
 {
-  for (j=0;j<6;j++)
-  {
-    pNodes[i]->dof[j]=0;
-  }
+	outtext1("ERROR: No Solution Step is Active.");
+
 }
-
-
-
-Mat KME;
-//Mat dee=DeeMat(100,0.29,6);
-this->ApplyRes(pBC);
-neq=GenDofs();
-if (neq==0)
+if (bGo)
 {
-  outtext1("ERROR: No Degrees of Freedoms Exist.");
-  outtext1("Ensure the Correct F.E. Model is Active.");
+	for (i = 0; i < iNdNo; i++)
+	{
+		for (j = 0; j < 6; j++)
+		{
+			pNodes[i]->dof[j] = 0;
+		}
+	}
+
+	Mat KME;
+	//Mat dee=DeeMat(100,0.29,6);
+	this->ApplyRes(pBC);
+	neq = GenDofs();
+	if (neq == 0)
+	{
+		outtext1("ERROR: No Degrees of Freedoms Exist.");
+		outtext1("Ensure the Correct F.E. Model is Active.");
+	}
+	else
+	{
+		Vec<double> FVec;
+		Vec<int> Steer;
+
+		if (neq != 0)
+		{
+			ZeroThermalStrains(0.0);
+			BuildForceVector(PropsT, MatT, pLC, pTC, neq, FVec);
+			bGo = TRUE;
+		}
+
+		//FVec = GetForceVec(pLC,neq);
+		//GetPressureLoads(pLC,neq,FVec);
+		//if (pTC != NULL)
+		//{
+		   // //convert nodal temps to element centroid
+		   // cLinkedList* pTC_ELEM;
+		   // double dDefT = 0;
+		   // BOOL bTEMPD = FALSE;
+		   // bTEMPD = TSEThasTEMPD(pTC, dDefT);
+		   // pTC_ELEM = TSetNodaltoElement(pTC, dDefT);
+		   // GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
+		//}
+
+		int iBW = this->MaxBW();
+		Vec <double> KM(neq * (iBW + 1));
+		LocalRes(neq, Steer, KM);
+		outtext1("STARTING ASSY");
+		E_Object* pE;
+
+
+		for (i = 0; i < iElNo; i++)
+		{
+			pE = pElems[i];
+
+			if (pE->ChkNegJac() == FALSE)
+			{
+				KME = pE->GetStiffMat(PropsT, MatT, bOpt, bErr);
+				Steer = pE->GetSteerVec3d();
+			}
+			else
+			{
+
+				pE = (E_Object*)pElems[i]->Copy(this);
+				pE->Reverse();
+				KME = pE->GetStiffMat(PropsT, MatT, bOpt, bErr);
+				Steer = pE->GetSteerVec3d();
+				delete(pE);
+				pE = NULL;
+			}
+
+			formkv(KM, KME, Steer, neq);
+			//KME.diag();
+			KME.clear();
+		}
+
+		//KM.diag();
+		outtext1("STARTING BAND REDUCTION");
+		banred(KM, neq);
+		outtext1("STARTING BACK SUBSTITUTION");
+		bacsub(KM, FVec);
+		outtext1("FINISHED SOLUTION");
+		Displacements(iStep, sSol, sStep, Steer, FVec);
+		ForcesRod(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+		ForcesBUSH(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+		ForcesBeam(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+		//Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
+		RecoverShell(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+		Stresses3d(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+		outtext1("FINISHED SOLUTION");
+
+		KM.DeleteAll();
+		Steer.DeleteAll();
+	}
+	timeStart = COleDateTime::GetCurrentTime();
+	Hour = timeStart.GetHour();
+	Min = timeStart.GetMinute();
+	Sec = timeStart.GetSecond();
+	sprintf_s(s1, "%s %i:%i:%i\n", "END TIME", Hour, Min, Sec);
 }
 else
-{
-  Vec<double> FVec;
-  Vec<int> Steer;
-
-  if (neq != 0)
-  {
-	  ZeroThermalStrains(0.0);
-	  BuildForceVector(PropsT, MatT, pLC, pTC, neq, FVec);
-	  bGo = TRUE;
-  }
-
-  //FVec = GetForceVec(pLC,neq);
-  //GetPressureLoads(pLC,neq,FVec);
-  //if (pTC != NULL)
-  //{
-	 // //convert nodal temps to element centroid
-	 // cLinkedList* pTC_ELEM;
-	 // double dDefT = 0;
-	 // BOOL bTEMPD = FALSE;
-	 // bTEMPD = TSEThasTEMPD(pTC, dDefT);
-	 // pTC_ELEM = TSetNodaltoElement(pTC, dDefT);
-	 // GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
-  //}
-
-  int iBW=this->MaxBW();
-  Vec <double> KM(neq*(iBW+1));
-  LocalRes(neq,Steer,KM);
-  outtext1("STARTING ASSY");
-  E_Object* pE;
-
-
-  for (i=0;i<iElNo;i++)
-  {
-    pE=pElems[i];
-    
-    if (pE->ChkNegJac()==FALSE)
-    {
-      KME=pE->GetStiffMat(PropsT,MatT, bOpt, bErr);
-      Steer=pE->GetSteerVec3d();
-    }
-    else
-    {
-
-      pE=(E_Object*) pElems[i]->Copy(this);
-      pE->Reverse();
-      KME=pE->GetStiffMat(PropsT,MatT,bOpt, bErr);
-      Steer=pE->GetSteerVec3d();
-      delete(pE);
-      pE=NULL;
-    }
-
-    formkv(KM,KME,Steer,neq);
-    //KME.diag();
-    KME.clear();
-  }
-
-  //KM.diag();
-  outtext1("STARTING BAND REDUCTION");
-  banred(KM,neq);
-  outtext1("STARTING BACK SUBSTITUTION");
-  bacsub(KM,FVec);
-  outtext1("FINISHED SOLUTION");
-  Displacements(iStep,sSol,sStep,Steer,FVec);
-  ForcesRod(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
-  ForcesBUSH(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
-  ForcesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,FVec);
-  //Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
-  RecoverShell(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
-  Stresses3d(iStep, sSol, sStep, PropsT,MatT,Steer,FVec);
-  outtext1("FINISHED SOLUTION");
-
-  KM.DeleteAll();
-  Steer.DeleteAll();
-}
-timeStart = COleDateTime::GetCurrentTime();
-Hour=timeStart.GetHour();
-Min=timeStart.GetMinute();
-Sec=timeStart.GetSecond();
-sprintf_s(s1,"%s %i:%i:%i\n","END TIME",Hour,Min,Sec);
-outtext1(s1);
+    outtext1("FATAL ERROR");
 }
 
 Mat GetG(Vec<double> &AA,Vec<int> &G)
@@ -25793,6 +25895,7 @@ int iS;
 int i;
 double dP=0;
 iS=AA.n;
+
 for (i=0;i<iS;i++)
 {
 double f=AA(i);
@@ -25917,6 +26020,10 @@ iStep=0;
 
   PrintTime("START TIME: ");
   bGo=GetStepCasesLinStat(iStep, sSol, sStep,dTol,pLC,pBC,pTC,bRS);
+  if (iStep == -1)
+  {
+	  outtext1("ERROR: No Solution Step is Active.");
+  }
   if (bGo)
   {
   ZeroDOF();                    //Zero the DOFS
@@ -28601,24 +28708,27 @@ void ME_Object::AddElEx(E_Object* pEl)
 	iElNo++;
 }
 
-E_Object* ME_Object::AddEl2(int pVnode[200], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C,int iMatCys,double dMatAng)
+E_Object* ME_Object::AddEl2(int pVnode[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C,int iMatCys,double dMatAng)
 {
   int iCnt;
   E_Object* cAddedEl;
-  Node *pENodes[200];
+  Node *pENodes[MaxSelNodes];
+  if (iCnt> MaxSelNodes)
+     outtext1("WARNING: Max RBE2 Nodes Exceeded.");
   if (TempList!=NULL)
   {
     for (iCnt = 0; iCnt < iNoNodes; iCnt ++)
     {
-	  if (iCnt <200)
-        pENodes[iCnt] =(Node*) TempList->Objs[pVnode[iCnt]];
+	  if (iCnt < MaxSelNodes)
+         pENodes[iCnt] =(Node*) TempList->Objs[pVnode[iCnt]];
     }
   }
   else
   {
     for (iCnt = 0; iCnt < iNoNodes; iCnt ++)
     {
-      pENodes[iCnt] = GetNode(pVnode[iCnt]);
+	  if (iCnt < MaxSelNodes)
+        pENodes[iCnt] = GetNode(pVnode[iCnt]);
     }
   }
   if (iLab>iElementLab)
@@ -28697,7 +28807,7 @@ iElementLab++;
 iCYSLab++;
 }
 
-// pInVertex[200]	Nodes
+// pInVertex[2000]	Nodes
 // int iLab			Element Label
 // int iCol			Element Colour
 // int iType		Element Type
@@ -28710,7 +28820,7 @@ iCYSLab++;
 // BOOL AddDisp
 // int iMatCys
 // double dMatAng)
-E_Object* ME_Object::AddEl(Node* pInVertex[200],int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int iA,int iB,int iC,BOOL AddDisp,int iMatCys,double dMatAng)
+E_Object* ME_Object::AddEl(Node* pInVertex[MaxSelNodes],int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int iA,int iB,int iC,BOOL AddDisp,int iMatCys,double dMatAng)
 {
 E_Object* pERet=NULL;
 
@@ -38202,7 +38312,7 @@ int i;
 int j;
 int k;
 Node* S1[500][100];
-Node* E1[2000];
+Node* E1[MaxSelNodes];
 Node* pNd;
 C3dVector Nd;
 int iCnt1=0;
@@ -38628,7 +38738,7 @@ int i;
 int j;
 int k;
 Node* S1[500][100];
-Node* E1[2000];
+Node* E1[MaxSelNodes];
 Node* pNd;
 C3dVector Nd;
 int iCnt1=0;
@@ -38862,7 +38972,7 @@ int i;
 int j;
 int k;
 Node* S1[500][100];
-Node* E1[2000];
+Node* E1[MaxSelNodes];
 Node* pNd;
 C3dVector Nd;
 int iCnt1=0;
@@ -46660,7 +46770,7 @@ void  DIMA::Build()
 	char buff[200];
 	if (!bTextOverRide)
 	{
-		sprintf_s(buff, "%.2f", dDist);
+		sprintf_s(buff, "%.*f",gDIM_PREC, dDist);
 		sText = buff;
 	}
 	vPP1D = vPP1;
@@ -47148,7 +47258,7 @@ void  DIMANG::Build()
 	if (!bTextOverRide)
 	{
 		char newCharacter = 1;  // Assuming the character 8960 is a TCHAR
-		sprintf_s(buff, "%.2f", dDist);
+		sprintf_s(buff, "%.*f", gDIM_PREC, dDist);
 		sText = buff;
 		sText += newCharacter;
 	}
@@ -47430,7 +47540,7 @@ void  DIMH::Build()
 	char buff[200];
 	if (!bTextOverRide)
 	{
-		sprintf_s(buff, "%.2f", dDist);
+		sprintf_s(buff, "%.*f", gDIM_PREC, dDist);
 		sText = buff;
 	}
 	vDY = vNorm.Cross(vDX); vDY.Normalize();
@@ -47718,7 +47828,7 @@ void  DIMV::Build()
 	char buff[200];
 	if (!bTextOverRide)
 	{
-		sprintf_s(buff, "%.2f", dDist);
+		sprintf_s(buff, "%.*f", gDIM_PREC, dDist);
 		sText = buff;
 	}
 	vDY = vNorm.Cross(vDX); vDY.Normalize();
@@ -48215,7 +48325,7 @@ void  DIMR::Build()
 	char buff[200];
 	if (!bTextOverRide)
 	{
-		sprintf_s(buff, "R%.2f", dDist);
+		sprintf_s(buff, "%.*f", gDIM_PREC, dDist);
 		sText = buff;
 	}
 
@@ -48455,7 +48565,7 @@ void  DIMD::Build()
 	char buff[200];
 	if (!bTextOverRide)
 	{
-		sprintf_s(buff, "%.2f", dDist);
+		sprintf_s(buff, "%.*f", gDIM_PREC, dDist);
 		sText = buff;
 		char newCharacter = 0;  // Assuming the character 8960 is a TCHAR
 		sText.Insert(0, newCharacter);
@@ -61696,6 +61806,7 @@ int G_ObjectDUM::GetVarHeaders(CString sVar[])
 	sVar[iNo++] = "gTXT_HEIGHT";
 	sVar[iNo++] = "gDIM_RADSZ";
 	sVar[iNo++] = "gDIM_CVORD";
+	sVar[iNo++] = "gDIM_PREC Dimension Precision";
 	sVar[iNo++] = "gDIM_SIZE";
 	sVar[iNo++] = "gDRILL_KS";
 	sVar[iNo++] = "gRIGID_MULTIPLIER";
@@ -61744,6 +61855,8 @@ int G_ObjectDUM::GetVarValues(CString sVar[])
 	sVar[iNo++] = S1;
 	sprintf_s(S1, "%g", gDIM_CVORD);
 	sVar[iNo++] = S1;
+	sprintf_s(S1, "%i", gDIM_PREC);
+	sVar[iNo++] = S1;
 	sprintf_s(S1, "%g", gDIM_SIZE);
 	sVar[iNo++] = S1;
 	sprintf_s(S1, "%g", gDRILL_KS);
@@ -61786,6 +61899,7 @@ void G_ObjectDUM::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 	gTXT_HEIGHT = atof(sVar[iC++]);
 	gDIM_RADSZ = atof(sVar[iC++]);
 	gDIM_CVORD = atof(sVar[iC++]);
+	gDIM_PREC = atoi(sVar[iC++]);
 	gDIM_SIZE = atof(sVar[iC++]);
 	gDRILL_KS = atof(sVar[iC++]);
 	gRIGID_MULTIPLIER = atof(sVar[iC++]);

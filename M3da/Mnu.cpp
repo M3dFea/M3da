@@ -4028,7 +4028,7 @@ int zDIMANG_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		}
 		if (iStat == 0)
 		{
-			cDBase->FILTER.SetAll();
+			//cDBase->FILTER.SetAll();
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -4109,7 +4109,7 @@ int zDIMH_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		}
 		if (iStat == 0)
 		{
-			cDBase->FILTER.SetAll();
+			//cDBase->FILTER.SetAll();
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -4181,7 +4181,7 @@ int zDIMV_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		}
 		if (iStat == 0)
 		{
-			cDBase->FILTER.SetAll();
+			//cDBase->FILTER.SetAll();
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -4254,7 +4254,7 @@ int zDIML_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		}
 		if (iStat == 0)
 		{
-			cDBase->FILTER.SetAll();
+			//cDBase->FILTER.SetAll();
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -4327,7 +4327,7 @@ int zDIMR_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		}
 		if (iStat == 0)
 		{
-			cDBase->FILTER.SetAll();
+			//cDBase->FILTER.SetAll();
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -4409,7 +4409,7 @@ int zDIMCL_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		}
 		if (iStat == 0)
 		{
-			cDBase->FILTER.SetAll();
+			//cDBase->FILTER.SetAll();
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -4476,7 +4476,7 @@ int zDIMDRAG_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		}
 		if (iStat == 0)
 		{
-			cDBase->FILTER.SetAll();
+			//cDBase->FILTER.SetAll();
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -4561,7 +4561,7 @@ int zDIMD_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
 		}
 		if (iStat == 0)
 		{
-			cDBase->FILTER.SetAll();
+			//cDBase->FILTER.SetAll();
 			iStat = 1;
 		}
 		if (iStat == 1)

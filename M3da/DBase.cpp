@@ -1234,6 +1234,7 @@ void DBase::Serialize(CArchive& ar)
 		ar << gDEF_CTE;
 		ar << gDEF_THERM_LNK;
 		ar << gDEF_SOL_TOL;
+		ar << gDIM_PREC;
 
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
@@ -1324,6 +1325,10 @@ void DBase::Serialize(CArchive& ar)
 		if (iVER <= -73)
 		{
 			ar >> gDEF_SOL_TOL;
+		}
+		if (iVER <= -74)
+		{
+			ar >> gDIM_PREC;
 		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);
@@ -5352,7 +5357,7 @@ NEList* newNds = new NEList();
 G_Object* pO;
 G_Object* pOC;
 C3dVector vA;
-Node* pInVertex[200];
+Node* pInVertex[MaxSelNodes];
 Node* Nd;
 Node* NdNew;
 E_Object* El;
@@ -5971,7 +5976,7 @@ if ((Nodes->iNo>0) && (Nodes2->iNo>0) && (iNoOfTimes>=0))
 		  Dsp_Add(cAddedNode);
 	  }
     }
-	Node* iNlabs[200]; 
+	Node* iNlabs[MaxSelNodes]; 
     E_Object* pEl;
     for (i=0;i<Nodes->iNo-1;i++)
     {
@@ -8836,7 +8841,7 @@ int iNewNd=-1;
 NEList* newNds = new NEList();
 G_Object* pO;
 C3dVector vA;
-Node* pInVertex[200];
+Node* pInVertex[MaxSelNodes];
 Node* Nd;
 Node* NdNew;
 E_Object* El;
@@ -8970,7 +8975,7 @@ int iNewNd;
 G_Object* pO;
 double dA;
 NEList* newNds = new NEList();
-Node* pInVertex[200];
+Node* pInVertex[MaxSelNodes];
 Node* Nd;
 Node* NdNew;
 E_Object* El;
@@ -9096,7 +9101,7 @@ if (iNoOff > 0)
 	tVec.y /= dd;
 	tVec.z /= dd;
 }
-Node* iNlabs[200]; 
+Node* iNlabs[MaxSelNodes]; 
 C3dVector vA;
 Node* NdNew = NULL;
 E_Object* El = NULL;
@@ -9270,7 +9275,7 @@ void DBase::NDSweepToShell(ObjList* Items, C3dVector tVec, int iNoOff)
 		tVec.y /= dd;
 		tVec.z /= dd;
 	}
-	Node* iNlabs[200];
+	Node* iNlabs[MaxSelNodes];
 	C3dVector vA;
 	Node* NdNew = NULL;
 	E_Object* El = NULL;
@@ -9367,7 +9372,7 @@ void DBase::NDSweepToBeam(ObjList* Items, C3dVector tVec, int iNoOff)
 		tVec.y /= dd;
 		tVec.z /= dd;
 	}
-	Node* iNlabs[200];
+	Node* iNlabs[MaxSelNodes];
 	C3dVector vA;
 	Node* NdNew = NULL;
 	E_Object* El = NULL;
@@ -10783,7 +10788,7 @@ E_Object* DBase::AddEl(int iPos,BOOL AddDsp)
 int iNo=pCurrentMesh->GetNoNode(iCurElemType);
 BOOL bChk = TRUE;
 E_Object* cAddedEl;
-Node *pENodes[200];
+Node *pENodes[MaxSelNodes];
 cAddedEl=NULL;
 int i;
 char S1[80];
@@ -10878,7 +10883,7 @@ E_Object* DBase::InsSpringEl(int iPos, BOOL AddDsp)
 	E_Object* cAddedEl;
 	E_ObjectR* pELP=NULL;
 	E_Object* pOE=NULL;
-	Node* pENodes[200];
+	Node* pENodes[MaxSelNodes];
 	Node* pNP = NULL;
 	Node* pNS = NULL;
 	Node* pNewN = NULL;
@@ -10956,7 +10961,7 @@ E_Object* DBase::InsSpringEl(int iPos, BOOL AddDsp)
 
 
 
-int DBase::AddEl2(int pVnode[200], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C)
+int DBase::AddEl2(int pVnode[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C)
 {
 E_Object* cAddedEl;
 Node *pENodes[100];
@@ -12448,7 +12453,7 @@ iFEl=iSEl;
 		    if (dU>1) {dU=1;}
 		}
 	}
-	Node* iNlabs[200]; 
+	Node* iNlabs[MaxSelNodes]; 
   E_Object* pEl;
   for (i=0;i<iU;i++)
   {
@@ -12542,7 +12547,7 @@ iFEl=iSEl;
 		    if (dU>1) {dU=1;}
 		}
 	}
-	Node* iNlabs[200]; 
+	Node* iNlabs[MaxSelNodes]; 
     E_Object* pEl;
     for (i=0;i<iU;i++)
     {
@@ -16790,7 +16795,7 @@ int i6;
 int i;
 int iT=0;
 iStop = 0;
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 do
   {
   d1=0;
@@ -17014,7 +17019,7 @@ E_Object* NASReadCHEXA(NasCard& oC,
                         int iType,
 	                    int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 iID=atoi(oC.GetField(0));
@@ -17042,7 +17047,7 @@ E_Object* NASReadCONM2(NasCard& oC,
                        int iType,
 	                   int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 E_Object1* pE;
 iID=atoi(oC.GetField(0));
@@ -17074,7 +17079,7 @@ E_Object* NASReadCONM1(NasCard& oC,
 	                   int iF)
 {
 	outtext1("WARNING: CONM1 is not supported.");
-	int iNlabs[200];
+	int iNlabs[MaxSelNodes];
 	int iID;
 	E_Object1* pE;
 	iID = atoi(oC.GetField(0));
@@ -17105,7 +17110,7 @@ E_Object* NASReadCQUAD4(NasCard& oC,
                         int iType,
 	                    int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 int MCID;
@@ -17145,7 +17150,7 @@ E_Object* NASReadCTRIA3(NasCard& oC,
                         int iType,
 	                    int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 int MCID;
@@ -17186,7 +17191,7 @@ E_Object* NASReadCQUAD4D(ME_Object* pM,
                   int iType,
 	              int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 char s1[200];
 int iID;
 int iPID;
@@ -17229,7 +17234,7 @@ E_Object* NASReadCPENTA(NasCard& oC,
                         int iType,
                         int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 
@@ -17256,7 +17261,7 @@ E_Object2* NASReadCBUSH(NasCard& oC,
 					   C3dVector& pUp,
 	                   int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 CString sOmid;
@@ -17294,7 +17299,7 @@ E_Object2B* NASReadCBAR(NasCard& oC,
 					   C3dVector& OffB,
 	                   int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 CString sOmid;
@@ -17352,7 +17357,7 @@ E_Object2B* NASReadCBEAM(NasCard& oC,
 					   C3dVector& OffB,
 	                   int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 CString sOmid;
@@ -17410,7 +17415,7 @@ E_Object* NASReadCTETRA(NasCard& oC,
                         int iType,
                         int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 
@@ -17443,7 +17448,7 @@ E_Object* NASReadRBE2(NasCard& oC,
                       int iType,
 	                  int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID=0;
 int iFN;
@@ -17491,7 +17496,7 @@ E_Object* NASReadRBAR(NasCard& oC,
                       int iType,
 	                  int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 
 int iID;
 int iPID=0;
@@ -17526,7 +17531,7 @@ E_Object* NASReadCROD(NasCard& oC,
                       int iType,
                       int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 
 int iID;
 int iPID=0;

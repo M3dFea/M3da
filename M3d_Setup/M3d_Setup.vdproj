@@ -21,12 +21,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_07CEC168BA4ED1F19F0E66F84AA32100"
-        "OwnerKey" = "8:_4C56C7BE3B0B41A196944B5B9EF8BD58"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_0C1DDD01A9604EE282E5945C29A0E5C2"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -87,38 +81,14 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_4FCD2CCDD2C8FD51084CDC0FA9CB4357"
-        "OwnerKey" = "8:_4C56C7BE3B0B41A196944B5B9EF8BD58"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_5226BC309BAE4F0A8D9AB5C816E0D176"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_5A3CEE8619E7B38B826ED04517989136"
-        "OwnerKey" = "8:_4C56C7BE3B0B41A196944B5B9EF8BD58"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_5EBAEC013FB64381BA820813EA056FA3"
+        "MsmKey" = "8:_6C4DB00D85DB48069BC600AA1DF126A5"
         "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_6ABAFF47BEF546CAB61D13B6409C3DFB"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_6B2B051B8A5BF2DFFC40DBC914ED174C"
-        "OwnerKey" = "8:_4C56C7BE3B0B41A196944B5B9EF8BD58"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -131,12 +101,6 @@
         {
         "MsmKey" = "8:_736C6E2FF615414F9278130416EC4116"
         "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_7A17D64EC50330CFC7DB6DAB5183905D"
-        "OwnerKey" = "8:_4C56C7BE3B0B41A196944B5B9EF8BD58"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -165,20 +129,14 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_B38792E7F06AAB074818FA78428D15E3"
-        "OwnerKey" = "8:_4C56C7BE3B0B41A196944B5B9EF8BD58"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_B4DA166450B741AC80D563822E974EEC"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_BDBCB113C939C141B579617336CE808C"
-        "OwnerKey" = "8:_4C56C7BE3B0B41A196944B5B9EF8BD58"
+        "MsmKey" = "8:_B88D156DCA3E446C91940F69B8EBDE5D"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -191,18 +149,6 @@
         {
         "MsmKey" = "8:_CFD01F8BA040407D9B09DF7E91200E20"
         "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_D3E3459136A1422F878D1193DA71897B"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
-        "MsmKey" = "8:_DB8CB7424180BFC552DA097AABBF2A72"
-        "OwnerKey" = "8:_4C56C7BE3B0B41A196944B5B9EF8BD58"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -340,26 +286,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_07CEC168BA4ED1F19F0E66F84AA32100"
-            {
-            "SourcePath" = "8:GLU32.dll"
-            "TargetName" = "8:GLU32.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_A256442BB36B47DBBCAE414827F5E146"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_0C1DDD01A9604EE282E5945C29A0E5C2"
@@ -542,26 +468,6 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_4FCD2CCDD2C8FD51084CDC0FA9CB4357"
-            {
-            "SourcePath" = "8:gdiplus.dll"
-            "TargetName" = "8:gdiplus.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_A256442BB36B47DBBCAE414827F5E146"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_5226BC309BAE4F0A8D9AB5C816E0D176"
             {
             "SourcePath" = "8:C:\\SCRATCH\\UPLOAD\\M3dSetup\\Examples\\CUBE_TETDEMO.m3d"
@@ -582,30 +488,10 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_5A3CEE8619E7B38B826ED04517989136"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6C4DB00D85DB48069BC600AA1DF126A5"
             {
-            "SourcePath" = "8:oledlg.dll"
-            "TargetName" = "8:oledlg.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_A256442BB36B47DBBCAE414827F5E146"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_5EBAEC013FB64381BA820813EA056FA3"
-            {
-            "SourcePath" = "8:C:\\SCRATCH\\UPLOAD\\M3dSetup\\Examples\\ramp_mod_3mm.op2"
-            "TargetName" = "8:ramp_mod_3mm.op2"
+            "SourcePath" = "8:C:\\SCRATCH\\UPLOAD\\M3dSetup\\Examples\\GRAV._TEMPD.dat"
+            "TargetName" = "8:GRAV._TEMPD.dat"
             "Tag" = "8:"
             "Folder" = "8:_EC2F535065E74374A81B1B868F943F2E"
             "Condition" = "8:"
@@ -620,46 +506,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6ABAFF47BEF546CAB61D13B6409C3DFB"
-            {
-            "SourcePath" = "8:C:\\SCRATCH\\UPLOAD\\M3dSetup\\Examples\\MySat.unv"
-            "TargetName" = "8:MySat.unv"
-            "Tag" = "8:"
-            "Folder" = "8:_EC2F535065E74374A81B1B868F943F2E"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6B2B051B8A5BF2DFFC40DBC914ED174C"
-            {
-            "SourcePath" = "8:IMM32.dll"
-            "TargetName" = "8:IMM32.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_A256442BB36B47DBBCAE414827F5E146"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_71EFD0EDE9394E869686D26E053BCDC0"
@@ -700,26 +546,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7A17D64EC50330CFC7DB6DAB5183905D"
-            {
-            "SourcePath" = "8:OLEACC.dll"
-            "TargetName" = "8:OLEACC.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_A256442BB36B47DBBCAE414827F5E146"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A65A2A1301014EBA9BE8E5934865C8FD"
@@ -802,26 +628,6 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B38792E7F06AAB074818FA78428D15E3"
-            {
-            "SourcePath" = "8:UxTheme.dll"
-            "TargetName" = "8:UxTheme.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_A256442BB36B47DBBCAE414827F5E146"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:4"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "IsolateTo" = "8:"
-            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B4DA166450B741AC80D563822E974EEC"
             {
             "SourcePath" = "8:C:\\SCRATCH\\UPLOAD\\M3dSetup\\Examples\\MySat.m3d"
@@ -842,12 +648,12 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_BDBCB113C939C141B579617336CE808C"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_B88D156DCA3E446C91940F69B8EBDE5D"
             {
-            "SourcePath" = "8:MSIMG32.dll"
-            "TargetName" = "8:MSIMG32.dll"
+            "SourcePath" = "8:C:\\SCRATCH\\UPLOAD\\M3dSetup\\Examples\\BEAM_THERMAL.dat"
+            "TargetName" = "8:BEAM_THERMAL.dat"
             "Tag" = "8:"
-            "Folder" = "8:_A256442BB36B47DBBCAE414827F5E146"
+            "Folder" = "8:_EC2F535065E74374A81B1B868F943F2E"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -858,8 +664,8 @@
             "SharedLegacy" = "11:FALSE"
             "PackageAs" = "3:1"
             "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_CF2960C94FDB4CD3B0F987E7A43F25BD"
@@ -900,46 +706,6 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D3E3459136A1422F878D1193DA71897B"
-            {
-            "SourcePath" = "8:C:\\SCRATCH\\UPLOAD\\M3dSetup\\Examples\\RAMP_MOD_3mm.bdf"
-            "TargetName" = "8:RAMP_MOD_3mm.bdf"
-            "Tag" = "8:"
-            "Folder" = "8:_EC2F535065E74374A81B1B868F943F2E"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:FALSE"
-            "IsDependency" = "11:FALSE"
-            "IsolateTo" = "8:"
-            }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_DB8CB7424180BFC552DA097AABBF2A72"
-            {
-            "SourcePath" = "8:OPENGL32.dll"
-            "TargetName" = "8:OPENGL32.dll"
-            "Tag" = "8:"
-            "Folder" = "8:_A256442BB36B47DBBCAE414827F5E146"
-            "Condition" = "8:"
-            "Transitive" = "11:FALSE"
-            "Vital" = "11:TRUE"
-            "ReadOnly" = "11:FALSE"
-            "Hidden" = "11:FALSE"
-            "System" = "11:FALSE"
-            "Permanent" = "11:FALSE"
-            "SharedLegacy" = "11:FALSE"
-            "PackageAs" = "3:1"
-            "Register" = "3:1"
-            "Exclude" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E0D6C4676B564032B5280FC4D851F4CA"
@@ -1110,7 +876,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:M3d"
         "ProductCode" = "8:{4BFDD200-5BA2-45F0-94BF-08BB3A6981ED}"
-        "PackageCode" = "8:{4CBAFD08-C7B0-4B33-93BC-D7154BFD4387}"
+        "PackageCode" = "8:{FE56F51E-383F-4E42-A2E2-AFA39EA434B2}"
         "UpgradeCode" = "8:{A1C3F5E0-A27C-4AFD-BF4B-959BE68CCD18}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -1659,7 +1425,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_4C56C7BE3B0B41A196944B5B9EF8BD58"
             {
-            "SourcePath" = "8:..\\x64\\Release\\M3d69.exe"
+            "SourcePath" = "8:..\\x64\\Release\\M3d73.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_A256442BB36B47DBBCAE414827F5E146"

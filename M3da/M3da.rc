@@ -511,10 +511,8 @@ BEGIN
         MENUITEM "List Boundary Sets",          ID_LOADSBC_LISTBOUNDARYSETS
         MENUITEM "List Temperature Sets",       ID_LOADSBC_LISTTEMPERATURESETS
         MENUITEM SEPARATOR
-        POPUP "Create Moment"
-        BEGIN
-            MENUITEM "Create Force",                ID_SOLVER_CREATEFORCE
-        END
+        MENUITEM "Create Force",                ID_SOLVER_CREATEFORCE
+        MENUITEM "Create Moment",               ID_ANALYSIS_CREATEMOMENT
         MENUITEM "Create Pressure",             ID_ANALYSIS_CREATEPRESSURE
         MENUITEM "Create Acceleration Body Load", ID_LOADSBC_CREATEACCELERATIONBODYLOAD
         MENUITEM "Create Rotational Body Load", ID_LOADSBC_CREATEROTATIONALBODYLOAD
@@ -639,7 +637,7 @@ CAPTION "About M3da"
 FONT 12, "Microsoft Sans Serif", 400, 0, 0x0
 BEGIN
     ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
-    LTEXT           "M3d, Version 7.3 04/03/2024 64BIT WIN10",IDC_STATIC,43,14,247,8,SS_NOPREFIX
+    LTEXT           "M3d, Version 7.4 10/03/2024 64BIT WIN10",IDC_STATIC,43,14,247,8,SS_NOPREFIX
     LTEXT           "Copyright (C) 2010",IDC_STATIC,43,26,114,8
     DEFPUSHBUTTON   "OK",IDOK,261,123,50,14,WS_GROUP
     LTEXT           "THE AUTHOR SHALL IN NO EVENT BE LIABLE TO THE USER",IDC_STATIC,42,52,235,8

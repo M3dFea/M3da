@@ -16,6 +16,7 @@ using namespace std;
 #define DBL_MAX 1.7976931348623158e+308 /* max value */
 //Graphics size vars
 const int MAX_SYMBOLS = 10000;
+const int MaxSelNodes = 2000;
 //Arrow head definition
 const double AHead [7][3] =
 {{2.000000, 0.000000, 0.000000},
@@ -3182,7 +3183,7 @@ public:
      virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
      virtual G_Object* Copy(G_Object* Parrent);
      virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
-     virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+     virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
 	 virtual void ExportUNV(FILE* pFile);
      virtual void ExportNAS(FILE* pFile);
 	 virtual void OffsetsTransform(Mat& off, C3dVector vOff); //Offsets to global KE SYS
@@ -3238,6 +3239,8 @@ public:
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
    virtual double GetElCentriodVal();
    virtual double GetPHI_SQ();
+   virtual void GetPinFlags(Vec<int>& PDOFS, int& iNoPINs);
+   virtual void PinFlgsToKE(Mat& KEL); //release DOF
 };
 
 
@@ -3254,7 +3257,7 @@ public:
    virtual void Info();
    virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3296,7 +3299,7 @@ public:
    Node* pVertex[6];
    virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3344,9 +3347,9 @@ public:
   int A;
   int B;
   int C;
-  virtual void Create(Node* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
+  virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
   virtual G_Object* Copy(G_Object* Parrent);
-  virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+  virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
   virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
   virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
   virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3390,7 +3393,7 @@ class E_Object2BUSH : public E_Object2
 	virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
 	virtual Vec<int> GetSteerVec3d();
 };
-//THIS IS A ROD ELEMENY ONLY HAS AXIAL K
+//THIS IS A ROD ELEMENT ONLY HAS AXIAL K
 //NOTE should also have Torsional K but is
 //currently missing
 //no offset and no pin flag
@@ -3411,7 +3414,7 @@ public:
   virtual void SetDOFStringB(CString sDOF);
   virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
   virtual G_Object* Copy(G_Object* Parrent);
-  virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+  virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
   virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
   virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
   virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3456,12 +3459,11 @@ virtual int noDof();
 virtual BOOL HasOffsets();
 virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
 virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
-virtual void PinFlgsToKE(Mat& KEL); //Pin Flags Element SYS
 virtual Vec<int> GetSteerVec3d();
 virtual Vec<int> GetSteerVec1d();
 virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
 virtual G_Object* Copy(G_Object* Parrent);
-virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
 virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
 CString GetName();
 virtual int GetVarHeaders(CString sVar[]);
@@ -3490,9 +3492,9 @@ public:
    E_Object1();
    ~E_Object1();
    Node* pVertex;
-   virtual void Create(Node* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
+   virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3528,9 +3530,9 @@ public:
    E_Object3();
    ~E_Object3();
    Node* pVertex[3];
-   virtual void Create(Node* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);
+   virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);  
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3605,7 +3607,7 @@ Node* pVertex[5];
 ~E_CellS();
 virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
 virtual G_Object* Copy(G_Object* Parrent);
-virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
 virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
 virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
 virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3628,9 +3630,9 @@ public:
 	Node* pVertex[4];
 	E_Object4();
 	~E_Object4();
-	virtual void Create(Node* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);	 
+	virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);	 
 	virtual G_Object* Copy(G_Object* Parrent);
-	virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+	virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
 	virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
 	virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
 	virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3710,7 +3712,7 @@ public:
    Node* pVertex[4];
    virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);   
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Info();
@@ -3762,9 +3764,9 @@ public:
 	E_Object310();
 	~E_Object310();
 	Node* pVertex[10];
-	virtual void Create(Node* pInVertex[100], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
+	virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
 	virtual G_Object* Copy(G_Object* Parrent);
-	virtual G_Object* Copy2(G_Object* Parrent, Node* pInVertex[200], int inPID, int inMID, int inPIDunv);
+	virtual G_Object* Copy2(G_Object* Parrent, Node* pInVertex[MaxSelNodes], int inPID, int inMID, int inPIDunv);
 	virtual G_Object* CopyAppend(int iSInd, ME_Object* Target, ME_Object* Source);
 	virtual void Serialize(CArchive& ar, int iV, ME_Object* MESH);
 	virtual void Info();
@@ -3814,15 +3816,15 @@ class E_ObjectR : public E_Object
 {
 DECLARE_DYNAMIC( E_ObjectR)
 public:
-   Node* pVertex[200];
+   Node* pVertex[MaxSelNodes];
    Vec<double> dTemps; //Thermal strains
    int iDOF;
    double dALPHA;
    E_ObjectR();
    ~E_ObjectR();
-   virtual void Create(Node* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
+   virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3852,6 +3854,9 @@ public:
    virtual Mat GetThermalStrainMat3d(PropTable* PropsT, MatTable* MatT, double dT);
    virtual double GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp);
    virtual double GetElCentriodVal();
+   virtual CString GetDofRelString();
+   virtual void GetPinFlags(Vec<int>& PDOFS, int& iNoPINs);
+
 
 };
 
@@ -3869,7 +3874,7 @@ public:
    E_ObjectR2();
    virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void ExportUNV(FILE* pFile);
@@ -4115,14 +4120,14 @@ public:
    C3dVector CartToCylCYS(CoordSys* pCy, C3dVector pP);
    int VecToGlobal(Node* pN,C3dVector &vRet,int iDef);
    Node* AddNode(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut);
-   E_Object* AddEl2(int pVnode[200], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C,int iMatCys,double dMatAng);
+   E_Object* AddEl2(int pVnode[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C,int iMatCys,double dMatAng);
    Node* GetNode(int iRLab); 
    E_Object* GetElement(int iRLab);
 
    virtual G_Object* GetObj(int iType,int iLab);
    //Elplicitly add an element directly
    void AddElEx(E_Object* pEl);
-   E_Object* AddEl(Node* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int iA, int iB, int iC, BOOL AddDisp, int iMatCys, double dMatAng);
+   E_Object* AddEl(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int iA, int iB, int iC, BOOL AddDisp, int iMatCys, double dMatAng);
    BOOL CanDeleteEl(E_Object* pEl);
    BOOL DeleteEl(E_Object* pEl);
    BOOL DeleteCys(CoordSys* pS);
