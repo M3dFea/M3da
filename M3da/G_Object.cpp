@@ -47296,9 +47296,16 @@ void  DIMANG::Build()
 	pC->iColour = iColour;
 	pC->we = 0;
 	pDimLine2 = pC;
-	//Circle end ppoiny
+	//Circle end point
 	double we;
-	we = pDimLine1->MinWPt(vPP2);
+	//this is a fix as MinWPt was not finding the correct point
+	C3dVector fA;
+	fA = vPP2 - vPPV;
+	fA.Normalize();
+	fA *= dR;
+	fA += vPPV;
+	//end of fix below fA was vPP2
+	we = pDimLine1->MinWPt(fA);
 	pDimLine1->we = we;
 	//pL = new NLine();
 	//pL->Create(vPP1, vPP2, -1, this);
