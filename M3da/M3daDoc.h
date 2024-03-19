@@ -559,6 +559,7 @@ public:
   afx_msg void OnEditGlobalpreferences();
   afx_msg void OnLoadsbcCreatetempd();
   afx_msg void OnLoadsbcCreategrav();
+  afx_msg void OnExportCurrentStl();
 };
 
 

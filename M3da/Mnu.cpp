@@ -2855,6 +2855,16 @@ if (iStat == 0)
 	  pNext->Init(cDBase, -1);
 	  this->DoMenu(CInMsg, Pt);
 	  }
+	  else if (CInMsg == "MESHINTWP")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zMESHINTWP_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
 	  else if (CInMsg == "RESDIVINTO")
 	  {
 		  iResumePos = 0;
@@ -16587,6 +16597,54 @@ int zMESHINT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		if (iStat == 2)
 		{
 			cDBase->IntersectEls(cDBase->OTemp);
+			cDBase->S_Res();
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zMESHINTWP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("// PICK TRI ELEMENTS TO INTERSECT WITH WP");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				cDBase->S_Save(cDBase->OTemp);
+				cDBase->S_Count = 0;
+				iStat = 2;
+				CInMsg = "NULL";
+			}
+		}
+		if (iStat == 2)
+		{
+			cDBase->IntersectElsWP(cDBase->OTemp);
 			cDBase->S_Res();
 			cDBase->S_Count = 0;
 			RetVal = 1;

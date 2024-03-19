@@ -370,6 +370,7 @@ void CpNodes(ObjList* Nodes,C3dVector vTrVect,int iNoOfTimes);
 void BetNodes(ObjList* Nodes,ObjList* Nodes2,int iNoOfTimes);
 void ElsBetNodes(ObjList* Nodes,ObjList* Nodes2,int iNoOfTimes);
 void IntersectEls(ObjList* Els1);
+void IntersectElsWP(ObjList* Els1);
 void ListAllProps();
 void ListAllMats();
 E_Object* AddEl(int iPos, BOOL AddDsp); 
@@ -613,6 +614,7 @@ void UserCalc();
 void UserCalc2();
 void TestTrans();
 void ExportMesh(FILE* pFile2);
+void ExportMesh2STL(CString sFile);
 void ExportDXF(FILE* pFile2);
 void ExportRes(FILE* pFile2);
 void ExportMeshNAS(FILE* pFile2,int iFile); //iFile is include file no or -1 all

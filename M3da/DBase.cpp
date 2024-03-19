@@ -5919,6 +5919,107 @@ void DBase::IntersectEls(ObjList* Els1)
 }
 
 
+//Intersect one set of TRI element with the WP
+void DBase::IntersectElsWP(ObjList* Els1)
+{
+	int i;
+	int j;
+	int iCol = -1;
+	BOOL bI;
+	CvPt_Object* pThePt = NULL;
+	C3dVector p0;
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector vInt;
+	double dS = 0;		//Parametric ordinates of intersection a seg with triange;
+	double dT = 0;		//Parametric ordinates of intersection a seg with triange
+	double dTol = 0.0001;
+	int iNoInts = 0;
+	E_Object* pE = NULL;
+	E_Object3* pEInt = NULL;
+	E_Object3* pETarget = NULL;
+	ObjList* WP = new ObjList();
+	//Create 2 Tri element that are the size of the WP
+	WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+	E_Object3* WP1 = new E_Object3();
+	E_Object3* WP2 = new E_Object3();
+	C3dMatrix TMAT = pWPlane->mWPTransform;
+	C3dVector vPt;
+
+	Node* N1 = new Node();
+	vPt.Set(pWPlane->Pt_Point[0]->x, pWPlane->Pt_Point[0]->y, pWPlane->Pt_Point[0]->z );
+	vPt = TMAT * vPt;
+	N1->Pt_Point = new C3dVector(vPt.x, vPt.y, vPt.z);
+	Node* N2 = new Node();
+	vPt.Set(pWPlane->Pt_Point[1]->x, pWPlane->Pt_Point[1]->y, pWPlane->Pt_Point[1]->z);
+	vPt = TMAT * vPt;
+	N2->Pt_Point = new C3dVector(vPt.x, vPt.y, vPt.z);
+	Node* N3 = new Node();
+	vPt.Set(pWPlane->Pt_Point[2]->x, pWPlane->Pt_Point[2]->y, pWPlane->Pt_Point[2]->z);
+	vPt = TMAT * vPt;
+	N3->Pt_Point = new C3dVector(vPt.x, vPt.y, vPt.z);
+	Node* N4 = new Node();
+	vPt.Set(pWPlane->Pt_Point[3]->x, pWPlane->Pt_Point[3]->y, pWPlane->Pt_Point[3]->z);
+	vPt = TMAT * vPt;
+	N4->Pt_Point = new C3dVector(vPt.x, vPt.y, vPt.z);
+	WP1->pVertex[0] = N1;
+	WP1->pVertex[1] = N2;
+	WP1->pVertex[2] = N3;
+	WP->Add(WP1);
+	WP2->pVertex[0] = N1;
+	WP2->pVertex[1] = N3;
+	WP2->pVertex[2] = N4;
+	WP->Add(WP2);
+	for (i = 0; i < Els1->iNo; i++)
+	{
+
+			//Element to intersect
+			pEInt = (E_Object3*)Els1->Objs[i];
+			p0 = pEInt->pVertex[0]->Get_Centroid();
+			p1 = pEInt->pVertex[1]->Get_Centroid();
+			p2 = pEInt->pVertex[2]->Get_Centroid();
+			//Target elements
+			for (j = 0; j < WP->iNo; j++)
+			{
+					pETarget = (E_Object3*)WP->Objs[j];
+					bI = LineIntTRI(p0, p1, pETarget, vInt, dS, dT, dTol);
+					if (bI)
+					{
+						pThePt = new CvPt_Object;
+						pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+						iPtLabCnt++;
+						AddObj(pThePt);
+						iNoInts++;
+					}
+					bI = LineIntTRI(p1, p2, pETarget, vInt, dS, dT, dTol);
+					if (bI)
+					{
+						pThePt = new CvPt_Object;
+						pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+						iPtLabCnt++;
+						AddObj(pThePt);
+						iNoInts++;
+					}
+					bI = LineIntTRI(p2, p0, pETarget, vInt, dS, dT, dTol);
+					if (bI)
+					{
+						pThePt = new CvPt_Object;
+						pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+						iPtLabCnt++;
+						AddObj(pThePt);
+						iNoInts++;
+					}
+			}
+
+	}
+	char s1[200];
+	sprintf_s(s1, "No of Intersection Points Generated: %i", iNoInts);
+	outtext1(s1);
+	ReDraw();
+
+}
+
+
 void DBase::ElsBetNodes(ObjList* Nodes,ObjList* Nodes2,int iNoOfTimes)
 {
 int i;
@@ -15321,11 +15422,23 @@ void DBase::ExportMesh(FILE* pFile2)
 {
 if (this->pCurrentMesh!=NULL)
 {
-	pCurrentMesh->ExportUNV(pFile2,pSecs);
+  pCurrentMesh->ExportUNV(pFile2,pSecs);
   fprintf(pFile2,"%6s\n","-1");
 }
 fclose(pFile2);
 }
+
+void DBase::ExportMesh2STL(CString sFile)
+{
+	if (this->pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ExportSTL(sFile);
+	}
+
+}
+
+
+
 
 void DBase::ExportDXF(FILE* pFile2)
 {

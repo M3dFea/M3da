@@ -410,6 +410,7 @@ ON_COMMAND(ID_ELEMENTTYPE_BUSH, &CM3daDoc::OnElementtypeBush)
 ON_COMMAND(ID_EDIT_GLOBALPREFERENCES, &CM3daDoc::OnEditGlobalpreferences)
 ON_COMMAND(ID_LOADSBC_CREATETEMPD, &CM3daDoc::OnLoadsbcCreatetempd)
 ON_COMMAND(ID_LOADSBC_CREATEGRAV, &CM3daDoc::OnLoadsbcCreategrav)
+ON_COMMAND(ID_EXPORT_CURRENT_STL, &CM3daDoc::OnExportCurrentStl)
 END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(CM3daDoc, CDocument)
@@ -6826,5 +6827,25 @@ void CM3daDoc::OnLoadsbcCreategrav()
 	else
 	{
 		outtext1("Finish Current Operation.");
+	}
+}
+
+
+void CM3daDoc::OnExportCurrentStl()
+{
+	// TODO: Add your command handler code here
+	outtext1("EXPORTING TO STL");
+	FILE* pFile;
+	CFileDialog FDia(FALSE, "stl", "*.stl", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
+	FDia.DoModal();
+	CString sPath = FDia.GetPathName();
+	CString sFile = FDia.GetFileName();
+	if (sFile != "")
+	{
+		pFile = fopen(sPath, "w");
+		if (pFile != NULL)
+		{
+			cDBase->ExportMesh2STL(sPath);
+		}
 	}
 }

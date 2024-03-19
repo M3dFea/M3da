@@ -628,13 +628,15 @@
 #define ID_LOADSBC_CREATETEMPD          33448
 #define ID_LOADSBC_CREATEGRAV           33449
 #define ID_LOADSBC_CREATEMOMENT         33450
+#define ID_EXPORT_CURRENTF              33451
+#define ID_EXPORT_CURRENT_STL           33452
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        369
-#define _APS_NEXT_COMMAND_VALUE         33451
+#define _APS_NEXT_COMMAND_VALUE         33453
 #define _APS_NEXT_CONTROL_VALUE         1068
 #define _APS_NEXT_SYMED_VALUE           314
 #endif

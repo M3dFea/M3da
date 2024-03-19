@@ -1,6 +1,8 @@
 #include "G_Object.h"
 #include "M3Da.h"
 #include "GLOBAL_VARS.h"
+#include <iostream>
+#include <fstream>
 //START OF GLOBAL VARIABLES - TRYING THIS OUT 22/09/2023
 //**************Symbols table are GLOBAL scope**************
 Symbol* pSymTable[MAX_SYMBOLS];
@@ -25667,6 +25669,48 @@ for (i=0;i<iNoGps;i++)
 }
 fprintf(pFile,"%6s\n","-1");
 }
+}
+
+void ME_Object::ExportSTL(CString sFileName)
+{
+	int i;
+	int j;
+	C3dVector vN;
+	std::ofstream file(sFileName);
+	if (!file.is_open()) {
+		outtext1("ERROR: Opening File.");
+		return;
+	}
+
+	COleDateTime timeStart;
+	timeStart = COleDateTime::GetCurrentTime();
+
+	int year = timeStart.GetYear();
+	int Mon = timeStart.GetMonth();
+	file << "solid " << sFileName << std::endl;
+	for (i = 0; i < iElNo; i++)
+	{
+		if (pElems[i]->iType == 91)  //its a tri element (facet);
+		{
+			//pElems[i]->ExportSTL(pFile);
+			E_Object3* pE = (E_Object3*) pElems[i]->Copy(this);
+			pE->Reverse();
+			vN = pElems[i]->Get_Normal();
+			
+				file << "  facet normal " << vN.x << " " << vN.y << " " << vN.z << std::endl;
+				file << "    outer loop" << std::endl;
+				for (int i = 0; i < 3; i++) 
+				{
+					file << "      vertex " << pE->pVertex[i]->Pt_Point->x << " " << pE->pVertex[i]->Pt_Point->y << " " << pE->pVertex[i]->Pt_Point->z << std::endl;
+				}
+			file << "    endloop" << std::endl;
+			file << "  endfacet" << std::endl;
+			delete (pE);
+		}
+	}
+	file << "endsolid " << sFileName << std::endl;
+	file.close();
+	outtext1("STL file written successfully");
 }
 
 int ME_Object::GetNoNode(int iType)

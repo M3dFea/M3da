@@ -315,6 +315,13 @@ public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zMESHINTWP_Mnu : public zMnu
+{
+public:
+	int iCnt;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 
 class zMMESHT_Mnu: public zMnu
 {

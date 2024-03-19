@@ -111,6 +111,7 @@ BEGIN
         BEGIN
             MENUITEM "Current F.E. Model to Ideas UNV", ID_EXPORT_CURRENTMESHTO
             MENUITEM "Current F.E. Model to NASTRAN", ID_EXPORT_CURRENTMESTTONAS
+            MENUITEM "Current F.E. Model to STL",   ID_EXPORT_CURRENT_STL
             MENUITEM "Include File",                ID_EXPORT_INCLUDEFILE
             MENUITEM "Groups to TXT",               ID_EXPORT_GROUPSTOTXT
             MENUITEM "Export Results to TEXT File", ID_POST_EXPORTRESULTSTOTEXTFILE
