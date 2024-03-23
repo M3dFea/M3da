@@ -2,7 +2,9 @@
 #include "M3Da.h"
 #include "GLOBAL_VARS.h"
 #include <iostream>
+#include <sstream>
 #include <fstream>
+using namespace std;
 //START OF GLOBAL VARIABLES - TRYING THIS OUT 22/09/2023
 //**************Symbols table are GLOBAL scope**************
 Symbol* pSymTable[MAX_SYMBOLS];
@@ -25711,6 +25713,59 @@ void ME_Object::ExportSTL(CString sFileName)
 	file << "endsolid " << sFileName << std::endl;
 	file.close();
 	outtext1("STL file written successfully");
+}
+
+void ME_Object::ImportSTL(CString sFileName)
+{
+	int i;
+	int j;
+	C3dVector vN;
+	C3dVector vP;
+	Node* pENodes[MaxSelNodes];
+	std::ifstream file(sFileName);
+	if (!file.is_open()) {
+		outtext1("ERROR: Reading File.");
+		return;
+	}
+
+	COleDateTime timeStart;
+	timeStart = COleDateTime::GetCurrentTime();
+
+	int year = timeStart.GetYear();
+	int Mon = timeStart.GetMonth();
+
+	std::string line;
+	std::string token;
+	int vertexIndex = 0;
+
+
+
+	while (std::getline(file, line)) {
+		std::istringstream iss(line);
+		iss >> token;
+
+		if (token == "facet") {
+			iss >> token; // Read "normal"
+			iss >> vN.x >> vN.y >> vN.z;
+		}
+		else if (token == "vertex") {
+			iss >> vP.x >> vP.y >> vP.z;
+			pENodes[vertexIndex] = AddNode(vP, iNodeLab, 0, 0, 11, 0, 0);
+			iNodeLab++;
+			++vertexIndex;
+			if (vertexIndex == 3) 
+			{
+				vertexIndex = 0;
+				E_Object* cAddedEl = AddEl(pENodes, iElementLab, 4, 91, -1, -1, 3, -1, -1, -1, FALSE, -1, 0);
+				cAddedEl->Reverse();
+				iElementLab++;
+			}
+		}
+	}
+
+
+	file.close();
+	outtext1("STL file read successfully");
 }
 
 int ME_Object::GetNoNode(int iType)

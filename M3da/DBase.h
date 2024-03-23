@@ -615,6 +615,7 @@ void UserCalc2();
 void TestTrans();
 void ExportMesh(FILE* pFile2);
 void ExportMesh2STL(CString sFile);
+void ImportMesh2STL(CString sFile);
 void ExportDXF(FILE* pFile2);
 void ExportRes(FILE* pFile2);
 void ExportMeshNAS(FILE* pFile2,int iFile); //iFile is include file no or -1 all

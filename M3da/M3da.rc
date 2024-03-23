@@ -102,6 +102,7 @@ BEGIN
             MENUITEM "Nastran DAT",                 ID_IMPORT_DAT
             MENUITEM "IGES",                        ID_IMPORT_IGES
             MENUITEM "Nastran OP2",                 ID_IMPORT_OP2
+            MENUITEM "STL to Tri Mesh",             ID_IMPORT_STLTOTRIMESH
             MENUITEM "TXT to Groups",               ID_IMPORT_TXTTOGROUPS
             MENUITEM "Symbols Table",               ID_IMPORT_SYMBOLSTABLE, INACTIVE
             MENUITEM "Load BMP",                    ID_IMPORT_LOADBMP

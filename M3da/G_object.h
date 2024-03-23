@@ -4154,6 +4154,7 @@ public:
    void Append(ME_Object* pMexh,int iNInc,int iEInc);
    void ExportUNV(FILE* pFile,SecTable* pS);
    void ExportSTL(CString sFileName);
+   void ImportSTL(CString sFileName);
    void ExportNASExec(FILE* pFile, SecTable* pS);
    void ExportNASCase101(FILE* pFile, SecTable* pS);
    void ExportNAS_SETS(FILE* pFile, SecTable* pS, int iFileNo);

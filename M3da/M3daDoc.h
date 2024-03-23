@@ -560,6 +560,7 @@ public:
   afx_msg void OnLoadsbcCreatetempd();
   afx_msg void OnLoadsbcCreategrav();
   afx_msg void OnExportCurrentStl();
+  afx_msg void OnImportStltotrimesh();
 };
 
 

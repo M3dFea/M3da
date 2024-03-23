@@ -15437,6 +15437,17 @@ void DBase::ExportMesh2STL(CString sFile)
 
 }
 
+void DBase::ImportMesh2STL(CString sFile)
+{
+	if (this->pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ImportSTL(sFile);
+		InvalidateOGL();
+		ReDraw();
+	}
+
+}
+
 
 
 
