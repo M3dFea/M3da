@@ -23836,6 +23836,9 @@ eFaceList* DBase::GenTesselation(ObjList* pN, ObjList* pE)
 			pPt = (c2dParPt*)pN->Objs[i];
 			pS = (NSurf*)pPt->pParent;
 			ptXYZ = pS->GetPt(pPt->PP.x, pPt->PP.y);
+			//ptXYZ.x = pPt->PP.x;  // to be deleted
+			//ptXYZ.y = pPt->PP.y;  // to be deleted
+			//ptXYZ.z = 0;  // to be deleted
 			PtRealXYX[i] = pCurrentMesh->AddNode(ptXYZ, pCurrentMesh->iNodeLab, 0, 0, 50, 0, 0);
 			pCurrentMesh->iNodeLab++;
 		}
@@ -24282,31 +24285,26 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 			//U only at present
 			pSeg = (cSeg*)Segs->Head;
 			//**********Need to CHECK***********
-			//pS->deriveAt(0, 0, 1, der);
-			//v1 = der(1, 0);
-			//v2 = der(0, 1);
-			//der.DeleteAll();
+
 			//**********************************
-			dSSpc1 = pS->GetPt(0.01, 0);
-			dSSpc2 = pS->GetPt(0, 0);
-			dSSpc1 -= dSSpc2;
-			dSclU = 0.01*dS / dSSpc1.Mag();
-			dSclPU = dSSpc1.Mag() / 0.01;
-			dSSpc1 = pS->GetPt(0, 0.01);
-			dSSpc2 = pS->GetPt(0, 0);
-			dSSpc1 -= dSSpc2;
-			dSclV = 0.01*dS / dSSpc1.Mag();
-			dSclPV = dSSpc1.Mag() / 0.01;
 			do
 			{
-				if (j == 168)
+				if (j == 30)
 					j = j;
 				pSeg = (cSeg*)Segs->Head;
 				//Calculate a node position away from seg
 				if (pSeg != NULL)
 				{
 					//local scale factor
-
+					pS->deriveAt(pSeg->MpT.x, pSeg->MpT.y, 1, der);
+					v1 = der(1, 0);
+					dSclPU = v1.Mag();
+					dSclU = dS / dSclPU;
+					v2 = der(0, 1);
+					dSclPV = v2.Mag();
+					dSclV = dS / dSclPV;
+					der.DeleteAll(); 
+					//end local scale factor
 					vD.x = pSeg->pt[0]->PP.y - pSeg->pt[1]->PP.y;
 					vD.y = pSeg->pt[1]->PP.x - pSeg->pt[0]->PP.x;
 					vD.Normalize();
@@ -24326,7 +24324,7 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 					//pRealPt->iLabel = iNodeLab; iNodeLab++;
 					pCandidateSegs->iNo=0;
 					pFrontNodes->iNo = 0;
-					GetCandiatesSeg2d(pSeg,Segs, pC, 3*RR, pCandidateSegs, dSclPU, dSclPV);
+					GetCandiatesSeg2d(pSeg,Segs, pC, 2*RR, pCandidateSegs, dSclPU, dSclPV);
 					GetCandiatesNodes2d(pSeg,pCandidateSegs, pC, 2*RR, pFrontNodes, dSclPU, dSclPV);
 					//Get Best node from boundary short list
 					dMinR = RR;
@@ -24377,6 +24375,11 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 								  break;
 							  }
 							}
+							else
+							{
+								//outtext1("ERROR: Node in Circumcircle.");
+								//bExitFail = TRUE;
+							}
 						}
 					}
 					//if an acceptable node from the boundary is available use it
@@ -24391,15 +24394,17 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 					  UpdateFront(pS,iNodeLab, iSegLab,isNewNd,pSeg,Pts, Segs, pbFNd, pTmp, pEls);
 				}
 				//if (j>1)
-				  //DELAY(1);
-				j++;
 
+				j++;
+				//if (j==155)
+				//   bExitFail = TRUE;
 			} while  ((Segs->iCnt > 0) && (!bExitFail));
 		}
 		//Smoothing Cycle
 		outtext1("Performing 1 Smoothing Cycle");
 		//PrintTime("TIME: ");
-		Smooth(Pts, pEls);
+		if (!bExitFail)
+		   Smooth(Pts, pEls);
 		//Generate Faces from pEls
 		iNoEls = pEls->iNo / 3;
 		pTesselation = GenTesselation(Pts, pEls);
@@ -24659,38 +24664,47 @@ void DBase::GetCandiatesNodes2d(cSeg* pNot, ObjList* pFrom, C2dVector vC, double
 	vB.y *= dSY;
 	vB.Normalize();
 	//vB is base segement direction vector;
-
+	BOOL bb = FALSE;
 	for (i = 0; i < pFrom->iNo; i++)
 	{
 		pO = pFrom->Objs[i];
+		pSeg = (cSeg*) pO;
+		if (pSeg == pNot)
+			bb = TRUE;
+
 		if (pO != NULL)
 		{
-			pSeg = (cSeg*)pO;
 			N = pSeg->pt[0];
-			if ((N != pNot->pt[0]) && (N != pNot->pt[1]))
+			if (!CheckInt(pFrom, pNot, N))
 			{
-				vT.x = N->PP.x;
-				vT.y = N->PP.y;
-				vT -= pNot->pt[0]->PP;
-				vT.x *= dSX;
-				vT.y *= dSY;
-				vT.Normalize();
-				dCross = vB.Cross(vT);  //is to right
-				if (dCross > 0.05)       // if node is smaller than critical distance it a posible
-					pRes->AddEx(N);
+				if ((N != pNot->pt[0]) && (N != pNot->pt[1]))
+				{
+					vT.x = N->PP.x;
+					vT.y = N->PP.y;
+					vT -= pNot->pt[0]->PP;
+					vT.x *= dSX;
+					vT.y *= dSY;
+					vT.Normalize();
+					dCross = vB.Cross(vT);  //is to right
+					if (dCross > 0.05)       // if node is smaller than critical distance it a posible
+						pRes->AddEx(N);
+				}
 			}
 			N = pSeg->pt[1];
-			if ((N != pNot->pt[0]) && (N != pNot->pt[1]))
+			if (!CheckInt(pFrom, pNot, N))
 			{
-				vT.x = N->PP.x;
-				vT.y = N->PP.y;
-				vT -= pNot->pt[0]->PP;
-				vT.x *= dSX;
-				vT.y *= dSY;
-				vT.Normalize();
-				dCross = vB.Cross(vT);  //is to right
-				if (dCross > 0.05)         // if node is smaller than critical distance it a posible
-					pRes->AddEx(N);
+				if ((N != pNot->pt[0]) && (N != pNot->pt[1]))
+				{
+					vT.x = N->PP.x;
+					vT.y = N->PP.y;
+					vT -= pNot->pt[0]->PP;
+					vT.x *= dSX;
+					vT.y *= dSY;
+					vT.Normalize();
+					dCross = vB.Cross(vT);  //is to right
+					if (dCross > 0.05)         // if node is smaller than critical distance it a posible
+						pRes->AddEx(N);
+				}
 			}
 		}
 	}
@@ -24753,13 +24767,20 @@ void DBase::CreateBSegs(ObjList* pP, cLinkedList* pS, double dS, NSurf* pSf)
 		if (iInc == -1)
 		{
 			dL = pSf->pExtLoop[i]->getLen();
-			iInc = dL / dS;
-			if ((pSf->iNoExtCvs == 1) && (iInc < 4))
+			if (dL > dTol)
 			{
-				iInc = 4;
+				iInc = dL / dS;
+				if ((pSf->iNoExtCvs == 1) && (iInc < 4))
+				{
+					iInc = 4;
+				}
+				if (iInc < 1)
+					iInc = 1;
 			}
-			if (iInc < 1)
-				iInc = 1;
+			else
+			{
+				iInc = -1;
+			}
 		}
 		dSInc = (pSf->pExtLoop[i]->we- pSf->pExtLoop[i]->ws)/iInc;
 		dSp = pSf->pExtLoop[i]->ws;
