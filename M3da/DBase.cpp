@@ -3036,6 +3036,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 
 		if (!bIsTet)
 		{
+			dMaxAng = 0;
 			for (itry = 0; itry < pCandidateNodes->iNo; itry++)
 			{
 			    vT = pCandidateNodes->Objs[itry]->Get_Centroid();
