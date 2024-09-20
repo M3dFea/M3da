@@ -12,13 +12,7 @@ double Pi = 3.1415926535;
 
 
 
-// 3dMatrix.cpp
-//
-// Copyright (c) Nigel Thompson 1996
-//
-// Implementation for:
-// C3dMatrix
-//
+
 
 IMPLEMENT_DYNAMIC(C3dObject, CObject)
 
@@ -49,13 +43,7 @@ double RadToDeg(double dARad)
 
 
 
-// 3dVector.cpp
-//
-// Copyright (c) Nigel Thompson 1996
-//
-// Implementation for:
-// C3dVector
-//
+
 
 //////////////////////////////////////////////////////////////////
 // C3dVector

@@ -28809,7 +28809,7 @@ void ME_Object::AddElEx(E_Object* pEl)
 
 E_Object* ME_Object::AddEl2(int pVnode[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C,int iMatCys,double dMatAng)
 {
-  int iCnt;
+  int iCnt=-1;
   E_Object* cAddedEl;
   Node *pENodes[MaxSelNodes];
   if (iCnt> MaxSelNodes)
