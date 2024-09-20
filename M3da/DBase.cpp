@@ -3134,7 +3134,7 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 			InvalidateOGL();
 			ReDraw();
 		}
-	} while ((iTT < 800) && (bExit == FALSE)); //(fEls->iNo>0);
+	} while ((iTT < 10000) && (bExit == FALSE)); //(fEls->iNo>0);
 
 	InvalidateOGL();
 	ReDraw();
