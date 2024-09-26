@@ -1,5 +1,8 @@
 fm3d compiled in Vis studio 2019. Originally started this in ç++4 many years ago, before vector classes were added.
 
+M3d is writen with no addins or external models so it can be deployed with no problems I would like to stay this way. The beauty is in developing a new solids kernal, mesher and FEA solver which can solve small problems.
+
+
 m3d has been used in many commercial aerospace projects and this what has driven the development. most of are structure are shell and beam model built by hand and with abstracted geometry.
 
 it was a very deliberate choice to drive the code from command line menu system. the allows basic txt scripts to be pasted in the command line. I did try exposing merhods by API functions but the engineers did not want to get involved with VBA programing.
