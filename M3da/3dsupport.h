@@ -63,6 +63,7 @@ public:
   C3dVector& operator /= (const double s);
   C3dVector operator - ();
   double Ang(const C3dVector& r);
+  double AngSigned(C3dVector r, C3dVector vN);
   double Dot(const C3dVector& a);
   double Mag();
   C3dVector Cross(C3dVector vIn);
@@ -99,7 +100,7 @@ public:
 	double Cross(C2dVector vIn);
 	double Dot(C2dVector vIn);
 	void Clamp(double dMin, double dMax);
-	double Dist(C2dVector inPt);
+	double Dist(C2dVector inV);
 	BOOL Normalize();
 	double Mag();
 };
@@ -358,7 +359,7 @@ void Vec<T>::diag()
 {
 FILE* pFile;
 int j;
-pFile = fopen("VEC_DIAG.txt","w");
+pFile = fopen("C:/SCRATCH/MIN3/VEC_DIAG.txt","w");
 
 fprintf(pFile,"%s\n","VECTOR");
 fprintf(pFile,"%s%i\n","N",n);
@@ -683,51 +684,51 @@ protected:
 
 
  
-class C3dMatrix
-{
+class C3dMatrix {
 public:
-	//DECLARE_DYNAMIC(C3dMatrix);
+    //DECLARE_DYNAMIC(C3dMatrix);
     C3dMatrix();
     virtual ~C3dMatrix();
     C3dMatrix(const C3dMatrix& r);
-    C3dMatrix(double v00, double v01, double v02, double v03,
-              double v10, double v11, double v12, double v13,
-              double v20, double v21, double v22, double v23,
-              double v30, double v31, double v32, double v33);
-    virtual void Serialize(CArchive& ar,int iV);
-	  C3dMatrix& operator = (const C3dMatrix& r);
-    C3dMatrix operator + (const C3dMatrix& b);
-    C3dMatrix& operator += (const C3dMatrix& r);
-    C3dMatrix operator * (const C3dMatrix& b);
-    C3dMatrix& operator *= (const C3dMatrix& r);
-    C3dVector operator * (const C3dVector& v);
+    C3dMatrix(
+        double v00, double v01, double v02, double v03,
+        double v10, double v11, double v12, double v13,
+        double v20, double v21, double v22, double v23,
+        double v30, double v31, double v32, double v33
+    );
+    virtual void Serialize(CArchive& ar, int iV);
+    C3dMatrix& operator=(const C3dMatrix& r);
+    C3dMatrix operator+(const C3dMatrix& b);
+    C3dMatrix& operator+=(const C3dMatrix& r);
+    C3dMatrix operator*(const C3dMatrix& b);
+    C3dMatrix& operator*=(const C3dMatrix& r);
+    C3dVector operator*(const C3dVector& v);
     void Rotate(double rx, double ry, double rz);
     void Translate(double dx, double dy, double dz);
     void Translate2(double dx, double dy, double dz);
-	  void Scale(double sx, double sy, double sz);
-	  void Scale(double s) {Scale(s, s, s);}
-	  void MakeUnit();
-    void SetColVec(int iC,C3dVector inV);
+    void Scale(double sx, double sy, double sz);
+    void Scale(double s) { Scale(s, s, s); }
+    void MakeUnit();
+    void SetColVec(int iC, C3dVector inV);
     C3dVector GetColVec(int iC);
     C3dVector GetUpVec();
     //void Initialize(D3DRMMATRIX4D& rlm);
     C3dVector Mult(C3dVector vInVect);
     C3dVector MultBack(C3dVector vInVect);
     OglMat GetOglMat();
-	  void Transpose();
-	  double det();
-	  C3dMatrix Inv();
+    void Transpose();
+    double det();
+    C3dMatrix Inv();
     C3dMatrix CalcTran(C3dVector vIn);
-    C3dMatrix CalcTranVUP(C3dVector vDir,C3dVector vUp);
-
+    C3dMatrix CalcTranVUP(C3dVector vDir, C3dVector vUp);
     double GetZRot(C3dMatrix mUp);
-	  void ReverseZ();
+    void ReverseZ();
     void ClearTranslations();
-	  // elements
-	  double m_00, m_01, m_02, m_03;
-	  double m_10, m_11, m_12, m_13;
-	  double m_20, m_21, m_22, m_23;
-	  double m_30, m_31, m_32, m_33;
+    // elements
+    double m_00, m_01, m_02, m_03;
+    double m_10, m_11, m_12, m_13;
+    double m_20, m_21, m_22, m_23;
+    double m_30, m_31, m_32, m_33;
 };
 
 void Circumsphere(C3dVector* v0, C3dVector* v1, C3dVector*  v2, C3dVector*  v3, C3dVector*  center, double* radius);
@@ -738,11 +739,11 @@ class DSP_Triad
 public:
      C3dVector vAxisPts[4];
      C3dVector vEyePt;
-	   C3dMatrix mOrientMat;
+	 C3dMatrix mOrientMat;
      double ds;
-	   double dSclFact;
+	 double dSclFact;
      void Create(double WPS);
-	   void ReSet();
+	 void ReSet();
      void SetTopView();
      void SetLeftView();
      void SetFrontView();
@@ -759,6 +760,7 @@ public:
 	   void Scl(double dSfactInc);
 	   double GetScl();
 	   C3dMatrix RetrieveMat();
+	   void PushMat(C3dMatrix mT);
 };
 
 

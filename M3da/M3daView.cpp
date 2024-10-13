@@ -8,6 +8,8 @@
 #include "M3daView.h"
 #include "resource.h"
 #include "math.h"
+#include "GLOBAL_VARS.h"
+DSP_Triad tOrient;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -61,6 +63,10 @@ ON_COMMAND(ID_PROJ_RIGHT, &CM3daView::OnProjRight)
 ON_COMMAND(ID_PROJ_BACK, &CM3daView::OnProjBack)
 ON_COMMAND(ID_PROJSO1, &CM3daView::OnProjso1)
 ON_COMMAND(ID_PROPISO2, &CM3daView::OnPropiso2)
+ON_COMMAND(ID_EDIT_UNDO, &CM3daView::OnEditUndo)
+ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO, &CM3daView::OnUpdateEditUndo)
+ON_COMMAND(ID_EDIT_REDO, &CM3daView::OnEditRedo)
+ON_UPDATE_COMMAND_UI(ID_EDIT_REDO, &CM3daView::OnUpdateEditRedo)
 END_MESSAGE_MAP()
 
 // CM3daView construction/destruction
@@ -254,6 +260,8 @@ void CM3daView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	{m_iFuncKey = 4;}
 	else if (nChar == 27)
 	{m_iFuncKey = 5;}
+	else if (nChar == 46)
+	{m_iFuncKey = 6;}
 	else
 	{m_iFuncKey = 0;}
 	m_iMouseButStat=0;
@@ -279,6 +287,10 @@ else if (m_iFuncKey==4)
 else if (m_iFuncKey==5)
 {
   outtextMSG2("C");
+}
+else if (m_iFuncKey == 6)
+{
+	GetDocument()->DeleteObjs();
 }
 else
 {
@@ -373,8 +385,8 @@ if ((m_iFuncKey != 0))
   b=iX*iX+iY*iY;
   a = sqrt(b);
   iMag = (int) a;
-    m_UpdateTriad(iMag);
-    m_PointOld = m_PointNew;
+  m_UpdateTriad(iMag);
+  m_PointOld = m_PointNew;
   CDC* pDC = this->GetDC();
   GetDocument()->SetView(this);
   GetDocument()->Draw(tOrient.RetrieveMat(),pDC,3);
@@ -397,7 +409,7 @@ else if (m_iMouseButStat == 1)
     ReleaseDC(pDC);
   }
 }
-else if(GetDocument()->isLineDragging())
+else if(GetDocument()->isDragging())
 {
 	iX = m_PointNew.x - m_PointDown.x;
 	iY = m_PointNew.y - m_PointDown.y;
@@ -409,9 +421,10 @@ else if(GetDocument()->isLineDragging())
 	{
 		CDC* pDC = this->GetDC();
 		GetDocument()->SetView(this);
+		GetDocument()->DragUpdate(m_PointNew);
 		GetDocument()->Draw(tOrient.RetrieveMat(), pDC, 3);
-		GetDocument()->SetLineEnd(point);
-		GetDocument()->LineDrag(pDC, m_PointDown, point);
+		//GetDocument()->SetLineEnd(m_PointNew);
+		//GetDocument()->LineDrag(pDC, m_PointDown, m_PointNew);
 		ReleaseDC(pDC);
 	}
 }
@@ -549,7 +562,7 @@ ReleaseDC(pDC);
 void CM3daView::OnMButtonDblClk(UINT nFlags, CPoint point)
 {
   // TODO: Add your message handler code here and/or call default
-  outtextMSG2("D");	
+  outtextMSG2("C");	
   CView::OnMButtonDblClk(nFlags, point);
 }
 
@@ -559,6 +572,7 @@ void CM3daView::OnMButtonUp(UINT nFlags, CPoint point)
 
   m_iFuncKey = 0;
   CView::OnMButtonUp(nFlags, point);
+  outtextMSG2("D");
   CDC* pDC = this->GetDC();
   GetDocument()->SetView(this);
   GetDocument()->Draw(tOrient.RetrieveMat(),pDC,4);
@@ -781,4 +795,50 @@ void CM3daView::OnPropiso2()
   GetDocument()->SetView(this);
   GetDocument()->Draw(tOrient.RetrieveMat(), pDC, 4);
   ReleaseDC(pDC);
+}
+
+
+void CM3daView::OnEditUndo()
+{
+	// TODO: Add your command handler code here
+	CM3daDoc* pDoc=NULL;
+	pDoc = GetDocument();
+	if (pDoc != NULL)
+	{
+		if (pDoc->bFinalChkPt == FALSE)
+		{
+			pDoc->CheckPoint();
+			pDoc->bFinalChkPt = TRUE;
+		}
+		pDoc->Undo();
+		CDC* pDC = this->GetDC();
+		pDoc->Draw(tOrient.RetrieveMat(), pDC, 4);
+		ReleaseDC(pDC);
+	}
+	//pDoc->UpdateAllViews(NULL);
+}
+
+
+void CM3daView::OnUpdateEditUndo(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	CM3daDoc* pDoc = GetDocument();
+	pCmdUI->Enable(pDoc->CanUndo());
+}
+
+
+void CM3daView::OnEditRedo()
+{
+	// TODO: Add your command handler code here
+	CM3daDoc* pDoc = GetDocument();
+	pDoc->Redo();
+	pDoc->UpdateAllViews(NULL);
+}
+
+
+void CM3daView::OnUpdateEditRedo(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	CM3daDoc* pDoc = GetDocument();
+	pCmdUI->Enable(pDoc->CanRedo());
 }

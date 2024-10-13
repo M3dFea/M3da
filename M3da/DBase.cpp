@@ -3,9 +3,21 @@
 #include "gl\gl.h"
 #include "gl\glu.h"
 #include "M3Da.h"
-#pragma warning(disable:4477)
+#include "SymTable.h"
+#include "GLOBAL_VARS.h"
+#include <fstream>  // Include the necessary header file
+#include <string>
+#include <atlstr.h>
 
+#pragma warning(disable:4477)
+BOOL gORTHO;
+BOOL gDSP_CPTS = FALSE;
+BOOL gDSP_CIRS = TRUE;
+BOOL gDSP_BACK = TRUE;
+const double dTol = 0.00000001;  //unsed for Surface tolerance
 const double Pi = 3.1415926535;
+#define D2R  0.01745329251994
+#define R2D  57.2957795130931
 
 
 
@@ -279,7 +291,9 @@ DBase::DBase()
 {
 	EnableAutomation();
     pWorldBMP=NULL;
-	bLineDrag = FALSE;
+	bIsDrag = FALSE;
+	iHLimit = -1;
+	G_Object* pDragObj = nullptr;
 }
 
 DBase::~DBase()
@@ -292,6 +306,34 @@ DBase::~DBase()
 		DB_Obj[i] = NULL;
 	}
 	DB_ObjectCount = 0;
+	if (pDragObj != nullptr)
+	   delete (pDragObj);
+}
+
+
+void DBase::LabGaps(int iGap)
+{
+	if (pCurrentMesh != NULL)
+		pCurrentMesh->LabGaps(iGap);
+}
+//***************************************************************************
+// PRE: TRUE
+// POST: ALL DELETED
+//***************************************************************************
+
+void DBase::DeleteAll()
+{
+	int i;
+	S_Count = 0;
+	DelAll_Group();
+	for (i = 1; i < DB_ObjectCount; i++)
+	{
+		delete(DB_Obj[i]);
+		DB_Obj[i] = NULL;
+	}
+	DB_ObjectCount = 1;
+	PropsT->DeleteAll();
+	MatT->DeleteAll();
 }
 
 void DBase::PrintTime(CString cS)
@@ -309,6 +351,53 @@ void DBase::PrintTime(CString cS)
 	outtext1(s1);
 }
 
+void DBase::ExporttoNAS(int iFileNo)
+{
+	outtext1("EXPORTING NASTRAN DECK");
+	FILE* pFile;
+	CFileDialog FDia(FALSE, "dat", "*.dat", OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, NULL, NULL);
+	FDia.DoModal();
+	CString sPath = FDia.GetPathName();
+	CString sFile = FDia.GetFileName();
+	if (sFile != "")
+	{
+		pFile = fopen(sPath, "w");
+		if (pFile != NULL)
+		{
+			ExportMeshNAS(pFile, iFileNo);
+			fclose(pFile);
+		}
+	}
+}
+
+
+
+int DBase::GetFileByNo(CString sF)
+{
+	int irc=-1;
+	int i;
+	for (i = 0; i < iFileNo; i++)
+	{
+		if (sFiles[i] == sF)
+		{
+			irc = i;
+			break;
+		}
+
+	}
+	return(irc);
+}
+
+void DBase::DragUpdate(CPoint inPt)
+{
+	C3dVector vG;
+	vG = PickPointToGlobal2(inPt);
+	C3dMatrix mTran;
+	WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+	mTran = pWPlane->mWPTransform;
+	if (pDragObj != nullptr)
+		pDragObj->DragUpdate(vG, mTran);
+}
 
 void DBase::SetLineStart(CPoint pS)
 {
@@ -335,7 +424,7 @@ void DBase::OnFinalRelease()
 DBase::DBase(double WPS)
 {
 EnableAutomation();
-bLineDrag = FALSE;
+bIsDrag = FALSE;
 TmpOGLCnt=0;
 DB_ObjectCount = 0;
 DB_ActiveBuff = 1;
@@ -383,13 +472,17 @@ DspFlags=DSP_ALL;
 dMFullScl=1;
 bRevColBar=FALSE;
 iPtLabCnt=1;
+iTxtLabCnt = 1;
 iCVLabCnt=1;
 iSFLabCnt=1;
 iPartLabCnt = 1;
 iNoSymbols=0;
+LoadSymbolsInternal();  //Load the Acad char set
 pWorldBMP = NULL;
 ResFrameDelay = 200;
 NoResFrame = 5;
+iHLimit =-1;
+G_Object* pDragObj = nullptr;
 }
 
 //********************************************************
@@ -835,17 +928,73 @@ char buff[80];
 	}
 }
 
+void DBase::HLimit(int iHlim)
+{
+	char buff[80];
+	if (iHlim > 0)
+	{
+		iHLimit = iHlim;
+		sprintf_s(buff, "%s %i", "Highlight Limit = ", iHLimit);
+		outtext1(buff);
+	}
+	else
+	{
+		iHLimit = -1;
+		sprintf_s(buff, "%s", "Highlight Limit = ALL");
+		outtext1(buff);
+	}
+}
+
 //*************************************************************
 //  LIST RESPONSE DATA FOR FREQUENCY ANALYSIS
 //  List repose for loadcase LC
 //  and for node or element iEnt
 //*************************************************************
-void DBase::ResListRespData(int iLC, int iEnt)
+void DBase::ResListRespData(int iEnt)
 {
 	if (pCurrentMesh != NULL)
-		pCurrentMesh->ResListRespData(iLC, iEnt);
+		pCurrentMesh->ResListRespData(iEnt);
 
 }
+
+//RESGRAPHRESP
+void DBase::ResGraphRespData(int iEnt)
+{
+	//if (pCurrentMesh != NULL)
+	//	pCurrentMesh->ResListRespData(iEnt);
+	CGraphDialog* Dlg = new CGraphDialog();
+	Dlg->pME = pCurrentMesh;
+	Dlg->DoModal();
+	if (Dlg != NULL)
+		delete Dlg;
+	InvalidateOGL();
+	ReGen();
+}
+
+//RESLABRESP
+void DBase::LabelRespItems()
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ResLabRespItems();
+		InvalidateOGL();
+		ReDraw();
+	}
+
+}
+
+//*************************************************************
+//  LIST RESPONSE DATA FOR FREQUENCY ANALYSIS
+//  List reponse for loadcase LC
+//  and for node or element iEnt
+//*************************************************************
+void DBase::ResListRespDataFull(int iEnt)
+{
+	if (pCurrentMesh != NULL)
+		pCurrentMesh->ResListRespDataFull(iEnt);
+
+}
+
 
 
 //********************************************
@@ -1044,12 +1193,56 @@ void DBase::Serialize(CArchive& ar)
 	{
 	  // TODO: add storing code here
 		ar<<VERSION_NO;
+		ar << pModelMat.m_00;
+		ar << pModelMat.m_01;
+		ar << pModelMat.m_02;
+		ar << pModelMat.m_03;
+		ar << pModelMat.m_10;
+		ar << pModelMat.m_11;
+		ar << pModelMat.m_12;
+		ar << pModelMat.m_13;
+		ar << pModelMat.m_20;
+		ar << pModelMat.m_21;
+		ar << pModelMat.m_22;
+		ar << pModelMat.m_23;
+		ar << pModelMat.m_30;
+		ar << pModelMat.m_31;
+		ar << pModelMat.m_32;
+		ar << pModelMat.m_33;
+		//global vars
+		ar << WPSize;
+		ar << gPT_SIZE;
+		ar << gND_SIZE;
+		ar << gLM_SIZE;
+		ar << gEL_SIZE;
+		ar << gED_SIZE;
+		ar << gFC_SIZE;
+		ar << gWP_SIZE;
+		ar << gBM_SIZE;
+		ar << gTXT_SIZE;
+		ar << gDIM_FILSZ;
+		ar << gDIM_OFFSZ;
+		ar << gTXT_HEIGHT;
+		ar << gDIM_RADSZ;
+		ar << gDIM_SIZE;
+		ar << gDRILL_KS;
+		ar << gRIGID_MULTIPLIER;
+		ar << gVSTIFF_KS;
+		ar << gDEF_E;
+		ar << gDEF_V;
+		ar << gSTIFF_BDIA;
+		ar << gDEF_CTE;
+		ar << gDEF_THERM_LNK;
+		ar << gDEF_SOL_TOL;
+		ar << gDIM_PREC;
+
 		PropsT->Serialize(ar,VERSION_NO);
 		MatT->Serialize(ar,VERSION_NO);
 		ar<<DB_ObjectCount;
 		ar<<iMeshCnt;
 		ar<<iCurGp;
 		ar<<iPtLabCnt; 
+		ar<<iTxtLabCnt;
 		ar<<iCVLabCnt;
 		ar<<iSFLabCnt;
 		ar<<iPartLabCnt;
@@ -1058,6 +1251,8 @@ void DBase::Serialize(CArchive& ar)
 			ar << pCurrentPart->iLabel;
 		else
 			ar << -1;
+		//Workplane 
+		DB_Obj[0]->Serialize(ar, iVER);
 		for (i=1;i<DB_ObjectCount;i++)
 		{
 			ar << DB_Obj[i]->iObjType;
@@ -1069,12 +1264,80 @@ void DBase::Serialize(CArchive& ar)
 	else
 	{
 		ar>>iVER;
+		if (iVER <= -66)
+		{
+			C3dMatrix mT;
+			ar >> mT.m_00;
+			ar >> mT.m_01;
+			ar >> mT.m_02;
+			ar >> mT.m_03;
+			ar >> mT.m_10;
+			ar >> mT.m_11;
+			ar >> mT.m_12;
+			ar >> mT.m_13;
+			ar >> mT.m_20;
+			ar >> mT.m_21;
+			ar >> mT.m_22;
+			ar >> mT.m_23;
+			ar >> mT.m_30;
+			ar >> mT.m_31;
+			ar >> mT.m_32;
+			ar >> mT.m_33;
+			tOrient.PushMat(mT);
+			pModelMat = mT;
+		}
+
+		if (iVER <= -65)
+		{
+			ar >> WPSize;
+			ar >> gPT_SIZE;
+			ar >> gND_SIZE;
+			ar >> gLM_SIZE;
+			ar >> gEL_SIZE;
+			ar >> gED_SIZE;
+			ar >> gFC_SIZE;
+			ar >> gWP_SIZE;
+			ar >> gBM_SIZE;
+			ar >> gTXT_SIZE;
+		}
+		if (iVER <= -67)
+		{
+			ar >> gDIM_FILSZ;
+			ar >> gDIM_OFFSZ;
+			ar >> gTXT_HEIGHT;
+			ar >> gDIM_RADSZ;
+		}
+		if (iVER <= -70)
+		{
+			ar >> gDIM_SIZE;
+		}
+		if (iVER <= -72)
+		{
+			ar >> gDRILL_KS;
+			ar >> gRIGID_MULTIPLIER;
+			ar >> gVSTIFF_KS;
+			ar >> gDEF_E;
+			ar >> gDEF_V;
+			ar >> gSTIFF_BDIA;
+			ar >> gDEF_CTE;
+			ar >> gDEF_THERM_LNK;
+		}
+		if (iVER <= -73)
+		{
+			ar >> gDEF_SOL_TOL;
+		}
+		if (iVER <= -74)
+		{
+			ar >> gDIM_PREC;
+		}
 		PropsT->Serialize(ar,iVER);
 		MatT->Serialize(ar,iVER);
 		ar>>DB_ObjectCount; //Change here
 		ar>>iMeshCnt;
 		ar>>iCurGp;
 		ar>>iPtLabCnt;
+		if (iVER <= -55)
+			ar >> iTxtLabCnt;
 		if (iVER <= -51)
 			ar >> iCVLabCnt;
 		ar>>iSFLabCnt;
@@ -1084,6 +1347,13 @@ void DBase::Serialize(CArchive& ar)
 		{
 			ar >> iCurMesh;
 			ar >> iCurPart;
+		}
+		//Workplane 
+		if (iVER <= -65)
+		{
+			WP_Object* pWP = (WP_Object*)DB_Obj[0];
+			pWP->Serialize(ar, iVER);
+			pWP->ReSize(WPSize);
 		}
 		for (i=1;i<DB_ObjectCount;i++)
 		{
@@ -1099,7 +1369,7 @@ void DBase::Serialize(CArchive& ar)
 				DB_Obj[i]->Serialize(ar,iVER);
 				break;
 			case 1:
-				DB_Obj[i] = new Pt_Object;
+				DB_Obj[i] = new Node;
 				DB_Obj[i]->Serialize(ar,iVER);
 				break;
 			case 2 :
@@ -1112,14 +1382,18 @@ void DBase::Serialize(CArchive& ar)
 				break;
 			case 4 :
 				DB_Obj[i] = new ME_Object;
-				DB_Obj[i]->Serialize(ar,iVER);
-				pM = (ME_Object*) DB_Obj[i];
+				DB_Obj[i]->Serialize(ar, iVER);
+				pM = (ME_Object*)DB_Obj[i];
 				pM->UpdatePropRef(PropsT);
-				//pM->Visable = TRUE;
+					//pM->Visable = TRUE;
 				break;
 			case 5 :
-				DB_Obj[i] = new Circ1;
+				DB_Obj[i] = new Symbol();
 				DB_Obj[i]->Serialize(ar,iVER);
+				break;
+			case 6:
+				DB_Obj[i] = new Text();
+				DB_Obj[i]->Serialize(ar, iVER);
 				break;
 			case 7 :
 				if (iSecondaryType == 3)
@@ -1147,9 +1421,27 @@ void DBase::Serialize(CArchive& ar)
 				DB_Obj[i]->iObjType = 7;
 				DB_Obj[i]->iType = 2;
 				break;
-			case 10 :
-				DB_Obj[i] = new Surf_Ex1;
-				DB_Obj[i]->Serialize(ar,iVER);
+			case 10:
+				if (iSecondaryType == 0)
+					DB_Obj[i] = new DIM();
+				else if (iSecondaryType == 1)
+					DB_Obj[i] = new DIMA();
+				else if (iSecondaryType == 2)
+					DB_Obj[i] = new DIMH();
+				else if (iSecondaryType == 3)
+					DB_Obj[i] = new DIMV();
+				else if (iSecondaryType == 4)
+					DB_Obj[i] = new DIMR();
+				else if (iSecondaryType == 5)
+					DB_Obj[i] = new DIMD();
+				else if (iSecondaryType == 6)
+					DB_Obj[i] = new DIMANG();
+				else if (iSecondaryType == 7)
+					DB_Obj[i] = new DIML();
+				DB_Obj[i]->Serialize(ar, iVER);
+				DB_Obj[i]->iObjType = iType;
+				DB_Obj[i]->iType = iSecondaryType;
+				DB_Obj[i]->Build();
 				break;
 			case 11 :
 				DB_Obj[i] = new Surf_R;
@@ -1194,6 +1486,10 @@ void DBase::Serialize(CArchive& ar)
 			case 604 :
 				DB_Obj[i] = new SweepB;
 				DB_Obj[i]->Serialize(ar,iVER);
+				break;
+			case 999:
+				DB_Obj[i] = new BackGround(WPSize);
+				DB_Obj[i]->Serialize(ar, iVER);
 				break;
 			case 500 :
 				DB_Obj[i] = new WG_Def;
@@ -1275,6 +1571,22 @@ irc++;
 return(irc);
 }
 
+int DBase::GetMaxTxtLabCnt()
+{
+	int i;
+	int irc = 0;
+	for (i = 1; i < DB_ObjectCount; i++)
+	{
+		if (DB_Obj[i]->iObjType == 6)
+		{
+			if (DB_Obj[i]->iLabel > irc)
+				irc = DB_Obj[i]->iLabel;
+		}
+	}
+	irc++;
+	return(irc);
+}
+
 int DBase::GetMaxCVLabCnt()
 {
 int i;
@@ -1330,22 +1642,22 @@ if (ar.IsStoring())
    ar<<iNo;
    for (j=0;j<iNo;j++)
    {
-     iLevs=0;
-     ptr = Groups[i]->Objs[j];
-	   do
-	   {
-       iLevs++;        //Count the levels of heiarachy
-	     ptr=ptr->pParent;
-	   }
-	   while (ptr!=NULL);
-     ptr = Groups[i]->Objs[j];
-	   ar<<iLevs;
-	   for (k=0;k<iLevs;k++)
-     {
-       ar<<ptr->iObjType;
-       ar<<ptr->iLabel;
-	     ptr=ptr->pParent;
-	   }
+		iLevs=0;
+		ptr = Groups[i]->Objs[j];
+		do
+		{
+			iLevs++;        //Count the levels of heiarachy
+			ptr=ptr->pParent;
+		}
+		while (ptr!=NULL);
+		ptr = Groups[i]->Objs[j];
+		ar<<iLevs;
+		for (k=0;k<iLevs;k++)
+		{
+			ar<<ptr->iObjType;
+			ar<<ptr->iLabel;
+			ptr=ptr->pParent;
+		}
    }
  }
 }
@@ -1569,6 +1881,22 @@ InvalidateOGL();
 ReDraw();
 }
 
+void DBase::Ortho()
+{
+	
+	if (gORTHO)
+	{
+		gORTHO = TRUE;
+		outtext1("Orthogonal Drawing Mode ON.");
+	}
+	else
+	{
+		gORTHO = FALSE;
+		outtext1("Orthogonal Drawing Mode OFF.");
+	}
+}
+
+
 void DBase::CreateWP(double dWPSize)
 {
 WP_Object* TheWP= new WP_Object;
@@ -1651,7 +1979,7 @@ void DBase::AddNode(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int 
 {
 
 //C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
-Pt_Object* cAddedNode;
+Node* cAddedNode;
 if (iLab == -1)
 {
   iLab=pCurrentMesh->iNodeLab;
@@ -1663,7 +1991,7 @@ Dsp_Add(cAddedNode);
 ReDraw();
 }
 
-C3dMatrix DBase::GetNodalSys(Pt_Object* pN)
+C3dMatrix DBase::GetNodalSys(Node* pN)
 {
 C3dMatrix mRC;
 
@@ -1686,10 +2014,10 @@ if (pCurrentMesh->iCurLC!=-1)
   { 
    if (Nodes->Objs[i]->iObjType==1)
    {
-     Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
+     Node* pN = (Node*) Nodes->Objs[i];
      ME_Object* ME= (ME_Object*) pN->pParent;
      G_Object* cAddedT;
-     cAddedT = ME->AddFluxQ((Pt_Object*) pN, T,-1);
+     cAddedT = ME->AddFluxQ((Node*) pN, T,-1);
      if (cAddedT!=NULL)
      {
         Dsp_Add(cAddedT);
@@ -1708,16 +2036,18 @@ else
 void DBase::AddTemperatureBC(ObjList* Nodes,double T)
 {
 int i;
+int iSet;
 if (pCurrentMesh->iCurBC!=-1)
 {
   for (i=0;i<Nodes->iNo;i++)
   { 
    if (Nodes->Objs[i]->iObjType==1)
    {
-     Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
+     Node* pN = (Node*) Nodes->Objs[i];
      ME_Object* ME= (ME_Object*) pN->pParent;
      G_Object* cAddedT;
-     cAddedT = ME->AddTemperatureBC((Pt_Object*) pN, T,-1);
+	 iSet = ME->GetTSETID(ME->iCurTSet);
+     cAddedT = ME->AddTemperatureBC((Node*) pN, T,-iSet);
      if (cAddedT!=NULL)
      {
         Dsp_Add(cAddedT);
@@ -1733,20 +2063,20 @@ else
 }
 }
 
-void DBase::AddTemperature(ObjList* Elements,double T)
+void DBase::AddTemperature(ObjList* Nodes,double T)
 {
 int i;
 if (pCurrentMesh->iCurTSet!=-1)
 {
-  for (i=0;i<Elements->iNo;i++)
+  for (i=0;i< Nodes->iNo;i++)
   { 
-   if (Elements->Objs[i]->iObjType==3)
+   if (Nodes->Objs[i]->iObjType==1)
    {
-     E_Object* pE = (E_Object*) Elements->Objs[i];
-     ME_Object* ME= (ME_Object*) pE->pParent;
+     Node* pN = (Node*)Nodes->Objs[i];
+     ME_Object* ME= (ME_Object*) pN->pParent;
      G_Object* cAddedT;
-     cAddedT = ME->AddTemperature((E_Object*) pE, T,-1);
-     if (cAddedT!=NULL)
+     cAddedT = ME->AddTemperature((Node*) pN, T,-1);
+     if (cAddedT!=nullptr)
      {
         Dsp_Add(cAddedT);
         AddTempGraphics(cAddedT);
@@ -1760,6 +2090,53 @@ else
   outtext1("ERROR: No Temperature Set is Active.");
 }
 }
+
+void DBase::AddTEMPD(double T)
+{
+	int i;
+	int iSID = -1;
+	double dT;
+	BOOL bIsTempD = FALSE;
+	cLinkedList* pS = nullptr;
+	if (pCurrentMesh->iCurTSet != -1)
+	{
+		iSID = pCurrentMesh->GetTSETID(pCurrentMesh->iCurTSet);
+		pS = pCurrentMesh->GetTSET(iSID);
+		bIsTempD = pCurrentMesh->TSEThasTEMPD(pS, dT);
+		if (bIsTempD)
+			outtext1("ERROR: TEMPD card already exists.");
+		else
+		   G_Object* pT = pCurrentMesh->AddTempD(T, iSID);
+	}
+	else
+	{
+		outtext1("ERROR: No Temperature Set is Active.");
+	}
+}
+
+void DBase::AddGrav(double dScl, C3dVector Vec)
+{
+	int i;
+	int iSID = -1;
+	double dT;
+	GRAV* pGrav = nullptr;
+	cLinkedList* pS = nullptr;
+	if (pCurrentMesh->iCurLC != -1)
+	{
+		iSID = pCurrentMesh->GetLCID(pCurrentMesh->iCurLC);
+		pS = pCurrentMesh->GetLC(iSID);
+		pGrav = pCurrentMesh->LSEThasGRAV(pS);
+		if (pGrav!=nullptr)
+			outtext1("ERROR: GRAV card already exists in this Load Set.");
+		else
+		    G_Object* pT = pCurrentMesh->AddGRAV(iSID, 0, dScl, Vec);
+	}
+	else
+	{
+		outtext1("ERROR: No Load Set is Active.");
+	}
+}
+
 
 
 void DBase::AddRotAccel(ObjList* Elements, double dw, C3dVector vAP1, C3dVector vAP2)
@@ -1828,7 +2205,7 @@ else
 void DBase::AddForce(ObjList* Nodes,C3dVector F)
 {
 int i;
-
+int iSet;
 C3dMatrix TMat;
 TMat.MakeUnit();
 if (pCurrentMesh->iCurLC!=-1)
@@ -1837,7 +2214,7 @@ for (i=0;i<Nodes->iNo;i++)
 { 
  if (Nodes->Objs[i]->iObjType==1)
  {
-   Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
+   Node* pN = (Node*) Nodes->Objs[i];
    if (pN->pParent!=NULL)
    {
     if (pN->pParent->iObjType==4)
@@ -1848,7 +2225,8 @@ for (i=0;i<Nodes->iNo;i++)
       }
 	    ME_Object* ME= (ME_Object*) pN->pParent;
         G_Object* cAddedF;
-        cAddedF = ME->AddForce((Pt_Object*) pN, TMat*F,-1);
+		iSet = ME->GetLCID(ME->iCurLC);
+        cAddedF = ME->AddForce((Node*) pN, TMat*F, iSet);
 		if (cAddedF!=NULL)
 		{
           Dsp_Add(cAddedF);
@@ -1870,7 +2248,7 @@ else
 void DBase::AddMoment(ObjList* Nodes,C3dVector F)
 {
 int i;
-
+int iSet;
 C3dMatrix TMat;
 TMat.MakeUnit();
 if (pCurrentMesh->iCurLC!=-1)
@@ -1879,7 +2257,7 @@ for (i=0;i<Nodes->iNo;i++)
 { 
  if (Nodes->Objs[i]->iObjType==1)
  {
-   Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
+   Node* pN = (Node*) Nodes->Objs[i];
 
    if (pN->pParent!=NULL)
    {
@@ -1891,7 +2269,8 @@ for (i=0;i<Nodes->iNo;i++)
       }
         ME_Object* ME= (ME_Object*) pN->pParent;
         G_Object* cAddedF;
-        cAddedF = ME->AddMoment((Pt_Object*) pN, TMat*F,-1);
+		iSet = ME->GetLCID(ME->iCurLC);
+        cAddedF = ME->AddMoment((Node*) pN, TMat*F,iSet);
 		if (cAddedF!=NULL)
 		{
           Dsp_Add(cAddedF);
@@ -1919,8 +2298,8 @@ void DBase::ShellSolids(ObjList* Els,int iCol)
 int i;
 E_Object* pRet;
 FreeFaceDsp(Els);
-Pt_Object* pENodes[100];
-cFace* pNext;
+Node* pENodes[100];
+eFace* pNext;
 pNext=pCurrentMesh->FcList->Head;
 while (pNext!=NULL)
 {
@@ -1938,7 +2317,7 @@ while (pNext!=NULL)
   }
   pRet->Reverse();
   pCurrentMesh->iElementLab++;
-  pNext=(cFace*) pNext->next;
+  pNext=(eFace*) pNext->next;
 }
 
 InvalidateOGL();
@@ -1952,7 +2331,7 @@ ReDraw();
 void DBase::QuadToTri(ObjList* Els)
 {
 E_Object* pRet;
-Pt_Object* pENodes[100];
+Node* pENodes[100];
 int i;
 ObjList* Els2  = new ObjList();
 for (i=0;i<Els->iNo;i++)
@@ -2033,7 +2412,7 @@ InvalidateOGL();
 ReDraw();
 }
 
-E_Object* DBase::GetElRelEdge(ObjList* pFrom, Pt_Object* N1, Pt_Object* N2)
+E_Object* DBase::GetElRelEdge(ObjList* pFrom, Node* N1, Node* N2)
 {
   E_Object* pE = NULL;
   E_Object* pRet = NULL;
@@ -2072,13 +2451,13 @@ for (i=0;i<Els->iNo;i++)
 }
 int iN;
 int iDir;
-cLink* pLk;
+eEdge* pLk;
 if (Els2->iNo>0)
 {
   E_Object* pE = (E_Object*) Els2->Objs[0];
   Els2->Remove(pE);
-  cLinkList* LkList = new cLinkList();
-  cLink* Lk[200];
+  eEdgeList* LkList = new eEdgeList();
+  eEdge* Lk[200];
   iN = pE->GetLinkList(Lk);
   LkList->AddGp(iN,Lk);
   int ii;
@@ -2139,7 +2518,7 @@ ObjList* DBase::is2D(ObjList* Els, double &dxMin, double &dyMin, double &dxMax, 
 	int i;
 	int j;
 	E_Object* pE;
-	Pt_Object* pN;
+	Node* pN;
 	ObjList* Els2 = new ObjList();
 	for (i = 0; i < Els->iNo; i++)
 	{
@@ -2162,7 +2541,7 @@ ObjList* DBase::is2D(ObjList* Els, double &dxMin, double &dyMin, double &dxMax, 
 		pE = (E_Object*) Els2->Objs[i];
 		for (j = 0; j < pE->iNoNodes; j++)
 		{
-			pN = (Pt_Object*) pE->GetNode(j);
+			pN = (Node*) pE->GetNode(j);
 			if ((pN->Pt_Point->z > -dNd2dTol) && (pN->Pt_Point->z < dNd2dTol))
 			{
 				if (pN->Pt_Point->x > dxMax)
@@ -2313,6 +2692,7 @@ void DBase::SectionProps(ObjList* Els)
 void DBase::FreeEdgeDsp(ObjList* Els)
 {
 int i;
+eEdgeList* LkList=NULL;
 ObjList* Els2  = new ObjList();
 for (i=0;i<Els->iNo;i++)
 { 
@@ -2326,30 +2706,57 @@ for (i=0;i<Els->iNo;i++)
 	 }
   }
 }
+if (Els2->iNo > 0)
+{
+	LkList = FindEdges(Els2);
+}
+else
+{
+	outtext1("ERROR: No Valid Elements Selected.");
+}
 if (pCurrentMesh->LkList!=NULL)
 {
-   delete(pCurrentMesh->LkList);
-   pCurrentMesh->LkList=NULL;
+	Dsp_Rem(pCurrentMesh->LkList);
+	RemTempGraphics(pCurrentMesh->LkList);
+    delete(pCurrentMesh->LkList);
+    pCurrentMesh->LkList=NULL;
 }
-if (pCurrentMesh->LkList==NULL)
-  pCurrentMesh->LkList=new cLinkList();
-cLink* Lk[200];
-int iN;
-int j;
-for(i=0;i<Els2->iNo;i++)
+if ((pCurrentMesh->LkList == NULL) && (LkList != NULL))
 {
-  E_Object* pE = (E_Object*) Els2->Objs[i];
-  iN = pE->GetLinkList(Lk);
-  for (j=0;j<iN;j++)
-  {
-    pCurrentMesh->LkList->Add(Lk[j]);
-  }
+	pCurrentMesh->LkList = LkList;
+	//Dsp_Add(pCurrentMesh->LkList);
+	eEdge* pNext = LkList->Head;
+	while (pNext != NULL)
+	{
+		Dsp_Add(pNext);
+		pNext = (eEdge*)pNext->next;
+	}
+	InvalidateOGL();
+	ReDraw();
 }
 delete(Els2);
-Dsp_Add(pCurrentMesh->LkList);
-InvalidateOGL();
-ReDraw();
+}
 
+//Find element free edges
+eEdgeList* DBase::FindEdges(ObjList* Els)
+{
+	eEdge* Lk[200];
+	int iN;
+	int i;
+	int j;
+	eEdgeList* LkList = new eEdgeList();
+	for (i = 0; i < Els->iNo; i++)
+	{
+		E_Object* pE = (E_Object*)Els->Objs[i];
+		iN = pE->GetLinkList(Lk);
+		for (j = 0; j < iN; j++)
+		{
+			Lk[j]->iColour = 0;
+			LkList->AddIncOnly(Lk[j]);
+		}
+	}
+	LkList->Purge();
+	return (LkList);
 }
 
 void DBase::FreeFaceDsp(ObjList* Els)
@@ -2373,8 +2780,8 @@ if (pCurrentMesh->FcList!=NULL)
    pCurrentMesh->FcList=NULL;
 }
 if (pCurrentMesh->FcList==NULL)
-  pCurrentMesh->FcList=new cFaceList();
-cFace* Fc[8];
+  pCurrentMesh->FcList=new eFaceList();
+eFace* Fc[8];
 int iN;
 int j;
 for(i=0;i<Els2->iNo;i++)
@@ -2387,7 +2794,15 @@ for(i=0;i<Els2->iNo;i++)
   }
 }
 delete(Els2);
-Dsp_Add(pCurrentMesh->FcList);
+
+
+//Dsp_Add(pCurrentMesh->LkList);
+eFace* pNext = pCurrentMesh->FcList->Head;
+while (pNext != NULL)
+{
+	Dsp_Add(pNext);
+	pNext = (eFace*)pNext->next;
+}
 InvalidateOGL();
 ReDraw();
 }
@@ -2403,22 +2818,60 @@ void DBase::ElMass(ObjList* Els)
   int j;
   Mat mm;
   double dM=0;
+  C3dVector vC;
+  double mx = 0;
+  double my = 0;
+  double mz = 0;
+  //monents of inertia about origin in basic cys
+  double Ixx = 0;
+  double Iyy = 0;
+  double Izz = 0;
+  double Ixy = 0;
+  double Ixz = 0;
+  double Iyz = 0;
 
   for (i = 0; i<Els->iNo; i++)
   {
     E_Object* pE = (E_Object*)Els->Objs[i];
     mm=pE->GetElNodalMass(PropsT, MatT);
+	
     for(j=0;j<pE->iNoNodes;j++)
     {
+	  vC = pE->GetNode(j)->Get_Centroid();
+	  vC = GlobaltoWP(vC);
+	  mx += *mm.mn(j + 1, 1) * vC.x;
+	  my += *mm.mn(j + 1, 1) * vC.y;
+	  mz += *mm.mn(j + 1, 1) * vC.z;
       dM+= *mm.mn(j+1, 1);
+	  //Mass Inertia Matrix Calculation
+	  Ixx += *mm.mn(j + 1, 1) * (vC.y * vC.y + vC.z * vC.z);
+	  Iyy += *mm.mn(j + 1, 1) * (vC.x * vC.x + vC.z * vC.z);
+	  Izz += *mm.mn(j + 1, 1) * (vC.x * vC.x + vC.y * vC.y);
+	  Ixy -= *mm.mn(j + 1, 1) * vC.x * vC.y;
+	  Ixz -= *mm.mn(j + 1, 1) * vC.x * vC.z;;
+	  Iyz -= *mm.mn(j + 1, 1) * vC.y * vC.z;;
     }
     mm.clear();
   }
-  outtext1("ELEMENT MASS SUMATION");
+  outtext1("ELEMENT MASS SUMATION IN WP COORDINATES");
   sprintf_s(S1, "Number off Elements summed: %i", Els->iNo);
+  sprintf_s(S1, "CofG X,Y,Z : %g,%g,%g", mx/dM, my / dM, mz / dM);
+  outtext1(S1);
+  outtext1("Mass Moment of Inertia");
+  sprintf_s(S1, "Ixx : %g", Ixx);
+  outtext1(S1);
+  sprintf_s(S1, "Iyy : %g", Iyy);
+  outtext1(S1);
+  sprintf_s(S1, "Izz : %g", Izz);
+  outtext1(S1);
+  sprintf_s(S1, "Ixy : %g", Ixy);
+  outtext1(S1);
+  sprintf_s(S1, "Ixz : %g", Ixz);
+  outtext1(S1);
+  sprintf_s(S1, "Iyz : %g", Iyz);
+  outtext1(S1);
   sprintf_s(S1, "Mass Total: %g", dM);
   outtext1(S1);
-  
 }
 
 //***************************************************************************
@@ -2479,6 +2932,7 @@ delete(Els2);
 //*********************************************************************************
 void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 {
+	double dMinAng = 25;  //Minimum internal angle for acceptance
 	char S1[200] = "";
 	E_Object3* pE = NULL;
 	int i;
@@ -2490,9 +2944,10 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 	double dTgt = GetTargetElSize(fEls);
 	double dMaxAng;
 	int iNoElsGen = 0;
-	Pt_Object* nNode;
-	Pt_Object* nNodeTry;
+	Node* nNode;
+	Node* nNodeTry;
 	C3dVector vC;
+	C3dVector vCF;
 	C3dVector vN;
 	C3dVector vB;
 	C3dVector vT;
@@ -2515,33 +2970,44 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 	E_Object3* pIntFace;
 	//fEls->MinSizeSort();
 	bExit = FALSE;
+	ZeroRemeshFlg(fEls);
 	//****************************************************************************
 	do
 	{
+		if (iTT == 703)
+			iTT = iTT;
 		bReTry = FALSE;
 		pIntFace = NULL;
 		dMaxAng = 0;
 		bIsTet = FALSE;
 		pE = (E_Object3*)fEls->Head;
+		dMinAng = 35;
+		if (pE->iNoRemesh > 0)
+			dMinAng = 15;
+		else if (pE->iNoRemesh > 1)
+			bExit = TRUE;
+		pE->iNoRemesh++;
 		vC = pE->Get_Centroid();
 		vB = vC;
 		vN = pE->Get_Normal();
 		dC = pE->GetCharSize();
 		dC *= 0.5;
 		dC = dC + dG * (dTgt - dC);
+
 		vN *= dC;
 		vC += vN;  //Or Ideal Node Position
-
+		
 		// get other candate nodes from boundary with a certain distance from ideal position
 		// in order of distance.
 	    //GetCandiates(fNodes, vC, 2*dC, pCandidateNodes);
 		//GetCandiateFaces(pE,fEls, vC, 2.0*dC, pCandidateFaces);
-		GetCandiates(fEls, vC, 2.0*dC, pCandidateFaces);
+		GetCandiates(fEls, vC,1.5*dC, pCandidateFaces);
 		pFrontNodes->Clear();
+		//Build list of possible face nodes that may create a TET
 		for (i = 0; i < pCandidateFaces->iNo; i++)
 		{
 			E_Object3* pEl2;
-			pEl2 = (E_Object3*)pCandidateFaces->Objs[i];
+			pEl2 = (E_Object3*) pCandidateFaces->Objs[i];
 			if (pEl2 != NULL)
 			{
 				pFrontNodes->AddEx(pEl2->pVertex[0]);
@@ -2550,13 +3016,11 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 			}
 		}
 		pCandidateNodes->Clear();
-		GetCandiatesNode(pE, pFrontNodes, vC, 0.7*dC, pCandidateNodes);
-		//GetCandiatesNode(pE,pFrontNodes, vB, 0.77*dC, pCandidateNodes);
+		GetCandiatesNode(pE, pFrontNodes, vC, 1.0*dC, pCandidateNodes);
 		GetAdjFaces(pCandidateFaces, pE, pAdjFaces, &dAdjAng, pAdjEl);
-		//vC=GetANodeLoc(pCandidateFaces, pE, pAdjFaces,dC);
-		if (pAdjFaces->iNo > 0)
+		if (pAdjFaces->iNo > 0)	  //070122 SEEMS TO WORK BETTER WITH OUT THIS
 		{
-			if (dAdjAng < 100)
+			if (dAdjAng < 45)
 			{
 				nNodeTry = GetOtherNode(pAdjEl, pE);
 				CreateTET(eTET, pE, nNodeTry);
@@ -2568,26 +3032,20 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 					bIsTet = TRUE;
 				}
 			}
-			//else
-			//{
-			//	for (jj = 0; jj < pAdjFaces->iNo; jj++)
-			//	{
-			//		nNode = GetOtherNode((E_Object3*)pAdjFaces->Objs[jj], pE);
-			//		pCandidateNodes->AddEx(nNode);
-			//	}
-			//}
 		}
+
 		if (!bIsTet)
 		{
+			dMaxAng = 0;
 			for (itry = 0; itry < pCandidateNodes->iNo; itry++)
 			{
-				vT = pCandidateNodes->Objs[itry]->Get_Centroid();
-				nNodeTry = (Pt_Object*)pCandidateNodes->Objs[itry];
+			    vT = pCandidateNodes->Objs[itry]->Get_Centroid();
+				nNodeTry = (Node*)pCandidateNodes->Objs[itry];
 				CreateTET(eTET, pE, nNodeTry);
 				double dH = eTET->GetTETHeight(vB);
 				double aaaa = MinInternalAngTET(eTET);
 				double dss = eTET->GetCharSize();
-				if ((aaaa > dMaxAng) && (aaaa > 5))
+				if ((aaaa > dMaxAng) && (aaaa > dMinAng))
 				{
 					bV = IsValidTET2(pCandidateFaces, pCandidateNodes, eTET, dC, pE);
 					pIntFace = DoesTETPenetrateBoundary(pCandidateFaces, eTET, pE);
@@ -2644,9 +3102,11 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 				sprintf_s(S1, "BOUNDARY VIOLATION DELETEING TET: %i CNT: %i", pEDel->iLabel, iTT);
 				outtext1(S1);
 				DeleteTET(fEls, fNodes, pCandidateFaces, pEDel);
-				bReTry = TRUE;
+				bReTry = TRUE;	   //Should be TRUE
+				//bExit = TRUE;
 			}
 		}
+
 		if (bIsTet)
 		{
 			CommitTET(fEls, pCandidateFaces, eTET);
@@ -2658,24 +3118,23 @@ void DBase::AdvancingTet(cLinkedList* fEls, cLinkedList* fNodes, double dG)
 		}
 		else
 		{
-			sprintf_s(S1, "Failed at face: %i cnt: %i", pE->iLabel, iTT);
-			outtext1(S1);
-			outtext1("SWAPING");
-			//bExit=TRUE;
-			G_Object* pp = fEls->Head;
-			fEls->RemNoDelete(pp);
-			fEls->Add(pp);
-			ii++;
+			  outtext1(S1);
+			  outtext1("SWAPING");
+			  //bExit=TRUE;
+			  G_Object* pp = fEls->Head;
+			  fEls->RemNoDelete(pp);
+			  fEls->Add(pp);
+			  ii++;
 		}
 		iTT++;
 		if (fEls->Head == NULL)
 			bExit = TRUE;
-		if (iTT % 100 == 0)
+		if (iTT % 200 == 0)
 		{
 			InvalidateOGL();
 			ReDraw();
 		}
-	} while ((iTT < 20000) && (bExit == FALSE)); //(fEls->iNo>0);
+	} while ((iTT < 10000) && (bExit == FALSE)); //(fEls->iNo>0);
 
 	InvalidateOGL();
 	ReDraw();
@@ -3003,7 +3462,7 @@ else
     vRes.z=p0.z+dpp*vT.z;
     iRC=0;
   }
-  if ((dpp>0) && (dpp<1.1))
+  if ((dpp>0) && (dpp<1.0))	  //was dpp<1.1
   {
     iRC=1;
   }
@@ -3109,13 +3568,13 @@ E_Object3* DBase::DoesFaceOverLap(E_Object3* pF1, ObjList* pCandidateFaces, doub
 	E_Object3* pFB = new E_Object3();   //Base face
 	E_Object3* pFT = new E_Object3();   //test face
 	pFB->pParent = NULL;
-	pFB->pVertex[0] = (Pt_Object *)pF1->pVertex[0]->Copy(NULL);
-	pFB->pVertex[1] = (Pt_Object *)pF1->pVertex[1]->Copy(NULL);
-	pFB->pVertex[2] = (Pt_Object *)pF1->pVertex[2]->Copy(NULL);
+	pFB->pVertex[0] = (Node *)pF1->pVertex[0]->Copy(NULL);
+	pFB->pVertex[1] = (Node *)pF1->pVertex[1]->Copy(NULL);
+	pFB->pVertex[2] = (Node *)pF1->pVertex[2]->Copy(NULL);
 	pFT->pParent = NULL;
-	pFT->pVertex[0] = (Pt_Object *)pF1->pVertex[0]->Copy(NULL);
-	pFT->pVertex[1] = (Pt_Object *)pF1->pVertex[1]->Copy(NULL);
-	pFT->pVertex[2] = (Pt_Object *)pF1->pVertex[2]->Copy(NULL);
+	pFT->pVertex[0] = (Node *)pF1->pVertex[0]->Copy(NULL);
+	pFT->pVertex[1] = (Node *)pF1->pVertex[1]->Copy(NULL);
+	pFT->pVertex[2] = (Node *)pF1->pVertex[2]->Copy(NULL);
 	mTram = pFB->GetElSys();
 	pFB->TransformAVF(mTram);
 	vTran = pFB->pVertex[0]->Get_Centroid();
@@ -3694,7 +4153,7 @@ BOOL DBase::CommitTET(cLinkedList* fEls,ObjList* pCandidateFaces,E_Object34* eTE
   BOOL bRet=FALSE;
   E_Object34* pRet;
   E_Object3* pFF;
-  Pt_Object* pENodes[100];
+  Node* pENodes[100];
   pENodes[0]=eTET->pVertex[0];
   pENodes[1]=eTET->pVertex[1];
   pENodes[2]=eTET->pVertex[2];
@@ -3735,7 +4194,7 @@ BOOL DBase::CommitTET(cLinkedList* fEls,ObjList* pCandidateFaces,E_Object34* eTE
   return(bRet);
 }
 
-E_Object3* DBase::GetFace(ObjList* pAdjFaces,Pt_Object* N1,Pt_Object* N2,Pt_Object* N3)
+E_Object3* DBase::GetFace(ObjList* pAdjFaces,Node* N1,Node* N2,Node* N3)
 {
 int i;
 E_Object3* pRet=NULL;
@@ -3771,11 +4230,11 @@ pCurrentMesh->DeleteEl(pFF);
 }
 
 
-E_Object3* DBase::CreateFace(Pt_Object* N1,Pt_Object* N2,Pt_Object* N3)
+E_Object3* DBase::CreateFace(Node* N1,Node* N2,Node* N3)
 {
 
   E_Object3* pRet=NULL;
-  Pt_Object* pENodes[100];
+  Node* pENodes[100];
   pENodes[0]=N1;
   pENodes[1]=N2;
   pENodes[2]=N3;
@@ -3904,7 +4363,7 @@ return (drc);
 
 
 
-void DBase::CreateTET(E_Object34* eRet,E_Object3* pE,Pt_Object* nNode)
+void DBase::CreateTET(E_Object34* eRet,E_Object3* pE,Node* nNode)
 {
 
 
@@ -3914,14 +4373,14 @@ void DBase::CreateTET(E_Object34* eRet,E_Object3* pE,Pt_Object* nNode)
   eRet->pVertex[3]=nNode;
 }
 
-Pt_Object* DBase::GetBestNode(ObjList* pFrom, E_Object3* pFace)
+Node* DBase::GetBestNode(ObjList* pFrom, E_Object3* pFace)
 {
 ObjList* pCand = new ObjList();
-Pt_Object* pN;
+Node* pN;
 E_Object3* pF;
 
 int i;
-Pt_Object* pRet=NULL;
+Node* pRet=NULL;
 pCand->Clear();
 if (pFace->iLabel==48)
   i=0;
@@ -3938,8 +4397,8 @@ for (i=0;i<pFrom->iNo;i++)
 //for each existing face edge form the face to the
 //other posisble nodes and check they are distinct from
 //the current one and not co-planar
- Pt_Object* n1;
- Pt_Object* n2;
+ Node* n1;
+ Node* n2;
  int j;
  C3dVector vFN;
  C3dVector vFC;
@@ -3948,7 +4407,7 @@ for (i=0;i<pFrom->iNo;i++)
  double dA;
  dA=pFace->GetCharSize();
  dA*=0.1;
-pRet=(Pt_Object*) pCand->Objs[0];
+pRet=(Node*) pCand->Objs[0];
 if (pCand->iNo>0)
 {  
  for (i=0;i<pFrom->iNo;i++)
@@ -3968,15 +4427,15 @@ if (pCand->iNo>0)
 	{
       if (pCand->Objs[j]!=pN)
 	  {
-         pTE.pVertex[0]=(Pt_Object*) n1;
-		 pTE.pVertex[1]=(Pt_Object*) n2;
-		 pTE.pVertex[2]=(Pt_Object*) pCand->Objs[j];
+         pTE.pVertex[0]=(Node*) n1;
+		 pTE.pVertex[1]=(Node*) n2;
+		 pTE.pVertex[2]=(Node*) pCand->Objs[j];
          vC=pTE.Get_Centroid();
          vC-=vFC;
 		 double dd=vC.Dot(vFN);
 		 if (vC.Dot(vFN)>dA)
 		 {
-           pRet=(Pt_Object*) pCand->Objs[j];
+           pRet=(Node*) pCand->Objs[j];
 		   break;
 		 }
 	  }
@@ -3993,9 +4452,9 @@ return(pRet);
 }
 
 //Get node in pFrom thats not in pFace
-Pt_Object* DBase::GetOtherNode(E_Object3* pFrom, E_Object3* pFace)
+Node* DBase::GetOtherNode(E_Object3* pFrom, E_Object3* pFace)
 {
-Pt_Object* pRet=NULL;
+Node* pRet=NULL;
 if (pFace->NodeInEl(pFrom->pVertex[0])==FALSE)
 {pRet=pFrom->pVertex[0];}
 else if (pFace->NodeInEl(pFrom->pVertex[1])==FALSE)
@@ -4010,7 +4469,7 @@ return(pRet);
 
 //Find the other face conected to N1 & N2 nut not N3
 //Note if the face is the existing face NULL will be returned
-E_Object3* DBase::GetAdjFace(ObjList* pFrom,Pt_Object* N1,Pt_Object* N2,Pt_Object* N3,E_Object3* pExclude)
+E_Object3* DBase::GetAdjFace(ObjList* pFrom,Node* N1,Node* N2,Node* N3,E_Object3* pExclude)
 {
   E_Object3* pFace=NULL;
   E_Object3* pE=NULL;
@@ -4168,6 +4627,14 @@ void DBase::GetCandiatesNode(E_Object3* pFace, ObjList* pFrom, C3dVector vC, dou
 	}
 }
 
+//**************************************************************
+//Pre: pFrom linked list to search
+//     vC search point
+//     dCD critcal distance
+//     pRes results list
+//Post: For aall items in pFrom centroid distance to vC that are within dCD
+//      returned in pRes
+//**************************************************************
 void DBase::GetCandiates(cLinkedList* pFrom,C3dVector vC, double dCD, ObjList* pRes)
 {
   C3dVector vT;
@@ -4179,10 +4646,22 @@ void DBase::GetCandiates(cLinkedList* pFrom,C3dVector vC, double dCD, ObjList* p
   {
     vT= pNext->Get_Centroid();
     dDist=vT.Dist(vC);
-    if (dDist<dCD)         // if node is smaller than critical distance it a posible
+    if (dDist<dCD)         // if distacnce is smaller than critical distance it a posible
 	  pRes->Add(pNext);
 	pNext = (G_Object*)pNext->next;
   }
+}
+
+void DBase::ZeroRemeshFlg(cLinkedList* pFrom)
+{
+
+	E_Object3* pNext;
+	pNext =(E_Object3*) pFrom->Head;
+	while (pNext != NULL)
+	{
+		pNext->iNoRemesh = 0;
+		pNext = (E_Object3*) pNext->next;
+	}
 }
 
 void DBase::GetCandiateFaces(E_Object3* pBF,ObjList* pFrom,C3dVector vC, double dCD, ObjList* pRes)
@@ -4222,6 +4701,7 @@ void DBase::GetCandiateFaces(E_Object3* pBF,ObjList* pFrom,C3dVector vC, double 
 void DBase::AddPressure(ObjList* Els,C3dVector F)
 {
 int i;
+int iSet;
 if (pCurrentMesh->iCurLC!=-1)
 {
 for (i=0;i<Els->iNo;i++)
@@ -4233,11 +4713,12 @@ for (i=0;i<Els->iNo;i++)
    {
     if (pE->pParent->iObjType==4)
 	  {
-		   ME_Object* ME= (ME_Object*) pE->pParent;
-       G_Object* cAddedM;
-       cAddedM = ME->AddPressure((E_Object*) pE, F,1);
-		   Dsp_Add(cAddedM);
-       AddTempGraphics(cAddedM);
+		ME_Object* ME= (ME_Object*) pE->pParent;
+		G_Object* cAddedM;
+		iSet = ME->GetLCID(ME->iCurLC);
+		cAddedM = ME->AddPressure((E_Object*) pE, F,iSet);
+		Dsp_Add(cAddedM);
+		AddTempGraphics(cAddedM);
 	  }
    }
  }
@@ -4307,7 +4788,7 @@ void DBase::RESLISTND(ObjList* Nds)
 			{
 				if (Nds->Objs[i]->iObjType == 1)
 				{
-					Pt_Object* pN = (Pt_Object*) Nds->Objs[i];
+					Node* pN = (Node*) Nds->Objs[i];
 					if (pN->pResV != NULL)
 					{
 						fRes = (*pN->pResV->GetAddress(pCurrentMesh->iCVar));
@@ -4331,6 +4812,7 @@ void DBase::RESLISTND(ObjList* Nds)
 void DBase::AddRestraint(ObjList* Nodes,C3dVector TDofSet,C3dVector RDofSet)
 {
 int i;
+int iSet = -1;
 BOOL xon,yon,zon,rxon,ryon,rzon;
 xon = FALSE;
 yon = FALSE;
@@ -4351,14 +4833,15 @@ for (i=0;i<Nodes->iNo;i++)
 {     
  if (Nodes->Objs[i]->iObjType==1)
  {
-   Pt_Object* pN = (Pt_Object*) Nodes->Objs[i];
+   Node* pN = (Node*) Nodes->Objs[i];
    if (pN->pParent!=NULL)
    {
       if (pN->pParent->iObjType==4)
 	  {
-		    ME_Object* ME= (ME_Object*) pN->pParent;
+		ME_Object* ME= (ME_Object*) pN->pParent;
         G_Object* cAddedR;
-        cAddedR = ME->AddRestraint((Pt_Object*) pN, xon,yon,zon,rxon,ryon,rzon,-1);
+		iSet = ME->GetBCID(ME->iCurBC);
+        cAddedR = ME->AddRestraint((Node*) pN, xon,yon,zon,rxon,ryon,rzon, iSet);
 		if (cAddedR!=NULL)
           Dsp_Add(cAddedR);
 	  }
@@ -4461,7 +4944,7 @@ void DBase::CoincidentElements (ObjList* Chkls)
 void DBase::FindNode(C3dVector vP)
 {
 	char s1[80];
-	Pt_Object* cNode;
+	Node* cNode;
 	double dMinDist = 1e36;
 	sprintf_s(s1, "Closest Node To: %g,%g,%g",vP.x,vP.y,vP.z);
 	outtext1(s1);
@@ -4630,11 +5113,11 @@ void DBase::ModNodeX(ObjList* Nodes, double dX)
   C3dVector vTrans;
   C3dVector vCart;
   WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
-  Pt_Object* pT;
+  Node* pT;
   C3dVector vNewNode;
   for (i = 0; i<Nodes->iNo; i++)
   {
-    pT = (Pt_Object*)Nodes->Objs[i];
+    pT = (Node*)Nodes->Objs[i];
     vNewNode.x = pT->Pt_Point->x;
     vNewNode.y = pT->Pt_Point->y;
     vNewNode.z = pT->Pt_Point->z;
@@ -4654,11 +5137,11 @@ void DBase::ModNodeY(ObjList* Nodes, double dY)
   C3dVector vTrans;
   C3dVector vCart;
   WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
-  Pt_Object* pT;
+  Node* pT;
   C3dVector vNewNode;
   for (i = 0; i<Nodes->iNo; i++)
   {
-    pT = (Pt_Object*)Nodes->Objs[i];
+    pT = (Node*)Nodes->Objs[i];
     vNewNode.x = pT->Pt_Point->x;
     vNewNode.y = pT->Pt_Point->y;
     vNewNode.z = pT->Pt_Point->z;
@@ -4677,11 +5160,11 @@ void DBase::ModNodeZ(ObjList* Nodes, double dZ)
   C3dVector vTrans;
   C3dVector vCart;
   WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
-  Pt_Object* pT;
+  Node* pT;
   C3dVector vNewNode;
   for (i = 0; i<Nodes->iNo; i++)
   {
-    pT = (Pt_Object*)Nodes->Objs[i];
+    pT = (Node*)Nodes->Objs[i];
     vNewNode.x = pT->Pt_Point->x;
     vNewNode.y = pT->Pt_Point->y;
     vNewNode.z = pT->Pt_Point->z;
@@ -4705,15 +5188,15 @@ int j;
 C3dVector vTrans;
 C3dVector vCart;
 WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
-Pt_Object* cAddedNode;
-Pt_Object* pT;
+Node* cAddedNode;
+Node* pT;
 C3dVector vNewNode;
 
    for (i=0;i<Nodes->iNo;i++)
    {     
 	   for (j=1;j<=iNoOfTimes;j++)
 	   {   
-		 pT = (Pt_Object*) Nodes->Objs[i];
+		 pT = (Node*) Nodes->Objs[i];
 	   vNewNode.x = pT->Pt_Point->x;
      vNewNode.y = pT->Pt_Point->y;
      vNewNode.z = pT->Pt_Point->z;
@@ -4875,9 +5358,9 @@ NEList* newNds = new NEList();
 G_Object* pO;
 G_Object* pOC;
 C3dVector vA;
-Pt_Object* pInVertex[200];
-Pt_Object* Nd;
-Pt_Object* NdNew;
+Node* pInVertex[MaxSelNodes];
+Node* Nd;
+Node* NdNew;
 E_Object* El;
 E_Object* ENew;
 
@@ -4938,15 +5421,15 @@ if (Objs->iNo>0)
       El= (E_Object*) Objs->Objs[i];
       for (k=0;k<El->iNoNodes;k++)
       {
-        Nd=(Pt_Object*) El->GetNode(k);
+        Nd=(Node*) El->GetNode(k);
         iNewNd=newNds->Get(Nd->iLabel);
         if (iNewNd!=-1)
         {
-          pInVertex[k]=(Pt_Object*) pCurrentMesh->GetNode(iNewNd);
+          pInVertex[k]=(Node*) pCurrentMesh->GetNode(iNewNd);
         }
         else
         {
-          pInVertex[k]=(Pt_Object*) El->GetNode(k)->Copy(pCurrentMesh);
+          pInVertex[k]=(Node*) El->GetNode(k)->Copy(pCurrentMesh);
           pInVertex[k]->iLabel=pCurrentMesh->iNodeLab;
           newNds->Add(Nd->iLabel,pCurrentMesh->iNodeLab);
           pCurrentMesh->iNodeLab++;
@@ -4973,8 +5456,8 @@ for (i=0;i<Objs->iNo;i++)
   {
     if (Objs->Objs[i]->iObjType==1)
     {
-      Nd= (Pt_Object*) Objs->Objs[i];
-      NdNew=(Pt_Object*) Nd->Copy(pCurrentMesh);
+      Nd= (Node*) Objs->Objs[i];
+      NdNew=(Node*) Nd->Copy(pCurrentMesh);
       NdNew->iLabel=pCurrentMesh->iNodeLab;
       newNds->Add(Nd->iLabel,pCurrentMesh->iNodeLab);
       pCurrentMesh->iNodeLab++;
@@ -4991,31 +5474,37 @@ for (i=0;i<Objs->iNo;i++)
   {
      pOC=Objs->Objs[i];
      pO=NULL;
-		 if (pOC->iObjType==0)             //POINTS
-		 { 
-       pO = Objs->Objs[i]->Copy(NULL);
-       pO->iLabel=iPtLabCnt;
-       iPtLabCnt++;
-     }
-     else if (pOC->iObjType==7) 
-     {
-        pO = Objs->Objs[i]->Copy(NULL);
-        pO->iLabel=iCVLabCnt;
-        iCVLabCnt++;
+	if (pOC->iObjType==0)             //POINTS
+	{ 
+		pO = Objs->Objs[i]->Copy(NULL);
+		pO->iLabel=iPtLabCnt;
+		iPtLabCnt++;
+    }
+	else if (pOC->iObjType == 6)
+	{
+		pO = Objs->Objs[i]->Copy(NULL);
+		pO->iLabel = iTxtLabCnt;
+		iTxtLabCnt++;
+	}
+    else if (pOC->iObjType==7) 
+    {
+		pO = Objs->Objs[i]->Copy(NULL);
+		pO->iLabel=iCVLabCnt;
+		iCVLabCnt++;
      }
      else if (pOC->iObjType==15)
      {
-        pO = Objs->Objs[i]->Copy(NULL);
-        pO->iLabel=iSFLabCnt;
-        iSFLabCnt++;
+		pO = Objs->Objs[i]->Copy(NULL);
+		pO->iLabel=iSFLabCnt;
+		iSFLabCnt++;
      }
      if (pO!=NULL)
      {
-        pO->pParent=NULL;
-		    pO->Translate(-p1);
-        pO->Transform(tForm);
-        pO->Translate(p1);
-	      AddObj(pO);
+		pO->pParent=NULL;
+		pO->Translate(-p1);
+		pO->Transform(tForm);
+		pO->Translate(p1);
+		AddObj(pO);
      }
   }
 }
@@ -5231,8 +5720,9 @@ int j;
 C3dVector vTrans;
 C3dVector vCart;
 WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
-Pt_Object* cAddedNode;
-Pt_Object* pT;
+int bWPMode = pWPlane->iWPMode;
+Node* cAddedNode;
+Node* pT;
 C3dVector vNewNode;
 C3dVector vN1;
 C3dVector vN2;
@@ -5244,30 +5734,35 @@ if (Nodes->iNo == Nodes2->iNo)
 {
    for (i=0;i<Nodes->iNo;i++)
    { 
-	  pT = (Pt_Object*) Nodes->Objs[i];
+	  pT = (Node*) Nodes->Objs[i];
 	  vN1.x = pT->Pt_Point->x;
       vN1.y = pT->Pt_Point->y;
       vN1.z = pT->Pt_Point->z;
-	  pT = (Pt_Object*) Nodes2->Objs[i];
+	  pT = (Node*) Nodes2->Objs[i];
 	  vN2.x = pT->Pt_Point->x;
       vN2.y = pT->Pt_Point->y;
       vN2.z = pT->Pt_Point->z;
 	  vN1=GlobaltoWP(vN1);
       vN2=GlobaltoWP(vN2);
+	  if (bWPMode == 1) // polar coords
+	  {
+		  if (vN2.y < vN1.y)
+			  vN2.y += 360.0;
+	  }
 	  vDiff=vN2;
       vDiff-=vN1;
 	  for (j=1;j<=iNoOfTimes;j++)
-	  {   
+		{   
 		  ds=j;
 		  ds = ds	/(iNoOfTimes+1);
-      vNewNode=vN1;
+          vNewNode=vN1;
 		  vNewNode.x=vNewNode.x+vDiff.x*ds;
 		  vNewNode.y=vNewNode.y+vDiff.y*ds;
 		  vNewNode.z=vNewNode.z+vDiff.z*ds;
-      vNewNode=WPtoGlobal(vNewNode);
-      cAddedNode=pCurrentMesh->AddNode(vNewNode, pCurrentMesh->iNodeLab,0,0,11,0,0);
+          vNewNode=WPtoGlobal(vNewNode);
+          cAddedNode=pCurrentMesh->AddNode(vNewNode, pCurrentMesh->iNodeLab,0,0,11,0,0);
 		  pCurrentMesh->iNodeLab++;
-      AddTempGraphics(cAddedNode);
+          AddTempGraphics(cAddedNode);
 		  Dsp_Add(cAddedNode);
 	  }
      }
@@ -5276,16 +5771,21 @@ else if ((Nodes->iNo == 1) && (Nodes2->iNo>0))
 {
    for (i=0;i<Nodes2->iNo;i++)
    { 
-	  pT = (Pt_Object*) Nodes->Objs[0];
+	  pT = (Node*) Nodes->Objs[0];
 	  vN1.x = pT->Pt_Point->x;
       vN1.y = pT->Pt_Point->y;
       vN1.z = pT->Pt_Point->z;
-	  pT = (Pt_Object*) Nodes2->Objs[i];
+	  pT = (Node*) Nodes2->Objs[i];
 	  vN2.x = pT->Pt_Point->x;
       vN2.y = pT->Pt_Point->y;
       vN2.z = pT->Pt_Point->z;
 	  vN1=GlobaltoWP(vN1);
       vN2=GlobaltoWP(vN2);
+	  if (bWPMode == 1) // polar coords
+	  {
+		  if (vN2.y < vN1.y)
+			  vN2.y += 360.0;
+	  }
 	  vDiff=vN2;
       vDiff-=vN1;
 	  for (j=1;j<=iNoOfTimes;j++)
@@ -5299,7 +5799,7 @@ else if ((Nodes->iNo == 1) && (Nodes2->iNo>0))
         vNewNode=WPtoGlobal(vNewNode);
         cAddedNode=pCurrentMesh->AddNode(vNewNode, pCurrentMesh->iNodeLab,0,0,11,0,0);
 		pCurrentMesh->iNodeLab++;
-    AddTempGraphics(cAddedNode);
+        AddTempGraphics(cAddedNode);
 		Dsp_Add(cAddedNode);
 	  }
      }
@@ -5308,16 +5808,21 @@ else if ((Nodes->iNo > 0) && (Nodes2->iNo==1))
 {
    for (i=0;i<Nodes->iNo;i++)
    { 
-	  pT = (Pt_Object*) Nodes->Objs[i];
+	  pT = (Node*) Nodes->Objs[i];
 	  vN1.x = pT->Pt_Point->x;
       vN1.y = pT->Pt_Point->y;
       vN1.z = pT->Pt_Point->z;
-	  pT = (Pt_Object*) Nodes2->Objs[0];
+	  pT = (Node*) Nodes2->Objs[0];
 	  vN2.x = pT->Pt_Point->x;
       vN2.y = pT->Pt_Point->y;
       vN2.z = pT->Pt_Point->z;
 	  vN1=GlobaltoWP(vN1);
       vN2=GlobaltoWP(vN2);
+	  if (bWPMode == 1) // polar coords
+	  {
+		  if (vN2.y < vN1.y)
+			  vN2.y += 360.0;
+	  }
 	  vDiff=vN2;
       vDiff-=vN1;
 	  for (j=1;j<=iNoOfTimes;j++)
@@ -5332,13 +5837,189 @@ else if ((Nodes->iNo > 0) && (Nodes2->iNo==1))
         cAddedNode=pCurrentMesh->AddNode(vNewNode, pCurrentMesh->iNodeLab,0,0,11,0,0);
 		pCurrentMesh->iNodeLab++;
 		Dsp_Add(cAddedNode);
-    AddTempGraphics(cAddedNode);
+        AddTempGraphics(cAddedNode);
 	  }
      }
 }
 }
 ReDraw();
 }
+
+//Intersect one set of TRI element with another set
+void DBase::IntersectEls(ObjList* Els1)
+{
+	int i;
+	int j;
+	int iCol = -1;
+	BOOL bI;
+	CvPt_Object* pThePt = NULL;
+	C3dVector p0;
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector vInt;
+	double dS= 0;		//Parametric ordinates of intersection a seg with triange;
+	double dT = 0;		//Parametric ordinates of intersection a seg with triange
+	double dTol = 0.0001;
+	int iNoInts = 0;
+	E_Object* pE = NULL;
+	E_Object3* pEInt = NULL;
+	E_Object3* pETarget = NULL;
+	for (i = 0; i < Els1->iNo; i++)
+	{
+		if ((Els1->Objs[i]->iObjType == 3) && (Els1->Objs[i]->iType == 91))
+		{
+			//Element to intersect
+			pEInt = (E_Object3*)Els1->Objs[i];
+			p0 = pEInt->pVertex[0]->Get_Centroid();
+			p1 = pEInt->pVertex[1]->Get_Centroid();
+			p2 = pEInt->pVertex[2]->Get_Centroid();
+			//Target elements
+			for (j = 0; j < Els1->iNo; j++)
+			{
+					if ((pEInt!= Els1->Objs[j]) && (Els1->Objs[j]->iObjType == 3) && (Els1->Objs[j]->iType == 91))
+					{
+						pETarget = (E_Object3*)Els1->Objs[j];
+						bI = LineIntTRI(p0, p1, pETarget, vInt, dS, dT, dTol);
+						if (bI)
+						{
+							pThePt = new CvPt_Object;
+							pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+							iPtLabCnt++;
+							AddObj(pThePt);
+							iNoInts++;
+						}
+						bI = LineIntTRI(p1, p2, pETarget, vInt, dS, dT, dTol);
+						if (bI)
+						{
+							pThePt = new CvPt_Object;
+							pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+							iPtLabCnt++;
+							AddObj(pThePt);
+							iNoInts++;
+						}
+						bI = LineIntTRI(p2, p0, pETarget, vInt, dS, dT, dTol);
+						if (bI)
+						{
+							pThePt = new CvPt_Object;
+							pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+							iPtLabCnt++;
+							AddObj(pThePt);
+							iNoInts++;
+						}
+
+					}
+			}
+		}
+
+	}
+	char s1[200];
+	sprintf_s(s1, "No of Intersection Points Generated: %i", iNoInts);
+	outtext1(s1);
+	ReDraw();
+
+}
+
+
+//Intersect one set of TRI element with the WP
+void DBase::IntersectElsWP(ObjList* Els1)
+{
+	int i;
+	int j;
+	int iCol = -1;
+	BOOL bI;
+	CvPt_Object* pThePt = NULL;
+	C3dVector p0;
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector vInt;
+	double dS = 0;		//Parametric ordinates of intersection a seg with triange;
+	double dT = 0;		//Parametric ordinates of intersection a seg with triange
+	double dTol = 0.0001;
+	int iNoInts = 0;
+	E_Object* pE = NULL;
+	E_Object3* pEInt = NULL;
+	E_Object3* pETarget = NULL;
+	ObjList* WP = new ObjList();
+	//Create 2 Tri element that are the size of the WP
+	WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+	E_Object3* WP1 = new E_Object3();
+	E_Object3* WP2 = new E_Object3();
+	C3dMatrix TMAT = pWPlane->mWPTransform;
+	C3dVector vPt;
+
+	Node* N1 = new Node();
+	vPt.Set(pWPlane->Pt_Point[0]->x, pWPlane->Pt_Point[0]->y, pWPlane->Pt_Point[0]->z );
+	vPt = TMAT * vPt;
+	N1->Pt_Point = new C3dVector(vPt.x, vPt.y, vPt.z);
+	Node* N2 = new Node();
+	vPt.Set(pWPlane->Pt_Point[1]->x, pWPlane->Pt_Point[1]->y, pWPlane->Pt_Point[1]->z);
+	vPt = TMAT * vPt;
+	N2->Pt_Point = new C3dVector(vPt.x, vPt.y, vPt.z);
+	Node* N3 = new Node();
+	vPt.Set(pWPlane->Pt_Point[2]->x, pWPlane->Pt_Point[2]->y, pWPlane->Pt_Point[2]->z);
+	vPt = TMAT * vPt;
+	N3->Pt_Point = new C3dVector(vPt.x, vPt.y, vPt.z);
+	Node* N4 = new Node();
+	vPt.Set(pWPlane->Pt_Point[3]->x, pWPlane->Pt_Point[3]->y, pWPlane->Pt_Point[3]->z);
+	vPt = TMAT * vPt;
+	N4->Pt_Point = new C3dVector(vPt.x, vPt.y, vPt.z);
+	WP1->pVertex[0] = N1;
+	WP1->pVertex[1] = N2;
+	WP1->pVertex[2] = N3;
+	WP->Add(WP1);
+	WP2->pVertex[0] = N1;
+	WP2->pVertex[1] = N3;
+	WP2->pVertex[2] = N4;
+	WP->Add(WP2);
+	for (i = 0; i < Els1->iNo; i++)
+	{
+
+			//Element to intersect
+			pEInt = (E_Object3*)Els1->Objs[i];
+			p0 = pEInt->pVertex[0]->Get_Centroid();
+			p1 = pEInt->pVertex[1]->Get_Centroid();
+			p2 = pEInt->pVertex[2]->Get_Centroid();
+			//Target elements
+			for (j = 0; j < WP->iNo; j++)
+			{
+					pETarget = (E_Object3*)WP->Objs[j];
+					bI = LineIntTRI(p0, p1, pETarget, vInt, dS, dT, dTol);
+					if (bI)
+					{
+						pThePt = new CvPt_Object;
+						pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+						iPtLabCnt++;
+						AddObj(pThePt);
+						iNoInts++;
+					}
+					bI = LineIntTRI(p1, p2, pETarget, vInt, dS, dT, dTol);
+					if (bI)
+					{
+						pThePt = new CvPt_Object;
+						pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+						iPtLabCnt++;
+						AddObj(pThePt);
+						iNoInts++;
+					}
+					bI = LineIntTRI(p2, p0, pETarget, vInt, dS, dT, dTol);
+					if (bI)
+					{
+						pThePt = new CvPt_Object;
+						pThePt->Create(vInt, 1, iPtLabCnt, 0, 0, 11, NULL);
+						iPtLabCnt++;
+						AddObj(pThePt);
+						iNoInts++;
+					}
+			}
+
+	}
+	char s1[200];
+	sprintf_s(s1, "No of Intersection Points Generated: %i", iNoInts);
+	outtext1(s1);
+	ReDraw();
+
+}
+
 
 void DBase::ElsBetNodes(ObjList* Nodes,ObjList* Nodes2,int iNoOfTimes)
 {
@@ -5349,14 +6030,14 @@ int j;
 C3dVector vTrans;
 C3dVector vCart;
 WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
-Pt_Object* cAddedNode;
-Pt_Object* pT;
+Node* cAddedNode;
+Node* pT;
 C3dVector vNewNode;
 C3dVector vN1;
 C3dVector vN2;
 C3dVector vDiff;
 double ds;
-Matrix<Pt_Object*> Nds(Nodes->iNo,iNoOfTimes+2) ;
+Matrix<Node*> Nds(Nodes->iNo,iNoOfTimes+2) ;
 
 if ((Nodes->iNo>0) && (Nodes2->iNo>0) && (iNoOfTimes>=0))
 {
@@ -5364,16 +6045,16 @@ if ((Nodes->iNo>0) && (Nodes2->iNo>0) && (iNoOfTimes>=0))
   {
 	 for (i=0;i<Nodes->iNo;i++)
      { 
-	   Nds(i,0)=(Pt_Object*) Nodes->Objs[i];
-       Nds(i,iNoOfTimes+1)=(Pt_Object*) Nodes2->Objs[i];
+	   Nds(i,0)=(Node*) Nodes->Objs[i];
+       Nds(i,iNoOfTimes+1)=(Node*) Nodes2->Objs[i];
 	 }
      for (i=0;i<Nodes->iNo;i++)
      { 
-	   pT = (Pt_Object*) Nodes->Objs[i];
+	   pT = (Node*) Nodes->Objs[i];
 	   vN1.x = pT->Pt_Point->x;
        vN1.y = pT->Pt_Point->y;
        vN1.z = pT->Pt_Point->z;
-	   pT = (Pt_Object*) Nodes2->Objs[i];
+	   pT = (Node*) Nodes2->Objs[i];
 	   vN2.x = pT->Pt_Point->x;
        vN2.y = pT->Pt_Point->y;
        vN2.z = pT->Pt_Point->z;
@@ -5397,7 +6078,7 @@ if ((Nodes->iNo>0) && (Nodes2->iNo>0) && (iNoOfTimes>=0))
 		  Dsp_Add(cAddedNode);
 	  }
     }
-	Pt_Object* iNlabs[200]; 
+	Node* iNlabs[MaxSelNodes]; 
     E_Object* pEl;
     for (i=0;i<Nodes->iNo-1;i++)
     {
@@ -5439,19 +6120,293 @@ NLine* DBase::AddLNbyXYZ(double x1, double y1, double z1, double x2, double y2, 
 	return (LnIn);
 }
 
+void DBase::AddDragLN(C3dVector v1)
+{
+	NLine* LnIn = new NLine();
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	LnIn->Create(v1, v1, -1, NULL);
+	pDragObj = (NLine*)LnIn;
+}
+
+void DBase::AddDragDIMA(C3dVector v1, C3dVector v2)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+
+	DIM* pDIM = new DIMA(v1,v2,v2,vO,vN,vDir,gDIM_SIZE,-1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*) pDIM;
+}
+
+void DBase::AddDragDIMANG(C3dVector vVert, C3dVector v1, C3dVector v2)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+
+	DIM* pDIM = new DIMANG(vVert,v1, v2, v2, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
+void DBase::AddDragDIMH(C3dVector v1, C3dVector v2)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+
+	DIM* pDIM = new DIMH(v1, v2, v2, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
+void DBase::AddDragDIMV(C3dVector v1, C3dVector v2)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+
+	DIM* pDIM = new DIMV(v1, v2, v2, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
+
+void DBase::AddDragDIML(CString sText, C3dVector v1)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+
+	DIM* pDIM = new DIML(sText,v1, v1, v1, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
+void DBase::AddDragDIMR(NCircle* pC, C3dVector v1)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+	C3dVector vC;
+	vC = pC->Get_Centroid();
+	DIM* pDIM = new DIMR(pC->dRadius, vC, vC, vC, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
+void DBase::AddCirCL(NCircle* pC)
+{
+	int iC = 12;
+	NLine* pCL = nullptr;
+	C3dVector vDirX, vDirY, vO, vCent, p1X, p1Y, p2X, p2Y;
+	double dR = 1;
+	dR = pC->dRadius;
+	vO.Set(0, 0, 0);  //Origin
+	vDirX.Set(1, 0, 0);  //X Dir
+	vDirY.Set(0, 1, 0);  //Y Dir
+	vCent = pC->Get_Centroid();
+	vO = WPtoGlobal2(vO);
+	vDirX = WPtoGlobal2(vDirX);
+	vDirY = WPtoGlobal2(vDirY);
+	vDirX -= vO; 
+	vDirY -= vO; 
+	p1X = vDirX;
+	p1Y = vDirY;
+	//Centre of matker
+	p1X *= 0.25 * dR;
+	p1Y *= 0.25 * dR;
+    //Add Circle Centre Lines
+	pCL = new NLine();
+	pCL->Create(vCent - p1X, vCent + p1X, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+	pCL = new NLine();
+	pCL->Create(vCent - p1Y, vCent + p1Y, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+
+	//X 
+	p1X = vDirX;
+	p2X = vDirX;
+	p1X *= 0.5 * dR;
+	p2X *= 1.25 * dR;
+	pCL = new NLine();
+	pCL->Create(vCent - p1X, vCent - p2X, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+	pCL = new NLine();
+	pCL->Create(vCent + p1X, vCent + p2X, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+	//Y
+	p1Y = vDirY;
+	p2Y = vDirY;
+	p1Y *= 0.5 * dR;
+	p2Y *= 1.25 * dR;
+	pCL = new NLine();
+	pCL->Create(vCent - p1Y, vCent - p2Y, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+	pCL = new NLine();
+	pCL->Create(vCent + p1Y, vCent + p2Y, -1, nullptr);
+	pCL->iColour = iC;
+	pCL->iLnThk = 2;
+	AddObj(pCL);
+
+}
+
+void DBase::AddDimForDrag(DIM* pD)
+{
+	Dsp_Rem(pD);
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*) pD;
+	InvalidateOGL();
+	ReDraw();
+}
+
+void DBase::AddDragDIMD(NCircle* pC, C3dVector v1)
+{
+	C3dVector vN, vDir, vO;
+	vO.Set(0, 0, 0);
+	vN.Set(0, 0, 1);
+	vDir.Set(1, 0, 0);  //Text direction assume workplane X
+	vO = WPtoGlobal2(vO);
+	vN = WPtoGlobal2(vN);
+	vDir = WPtoGlobal2(vDir);
+	vN -= vO;
+	vDir -= vO;
+	C3dVector vC;
+	vC = pC->Get_Centroid();
+	DIM* pDIM = new DIMD(pC->dRadius, vC, vC, vC, vO, vN, vDir, gDIM_SIZE, -1);
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pDragObj = (DIM*)pDIM;
+}
+
+
+NLine* DBase::AddLNfromDrag(C3dVector v2)
+{
+
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	NLine* LnIn = nullptr;
+	C3dMatrix mTran;
+	C3dVector vn1, vn2;
+	WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+	mTran = pWPlane->mWPTransform;
+	if (pDragObj != nullptr)
+	{
+		pDragObj->DragUpdate(v2, mTran);
+		NLine* pL = (NLine*)pDragObj;
+		vn1 = pL->cPts[0]->Pt_Point;
+		vn2 = pL->cPts[1]->Pt_Point;
+		LnIn = new NLine();
+		LnIn->Create(vn1, vn2, iCVLabCnt, NULL);
+		iCVLabCnt++;
+		AddObj(LnIn);
+		ReDraw();
+	}
+	return (LnIn);
+}
+
+DIM* DBase::AddDIMfromDrag(C3dVector v3)
+{
+	DIM* pD = nullptr;
+	C3dMatrix mTran;
+	C3dVector vn1, vn2;
+	WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+	mTran = pWPlane->mWPTransform;
+	if (pDragObj != nullptr)
+	{
+		pDragObj->DragUpdate(v3, mTran);
+		pD = (DIM*) pDragObj;
+		pDragObj = nullptr;
+
+		//iDIMLabCnt++;  NEW DIM COUNT
+		AddObj(pD);
+		ReDraw();
+	}
+	return (pD);
+}
+
+
+
+
 NLine* DBase::AddLN(C3dVector v1,C3dVector v2, int ilab,BOOL bRedraw)
 {
 
 //C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
 
 NLine* LnIn = new NLine();
-LnIn->Create(v1,v2,iCVLabCnt,NULL);
+
+LnIn->Create(v1, v2, iCVLabCnt, NULL);
 iCVLabCnt++;
 AddObj(LnIn);
 if (bRedraw)
   ReDraw();
 return (LnIn);
 }
+
+
+
 
 void DBase::AddRect(C3dVector v1,C3dVector v2, int ilab)
 {
@@ -5730,7 +6685,7 @@ if (pCurrentPart != NULL)
 			pRet = pCurrentPart->GetObj(iType, i);
 			if (pRet != NULL)
 			{
-				if (iNo < 1000000)
+				if (iNo < MAX_SIZE)
 				{
 					S_Buff[S_Count] = pRet;
 					S_Count++;
@@ -5748,7 +6703,7 @@ if ((iType==1) || (iType==3) || (iType==12))
     pRet = pMsh->GetObj(iType,i);
 	if (pRet!=NULL)
 	{
-	  if (iNo<1000000)
+	  if (iNo< MAX_SIZE)
 	  {
         S_Buff[S_Count]=pRet;
         S_Count++;
@@ -5763,7 +6718,7 @@ else
     pRet = GetObj(iType,i);
 	if (pRet!=NULL)
 	{
-		if (iNo<1000000)
+		if (iNo< MAX_SIZE)
 		{
 			S_Buff[S_Count]=pRet;
 			S_Count++;
@@ -5775,83 +6730,131 @@ ReDraw();
 return (pRet);
 }
 
+
+
 void DBase::TrimLn()
 {
+	CvPt_Object* mPt;
+	double MinDist = 10000000;
+	double dDist = 0;
+	double dU, dTU;
+	C3dVector vP;
+	CDC* pDC = pTheView->GetDC();
+	int iCnt1;
 
-CvPt_Object* mPt;
-double MinDist = 10000000;
-double dDist = 0;
-double dU,dTU;
-C3dVector vP;
-CDC* pDC = pTheView->GetDC();
-int iCnt1;
+	// Check if the last two objects in S_Buff are both of type 2 (Line_Object)
+	if ((S_Buff[S_Count - 1]->iObjType == 2) && (S_Buff[S_Count - 2]->iObjType == 2))
+	{
+		Line_Object* L2 = (Line_Object*)S_Buff[S_Count - 1];
+		Line_Object* L1 = (Line_Object*)S_Buff[S_Count - 2];
 
-if ((S_Buff[S_Count-1]->iObjType == 2) && (S_Buff[S_Count-2]->iObjType == 2))
+		// Iterate through a range of values for parameter dU
+		for (iCnt1 = 1; iCnt1 < 1000; iCnt1++)
+		{
+			dU = iCnt1 * 0.001;
+			vP = L2->GetPt(dU);
+			dDist = L1->MinDist(vP);
 
-  { 
-  Line_Object* L2 = (Line_Object*) S_Buff[S_Count-1];
-  Line_Object* L1 = (Line_Object*) S_Buff[S_Count-2];
-    for (iCnt1 = 1; iCnt1 < 1000; iCnt1++)
-     {
-	 dU = iCnt1*0.001;
-	 vP = L2->GetPt(dU);
-	 dDist = L1->MinDist(vP);
-	 if (dDist < MinDist)
-	   {
-	   MinDist = dDist;
-	   dTU = dU;
-	   }
+			// Update MinDist and dTU if a smaller distance is found
+			if (dDist < MinDist)
+			{
+				MinDist = dDist;
+				dTU = dU;
+			}
+		}
 
-	 }
+		// If the minimum distance is less than 0.1
+		if (MinDist < 0.1)
+		{
+			// Set a thicker pen for drawing
+			SetPen(pDC, 5);
+			L2->SetToScr(&pModelMat, &pScrMat);
+			L2->Draw(pDC, 4);
+			RestorePen(pDC);
 
-   if (MinDist < 0.1)
-     {
-   
-	 SetPen(pDC,5);
-	 L2->SetToScr(&pModelMat,&pScrMat);
-     L2->Draw(pDC,4);
-     RestorePen(pDC);
-     mPt = L2->GetTEnd();
-     vP = L2->GetPt(dTU);
-	 mPt->SetTo(vP);
-     SetPen(pDC,3);
-	 L2->SetToScr(&pModelMat,&pScrMat);
-     L2->Draw(pDC,4);
-     RestorePen(pDC);
-     }
-    MinDist = 10000000;
-L2 = (Line_Object*) S_Buff[S_Count-2];
-L1 = (Line_Object*) S_Buff[S_Count-1];
-    for (iCnt1 = 1; iCnt1 < 1000; iCnt1++)
-     {
-	 dU = iCnt1*0.001;
-	 vP = L2->GetPt(dU);
-	 dDist = L1->MinDist(vP);
-	 if (dDist < MinDist)
-	   {
-	   MinDist = dDist;
-	   dTU = dU;
-	   }
-	 }
+			// Move an endpoint of L2 to the calculated position
+			mPt = L2->GetTEnd();
+			vP = L2->GetPt(dTU);
+			mPt->SetTo(vP);
 
-   if (MinDist < 0.1)
-     {
-	   SetPen(pDC,5);
-	   L2->SetToScr(&pModelMat,&pScrMat);
-     L2->Draw(pDC,4);
-     RestorePen(pDC);
-     mPt = L2->GetTEnd();
-     vP = L2->GetPt(dTU);
-	   mPt->SetTo(vP);
-     SetPen(pDC,3);
-	   L2->SetToScr(&pModelMat,&pScrMat);
-     L2->Draw(pDC,4);
-     RestorePen(pDC);
-     }
-    }
-pTheView->ReleaseDC(pDC);
+			// Set a thinner pen for drawing
+			SetPen(pDC, 3);
+			L2->SetToScr(&pModelMat, &pScrMat);
+			L2->Draw(pDC, 4);
+			RestorePen(pDC);
+		}
+
+		MinDist = 10000000;
+		L2 = (Line_Object*)S_Buff[S_Count - 2];
+		L1 = (Line_Object*)S_Buff[S_Count - 1];
+
+		// Iterate through a range of values for parameter dU again
+		for (iCnt1 = 1; iCnt1 < 1000; iCnt1++)
+		{
+			dU = iCnt1 * 0.001;
+			vP = L2->GetPt(dU);
+			dDist = L1->MinDist(vP);
+
+			// Update MinDist and dTU if a smaller distance is found
+			if (dDist < MinDist)
+			{
+				MinDist = dDist;
+				dTU = dU;
+			}
+		}
+
+		// If the minimum distance is less than 0.1
+		if (MinDist < 0.1)
+		{
+			// Set a thicker pen for drawing
+			SetPen(pDC, 5);
+			L2->SetToScr(&pModelMat, &pScrMat);
+			L2->Draw(pDC, 4);
+			RestorePen(pDC);
+
+			// Move an endpoint of L2 to the calculated position
+			mPt = L2->GetTEnd();
+			vP = L2->GetPt(dTU);
+			mPt->SetTo(vP);
+
+			// Set a thinner pen for drawing
+			SetPen(pDC, 3);
+			L2->SetToScr(&pModelMat, &pScrMat);
+			L2->Draw(pDC, 4);
+			RestorePen(pDC);
+		}
+	}
+
+	// Release the device context
+	pTheView->ReleaseDC(pDC);
 }
 
+
+
+
+//Caluclate the aparent intersection of two lines in 3d
+//lines defined as points
+BOOL DBase::LnIntByPoints(C3dVector p11, C3dVector p12, C3dVector p21,
+	               C3dVector p22, C3dVector& pInt)
+{
+	C3dVector v1, v2;
+	NLine* Ln1;
+	NLine* Ln2;
+	v1 = p11; v1 -= p12; v1.Normalize();
+	v2 = p21; v2 -= p22; v2.Normalize();
+	//Check for parrellel lines
+	if (abs(v1.Dot(v2)) > 1.0)
+		return (FALSE);
+	Ln1 = new NLine();
+	Ln1->Create(p11, p12, -1, NULL);
+	Ln2 = new NLine();
+	Ln2->Create(p21, p22, -1, NULL);
+	pInt = NLnInt(Ln1, Ln2, &v1);
+
+	delete(Ln1);
+	delete(Ln2);
+	return (TRUE);
+}
 
 C3dVector DBase::LnInt(Line_Object* L1,G_Object* L2)
 {
@@ -5883,7 +6886,7 @@ while (dM>dTol);
 return (P2);
 }
 
-C3dVector DBase::NLnInt(NCurve* L1,NCurve* L2)
+C3dVector DBase::NLnInt(NCurve* L1,NCurve* L2, C3dVector* pNear)
 {
 int i=0;
 double MinDist = 10000000;
@@ -5904,6 +6907,212 @@ do
 }
 while ((dDist>dTol) && (iMaxIt<100));
 return (P2);
+}
+
+//RBLows 23042023
+//This version finds intersection near pNear
+//this should probably superceed NLnInt above
+//THIS VERSION FAILS TO BE ACCURATE WHEN CURVES ARW PARALE//
+
+C3dVector DBase::NLnInt2(NCurve* L1, NCurve* L2, C3dVector* pNear)
+{
+	int i = 0;
+	double MinDist = 10000000;
+	double dDist = 0;
+	double dDistB = 0;
+	const double dTol = 0.0000001;
+	C3dVector P1;
+	C3dVector P2;
+	P1.Set(pNear->x,pNear->y,pNear->z);
+	P2.Set(pNear->x, pNear->y, pNear->z);
+	int iMaxIt = 0;
+	//P1 = L1->GetPt(0);
+
+	do
+	{
+		P2 = L2->MinPt(P1);
+		P1 = L1->MinPt(P2);
+		dDist = P2.Dist(P1);
+		iMaxIt++;
+	} while ((dDist > dTol) && (iMaxIt<10000));
+	char S1[200];
+	CString OutT;
+	sprintf_s(S1, "ITERATIONS: %i TOL: %f", iMaxIt, dDist);
+	outtext1(S1);
+
+	return (P1);
+}
+
+C3dVector DBase::NLnInt3(NCurve* L1, NCurve* L2, C3dVector* pNear)
+{
+	int i = 0;
+	double MinDist = 10000000;
+	double w;
+	double dw=0.01;
+	double dDist = 0;
+	double dDistF = 0;
+	double dDistB = 0;
+	const double dTol = 0.0000001;
+	C3dVector P1;
+	C3dVector P2;
+	BOOL isClosed = FALSE;
+	P1.Set(pNear->x, pNear->y, pNear->z);
+	P2.Set(pNear->x, pNear->y, pNear->z);
+	int iMaxIt = 0;
+	isClosed = L1->IsClosed();
+	w = L1->MinWPt(P1);
+	dDist = 1;
+	
+	do
+	{
+		P1 = L1->GetPt(w+dw);
+		P2 = L2->MinPt(P1);
+		dDistF = P2.Dist(P1);
+		if (dDistF < dDist)
+		{
+			w = w + dw;
+			dDist = dDistF;
+			if (w > 1)
+				w = 1;
+		}
+		else
+		{
+			double dAA;
+			dAA = (w - dw);
+			if (dAA < 0)
+			  dAA = 0;
+			P1 = L1->GetPt(dAA);
+			P2 = L2->MinPt(P1);
+			dDistB = P2.Dist(P1);
+			if (dDistB < dDist)
+			{
+				w = w - dw;
+				if (w < 0)
+					w = 0;
+				dDist = dDistB;
+			}
+			else
+			{
+				dw = 0.5 * dw;
+			}
+		}
+		iMaxIt++;
+	} while ((dDist > dTol) && (iMaxIt < 1000));
+	char S1[200];
+	CString OutT;
+	sprintf_s(S1, "ITERATIONS: %i TOL: %g", iMaxIt, dDist);
+	outtext1(S1);
+	return (P1);
+}
+
+
+BOOL DBase::IsIntersection(C3dVector C1S, C3dVector C1E, C3dVector C2S, C3dVector C2E)
+{
+	C3dVector vD1,v1,v2,vN1, vN2;
+	double dd1, dd2;
+	//Test 1
+	vD1 = C1E - C1S;
+	v1 = C2S - C1S;
+	v2 = C2E - C1S;
+	vD1.Normalize(); v1.Normalize(); v2.Normalize();
+	vN1 = vD1.Cross(v1);
+	vN2 = vD1.Cross(v2);
+	dd1 = vN1.Dot(vN2);
+	//Test 2
+	vD1 = C2E - C2S;
+	v1 = C1S - C2S;
+	v2 = C1E - C2S;
+	vD1.Normalize(); v1.Normalize(); v2.Normalize();
+	vN1 = vD1.Cross(v1);
+	vN2 = vD1.Cross(v2);
+	dd2 = vN1.Dot(vN2);
+
+	if ((dd1<=0.0) && (dd2<=0.0))
+	  return TRUE;
+	else
+	  return FALSE;
+}
+
+
+//Find possible approximate multiple intersection between two curves
+//First draft of proc
+int DBase::TentativeInt(NCurve* C1, NCurve* C2, C3dVector vInts[10],double uInts[10])
+{
+	int iDiv = 100;
+	int i;
+	int j;
+	int iRet = 0;
+	double dU1=0;
+	double dU2 = 0;
+	BOOL bErr;
+	C3dVector vInt;
+	C3dVector vP1,vP2, vP3, vP4, PC3,vN,vD1,vD2,vt1,vt2;
+
+	for (i = 0; i <= iDiv-1; i++)
+	{
+		dU1 = i*0.01;
+		vP1 = C1->GetPt(i * 0.01);
+		vP2 = C1->GetPt((i + 1) * 0.01);
+		for (j = 0; j <= iDiv; j++)
+		{
+			vP3 = C2->GetPt(j * 0.01);
+			vP4 = C2->GetPt((j + 1) * 0.01);
+			bErr = IsIntersection(vP1, vP2, vP3, vP4);
+			if (bErr)
+			{
+				//C3dVector vRet = NLnInt2(C1, C2, &vP1);
+				if (iRet < 10)
+				{
+					vInts[iRet] = vP1;
+					uInts[iRet] = i * 0.01;
+					iRet++;
+				}
+				//AddPt(vRet, -1, TRUE);
+			}
+			  //outtext1("Inter");
+		}
+	}
+
+	return (iRet);
+}
+
+
+
+//find span u lies between
+int DBase::FindNearest(int iNo,double uInts[10], double u)
+{
+	int iRC = -1;
+	int i;
+	if (iNo == 1)
+	{
+		iRC = 0;
+	}
+	else
+	{
+		//if (u < uInts[0])
+		//	iRC = 0;
+		//else if (u > uInts[iNo - 1])
+		//	iRC = iNo - 1;
+		//else
+		{
+			double ddist = 0;
+			ddist = abs(u - uInts[0]);
+			iRC = 0;
+			for (i = 0; i < iNo; i++)
+			{
+				if (abs(u - uInts[i]) < ddist)
+				{
+					ddist = abs(u - uInts[i]);
+					iRC = i;
+				}
+				//if ((u >= uInts[i]) && (u < uInts[i + 1]))
+				//{
+
+				//}
+			}
+		}
+	}
+	return (iRC);
 }
 
 C3dVector DBase::LnInt2(Line_Object* L1,G_Object* L2)
@@ -5936,26 +7145,296 @@ while (dM>dTol);
 return (P2);
 }
 
-NCircle* DBase::AddCirCR(C3dVector vNorm,C3dVector vCent,double dR,int ilab)
+NCircle* DBase::AddCirCR(C3dVector vNorm, C3dVector vCent, double dR, int ilab)
 {
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	C3dVector vRDir, vX;
+	C3dMatrix mTran;
+	WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+	mTran = pWPlane->mWPTransform;
+	vX.Set(mTran.m_00, mTran.m_10, mTran.m_20);
 
-//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
-NCircle* cCir = new NCircle();
-cCir->Create(vNorm,vCent,dR,iCVLabCnt,NULL);
-iCVLabCnt++;
-AddObj(cCir);
-ReDraw();
-return (cCir);
+	NCircle* cCir = new NCircle();
+	cCir->Create2(vNorm, vCent, vX, dR, iCVLabCnt, NULL);
+	iCVLabCnt++;
+	AddObj(cCir);
+	ReDraw();
+	return cCir;
+}
+
+void DBase::AddDragCIR(C3dVector vN,C3dVector v1)
+{
+	NCircle* pCir = new NCircle();
+	//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat(); 
+	if (pDragObj != nullptr)
+		delete(pDragObj);
+	pCir->Create(vN, v1, 0, -1,NULL);
+	pDragObj = (NCircle*) pCir;
+}
+
+int calculateTangents(double Cx, double Cy, double r, double Px, double Py, C3dVector &t1, C3dVector &t2)
+{
+	int irc=0;
+	double dx = Px - Cx;
+	double dy = Py - Cy;
+	double dxr = -dy;
+	double dyr = dx;
+	double d = std::sqrt(dx * dx + dy * dy);
+
+	if (d >= r) {
+		double rho = r / d;
+		double ad = rho * rho;
+		double bd = rho * std::sqrt(1 - rho * rho);
+		double T1x = Cx + ad * dx + bd * dxr;
+		double T1y = Cy + ad * dy + bd * dyr;
+		double T2x = Cx + ad * dx - bd * dxr;
+		double T2y = Cy + ad * dy - bd * dyr;
+		t1.Set(T1x, T1y, 0);
+		t2.Set(T2x, T2y, 0);
+		irc = 1; //ok
+	}
+
+	return (irc);
+}
+
+//Create a line from a point tangent to a circle
+NLine* DBase::AddCirTanPt(C3dVector vNorm, C3dVector vPt, CPoint PNear1)
+{
+	//https://math.stackexchange.com/questions/543496/how-to-find-the-equation-of-a-line-tangent-to-a-circle-that-passes-through-a-g
+
+	int iErr;
+	C3dVector vC;
+	NCircle* pC;
+	C3dVector pN1;
+	C3dVector t1;
+	C3dVector t2;
+	C3dVector vD;
+	double d1, d2;
+
+	pN1 = PickPointToGlobal(PNear1);
+	pN1 = GlobaltoWP(pN1);
+	if (S_Count > 0)
+	{
+		// Check to see is item is circle
+		if ((S_Buff[S_Count - 1]->iObjType == 7) &&
+			(S_Buff[S_Count - 1]->iType == 3))
+		{
+			pC = (NCircle*) S_Buff[S_Count - 1];
+			S_Des();
+			double Cx, Cy;
+			vC = pC->vCent;
+			vC = GlobaltoWP(vC);
+			Cx = vC.x;
+			Cy = vC.y;
+			double r = 5;
+			r = pC->dRadius;
+			double Px , Py;
+			vPt = GlobaltoWP(vPt);
+			Px = vPt.x;
+			Py = vPt.y;
+			iErr = calculateTangents(Cx, Cy, r, Px, Py, t1, t2);
+			if (iErr == 1)
+			{
+				vD = pN1 - t1;
+				d1 = vD.Mag();
+				vD = pN1 - t2;
+				d2 = vD.Mag();
+				vPt = WPtoGlobal(vPt);
+				if (d1 < d2)
+				{
+					t1 = WPtoGlobal(t1);
+					AddLN(vPt, t1, -1, TRUE);
+				}
+				else
+				{
+					t2 = WPtoGlobal(t2);
+					AddLN(vPt, t2, -1, TRUE);
+				}
+			}
+			else
+			{
+				outtext1("ERROR: Calculating tangents.");
+			}
+		}
+		else
+		{
+			outtext1("ERROR: No Circle Selected.");
+		}
+	}
+
+	return(nullptr);
+}
+
+int CalcTan2Circles(C3dVector vC1, double dR1, C3dVector vNr1,
+	                C3dVector vC2, double dR2, C3dVector vNr2,
+	                C3dVector& t1, C3dVector& t2)
+{
+	//https://math.stackexchange.com/questions/719758/inner-tangent-between-two-circles-formula#:~:text=Treating%20the%20bigger%20circle%20as,us%20calculate%20the%20two%20outer
+	int irc = 0;
+	double dDot;
+	double dT;
+	double dR3;
+	double dPhi;
+	C3dMatrix mT;
+	C3dVector vCC;
+	C3dVector vTT;
+	double dDist;
+	C3dVector vP1, vP2;
+	//Error circles are concentric
+	if (vC1 == vC2)
+	{
+		return (1);
+	}
+	vP1 = vNr1 - vC1;
+	vP1.Normalize();
+	vP2 = vNr2 - vC2;
+	vP2.Normalize();
+	dDot = vP1.Dot(vP2);
+	if (dDot > 0)
+	{
+		outtext1("INFO: External Tangent.");
+		if (dR1 > dR2)
+		{
+			dR3 = dR1 - dR2;
+			vTT = vC2 - vC1;
+		}
+		else
+		{
+			dR3 = dR2 - dR1;
+			vTT = vC1 - vC2;
+		}
+		
+		dDist = vTT.Mag();
+		vTT.Normalize();
+		vCC = vTT;
+		dPhi = std::acos(dR3 / dDist);
+		mT.MakeUnit();
+		mT.Rotate(0, 0, dPhi*R2D);
+		vTT = mT*vTT; 
+		vTT.Normalize();
+		if (vTT.Dot(vP1) < 0) //change offset dir
+		{
+			mT.MakeUnit();
+			mT.Rotate(0, 0, -dPhi * R2D);
+			vTT = vCC;
+			vTT = mT * vTT;
+			vTT.Normalize();
+		}
+		t1 = vTT; t1 *= dR1; dT = t1.Mag(); t1 += vC1;
+		vTT.Normalize();
+		t2 = vTT; t2 *= dR2; dT = t2.Mag(); t2 += vC2;
+	}
+	else
+	{
+		outtext1("INFO: Internal Tangent.");
+        dR3 = dR1 + dR2;
+		vTT = vC2 - vC1;
+		dDist = vTT.Mag();
+		if (dDist <= dR1 + dR2)
+			return (2);
+		vTT.Normalize();
+		vCC = vTT;
+		//Case 1
+		dPhi = std::asin(dR3 / dDist) - Pi/2;
+		mT.MakeUnit();
+		mT.Rotate(0, 0, dPhi * R2D);
+		vTT = mT * vCC;
+		vTT.Normalize();
+		if (vTT.Dot(vP1) < 0) //change offset dir
+		{
+			mT.MakeUnit();
+			mT.Rotate(0, 0, -dPhi * R2D);
+			vTT = mT * vCC;
+			t1 = vTT; t1 *= dR1; dT = t1.Mag(); t1 += vC1;
+			mT.Rotate(0, 0, -180);
+			vTT = mT * vCC;
+			t2 = vTT; t2 *= dR2; dT = t2.Mag(); t2 += vC2;
+		}
+		else
+		{
+			t1 = vTT; t1 *= dR1; dT = t1.Mag(); t1 += vC1;
+			mT.Rotate(0, 0, -180);
+			vTT = mT * vCC;
+			t2 = vTT; t2 *= dR2; dT = t2.Mag(); t2 += vC2;
+		}
+	}
+
+	return (irc);
+}
+
+NLine* DBase::AddLinTan2Cir(CPoint PNear1, CPoint PNear2)
+{
+	int iErr = 0;
+	C3dVector vNr1, vNr2;
+	C3dVector vC1, vC2;
+	C3dVector vt1, vt2;
+	double dR1, dR2;
+	NCircle* pC1 = nullptr;
+	NCircle* pC2 = nullptr;
+	//Pick near points in WP coords
+	vNr1 = PickPointToGlobal(PNear1);
+	vNr1 = GlobaltoWP(vNr1);
+	vNr2 = PickPointToGlobal(PNear2);
+	vNr2 = GlobaltoWP(vNr2);
+
+	if (S_Count > 1) //We have two objects is buffer
+	{
+		// Check to see is item is circle
+		if ((S_Buff[S_Count - 2]->iObjType == 7) &&
+			(S_Buff[S_Count - 2]->iType == 3) &&
+			(S_Buff[S_Count - 1]->iObjType == 7) &&
+			(S_Buff[S_Count - 1]->iType == 3))
+		{
+			pC1 = (NCircle*)S_Buff[S_Count - 2];
+			pC2 = (NCircle*)S_Buff[S_Count - 1];
+			//All circle centres to workplaing
+			vC1 = pC1->vCent;
+			vC1 = GlobaltoWP(vC1);
+			dR1 = pC1->dRadius;
+			vC2 = pC2->vCent;
+			vC2 = GlobaltoWP(vC2);
+			dR2 = pC2->dRadius;
+			iErr = CalcTan2Circles(vC1, dR1, vNr1,
+				                   vC2, dR2, vNr2,
+				                   vt1, vt2);
+			if (iErr == 1)
+			{
+				outtext1("ERROR: Circles are Concentric.");
+			}
+			else if (iErr == 2)
+			{
+				outtext1("ERROR: Circles Must be Distinct for Internal Tangent.");
+			}
+			else
+			{
+				vt1 = WPtoGlobal(vt1);
+				vt2 = WPtoGlobal(vt2);
+				AddLN(vt1, vt2, -1, TRUE);
+			}
+		}
+		else
+		{
+			outtext1("ERROR: No Circles Selected.");
+		}
+	}
+	S_Des();
+	return (nullptr);
 }
 
 NCircle* DBase::AddCirCentPt(C3dVector vNorm,C3dVector vCent,C3dVector vR)
 {
 
-//C3dMatrix cTransformMat = DB_pGrpWnd->Get3DMat()
+C3dVector vRDir,vX;
+C3dMatrix mTran;
 vR-=vCent;
 
+double dR = vR.Mag();
+WP_Object* pWPlane = (WP_Object*)DB_Obj[iWP];
+mTran = pWPlane->mWPTransform;
+vX.Set(mTran.m_00, mTran.m_10, mTran.m_20);
 NCircle* cCir = new NCircle();
-cCir->Create(vNorm,vCent,vR.Mag(),iCVLabCnt,NULL);
+
+cCir->Create2(vNorm,vCent, vX,vR.Mag(),iCVLabCnt,NULL);
 iCVLabCnt++;
 AddObj(cCir);
 ReDraw();
@@ -6038,7 +7517,7 @@ C3dVector DBase::PickPointToGlobal2(CPoint Pt)
 	AA = pModelMat;
 	do
 	{
-		P0 = this->WPtoGlobal(P0);
+		P0 = this->WPtoGlobal2(P0); //was WPtoGlobal1
 		M = P0;
 		V.x = AA.m_00 * M.x + AA.m_01 * M.y + AA.m_02 * M.z + AA.m_30;
 		V.y = AA.m_10 * M.x + AA.m_11 * M.y + AA.m_12 * M.z + AA.m_31;
@@ -6060,7 +7539,7 @@ C3dVector DBase::PickPointToGlobal2(CPoint Pt)
 		iErrCnt++;
 	} 
 	while ((dErr > 5) && (iErrCnt<100));
-	P0 = this->WPtoGlobal(P0);
+	  P0 = this->WPtoGlobal(P0);
 	//sprintf_s(s1, "Error %g cnt %i", dErr, iErrCnt);
 	//outtext1(s1);
 	return (P0);
@@ -6127,7 +7606,7 @@ else
 }
 }
 
-void DBase::AddCoordSys(C3dVector p1,C3dVector p2,C3dVector p3,int Lab,int Typ)
+void DBase::AddCoordSys(C3dVector p1,C3dVector p2,C3dVector p3,int Lab,int Typ,int iRID)
 {
 C3dVector vO;
 C3dVector vX;
@@ -6153,13 +7632,13 @@ rMat.m_02 = vZ.x;
 rMat.m_12 = vZ.y;
 rMat.m_22 = vZ.z;
 if (Typ==0) Typ=1;
-CoordSys* pRet = pCurrentMesh->AddSys(vO,rMat,-1,Typ,Lab,55);
+CoordSys* pRet = pCurrentMesh->AddSys(vO,rMat,iRID,Typ,Lab,55);
 Dsp_Add(pRet); 
 AddTempGraphics(pRet);
 ReDraw();
 }
 
-void DBase::AddContPolyW(double dWght)
+void DBase::AddContPolyW(double dWght, double deg)
 {
 	int iCnt;
 	C3dVector pT;
@@ -6173,7 +7652,7 @@ void DBase::AddContPolyW(double dWght)
 			pT = DB_GetBuffbyInd(iCnt);
 			cPolyW->AddVert(pT,dWght);
 		}
-		cPolyW->Generate(2);
+		cPolyW->Generate(deg);
 		C3dVector a = cPolyW->GetPt(0.5);
 		DB_Obj[DB_ObjectCount]=cPolyW;
 		DB_Obj[DB_ObjectCount]->SetToScr(&pModelMat,&pScrMat);
@@ -7036,18 +8515,46 @@ int j;
 double dInc;
 for (i=0;i<S_Count;i++)
 {
-  if ((S_Buff[i]->iType == 1) ||
-      (S_Buff[i]->iType == 2))
-  {
-     Curves->Add(S_Buff[i]->Copy(NULL));
-  }
+	if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 1))
+	{
+		//NEEDS UPDATING TO CURVE SPLIT FOR WS & WE <> 0 & 1
+		//Curves->Add(S_Buff[i]->Copy(NULL));
+		NCurve* pC = (NCurve*)S_Buff[i];
+		if ((pC->we == 1.0) && (pC->ws == 0.0))
+		{
+			Curves->Add(S_Buff[i]->Copy(NULL));
+		}
+		else
+		{
+			dInc = (pC->we - pC->ws) / 36;
+			NCurve* pPC = new NCurve();
+			for (j = 0; j <= 36; j++)
+			{
+				pt = pC->GetPt(pC->ws + j * dInc);
+				pPC->AddVert(pt, 1);
+			}
+			pPC->Generate(1);
+			Curves->Add(pPC);
+		}
+	}
+	else if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 2))
+	{
+		C3dVector p1, p2;
+		NCurve* C1 = (NCurve*)S_Buff[i];
+		p1 = C1->GetPt(C1->ws);
+		p2 = C1->GetPt(C1->we);
+		NLine* oL = new NLine();
+		oL->Create(p1, p2, -1, NULL);
+		Curves->Add(oL);
+		// Curves->Add(S_Buff[i]->Copy(NULL));
+	}
   else if (S_Buff[i]->iObjType == 13)
   {  
      NCurveOnSurf* pSS;
      pSS=(NCurveOnSurf*) S_Buff[i];
      Curves->Add(pSS->GetSurfaceCVG(pSS->pParent));
   }
-  else if (S_Buff[i]->iType == 3)
+  else if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 3))
   {
   //Need to deal with incomplete circles until we have 
   //the arbitaru arc
@@ -7105,6 +8612,7 @@ if (Curves->iNo>0)
   pS->UserTrim(Curves);
   //pS->DefualtTrim();
 }
+
 delete (Curves);
 ReDraw();
 }
@@ -7283,6 +8791,74 @@ if (bReGen==TRUE)
 }
 }
 
+void DBase::BeamOffsetY(ObjList* Items, double dy)
+{
+	int iCO;
+	C3dVector tVec;
+	C3dVector tVecR;
+	tVec.Set(0, dy, 0);
+	C3dMatrix EMat;
+	CString OutT;
+	BOOL bReGen = FALSE;
+	for (iCO = 0; iCO < Items->iNo; iCO++)
+	{
+		if (Items->Objs[iCO]->iObjType == 3)
+		{
+			E_Object* pE = (E_Object*)Items->Objs[iCO];
+			if (pE->iType == 21)
+			{
+
+				E_Object2B* pB = (E_Object2B*)pE;
+				EMat = pB->GetElSys();
+				EMat.Transpose();
+				tVecR = EMat*tVec;
+				pB->OffA = tVecR;
+				pB->OffB = tVecR;
+				bReGen = TRUE;
+			}
+		}
+	}
+	if (bReGen == TRUE)
+	{
+		InvalidateOGL();
+		ReDraw();
+	}
+}
+
+void DBase::BeamOffsetZ(ObjList* Items, double dz)
+{
+	int iCO;
+	C3dVector tVec;
+	C3dVector tVecR;
+	tVec.Set(0, 0, dz);
+	C3dMatrix EMat;
+	CString OutT;
+	BOOL bReGen = FALSE;
+	for (iCO = 0; iCO < Items->iNo; iCO++)
+	{
+		if (Items->Objs[iCO]->iObjType == 3)
+		{
+			E_Object* pE = (E_Object*)Items->Objs[iCO];
+			if (pE->iType == 21)
+			{
+
+				E_Object2B* pB = (E_Object2B*)pE;
+				EMat = pB->GetElSys();
+				EMat.Transpose();
+				tVecR = EMat*tVec;
+				pB->OffA = tVecR;
+				pB->OffB = tVecR;
+				bReGen = TRUE;
+			}
+		}
+	}
+	if (bReGen == TRUE)
+	{
+		InvalidateOGL();
+		ReDraw();
+	}
+}
+
 void DBase::SetDOFStringA(ObjList* Items, CString sDOF)
 {
 	int iCO;
@@ -7321,7 +8897,9 @@ void DBase::SetDOFStringB(ObjList* Items, CString sDOF)
 
 void DBase::ShellOffsets(ObjList* Items,double dOff)
 {
-int iCO;
+int iCO=0;
+int iNoC=0;
+char s1[200];
 
 CString OutT;
 BOOL bReGen=FALSE;
@@ -7335,15 +8913,19 @@ for (iCO=0;iCO<Items->iNo;iCO++)
       E_Object3* pB=(E_Object3*) pE;
       pB->dZOFFS=dOff;
       bReGen=TRUE;
+	  iNoC++;
     }
     else if (pE->iType==94) 
     {
       E_Object4* pB=(E_Object4*) pE;
       pB->dZOFFS=dOff;
       bReGen=TRUE;
+	  iNoC++;
     }
   }
 }
+sprintf_s(s1, "%s%i", "Number of Elements Modified : ", iNoC);
+outtext1(_T(s1));
 if (bReGen==TRUE)
 {
   InvalidateOGL();
@@ -7361,9 +8943,9 @@ int iNewNd=-1;
 NEList* newNds = new NEList();
 G_Object* pO;
 C3dVector vA;
-Pt_Object* pInVertex[200];
-Pt_Object* Nd;
-Pt_Object* NdNew;
+Node* pInVertex[MaxSelNodes];
+Node* Nd;
+Node* NdNew;
 E_Object* El;
 E_Object* ENew;
 
@@ -7371,8 +8953,8 @@ E_Object* ENew;
 if (Items->iNo>0)
 {
 pCurrentMesh->MaxLab();
-pCurrentMesh->iElementLab++;
-pCurrentMesh->iNodeLab++;
+//pCurrentMesh->iElementLab++;
+//pCurrentMesh->iNodeLab++;
 vA = tVec;
 for (j=0;j<iNoOff;j++)
 {
@@ -7384,15 +8966,15 @@ for (j=0;j<iNoOff;j++)
       El= (E_Object*) Items->Objs[i];
       for (k=0;k<El->iNoNodes;k++)
       {
-        Nd=(Pt_Object*) El->GetNode(k);
+        Nd=(Node*) El->GetNode(k);
         iNewNd=newNds->Get(Nd->iLabel);
         if (iNewNd!=-1)
         {
-          pInVertex[k]=(Pt_Object*) pCurrentMesh->GetNode(iNewNd);
+          pInVertex[k]=(Node*) pCurrentMesh->GetNode(iNewNd);
         }
         else
         {
-          pInVertex[k]=(Pt_Object*) El->GetNode(k)->Copy(pCurrentMesh);
+          pInVertex[k]=(Node*) El->GetNode(k)->Copy(pCurrentMesh);
           pInVertex[k]->iLabel=pCurrentMesh->iNodeLab;
           newNds->Add(Nd->iLabel,pCurrentMesh->iNodeLab);
           pCurrentMesh->iNodeLab++;
@@ -7419,11 +9001,11 @@ for (j=0;j<iNoOff;j++)
     {
       if (Items->Objs[i]->iObjType==1)
       {
-        Nd= (Pt_Object*) Items->Objs[i];
+        Nd= (Node*) Items->Objs[i];
         vA = tVec;
 	      for (j=0;j<iNoOff;j++)
         {
-          	NdNew=(Pt_Object*) Nd->Copy(pCurrentMesh);
+          	NdNew=(Node*) Nd->Copy(pCurrentMesh);
             NdNew->iLabel=pCurrentMesh->iNodeLab;
             newNds->Add(Nd->iLabel,pCurrentMesh->iNodeLab);
             pCurrentMesh->iNodeLab++;
@@ -7451,6 +9033,11 @@ for (j=0;j<iNoOff;j++)
 			  pO->iLabel = iMeshCnt;
 			  iMeshCnt++;
 		  }
+		  else if (pO->iObjType == 6)
+		  {  //Text
+			  pO->iLabel = iTxtLabCnt;
+			  iTxtLabCnt++;
+		  }
 		  else if (pO->iObjType==7)
 		  {  //curve
              pO->iLabel=iCVLabCnt;
@@ -7460,6 +9047,11 @@ for (j=0;j<iNoOff;j++)
 		  {  //surface
              pO->iLabel=iSFLabCnt;
 			 iSFLabCnt++;
+		  }
+		  else if (pO->iObjType == 12)
+		  {  //Coordinate System
+			  pO->iLabel = pCurrentMesh->iCYSLab;
+			  pCurrentMesh->iCYSLab++;
 		  }
           pO->pParent=NULL;
 		  MoveObj(pO,vA);
@@ -7485,9 +9077,9 @@ int iNewNd;
 G_Object* pO;
 double dA;
 NEList* newNds = new NEList();
-Pt_Object* pInVertex[200];
-Pt_Object* Nd;
-Pt_Object* NdNew;
+Node* pInVertex[MaxSelNodes];
+Node* Nd;
+Node* NdNew;
 E_Object* El;
 E_Object* ENew;
 
@@ -7509,15 +9101,15 @@ for (j=0;j<iNoOff;j++)
       El= (E_Object*) Items->Objs[i];
       for (k=0;k<El->iNoNodes;k++)
       {
-        Nd=(Pt_Object*) El->GetNode(k);
+        Nd=(Node*) El->GetNode(k);
         iNewNd=newNds->Get(Nd->iLabel);
         if (iNewNd!=-1)
         {
-          pInVertex[k]=(Pt_Object*) pCurrentMesh->GetNode(iNewNd);
+          pInVertex[k]=(Node*) pCurrentMesh->GetNode(iNewNd);
         }
         else
         {
-          pInVertex[k]=(Pt_Object*) El->GetNode(k)->Copy(pCurrentMesh);
+          pInVertex[k]=(Node*) El->GetNode(k)->Copy(pCurrentMesh);
           pInVertex[k]->iLabel=pCurrentMesh->iNodeLab;
           newNds->Add(Nd->iLabel,pCurrentMesh->iNodeLab);
           pCurrentMesh->iNodeLab++;
@@ -7543,11 +9135,11 @@ for (j=0;j<iNoOff;j++)
     {
       if (Items->Objs[i]->iObjType==1)
       {
-        Nd= (Pt_Object*) Items->Objs[i];
+        Nd= (Node*) Items->Objs[i];
         dA = dAng;
 	      for (j=0;j<iNoOff;j++)
         {
-          	NdNew=(Pt_Object*) Nd->Copy(pCurrentMesh);
+          	NdNew=(Node*) Nd->Copy(pCurrentMesh);
             NdNew->iLabel=pCurrentMesh->iNodeLab;
             pCurrentMesh->iNodeLab++;
             pCurrentMesh->pNodes[pCurrentMesh->iNdNo]=NdNew;
@@ -7565,19 +9157,24 @@ for (j=0;j<iNoOff;j++)
       {
 	    pO = Items->Objs[i]->Copy(NULL);
 		  if (pO->iObjType==0)
-		  {  //Point
-        pO->iLabel=iPtLabCnt;
-			  iPtLabCnt++;
+		  {		//Point
+				pO->iLabel=iPtLabCnt;
+				iPtLabCnt++;
+		  }
+		  else if (pO->iObjType == 6)
+		  {		//Text
+				pO->iLabel = iTxtLabCnt;
+				iTxtLabCnt++;
 		  }
 		  else if (pO->iObjType==7) 
-		  {//curve
-        pO->iLabel=iCVLabCnt;
-			  iCVLabCnt++;
+		  {		//curve
+				pO->iLabel=iCVLabCnt;
+				iCVLabCnt++;
 		  }
 		  else if (pO->iObjType==15)
-		  {//surface
-            pO->iLabel=iSFLabCnt;
-			iSFLabCnt++;
+		  {		//surface
+				pO->iLabel=iSFLabCnt;
+				iSFLabCnt++;
 		  }
           RotateAbout2(pO,p1,p2,dA);
 	      AddObj(pO);
@@ -7595,11 +9192,20 @@ void DBase::ElSweep(ObjList* Items,C3dVector tVec,int iNoOff)
 int i;
 int j;
 int k;
-
-
-Pt_Object* iNlabs[200]; 
+double dd = iNoOff;
+eFace* eF = NULL;
+eEdge* eE = NULL;
+//change to how sweep is done now tVec is the totatl vector
+//to move in iNoOff increments
+if (iNoOff > 0)
+{
+	tVec.x /= dd;
+	tVec.y /= dd;
+	tVec.z /= dd;
+}
+Node* iNlabs[MaxSelNodes]; 
 C3dVector vA;
-Pt_Object* NdNew = NULL;
+Node* NdNew = NULL;
 E_Object* El = NULL;
 E_Object* ENew = NULL;
 ObjList* ELF=new ObjList;
@@ -7630,6 +9236,45 @@ if (Items->iNo>0)
 		  }
         }
 	}
+	else if (Items->Objs[i]->iObjType == 9) //eFace
+	{
+		eF = (eFace*) Items->Objs[i];
+		if (eF->NoVert == 4)	 //Used as a marker to tell what type of element it is
+		{
+			E_Object4* El4 = new E_Object4();
+			El4->iType = 94;
+			ELF->Add(El4);
+			for (j = 0; j < eF->NoVert; j++)
+			{
+				El4->pVertex[j] = eF->pVertex[j];
+				NDF->AddEx(eF->pVertex[j]);
+			}
+		}
+		else if (eF->NoVert == 3)
+		{
+			E_Object3* EL3 = new E_Object3();
+			EL3->iType = 91;
+			ELF->Add(EL3);
+			for (j = 0; j < eF->NoVert; j++)
+			{
+				EL3->pVertex[j] = eF->pVertex[j];
+				NDF->AddEx(eF->pVertex[j]);
+			}
+		}
+		
+	}
+	else if (Items->Objs[i]->iObjType == 8) //eEdge
+	{
+		eE = (eEdge*)Items->Objs[i];
+		E_Object2* El2 = new E_Object2B();
+		El2->iType = 21;
+		ELF->Add(El2);
+		for (j = 0; j < 2; j++)
+		{
+			El2->pVertex[j] = eE->pVertex[j];
+			NDF->AddEx(eE->pVertex[j]);
+		}
+	}
   }
 
 for (i=0;i<iNoOff+1;i++)
@@ -7640,7 +9285,7 @@ for (i=0;i<iNoOff+1;i++)
     vA.Set(0,0,0);
     for (j=0;j<NDF->iNo;j++)
     {
-      NdNew=(Pt_Object*) NDF->Objs[j]->Copy(pCurrentMesh);
+      NdNew=(Node*) NDF->Objs[j]->Copy(pCurrentMesh);
       NdNew->iLabel=pCurrentMesh->iNodeLab;
       pCurrentMesh->iNodeLab++;
       pCurrentMesh->pNodes[pCurrentMesh->iNdNo]=NdNew;
@@ -7655,7 +9300,7 @@ for (i=0;i<iNoOff+1;i++)
     vA = tVec;
     for (j=0;j<NDF->iNo;j++)
     {
-      NdNew=(Pt_Object*) NDF1->Objs[j]->Copy(pCurrentMesh);
+      NdNew=(Node*) NDF1->Objs[j]->Copy(pCurrentMesh);
       NdNew->iLabel=pCurrentMesh->iNodeLab;
       pCurrentMesh->iNodeLab++;
       pCurrentMesh->pNodes[pCurrentMesh->iNdNo]=NdNew;
@@ -7668,34 +9313,34 @@ for (i=0;i<iNoOff+1;i++)
       El = (E_Object*) ELF->Objs[k];
       if (El->iType==94)
 	  {
-        iNlabs[0]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
-	    iNlabs[1]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
-	    iNlabs[2]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(2))];
-	    iNlabs[3]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(3))];
-        iNlabs[4]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
-	    iNlabs[5]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
-	    iNlabs[6]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(2))];
-	    iNlabs[7]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(3))];
+        iNlabs[0]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
+	    iNlabs[1]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
+	    iNlabs[2]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(2))];
+	    iNlabs[3]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(3))];
+        iNlabs[4]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
+	    iNlabs[5]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
+	    iNlabs[6]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(2))];
+	    iNlabs[7]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(3))];
 		ENew=pCurrentMesh->AddEl(iNlabs,pCurrentMesh->iElementLab,9,115,-1,1,8,0,0,0,0,0,0);
 		pCurrentMesh->iElementLab++;
 	  }
 	  else if (El->iType==91)
 	  {
-        iNlabs[0]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
-	    iNlabs[1]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
-	    iNlabs[2]=(Pt_Object*) NDF1->Objs[NDF->IsIn2(El->GetNode(2))];
-        iNlabs[3]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
-	    iNlabs[4]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
-	    iNlabs[5]=(Pt_Object*) NDF2->Objs[NDF->IsIn2(El->GetNode(2))];
+        iNlabs[0]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
+	    iNlabs[1]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
+	    iNlabs[2]=(Node*) NDF1->Objs[NDF->IsIn2(El->GetNode(2))];
+        iNlabs[3]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
+	    iNlabs[4]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
+	    iNlabs[5]=(Node*) NDF2->Objs[NDF->IsIn2(El->GetNode(2))];
 		ENew=pCurrentMesh->AddEl(iNlabs,pCurrentMesh->iElementLab,9,112,-1,1,6,0,0,0,0,0,0);
 		pCurrentMesh->iElementLab++;
 	  }
 	  else if (El->iType == 21)
 	  {
-		  iNlabs[0] = (Pt_Object*)NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
-		  iNlabs[1] = (Pt_Object*)NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
-		  iNlabs[2] = (Pt_Object*)NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
-		  iNlabs[3] = (Pt_Object*)NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
+		  iNlabs[0] = (Node*)NDF1->Objs[NDF->IsIn2(El->GetNode(0))];
+		  iNlabs[1] = (Node*)NDF2->Objs[NDF->IsIn2(El->GetNode(0))];
+		  iNlabs[2] = (Node*)NDF2->Objs[NDF->IsIn2(El->GetNode(1))];
+		  iNlabs[3] = (Node*)NDF1->Objs[NDF->IsIn2(El->GetNode(1))];
 		  ENew = pCurrentMesh->AddEl(iNlabs, pCurrentMesh->iElementLab, 74, 94, -1, 1, 4, 0, 0, 0, 0, -1, 0);
 		  pCurrentMesh->iElementLab++;
 	  }
@@ -7716,11 +9361,202 @@ delete(NDF1);
 delete(NDF2);
 }
 
+//******************************************************************
+//Sweep an ordered list of nodes into shell elements along tvec
+void DBase::NDSweepToShell(ObjList* Items, C3dVector tVec, int iNoOff)
+{
+	int i;
+	int j;
+	int k;
+	double dd = iNoOff;
+	//change to how sweep is done now tVec is the totatl vector
+	//to move in iNoOff increments
+	if (iNoOff > 0)
+	{
+		tVec.x /= dd;
+		tVec.y /= dd;
+		tVec.z /= dd;
+	}
+	Node* iNlabs[MaxSelNodes];
+	C3dVector vA;
+	Node* NdNew = NULL;
+	E_Object* El = NULL;
+	E_Object* ENew = NULL;
+	ObjList* ELF = new ObjList;
+	ObjList* NDF = new ObjList;;
+	ObjList* NDF1 = new ObjList;;
+	ObjList* NDF2 = new ObjList;;
+	NDF->Clear();
+	NDF1->Clear();
+	NDF2->Clear();
+	ELF->Clear();
+	BOOL bFirst = TRUE;
+	if (Items->iNo > 0)
+	{
+		pCurrentMesh->MaxLab();
+		pCurrentMesh->iElementLab++;
+		pCurrentMesh->iNodeLab++;
+		for (i = 0; i < Items->iNo; i++)
+		{
+			if (Items->Objs[i]->iObjType == 1)
+			{
+						NDF->AddEx(Items->Objs[i]);
+			}	
+		}
+		for (i = 0; i < iNoOff + 1; i++)
+		{
+			if (bFirst == TRUE)
+			{
+				//vA = tVec;
+				vA.Set(0, 0, 0);
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					//NdNew = (Pt_Object*)NDF->Objs[j]->Copy(pCurrentMesh);
+					//NdNew->iLabel = pCurrentMesh->iNodeLab;
+					//pCurrentMesh->iNodeLab++;
+					//pCurrentMesh->pNodes[pCurrentMesh->iNdNo] = NdNew;
+					NDF1->Add(NDF->Objs[j]);
+					//pCurrentMesh->iNdNo++;
+					//MoveObj(NdNew, vA);
+				}
+				bFirst = FALSE;
+			}
+			else
+			{
+				vA = tVec;
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					NdNew = (Node*)NDF1->Objs[j]->Copy(pCurrentMesh);
+					NdNew->iLabel = pCurrentMesh->iNodeLab;
+					pCurrentMesh->iNodeLab++;
+					pCurrentMesh->pNodes[pCurrentMesh->iNdNo] = NdNew;
+					NDF2->Objs[j] = NdNew;
+					pCurrentMesh->iNdNo++;
+					MoveObj(NdNew, vA);
+				}
+				for (k = 0; k < NDF1->iNo-1; k++)
+				{
+						iNlabs[0] = (Node*) NDF1->Objs[k];
+						iNlabs[1] = (Node*) NDF2->Objs[k];
+						iNlabs[2] = (Node*) NDF2->Objs[k+1]; 
+						iNlabs[3] = (Node*) NDF1->Objs[k+1];
+						ENew = pCurrentMesh->AddEl(iNlabs, pCurrentMesh->iElementLab, 74, 94, -1, 1, 4, 0, 0, 0, 0, -1, 0);
+						pCurrentMesh->iElementLab++;
+				}
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					NDF1->Objs[j] = NDF2->Objs[j];
+				}
+			}
+		}
+		InvalidateOGL();
+		ReDraw();
+	}
+	delete(ELF);
+	delete(NDF);
+	delete(NDF1);
+	delete(NDF2);
+}
+
+//******************************************************************
+//Sweep an ordered list of nodes into beam elements along tvec
+void DBase::NDSweepToBeam(ObjList* Items, C3dVector tVec, int iNoOff)
+{
+	int i;
+	int j;
+	int k;
+	double dd = iNoOff;
+	//change to how sweep is done now tVec is the totatl vector
+	//to move in iNoOff increments
+	if (iNoOff > 0)
+	{
+		tVec.x /= dd;
+		tVec.y /= dd;
+		tVec.z /= dd;
+	}
+	Node* iNlabs[MaxSelNodes];
+	C3dVector vA;
+	Node* NdNew = NULL;
+	E_Object* El = NULL;
+	E_Object* ENew = NULL;
+	ObjList* ELF = new ObjList;
+	ObjList* NDF = new ObjList;;
+	ObjList* NDF1 = new ObjList;;
+	ObjList* NDF2 = new ObjList;;
+	NDF->Clear();
+	NDF1->Clear();
+	NDF2->Clear();
+	ELF->Clear();
+	BOOL bFirst = TRUE;
+	if (Items->iNo > 0)
+	{
+		pCurrentMesh->MaxLab();
+		pCurrentMesh->iElementLab++;
+		pCurrentMesh->iNodeLab++;
+		for (i = 0; i < Items->iNo; i++)
+		{
+			if (Items->Objs[i]->iObjType == 1)
+			{
+				NDF->AddEx(Items->Objs[i]);
+			}
+		}
+		for (i = 0; i < iNoOff + 1; i++)
+		{
+			if (bFirst == TRUE)
+			{
+				//vA = tVec;
+				vA.Set(0, 0, 0);
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					//NdNew = (Pt_Object*)NDF->Objs[j]->Copy(pCurrentMesh);
+					//NdNew->iLabel = pCurrentMesh->iNodeLab;
+					//pCurrentMesh->iNodeLab++;
+					//pCurrentMesh->pNodes[pCurrentMesh->iNdNo] = NdNew;
+					NDF1->Add(NDF->Objs[j]);
+					//pCurrentMesh->iNdNo++;
+					//MoveObj(NdNew, vA);
+				}
+				bFirst = FALSE;
+			}
+			else
+			{
+				vA = tVec;
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					NdNew = (Node*)NDF1->Objs[j]->Copy(pCurrentMesh);
+					NdNew->iLabel = pCurrentMesh->iNodeLab;
+					pCurrentMesh->iNodeLab++;
+					pCurrentMesh->pNodes[pCurrentMesh->iNdNo] = NdNew;
+					NDF2->Objs[j] = NdNew;
+					pCurrentMesh->iNdNo++;
+					MoveObj(NdNew, vA);
+				}
+				for (k = 0; k < NDF1->iNo; k++)
+				{
+					iNlabs[0] = (Node*)NDF1->Objs[k];
+					iNlabs[1] = (Node*)NDF2->Objs[k];
+					ENew = pCurrentMesh->AddEl(iNlabs, pCurrentMesh->iElementLab, 75, 21, -1, 1, 4, 0, 0, 0, 0, -1, 0);
+					pCurrentMesh->iElementLab++;
+				}
+				for (j = 0; j < NDF->iNo; j++)
+				{
+					NDF1->Objs[j] = NDF2->Objs[j];
+				}
+			}
+		}
+		InvalidateOGL();
+		ReDraw();
+	}
+	delete(ELF);
+	delete(NDF);
+	delete(NDF1);
+	delete(NDF2);
+}
 //*********************************************************************************
 // Pre: Node
 // Post: Nodal averaged normal calculated
 //*********************************************************************************
-C3dVector DBase::GetNodalNormal(Pt_Object* pN, ObjList* ELS)
+C3dVector DBase::GetNodalNormal(Node* pN, ObjList* ELS)
 {
 	int i;
 	double dC=0;
@@ -7750,6 +9586,82 @@ C3dVector DBase::GetNodalNormal(Pt_Object* pN, ObjList* ELS)
 	return (vRet);
 }
 
+
+//*********************************************************************************
+// Pre: Node
+// Post: Nodal averaged normal calculated
+//*********************************************************************************
+C3dVector DBase::GetNodalNormal2(Node* pN, ObjList* ELS)
+{
+	int i;
+	double dC = 0;
+	C3dVector vRet;
+	C3dVector vZ;
+	C3dVector vDir;
+	C3dVector vN;
+	vZ.Set(0, 0, 1);
+	vRet.Set(0, 0, 0);
+	ME_Object* ME = pCurrentMesh;
+
+	eEdge* pEE1 = (eEdge*) ELS->Objs[0];
+	for (i = 0; i < ELS->iNo; i++)
+	{
+		eEdge* pEE = (eEdge*) ELS->Objs[i];
+		if ((pEE->pVertex[0] == pN) || (pEE->pVertex[1] == pN))
+		{
+			vDir.x = pEE->pVertex[1]->Pt_Point->x - pEE->pVertex[0]->Pt_Point->x;
+			vDir.y = pEE->pVertex[1]->Pt_Point->y - pEE->pVertex[0]->Pt_Point->y;
+			vDir.z = pEE->pVertex[1]->Pt_Point->z - pEE->pVertex[0]->Pt_Point->z;
+			vDir.Normalize();
+			vN = vDir.Cross(vZ);
+			vRet.x += vN.x;
+			vRet.y += vN.y;
+			vRet.z += vN.z;
+			dC += 1.0;
+		}
+
+	}
+	double dS;
+	dS = 1 / dC;
+	vRet *= dS;
+	vRet.Normalize();
+	return (vRet);
+}
+
+double DBase::DirCheck(C3dVector vN, ObjList* ELS)
+{
+	double dRet = 1;
+	double dDot;
+	C3dVector vEC;
+	C3dVector vEd;
+	C3dVector vNe;
+	C3dVector vNc;
+	ObjList* pEls = new ObjList();
+	eEdge* eE = NULL;
+	//find edge
+	eE = (eEdge*)ELS->Objs[0];
+	pCurrentMesh->RelTo(eE->pVertex[0], pEls,3);
+	if (pEls->iNo > 0)
+	{
+		vEC = pEls->Objs[0]->Get_Centroid();
+		vEC -= eE->pVertex[0]->Get_Centroid();
+		vEd = eE->pVertex[1]->Get_Centroid();
+		vEd-= eE->pVertex[0]->Get_Centroid();
+		vEC.Normalize();
+		vEd.Normalize();
+		vNc = vEd.Cross(vEC);
+		vNe = vEd.Cross(vN);
+		dDot = vNc.Dot(vNe);
+		if (dDot > 0)
+			dRet = -1;
+	}
+	else
+	{
+		outtext1("ERROR: Sweep direction could not be calculated.");
+	}
+	delete (pEls);
+	return(dRet);
+}
 //*********************************************************************************
 // Pre: Valid OML fronts=
 // Post: Angle between adjacent segements calculated and stored on the front
@@ -7783,7 +9695,89 @@ void DBase::CalcAngles(cLinkedList* NDF)
 	}
 }
 
+double DBase::CalcAngle(BOOL bL, Node* pN, ObjList* NList)
+{
+	int i;
+	int iB, iA;
+	int ind = -1;
+	double dRet = 180;
+	C3dVector vA, vB, vC;
+	C3dVector v1, v2;
+	for (i = 0; i < NList->iNo;i++)
+	{
+		if (NList->Objs[i] == pN)
+		{
+			ind = i;
+			break;
+		}
+	}
+	if (bL)
+	{
+		if ((ind > 0) && (ind < NList->iNo - 1))
+		{
+			iB = ind - 1;
+			iA = ind + 1;
+		}
+		else if (ind == 0)
+		{
+			iB = NList->iNo - 1;
+			iA = ind + 1;
+		}
+		else if (ind == NList->iNo - 1)
+		{
+			iB = ind - 1;
+			iA = 0;
+		}
+		else
+		{
+			ind = 0;
+			iA = 0;
+			iB = 0;
+		}
+		vC = NList->Objs[ind]->Get_Centroid();
+		vA = NList->Objs[iA]->Get_Centroid();
+		vB = NList->Objs[iB]->Get_Centroid();
+		v1 = vA;
+		v2 = vB;
+		v1 -= vC;
+		v2 -= vC;
+		v1.Normalize();
+		v2.Normalize();
+		double dDot;
+		dDot = v1.Dot(v2);
+		if (dDot > 1) 
+			dDot = 1;
+		if (dDot<-1)
+			dDot = -1; 
+		dRet = acos(dDot) * 57.2957795130931;
+	}
+	else
+	{
+		if ((ind > 0) && (ind < NList->iNo - 1))
+		{
+			iB = ind - 1;
+			iA = ind + 1;
+			vC = NList->Objs[ind]->Get_Centroid();
+			vA = NList->Objs[iA]->Get_Centroid();
+			vB = NList->Objs[iB]->Get_Centroid();
+			v1 = vA;
+			v2 = vB;
+			v1 -= vC;
+			v2 -= vC;
+			v1.Normalize();
+			v2.Normalize();
+			double dDot;
+			dDot = v1.Dot(v2);
+			if (dDot > 1)
+				dDot = 1;
+			if (dDot < -1)
+				dDot = -1;
+			dRet = acos(dDot) * 57.2957795130931;
+		}
+	}
 
+	return(dRet);
+}
 
 
 //*********************************************************************************
@@ -7795,8 +9789,8 @@ void DBase::GenFronts(cLinkedList* NDF,int iDir)
 	int i;
 	double t = 0.2;
 	c2dFront* pF = (c2dFront*) NDF->Head;
-	Pt_Object* pBN; 
-	Pt_Object* pNN;
+	Node* pBN; 
+	Node* pNN;
 	C3dVector vBN;
 	C3dVector vUp;
 	C3dVector vNewNd;
@@ -7820,7 +9814,7 @@ void DBase::GenFronts(cLinkedList* NDF,int iDir)
 		{
 			dCorr = 1 / sin(0.017453*(pF->dA / 2));
 			iNoLay = pC->iNoLays;
-			pBN = (Pt_Object*)pF->fNodes->Head;
+			pBN = (Node*)pF->fNodes->Head;
 			pBN->iColour = 10; //Using colour to identify g ply id as dont want to add to m3d
 			vBN = pBN->Get_Centroid();
 			vUp = pF->vN;
@@ -7851,18 +9845,18 @@ BOOL  DBase::MoveFront(c2dFront* pMF)
 	c2dFront* pAfter;
 	pBefore = (c2dFront*) pMF->before;
 	pAfter = (c2dFront*) pMF->next;
-	Pt_Object* pNB;
-	Pt_Object* pNM;
-	Pt_Object* pNA;
+	Node* pNB;
+	Node* pNM;
+	Node* pNA;
 	C3dVector vMid;
 	C3dVector vT;
 	if ((pBefore != NULL) && (pAfter != NULL))
 	{
 		if ((pBefore->fNodes->iCnt == pMF->fNodes->iCnt) && (pAfter->fNodes->iCnt == pMF->fNodes->iCnt))
 		{
-			pNB = (Pt_Object*) pBefore->fNodes->Head;
-			pNM = (Pt_Object*) pMF->fNodes->Head;
-			pNA = (Pt_Object*) pAfter->fNodes->Head;
+			pNB = (Node*) pBefore->fNodes->Head;
+			pNM = (Node*) pMF->fNodes->Head;
+			pNA = (Node*) pAfter->fNodes->Head;
 			while (pNM != NULL)
 			{
 				vMid = pNB->Get_Centroid();
@@ -7870,9 +9864,9 @@ BOOL  DBase::MoveFront(c2dFront* pMF)
 				vMid += vT;
 				vMid *= 0.5;
 				pNM->Pt_Point->Set(vMid.x, vMid.y, vMid.z);
-				pNB = (Pt_Object*) pNB->next;
-				pNM = (Pt_Object*) pNM->next;
-				pNA = (Pt_Object*) pNA->next;
+				pNB = (Node*) pNB->next;
+				pNM = (Node*) pNM->next;
+				pNA = (Node*) pNA->next;
 			}
 		}
 
@@ -7929,24 +9923,24 @@ void DBase::ChkIntersects(cLinkedList* NDF)
 //*********************************************************************************
 void DBase::GenElements(cLinkedList* NDF)
 {
-	Pt_Object *pENodes[100];
+	Node *pENodes[100];
 	c2dFront* pF1 = (c2dFront*) NDF->Head;
 	c2dFront* pF2;
-	Pt_Object* p1;
-	Pt_Object* p2;
-	Pt_Object* p3;
-	Pt_Object* p4;
-	Pt_Object* p43;
+	Node* p1;
+	Node* p2;
+	Node* p3;
+	Node* p4;
+	Node* p43;
 	E_Object* pEL;
 	while (pF1->next != NULL)
 	{
 		pF2 = (c2dFront*) pF1->next;
 		if (pF1->fNodes->Head != NULL)
 		{
-			p1 = (Pt_Object*) pF1->fNodes->Head;
+			p1 = (Node*) pF1->fNodes->Head;
 			while (p1->next != NULL)
 			{
-				p2 = (Pt_Object*) p1->next;
+				p2 = (Node*) p1->next;
 				p3 = pF2->GetNodeByGID(p2->iColour);
 				p4 = pF2->GetNodeByGID(p1->iColour);
 				p43 = pF2->isSegBet(p1->iColour, p2->iColour);	//Check for ply addition
@@ -7982,19 +9976,61 @@ void DBase::GenElements(cLinkedList* NDF)
 }
 
 //*********************************************************************************
+// Pre: Valid fronts
+// Post: Elements generated between front
+//*********************************************************************************
+void DBase::GenElements2(BOOL bL,ObjList* NF1, ObjList* NF2)
+{
+	Node* pENodes[100];
+	int i;
+	Node* p1;
+	Node* p2;
+	Node* p3;
+	Node* p4;
+	E_Object* pEL;
+	for (i=0;i<NF1->iNo-1;i++)
+	{
+
+		p1 = (Node*) NF1->Objs[i];
+		p2 = (Node*) NF1->Objs[i+1];
+		p3 = (Node*)NF2->Objs[i + 1];
+		p4 = (Node*)NF2->Objs[i];
+        pENodes[0] = p1;
+		pENodes[1] = p4;
+		pENodes[2] = p3;
+		pENodes[3] = p2;
+        pEL = pCurrentMesh->AddEl(pENodes, pCurrentMesh->iElementLab, 74, 94, 1, 1, 4, 0, 0, 0, 0, -1, 0);
+		pCurrentMesh->iElementLab++;
+	}
+	if (bL) //last elemen
+	{
+		p1 = (Node*)NF1->Objs[NF1->iNo - 1];
+		p2 = (Node*)NF1->Objs[0];
+		p3 = (Node*)NF2->Objs[0];
+		p4 = (Node*)NF2->Objs[NF1->iNo - 1];
+		pENodes[0] = p1;
+		pENodes[1] = p4;
+		pENodes[2] = p3;
+		pENodes[3] = p2;
+		pEL = pCurrentMesh->AddEl(pENodes, pCurrentMesh->iElementLab, 74, 94, 1, 1, 4, 0, 0, 0, 0, -1, 0);
+		pCurrentMesh->iElementLab++;
+	}
+}
+
+//*********************************************************************************
 // Pre: Valid fronts and resulting element colour
 // Post: Elements generated 
 //*********************************************************************************
 void DBase::GenBEamElements(cLinkedList* NDF,int iCOl)
 {
-	Pt_Object *pENodes[100];
-	Pt_Object* p1;
-	Pt_Object* p2;
+	Node *pENodes[100];
+	Node* p1;
+	Node* p2;
 	E_Object* pEL;
-	p1 = (Pt_Object*) NDF->Head;
+	p1 = (Node*) NDF->Head;
 	while (p1->next != NULL)
 	{
-		p2 = (Pt_Object*) p1->next;
+		p2 = (Node*) p1->next;
         pENodes[0] = p1;
 		pENodes[1] = p2;
         if ((p1 != NULL) && (p2 != NULL))
@@ -8055,16 +10091,31 @@ void DBase::CreatTestPCOMPS()
 //		Test pcomp mush have aready been created by calling "TEST"
 // Post: 1d elements extruded to 2d based on attached PCOMPG
 //*********************************************************************************
-void DBase::ElSweepB(ObjList* Items, int iDir)
+void DBase::ElSweepB(ObjList* Items,double dDist, int iNo)
 {
-	int i;
-	c2dFront* oF;
+
+	char S1[80];
+	double dDir = 1;
+	int i,j,k,m;
+	int iDir = 1;
+	C3dVector vNarray[10000];
+	double dAngarray[10000];
+	BOOL bStop = FALSE; 
+	BOOL bLoop = FALSE;
 	C3dVector vA;
-	E_Object* El;
-	ObjList* ELF = new ObjList;
-	cLinkedList* NDF = new cLinkedList();
-	NDF->DeleteAll();
-	BOOL bFirst = TRUE;
+	C3dVector vN;
+	C3dVector vNd;
+	eEdge* Ed=NULL;
+	eEdge* EC = NULL;
+	ObjList* ELF = new ObjList();
+	ObjList* EFALL = new ObjList();
+	ObjList* NDF1 = new ObjList();
+	ObjList* NDF2 = new ObjList();
+	double dCorr;
+	int iCC = 0;
+	double dA;
+	dDist /= iNo;
+
 	// Find all nodes on the OML and store as nodal front in linked list NDF
 	// Need to items supplied to PROC are elements and are 1d should also
 	// chain the 1d element to make sure are continuous
@@ -8072,57 +10123,201 @@ void DBase::ElSweepB(ObjList* Items, int iDir)
 	{
 		for (i = 0; i < Items->iNo; i++)		//For all selected items
 		{
-			if (Items->Objs[i]->iObjType == 3)	//Check its an element
+			if (Items->Objs[i]->iObjType == 8)	//Check its an edges
 			{
-				El = (E_Object*)Items->Objs[i];
-				if ((El->iType == 21))			//Check its a line element
-				{
-					E_Object2B* pEB = (E_Object2B*)El;
-					ELF->Add(pEB);
-				}
+				Ed = (eEdge*) Items->Objs[i];
+				EFALL->Add(Ed);  //All edges stored in ELF
 			}
 		}
-		for (i = 0; i < ELF->iNo; i++)		//For all selected items
+		while (EFALL->iNo > 0)
 		{
-					E_Object2B* pEB = (E_Object2B*) ELF->Objs[i];
-					if (bFirst)					// if its the first element take node 0
-					{  
-						oF = new c2dFront();
-						NDF->Add(oF);			
-						oF->fNodes->Add(pEB->GetNode(0));
-						oF->iPID = pEB->PID;
-						oF->vN = GetNodalNormal((Pt_Object*) pEB->GetNode(0), ELF);
-						if (iDir == 0)
-							oF->vN *= -1.0;
-						oF = new c2dFront();
-						NDF->Add(oF);
-						oF->fNodes->Add(pEB->GetNode(1));
-						oF->iPID = pEB->PID;
-						oF->vN = GetNodalNormal((Pt_Object*) pEB->GetNode(1), ELF);
-						if (iDir == 0)
-							oF->vN *= -1.0;
+			BOOL bFirst = TRUE;
+			bStop = FALSE;
+			ELF->Clear();
+			Ed = (eEdge*) EFALL->Objs[0]; //The edge to chain
+			ELF->Add(Ed);
+			EFALL->Remove(Ed);
+			while (!bStop)
+			{   //Forward direction from N2
+				bStop = TRUE;
+				iCC = 0;
+				while (iCC< EFALL->iNo)
+				{
+					EC = (eEdge*) EFALL->Objs[iCC];
+					if (EC->pVertex[0] == Ed->pVertex[1])
+					{
+						ELF->Add(EC);
+						Ed = EC;
+						EFALL->Remove(EC);
+						iCC=0;
+						bStop = FALSE;
+						break;
+					}
+					else if (EC->pVertex[1] == Ed->pVertex[1])
+					{
+						EC->Reverse();
+						ELF->Add(EC);
+						Ed = EC;
+						EFALL->Remove(EC);
+						iCC = 0;
+						bStop = FALSE;
+						break;
+					}
+					iCC++;
+				}
+			}
+			bLoop = FALSE;
+			eEdge* ES = (eEdge*)ELF->Objs[0];
+			eEdge* EE = (eEdge*)ELF->Objs[ELF->iNo - 1];
+			if (ES->pVertex[0] == EE->pVertex[1])
+				bLoop = TRUE;
+			if (!bLoop)  
+			{
+				Ed = (eEdge*)ELF->Objs[0]; //The edge to chain
+				bStop = FALSE;
+				while (!bStop)
+				{   //backward direction from N2
+					bStop = TRUE;
+					iCC = 0;
+					while (iCC < EFALL->iNo)
+					{
+						EC = (eEdge*)EFALL->Objs[iCC];
+						if (EC->pVertex[1] == Ed->pVertex[0])
+						{
+							ELF->InsertAt(0,EC);
+							Ed = EC;
+							EFALL->Remove(EC);
+							iCC = 0;
+							bStop = FALSE;
+							break;
+						}
+						else if (EC->pVertex[0] == Ed->pVertex[0])
+						{
+							EC->Reverse();
+							ELF->InsertAt(0,EC);
+							Ed = EC;
+							EFALL->Remove(EC);
+							iCC = 0;
+							bStop = FALSE;
+							break;
+						}
+						iCC++;
+					}
+				}
+			}
+
+
+
+			//Create Node front
+			NDF1->Clear();
+			for (i = 0; i < ELF->iNo; i++)
+			{
+				eEdge* pEdge;
+				pEdge = (eEdge*)ELF->Objs[i];
+				sprintf_s(S1, "%i %i", pEdge->pVertex[0]->iLabel, pEdge->pVertex[1]->iLabel);
+				outtext1(S1);
+
+				if (bFirst)
+				{
+					NDF1->Add(pEdge->pVertex[0]);
+					bFirst = FALSE;
+				}
+				NDF1->AddEx(pEdge->pVertex[1]);
+			}
+			outtext1("---");
+			NDF2->Clear();
+			bFirst = TRUE;
+
+			for(j = 0; j < iNo; j++)
+			{
+				for (i = 0; i < NDF1->iNo; i++)
+				{
+					Node* pN = (Node*)NDF1->Objs[i];
+					vNd = pN->Get_Centroid();
+					if (j == 0)
+					{
+						vN = GetNodalNormal2(pN, ELF);
+						vNarray[i] = vN;
+						dA = CalcAngle(bLoop, pN, NDF1);
+						dAngarray[i] = dA;
+					}
+					else
+					{
+						vN = vNarray[i];
+						dA=dAngarray[i];
+					}
+					
+					if (bFirst)
+					{
+						dDir = DirCheck(vN, ELF);
 						bFirst = FALSE;
 					}
-					else									//take node 1
+					dCorr = 1 / sin(0.017453 * (dA / 2));
+					vN *= dDir * dDist * dCorr;
+					vNd += vN;
+					NDF2->Add(pCurrentMesh->AddNode(vNd, pCurrentMesh->iNodeLab, -1, -1, 124, 0, 0));
+					pCurrentMesh->iNodeLab++;
+				}
+				GenElements2(bLoop, NDF1, NDF2);		//Generate elements between fronts
+				NDF1->Clear();
+				//Smooth
+				Node* nB;
+				Node* nA;
+				Node* nC;
+				for (m = 0; m < 2; m++)
+				{
+					for (k = 0; k < NDF2->iNo ; k++)
 					{
-						oF = new c2dFront();
-						NDF->Add(oF);
-						oF->fNodes->Add(pEB->GetNode(1));	//AddEx
-						oF->iPID = pEB->PID;
-						oF->vN = GetNodalNormal((Pt_Object*) pEB->GetNode(1), ELF);
-						if (iDir == 0)
-							oF->vN *= -1.0;
+						if ((dAngarray[k] > 179) && (dAngarray[k] < 181))
+						{
+							if ((bLoop) && (k == 0))
+							{
+								nB = (Node*)NDF2->Objs[NDF2->iNo-1];
+								nA = (Node*)NDF2->Objs[k + 1];
+								nC = (Node*)NDF2->Objs[k];
+								nC->Pt_Point->x = (nB->Pt_Point->x + nA->Pt_Point->x) / 2;
+								nC->Pt_Point->y = (nB->Pt_Point->y + nA->Pt_Point->y) / 2;
+								nC->Pt_Point->z = (nB->Pt_Point->z + nA->Pt_Point->z) / 2;
+							}
+							else if ((bLoop) && (k == NDF2->iNo - 1))
+							{
+								nB = (Node*)NDF2->Objs[k - 1];
+								nA = (Node*)NDF2->Objs[0];
+								nC = (Node*)NDF2->Objs[k];
+								nC->Pt_Point->x = (nB->Pt_Point->x + nA->Pt_Point->x) / 2;
+								nC->Pt_Point->y = (nB->Pt_Point->y + nA->Pt_Point->y) / 2;
+								nC->Pt_Point->z = (nB->Pt_Point->z + nA->Pt_Point->z) / 2;
+							}
+							else if ((k>0) && (k< NDF2->iNo-1))
+							{
+								nB = (Node*)NDF2->Objs[k - 1];
+								nA = (Node*)NDF2->Objs[k + 1];
+								nC = (Node*)NDF2->Objs[k];
+								nC->Pt_Point->x = (nB->Pt_Point->x + nA->Pt_Point->x) / 2;
+								nC->Pt_Point->y = (nB->Pt_Point->y + nA->Pt_Point->y) / 2;
+								nC->Pt_Point->z = (nB->Pt_Point->z + nA->Pt_Point->z) / 2;
+							}
+						}
+
 					}
+				}
+				for (k=0;k<NDF2->iNo;k++)
+				   NDF1->Add(NDF2->Objs[k]);
+				NDF2->Clear();
+				
+			}
+			InvalidateOGL();		//Invalidate graphics database
+			ReDraw();				//Regen graphics database
 		}
-		CalcAngles(NDF);		//Calculate angle between segements 
-		GenFronts(NDF,iDir);	//Generate the node fronts based on PID
-		ChkIntersects(NDF);		//Sort any front intersection
-		GenElements(NDF);		//Generate elements between fronts
-		AddObj(NDF);			//Add front to database
-		InvalidateOGL();		//Invalidate graphics database
-		ReDraw();				//Regen graphics database
+	}
+	else
+	{
+		outtext1("ERROR: No edges selected.");
 	}
 	delete(ELF);
+	delete(EFALL);
+	delete(NDF1);
+	delete(NDF2);
 }
 
 
@@ -8300,9 +10495,16 @@ for (i=0;i<S_Count;i++)
      pS->AddCV(pSS->GetSurfaceCVG(pSS->pParent));
   }
 }
-bErr=pS->GenerateFit(2,0,1);
-pS->iLabel=iSFLabCnt;
-iSFLabCnt++;
+if (pS->iNoCvs > 1)
+{
+	bErr = pS->GenerateFit(2, 0, 1);
+	pS->iLabel = iSFLabCnt;
+	iSFLabCnt++;
+}
+else
+{
+	bErr = TRUE;
+}
 
 if (bErr==TRUE)
 {
@@ -8312,14 +10514,15 @@ if (bErr==TRUE)
 }
 else
 {
+	C3dVector pT;
+	pT = pS->Get_Centroid();
+	Matrix <C3dVector> Mat1;
+	pS->deriveAt(0.5, 0.5, 1, Mat1);
+	pT = Mat1(0, 0);
   AddObj(pS);
   ReDraw();
 }
-C3dVector pT;
-pT=pS->Get_Centroid();
-Matrix <C3dVector> Mat1;
-pS->deriveAt(0.5, 0.5,1, Mat1);
-pT=Mat1(0,0);
+
 }
 
 C3dMatrix DBase::CalcTranSsswep(C3dMatrix TMat,C3dVector vDir)
@@ -8348,7 +10551,6 @@ int i;
 double dStep;
 int iSteps=10;
 
-span=pP->we-pP->ws;
 span=pP->we-pP->ws;
 dStep=span/iSteps;
 if (pP->iType==1)  //General curve cant deal with exactly
@@ -8398,7 +10600,7 @@ else if (pP->iType==2)  //Straigt line
      pPE->Create(pCn,pCn2,vT,iSFLabCnt,NULL);
      iSFLabCnt++;
      pPE->iColour=pC->iColour;
-     pPE->Generate(1,pP->ws,pP->we);
+     pPE->Generate(1,0,1);
      AddObj(pPE);
 }
 else if (pP->iType==3)  //Circle  can deal with exactly
@@ -8563,12 +10765,12 @@ if (pCurrentMesh!=NULL)
   int iC=pCurrentMesh->pSOLS->iCur;
   if (iC!=-1)
   {
-    if (pCurrentMesh->pSOLS->pSols[iC]->iType==0)
-      pCurrentMesh->IterSol3dLin(PropsT,MatT);
+	if (pCurrentMesh->pSOLS->pSols[iC]->iType == 0)
+	  pCurrentMesh->IterSol3dLin(PropsT, MatT);
     else if (pCurrentMesh->pSOLS->pSols[iC]->iType==1)
       pCurrentMesh->IterSol1dSS(PropsT,MatT);
 	else if (pCurrentMesh->pSOLS->pSols[iC]->iType == 2)
-	  pCurrentMesh->ExplicitSolTest(PropsT, MatT);
+		pCurrentMesh->Test(PropsT, MatT);  //pCurrentMesh->ExplicitSolTest(PropsT, MatT);
   }
 else
 {
@@ -8688,7 +10890,7 @@ E_Object* DBase::AddEl(int iPos,BOOL AddDsp)
 int iNo=pCurrentMesh->GetNoNode(iCurElemType);
 BOOL bChk = TRUE;
 E_Object* cAddedEl;
-Pt_Object *pENodes[100];
+Node *pENodes[MaxSelNodes];
 cAddedEl=NULL;
 int i;
 char S1[80];
@@ -8705,22 +10907,27 @@ iNo=S_Count-iPos;
 if (bChk==TRUE)
 {
 //Check to see if all nodes are in cur mesh
+
   for (i=0;i<iNo;i++)
   {
     if (S_Buff[i]->iObjType==1)
 	  {
-	    pENodes[i]=(Pt_Object*) S_Buff[i];
-	    if (S_Buff[i]->pParent != pCurrentMesh)
-	    {
-        bChk=FALSE;
-	    }
+	    pENodes[i]=(Node*) S_Buff[i];
+		if (pCurrentMesh->sName != "NULL")
+		{
+			if (S_Buff[i]->pParent != pCurrentMesh)
+			{
+				bChk = FALSE;
+			}
+		}
 	  }
 	  else
       {
 	    bChk=FALSE;
 	  }
+	
   }
-Pt_Object* cAddedNode;
+Node* cAddedNode;
 if (bChk==TRUE)
 {
   pCurrentMesh->MaxLab();
@@ -8771,15 +10978,95 @@ else
 return (cAddedEl);
 }
 
+E_Object* DBase::InsSpringEl(int iPos, BOOL AddDsp)
+{
+	int iNo = pCurrentMesh->GetNoNode(iCurElemType);
+	int i;
+	E_Object* cAddedEl;
+	E_ObjectR* pELP=NULL;
+	E_Object* pOE=NULL;
+	Node* pENodes[MaxSelNodes];
+	Node* pNP = NULL;
+	Node* pNS = NULL;
+	Node* pNewN = NULL;
+	ObjList* pList = new ObjList();
+	pList->Clear();
+	cAddedEl = NULL;
+	char S1[80];
+	CString OutT;
+	ME_Object* pMesh=NULL;
+
+	if (S_Buff[S_Count-1]->iObjType == 1)
+	{
+		pNP = (Node*) S_Buff[S_Count - 1];
+		pMesh = (ME_Object*)pNP->pParent;
+		pNewN = (Node*)pNP->Copy(pMesh);
+		pNewN->iLabel = pMesh->iNodeLab;
+		pMesh->iNodeLab++;
+		if (pMesh->iNdNo < MAX_FESIZE)
+		{
+			pMesh->pNodes[pMesh->iNdNo] = pNewN;
+			pMesh->iNdNo++;
+		}
+		else
+		{
+			outtext1("ERROR: Max node limit exceeded.");
+			delete(pNewN);
+			pNewN = NULL;
+		}
+		pMesh->RelTo(pNP, pList, 3);
+		if (pList->iNo > 1)
+		{
+			//Find primary element must be type 122 and with centre bide
+
+				for (i = 0; i < pList->iNo; i++)
+				{
+					pELP = (E_ObjectR*)pList->Objs[i];
+					if ((pELP->iType == 122) && (pELP->pVertex[0] != pNP))
+					{
+						pELP->RepNodeInEl(pNP, pNewN);
+					}
+				}
+			
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No mesh attached.");
+	}
+	
+
+	if ((pNP!=NULL) && (pNewN != NULL) && (pMesh != NULL))
+	{
+		pENodes[0] = pNP;
+		pENodes[1] = pNewN;
+		cAddedEl = pMesh->AddEl(pENodes, pCurrentMesh->iElementLab, 124, 136, -1, -1, 2, 1, 1, 1, AddDsp, -1, 0);
+		pCurrentMesh->iElementLab++;
+		cAddedEl->SetToScr(&pModelMat, &pScrMat);
+		AddTempGraphics(cAddedEl);
+		Dsp_Add(cAddedEl);
+		sprintf_s(S1, "Element %i created between nodes %i %i", cAddedEl->iLabel, pNP->iLabel, pNewN->iLabel);
+		outtext1(S1);
+	}
+	else
+	{
+		outtext1("ERROR: No Element Created");
+	}
+	pList->Clear();
+	delete (pList);
+	pList = NULL;
+	return (cAddedEl);
+}
 
 
 
 
 
-int DBase::AddEl2(int pVnode[200], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C)
+
+int DBase::AddEl2(int pVnode[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C)
 {
 E_Object* cAddedEl;
-Pt_Object *pENodes[100];
+Node *pENodes[100];
 int iCnt;
 if (pCurrentMesh != NULL)
   {
@@ -8945,9 +11232,13 @@ if ((iDrawmode == 4) || (iDrawmode == 5))
 	{
 		SetPen(pDC, 7);
 	}
+	int iHC = 0;
 	if (S_Count > 0)
 	{
-		for (iDB_I = 0; iDB_I < S_Count; iDB_I++)
+		iHC = S_Count;
+		if ((iHLimit>-1) && (iHLimit < iHC))
+			iHC = iHLimit;
+		for (iDB_I = 0; iDB_I < iHC; iDB_I++)
 		{
 			if (S_Buff[iDB_I]->Drawn == 0)
 			{
@@ -8956,16 +11247,30 @@ if ((iDrawmode == 4) || (iDrawmode == 5))
 			S_Buff[iDB_I]->HighLight(pDC);
 		}
 	}
+	//Highlight Points in the point Buffer
+	C3dVector vPt;
+	for (iDB_I = 0; iDB_I < DB_BuffCount; iDB_I++)
+	{
+		vPt=DB_PtBuff[iDB_I];
+		vPt.SetToScr(&pModelMat, &pScrMat);
+		pDC->Ellipse(int(vPt.x + 8), int(vPt.y + 8), int(vPt.x - 8), int(vPt.y - 8));
+	}
 	if (OTemp->iNo > 0)
 	{
-		for (iDB_I = 0; iDB_I < OTemp->iNo; iDB_I++)
+		iHC = OTemp->iNo;
+		if ((iHLimit > -1) && (iHLimit < iHC))
+			iHC = iHLimit;
+		for (iDB_I = 0; iDB_I < iHC; iDB_I++)
 		{
 			OTemp->Objs[iDB_I]->HighLight(pDC);
 		}
 	}
 	if (OTemp2->iNo > 0)
 	{
-		for (iDB_I = 0; iDB_I < OTemp2->iNo; iDB_I++)
+		iHC = OTemp2->iNo;
+		if ((iHLimit > -1) && (iHLimit < iHC))
+			iHC = iHLimit;
+		for (iDB_I = 0; iDB_I < iHC; iDB_I++)
 		{
 			OTemp2->Objs[iDB_I]->HighLight(pDC);
 		}
@@ -9264,6 +11569,9 @@ for (i=0;i<TmpOGLCnt;i++)
 {
   TmpOGL[i]->OglDrawW(iDspFlgs,dMFullScl,0);
 }
+//Draw the dragging update
+if ((pDragObj!=nullptr) && (bIsDrag==TRUE))
+   pDragObj->OglDrawW(iDspFlgs, dMFullScl, 0);
  if ((DspFlags & DSP_GRAD) != 0)
   {
     glMatrixMode(GL_MODELVIEW);
@@ -9404,7 +11712,9 @@ for (i=0;i<TmpOGLCnt;i++)
     TmpOGL[i]->OglDrawW(iDspFlgs,dMFullScl,0);
   }
 }
-
+//Draw the dragging update
+if ((pDragObj != nullptr) && (bIsDrag == TRUE))
+pDragObj->OglDrawW(iDspFlgs, dMFullScl, 0);
 glLoadIdentity();
 if (pCurrentMesh!=NULL)
 {
@@ -9538,6 +11848,46 @@ void DBase::SetFilter()
 
 }
 
+void DBase::QFilterNode()
+{
+	FILTER.Clear();
+	FILTER.SetFilter(1);
+	outtext1("Only Nodes are Pickable. ");
+}
+
+void DBase::QFilterElement()
+{
+	FILTER.Clear();
+	FILTER.SetFilter(3);
+	outtext1("Only Elements are Pickable. ");
+}
+
+void DBase::QFilterPoint()
+{
+	FILTER.Clear();
+	FILTER.SetFilter(0);
+	outtext1("Only Points are Pickable. ");
+}
+
+void DBase::QFilterCurve()
+{
+	FILTER.Clear();
+	FILTER.SetFilter(7);
+	outtext1("Only Curvess are Pickable. ");
+}
+
+void DBase::QFilterSurface()
+{
+	FILTER.Clear();
+	FILTER.SetFilter(15);
+	outtext1("Only Surfaces are Pickable. ");
+}
+
+void DBase::QFilterAll()
+{
+	FILTER.SetAll();
+	outtext1("Everything is Pickable. ");
+}
 
 int DBase::GetGroupID()
 {
@@ -9891,7 +12241,7 @@ return (cSel);
 void DBase::NodesOnCurve(NCurve* pC,int iNo, cLinkedList* pN)
 {
 	C3dVector v;
-	Pt_Object* pNode;
+	Node* pNode;
 	int i, iCO;
 	double dW = 0;
 	double dInc;
@@ -9915,34 +12265,175 @@ void DBase::NodesOnCurve(NCurve* pC,int iNo, cLinkedList* pN)
 	}
 }
 
+void DBase::GenNodesOnCircle(NCircle* pCir, int iNo, cLinkedList* pN)
+{
+	Node* pNode;
+	double dRad, dA1, dA2;
+	double dSpan, dInc, dAng;
+	int i;
+	int iDiv;
+	C3dMatrix mT;
+	C3dVector vTmp;
+	C3dVector vCent;
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vN;
+	C3dVector vS;
+	C3dVector vE;
+	C3dVector vNode;
+	//Calculate circle cys and radius
+	//calulating explicitly as circle may not have come from M3d
+	vTmp.x = 0.5 * (pCir->cPts[4]->Pt_Point->x - pCir->cPts[0]->Pt_Point->x);
+	vTmp.y = 0.5 * (pCir->cPts[4]->Pt_Point->y - pCir->cPts[0]->Pt_Point->y);
+	vTmp.z = 0.5 * (pCir->cPts[4]->Pt_Point->z - pCir->cPts[0]->Pt_Point->z);
+	dRad = vTmp.Mag();
+	vCent.x = vTmp.x + pCir->cPts[0]->Pt_Point->x;
+	vCent.y = vTmp.y + pCir->cPts[0]->Pt_Point->y;
+	vCent.z = vTmp.z + pCir->cPts[0]->Pt_Point->z;
+	vX.x = pCir->cPts[0]->Pt_Point->x - vCent.x;
+	vX.y = pCir->cPts[0]->Pt_Point->y - vCent.y;
+	vX.z = pCir->cPts[0]->Pt_Point->z - vCent.z;
+	vY.x = pCir->cPts[2]->Pt_Point->x - vCent.x;
+	vY.y = pCir->cPts[2]->Pt_Point->y - vCent.y;
+	vY.z = pCir->cPts[2]->Pt_Point->z - vCent.z;
+	vN = vX.Cross(vY);
+	vX.Normalize(); vY.Normalize(); vN.Normalize();
+	mT.SetColVec(1, vX);
+	mT.SetColVec(2, vY);
+	mT.SetColVec(3, vN);
+	mT.m_30 = vCent.x;
+	mT.m_31 = vCent.y;
+	mT.m_32 = vCent.z;
+	vS = pCir->GetPt(pCir->ws);
+	vE = pCir->GetPt(pCir->we);
+	vS -= vCent; vS.Normalize();
+	vE -= vCent; vE.Normalize();
+	dA1 = vX.AngSigned(vS, vN);
+	dA2 = vX.AngSigned(vE, vN);
+	iDiv = iNo;
+	if (dA1 != dA2)
+		iDiv -= 1;
+	if (dA2 == 0)
+		dA2 = 360;
+	dSpan = dA2 - dA1;
+    dInc = dSpan / iDiv;
+	//Generate the nodes
+	dAng = dA1;
+	for (i = 0; i < iNo; i++)
+	{
+		vNode.x = dRad * cos(dAng * D2R);
+		vNode.y = dRad * sin(dAng * D2R);
+		vNode.z = 0;
+		pNode = pCurrentMesh->AddNode(vNode, pCurrentMesh->iNodeLab, 1, 1, 100, 0, 0);
+		pNode->Transform(mT);
+		if (pN != NULL)
+			pN->Add(pNode);  //Add the newly created node to linked list
+		pCurrentMesh->iNodeLab++;
+		AddTempGraphics(pNode);
+		Dsp_Add(pNode);
+		dAng += dInc;
+	}
+}
+
+void DBase::GenPoinsOnCir(NCircle* pCir, int iNo)
+{
+	CvPt_Object* pPt;
+	double dRad, dA1, dA2;
+	double dSpan, dInc, dAng;
+	int i;
+	int iDiv;
+	C3dMatrix mT;
+	C3dVector vTmp;
+	C3dVector vCent;
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vN;
+	C3dVector vS;
+	C3dVector vE;
+	C3dVector vNode;
+	//Calculate circle cys and radius
+	//calulating explicitly as circle may not have come from M3d
+	vTmp.x = 0.5 * (pCir->cPts[4]->Pt_Point->x - pCir->cPts[0]->Pt_Point->x);
+	vTmp.y = 0.5 * (pCir->cPts[4]->Pt_Point->y - pCir->cPts[0]->Pt_Point->y);
+	vTmp.z = 0.5 * (pCir->cPts[4]->Pt_Point->z - pCir->cPts[0]->Pt_Point->z);
+	dRad = vTmp.Mag();
+	vCent.x = vTmp.x + pCir->cPts[0]->Pt_Point->x;
+	vCent.y = vTmp.y + pCir->cPts[0]->Pt_Point->y;
+	vCent.z = vTmp.z + pCir->cPts[0]->Pt_Point->z;
+	vX.x = pCir->cPts[0]->Pt_Point->x - vCent.x;
+	vX.y = pCir->cPts[0]->Pt_Point->y - vCent.y;
+	vX.z = pCir->cPts[0]->Pt_Point->z - vCent.z;
+	vY.x = pCir->cPts[2]->Pt_Point->x - vCent.x;
+	vY.y = pCir->cPts[2]->Pt_Point->y - vCent.y;
+	vY.z = pCir->cPts[2]->Pt_Point->z - vCent.z;
+	vN = vX.Cross(vY);
+	vX.Normalize(); vY.Normalize(); vN.Normalize();
+	mT.SetColVec(1, vX);
+	mT.SetColVec(2, vY);
+	mT.SetColVec(3, vN);
+	mT.m_30 = vCent.x;
+	mT.m_31 = vCent.y;
+	mT.m_32 = vCent.z;
+	vS = pCir->GetPt(pCir->ws);
+	vE = pCir->GetPt(pCir->we);
+	vS -= vCent; vS.Normalize();
+	vE -= vCent; vE.Normalize();
+	dA1 = vX.AngSigned(vS, vN);
+	dA2 = vX.AngSigned(vE, vN);
+	iDiv = iNo;
+	if (dA1 != dA2)
+		iDiv -= 1;
+	if (dA2 == 0)
+		dA2 = 360;
+	dSpan = dA2 - dA1;
+	dInc = dSpan / iDiv;
+	//Generate the nodes
+	dAng = dA1;
+	for (i = 0; i < iNo; i++)
+	{
+		vNode.x = dRad * cos(dAng * D2R);
+		vNode.y = dRad * sin(dAng * D2R);
+		vNode.z = 0;
+		pPt = AddPt(vNode, -1, TRUE);
+		pPt->Transform(mT);
+		AddTempGraphics(pPt);
+		Dsp_Add(pPt);
+		dAng += dInc;
+	}
+}
+
+
 void DBase::GenNodesOnCurve(int iNo,cLinkedList* pN)
 {
 C3dVector v;
-Pt_Object* pNode;
+Node* pNode;
 int i,iCO;
 double dW=0;
 double dInc;
 double dSpan;
 NCurve* pC;
+NCircle* pCir;
 if (iNo>0)
 {
   for (iCO=0;iCO<S_Count;iCO++)
   {
-    if ((S_Buff[iCO]->iObjType==7) ||
+	//Deal with circles which don't give equal spacings
+	//due to parametric nature
+	if ((S_Buff[iCO]->iObjType == 7) &&
+		(S_Buff[iCO]->iType == 3))
+	{
+		pCir = (NCircle*) S_Buff[iCO];
+		GenNodesOnCircle(pCir, iNo, pN);
+	}
+    else if ((S_Buff[iCO]->iObjType==7) ||
 	    (S_Buff[iCO]->iObjType==13))
     {
-	  dW=0;
       pC = (NCurve*) S_Buff[iCO];
 	  dSpan = pC->we-pC->ws;
       // check ends are not coinciden
 	  C3dVector vS;
       C3dVector vE;
-      vS=pC->GetPt(pC->ws);
-      vE=pC->GetPt(pC->we);
-      vE-=vS;
-	  BOOL bEndsMeet=FALSE;
-	  if (vE.Mag()<0.01)
-         bEndsMeet=TRUE;
+	  BOOL bEndsMeet= pC->IsClosed();
       //End coincident ends check
 	  if (bEndsMeet)
 	  {
@@ -9952,6 +12443,7 @@ if (iNo>0)
 	  {
         dInc = dSpan/(iNo-1);
 	  }
+	  dW = pC->ws;
       for (i=0;i<iNo;i++)
 	  {
 	    v=pC->GetPt(dW);
@@ -9961,15 +12453,45 @@ if (iNo>0)
 		AddTempGraphics(pNode);
 		Dsp_Add(pNode);
 	    dW+=dInc;
-		  if(dW>1.0) {dW=1.0;}
-		  if (pN != NULL)
-			  pN->Add(pNode);  //Add the newly created node to linked list
+		if(dW>1.0) 
+		  dW=1.0;
+		if (pN != NULL)
+		  pN->Add(pNode);  //Add the newly created node to linked list
 	  }
     }
   }
 }
 ReDraw();
 }
+
+void DBase::GenPointsOnCircle(int iNo)
+{
+	C3dVector v;
+	Node* pNode;
+	int i, iCO;
+	double dW = 0;
+	double dInc;
+	double dSpan;
+	NCurve* pC;
+	NCircle* pCir;
+	if (iNo > 0)
+	{
+		for (iCO = 0; iCO < S_Count; iCO++)
+		{
+			//Deal with circles which don't give equal spacings
+			//due to parametric nature
+			if ((S_Buff[iCO]->iObjType == 7) ||
+				(S_Buff[iCO]->iType == 3))
+			{
+				pCir = (NCircle*)S_Buff[iCO];
+				GenPoinsOnCir(pCir, iNo);
+			}
+			
+		}
+	}
+	ReDraw();
+}
+
 
 void DBase::MapMesh(double dU, double dV)
 {
@@ -9997,7 +12519,7 @@ if (iU<= 0)
    iU=1;
 if (iV<= 0)
    iV=1;
-Matrix<Pt_Object*> Nds(iU+1,iV+1) ;
+Matrix<Node*> Nds(iU+1,iV+1) ;
 pCurrentMesh->MaxLab();
 iSNd=pCurrentMesh->iNodeLab;
 iSEl=pCurrentMesh->iElementLab;
@@ -10033,7 +12555,7 @@ iFEl=iSEl;
 		    if (dU>1) {dU=1;}
 		}
 	}
-	Pt_Object* iNlabs[200]; 
+	Node* iNlabs[MaxSelNodes]; 
   E_Object* pEl;
   for (i=0;i<iU;i++)
   {
@@ -10091,7 +12613,7 @@ if (iU<= 0)
    iU=1;
 if (iV<= 0)
    iV=1;
-Matrix<Pt_Object*> Nds(iU+1,iV+1) ;
+Matrix<Node*> Nds(iU+1,iV+1) ;
 pCurrentMesh->MaxLab();
 iSNd=pCurrentMesh->iNodeLab;
 iSEl=pCurrentMesh->iElementLab;
@@ -10127,7 +12649,7 @@ iFEl=iSEl;
 		    if (dU>1) {dU=1;}
 		}
 	}
-	Pt_Object* iNlabs[200]; 
+	Node* iNlabs[MaxSelNodes]; 
     E_Object* pEl;
     for (i=0;i<iU;i++)
     {
@@ -10218,13 +12740,9 @@ AddObj(pS);
 ReDraw();
 }
 
-void DBase::Test3()
-{
-  outtext1("TEST PROCEDURE");
-  CPcompEditor Dlg;
-  //Dlg.pEnt = P;
-  Dlg.DoModal();
-}
+
+
+
 
 
 //*******************************************************
@@ -10249,16 +12767,49 @@ void DBase::TestFL()
 	GenAnimationW(DspFlags, 8);
 }
 
+//*******************************************************
+//Insert sphere and render with earth bmp if loaded
+//11/01/22
+//*******************************************************
+void DBase::insPlanet()
+{
+	Planet* pS;
+	pS=new (Planet);
+	if (pWorldBMP != NULL)
+	{
+		pS->AttachTexture(pWorldBMP);
+		AddObj(pS);
+		ReDraw();
+	}
+	else
+		outtext1("LOAD WORLD BITMAP FIRST");
 
-  //Planet* pS;
-  //pS=new (Planet);
-  //if (pWorldBMP!=NULL)
-  //  pS->AttachTexture(pWorldBMP);
-  //else
-  //  outtext1("LOAD WORLD BITMAP");
-  
-  //AddObj(pS);
-  //ReDraw();
+}
+
+//*******************************************************
+//Insert sphere and render with earth bmp if loaded
+//11/01/22
+//*******************************************************
+void DBase::insBackGround()
+{
+	char buff[200];
+	
+	BackGround* pS;
+	pS = new BackGround(WPSize);
+
+	if (pWorldBMP != nullptr)
+	{
+		pS->AttachTexture(pWorldBMP);
+		sprintf_s(buff, "%x", pWorldBMP->header);
+		outtext1(buff);
+		AddObj(pS);
+		ReDraw();
+	}
+	else
+		outtext1("LOAD BITMAP FIRST");
+
+}
+
   //SolveIncompFluids();
 
 
@@ -10478,7 +13029,7 @@ pTheView->GetClientRect(mCView_Rect);
 //only CQUAD4 force read at now
 //Element force data set
 //only CQUAD4 force read at now
-void DBase::Readdb(FILE* pFile, int Vals[], int &iCnt, int &iKey, int &iRec, CString &sTit, CString &sSubTit)
+void DBase::Readdb(FILE* pFile, int Vals[], int &iCnt, int &iKey, int &iRec, CString &sTit, CString &sSubTit,double &dFreq)
 {
 
 	int i;
@@ -10488,7 +13039,10 @@ void DBase::Readdb(FILE* pFile, int Vals[], int &iCnt, int &iKey, int &iRec, CSt
 	int TCODE;
 	int ELTYPE;
 	int WID;
+	int FORMAT_CODE = 0;
+	int STRESS_CODE = 0;
 	float fW;
+	float ff;
 	char sT[8];
 	int lLC;
 	int iWCnt;
@@ -10501,29 +13055,32 @@ void DBase::Readdb(FILE* pFile, int Vals[], int &iCnt, int &iKey, int &iRec, CSt
 	if (iNoW == 146)
 	{
 		fread(&sT, 8, 1, pFile);
-		fread(&ACODE, 4, 1, pFile);
-		fread(&TCODE, 4, 1, pFile);
-		fread(&ELTYPE, 4, 1, pFile);
-		fread(&lLC, 4, 1, pFile);
+		fread(&ACODE, 4, 1, pFile);	   //1
+		fread(&TCODE, 4, 1, pFile);	   //2
+		fread(&ELTYPE, 4, 1, pFile);   //3
+		fread(&lLC, 4, 1, pFile);      //4
 		Vals[0] = ACODE;
 		Vals[1] = TCODE;
 		if (TCODE == 18)
 			ELTYPE = 999;
 		Vals[2] = ELTYPE;
 		Vals[3] = lLC;
-
-		fread(&Vals[4], 4, 1, pFile);
-		fread(&Vals[5], 4, 1, pFile);
+		fread(&ff, 4, 1, pFile);  //5 if acode = 5 then this is freq val
+		dFreq = ff;
+		fread(&Vals[5], 4, 1, pFile);  //6
 		//fF = pow(fW, 0.5)/(3.14159265359 *2);
-		fread(&WID, 4, 1, pFile);
-		fread(&WID, 4, 1, pFile);
-		fread(&WID, 4, 1, pFile);
-		fread(&WID, 4, 1, pFile);
+		fread(&WID, 4, 1, pFile);              //7
+		fread(&WID, 4, 1, pFile);              //8
+		fread(&FORMAT_CODE, 4, 1, pFile);      //9	 format_code - Data types (real or complex)
+		fread(&WID, 4, 1, pFile);              //10	 block width
 		Vals[6] = WID;
-		iCnt = 7;
+		Vals[7] = FORMAT_CODE;
+		fread(&STRESS_CODE, 4, 1, pFile);
+		Vals[8] = STRESS_CODE;
+		iCnt = 10;
 		//if (ACODE=22)
 		  //sprintf_s(s80, "MODE ,%i", iM);
-		for (i = 10; i < 50; i++)
+		for (i = 11; i < 50; i++)
 		{
 			fread(&iWord, 4, 1, pFile);
 		}
@@ -10625,11 +13182,27 @@ if (pCurrentMesh!=NULL)
 }
 }
 
-void DBase::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+void DBase::AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
 {
 	if (pCurrentMesh != NULL)
 	{
-		pCurrentMesh->AddOAG1Res(Vals, iCnt, sTitle, sSubTitle, inName);
+		pCurrentMesh->AddOEFResF(Vals, iCnt, sTitle, sSubTitle, inName,dF);
+	}
+}
+
+void DBase::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dF)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOAG1Res(Vals, iCnt, sTitle, sSubTitle, inName,dF);
+	}
+}
+
+void DBase::AddOQMRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOQMRes(Vals, iCnt, sTitle, sSubTitle, inName, dF);
 	}
 }
 
@@ -10649,6 +13222,14 @@ if (pCurrentMesh!=NULL)
 }
 }
 
+void DBase::AddOES1ResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOES1ResF(Vals, iCnt, sTitle, sSubTitle, inName,dF);
+	}
+}
+
 void DBase::AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName)
 {
 if (pCurrentMesh!=NULL)
@@ -10657,12 +13238,47 @@ if (pCurrentMesh!=NULL)
 }
 }
 
+void DBase::AddOSTRResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOSTRResF(Vals, iCnt, sTitle, sSubTitle, inName,dF);
+	}
+}
+
+
 void DBase::AddOESNRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName)
 {
 if (pCurrentMesh!=NULL)
 {
   pCurrentMesh->AddOESNRes(Vals,iCnt,sTitle,sSubTitle,inName);
 }
+}
+
+void DBase::AddOESResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOESResR(Vals, iCnt, sTitle, sSubTitle, inName);
+	}
+}
+
+void DBase::AddOSTRResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dFreq)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOSTRResR(Vals, iCnt, sTitle, sSubTitle, inName, dFreq);
+	}
+}
+
+
+
+void DBase::AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->AddOSTRFCPXRes(Vals, iCnt, sTitle, sSubTitle, inName, dFreq);
+	}
 }
 
 void DBase::AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
@@ -10676,19 +13292,21 @@ void DBase::AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, 
 
 void DBase::S_ImportOp2(FILE* pFile,CString inName,int iT)
 {
+int ACODE = 0;
+int TCODE = 0;
+int FCODE = 0;
+int SCODE = 0;
 int iCnt;
-
+int iTC = -1;
 int* DataB = (int*) malloc(10000000 * sizeof(int) ); 
-
 CString sTitle;
 CString sSubTitle;
-char sDataS[5];
+double dFreq=0;
+char sDataS[5] = "";
 int iKey;
 int iRecord=0;
-
 char sT[8];
 int iWord;
-
 int i;
 fread (&iKey,4,1,pFile);
 while (!feof(pFile))
@@ -10732,28 +13350,60 @@ while (!feof(pFile))
       while (iKey != 0)
       {
             iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
+			ACODE = DataB[0];
+			TCODE = DataB[1];
+			FCODE = DataB[7];	  //newly added so result can be
+			SCODE = DataB[8];	  //interprested m
+			iTC = TCODE / 1000;
 			if (iCnt > 0)
 			{
-				if (DataB[0] / 10 == 1)
-					AddOEFRes(DataB, iCnt, sTitle, sSubTitle, inName);
+				if (DataB[0] / 10 == 1)	//Linear
+				{
+					if ((iTC == 0) || (iTC == 2))  //Real sort1 and sort2
+						AddOEFRes(DataB, iCnt, sTitle, sSubTitle, inName);
+					else if ((iTC == 4) || (iTC == 5)) //Real Random
+						AddOEFRes(DataB, iCnt, sTitle, sSubTitle, inName);
+				}
+				else if (DataB[0] / 10 == 5)	//Freq
+				{
+					if ((iTC == 1) || (iTC == 3))  //Complex sort1 and sort2
+						AddOEFResF(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+				}
 			}
             //WriteF
       }
    }
    else if ((sDataS[0] == 'O') &&
-	   (sDataS[1] == 'A') &&
-	   (sDataS[2] == 'G') &&
-	   (iRecord == -3))
+	        (sDataS[1] == 'A') &&
+	        (sDataS[2] == 'G') &&
+	        (iRecord == -3))
    {
 	   while (iKey != 0)
 	   {
 		   iCnt = 0;
-		   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle);
+		   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle, dFreq);
 		   if (iCnt > 0)
 		   {
 			   if (DataB[0]/10 == 5)  // Frequency Only
-				   AddOAG1Res(DataB, iCnt, sTitle, sSubTitle, inName);
+				   AddOAG1Res(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+		   }
+		   //WriteF
+	   }
+   }
+   else if ((sDataS[0] == 'O') &&
+	        (sDataS[1] == 'Q') &&
+	        (sDataS[2] == 'M') &&
+	        (iRecord == -3))
+   {   //MPC Forces
+	   while (iKey != 0)
+	   {
+		   iCnt = 0;
+		   Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle, dFreq);
+		   if (iCnt > 0)
+		   {
+			   if ((DataB[0] / 10 == 1) || (DataB[0] / 10 == 5))   // Static & Frequency Only
+				   AddOQMRes(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
 		   }
 		   //WriteF
 	   }
@@ -10766,7 +13416,7 @@ while (!feof(pFile))
       while (iKey != 0)
       {
             iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
 			if (iCnt > 0)
 			{
 				if ((DataB[0] / 10 == 1) || (DataB[0] / 10 == 2))   // Static or Modes
@@ -10784,11 +13434,27 @@ while (!feof(pFile))
       while (iKey != 0)
       {
             iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
+			ACODE = DataB[0];
+			TCODE = DataB[1];
+			FCODE = DataB[7];	  //newly added so result can be
+			SCODE = DataB[8];	  //interprested m
+			iTC = TCODE / 1000;
 			if (iCnt > 0)
 			{
-				if (DataB[0] / 10 == 1)  //Statics only
-				  AddOSTRRes(DataB, iCnt, sTitle, sSubTitle, inName);
+				if (ACODE / 10 == 1)  //STATICS	or RANDOM
+				{
+					if ((iTC == 0) || (iTC == 2))	//statics real sort 1 & 2
+						AddOSTRRes(DataB, iCnt, sTitle, sSubTitle, inName);
+					else if ((iTC=4) || (iTC=5))	//Random  real sort 1 & 2
+						AddOSTRResR(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+
+				}
+				if (ACODE / 10 == 5)  //Freq
+				{
+					if ((iTC == 1) || (iTC == 3))  //Complex sort1 and sort2
+						AddOSTRResF(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+				}
 			}
             //WriteF
       }
@@ -10796,37 +13462,36 @@ while (!feof(pFile))
    else if ((sDataS[0] == 'O') &&
             (sDataS[1] == 'E') &&
             (sDataS[2] == 'S') &&
-			(sDataS[3] == '1') &&
             (iRecord == -3)) 
    {
       while (iKey != 0)
       {
             iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
+            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle, dFreq);
+			ACODE = DataB[0];
+			TCODE = DataB[1];
+			FCODE = DataB[7];	  //newly added so result can be
+			SCODE = DataB[8];	  //interprested m
+			iTC = TCODE / 1000;
 			if (iCnt > 0)
 			{
-				if (DataB[0] / 10 == 1)  //Statics only
-					AddOES1Res(DataB, iCnt, sTitle, sSubTitle, inName);
-			}
-            //WriteF
-      }
-   }
-   else if ((sDataS[0] == 'O') &&
-            (sDataS[1] == 'E') &&
-            (sDataS[2] == 'S') &&
-			(sDataS[3] == 'N') &&
-            (iRecord == -3)) 
-   {
-      while (iKey != 0)
-      {
-            iCnt = 0;
-            Readdb(pFile,DataB,iCnt,iKey,iRecord,sTitle,sSubTitle);
-			if (iCnt > 0)
-			{
-				//Non Linear Stress
+				if (ACODE / 10 == 1)  //Statics only
+				{
+					if ((iTC == 0) || (iTC == 2))  //Real sort1 and sort2
+						AddOES1Res(DataB, iCnt, sTitle, sSubTitle, inName);
+					else if ((iTC == 4) || (iTC == 5))
+						AddOESResR(DataB, iCnt, sTitle, sSubTitle, inName);
+				}
+				else if (ACODE / 10 == 10) //NON LINEAR STATICS
+				{
 					AddOESNRes(DataB, iCnt, sTitle, sSubTitle, inName);
+				}
+				else if (ACODE / 10 == 5)  //Frequency
+				{
+					if ((iTC == 1) || (iTC == 3))  //Complex sort1 and sort2
+					  AddOES1ResF(DataB, iCnt, sTitle, sSubTitle, inName, dFreq);
+				}
 			}
-            //WriteF
       }
    }
    else if ((sDataS[0] == 'O') &&  //Strain element desity added 21/02/2019
@@ -10838,12 +13503,13 @@ while (!feof(pFile))
      while (iKey != 0)
      {
        iCnt = 0;
-       Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle);
+       Readdb(pFile, DataB, iCnt, iKey, iRecord, sTitle, sSubTitle, dFreq);
        if (iCnt>0)
          AddONRGRes(DataB, iCnt, sTitle, sSubTitle, inName);
        //WriteF
      }
    }
+
    fread (&sT,8,1,pFile);
    //iWord = *(int*) &sWord;
    //fWord = *(float*) &sWord; 
@@ -10869,6 +13535,7 @@ else if (iT == 3)
 }
 if (Mesh!=NULL)
 {
+  Mesh->MaxLab();
   pCurrentMesh=Mesh;
   DB_Obj[DB_ObjectCount] =Mesh;
   DB_ObjectCount++;
@@ -10906,9 +13573,9 @@ void DBase::S_ImportGroups(FILE* pFile)
 		}
 		else if (sdl.Find("ELEM")==0)
 		{
-		  s8=sdl.Mid(8,8);
+		  s8=sdl.Mid(10,10);
 		  iID=atoi(s8);
-		  s8=sdl.Mid(16,8);
+		  s8=sdl.Mid(20,10);
 		  iCol=atoi(s8);
 		  pO=pCurrentMesh->GetObj(3,iID);
 		  if (pO!=NULL)
@@ -10921,9 +13588,9 @@ void DBase::S_ImportGroups(FILE* pFile)
 		}
 		else if (sdl.Find("NODE")==0)
 		{
-		  s8=sdl.Mid(8,8);
+		  s8=sdl.Mid(10,10);
 		  iID=atoi(s8);
-		  s8=sdl.Mid(16,8);
+		  s8=sdl.Mid(20,10);
 		  iCol=atoi(s8);
 		  pO=pCurrentMesh->GetObj(1,iID);
 		  if (pO!=NULL)
@@ -10992,48 +13659,73 @@ outtext1("    ****");
 }
 
 
-GLuint DBase::S_loadBMP(FILE* pFile, CString inName)
+GLuint DBase::S_loadBMP(CString sFile, CString inName) 
 {
-  if (pWorldBMP==NULL)
-  {
-    pWorldBMP=new BMP();
-  }
-  else
-  {
-     delete(pWorldBMP);
-     pWorldBMP=NULL;
-  }
+	//Load the bitman must read as a binary file
+	CT2CA pszConvertedAnsiString(sFile);
+	std::string strFileName(pszConvertedAnsiString);
 
- 
-  if (pFile==NULL) 
-  { 
-    outtext1("ERROR: Image could not be opened.");
-    return (0); 
-  }
-  if (fread(pWorldBMP->header, 1, 54, pFile) != 54)
-  { // If not 54 bytes read : problem
-    outtext1("ERROR: Not a correct BMP file.");
-    return (0);
-  }
-  if (pWorldBMP->header[0] != 'B' || pWorldBMP->header[1] != 'M')
-  {
-    outtext1("ERROR: Not a correct BMP file.");
-    return 0;
-  }
-  // Read ints from the byte array
-  pWorldBMP->dataPos = *(int*)&(pWorldBMP->header[0x0A]);
-  pWorldBMP->imageSize = *(int*)&(pWorldBMP->header[0x22]);
-  pWorldBMP->width = *(int*)&(pWorldBMP->header[0x12]);
-  pWorldBMP->height = *(int*)&(pWorldBMP->header[0x16]);
-  // Some BMP files are misformatted, guess missing information
-  if (pWorldBMP->imageSize == 0)    pWorldBMP->imageSize = pWorldBMP->width*pWorldBMP->height * 3; // 3 : one byte for each Red, Green and Blue component
-  if (pWorldBMP->dataPos == 0)      pWorldBMP->dataPos = 54; // The BMP header is done that way
-                                       // Create a buffer
-  pWorldBMP->data = new unsigned char[pWorldBMP->imageSize];
-  // Read the actual data from the file into the buffer
-  fread(pWorldBMP->data, 1, pWorldBMP->imageSize, pFile);
-  return(1);
+	if (pWorldBMP != nullptr) {
+		delete (pWorldBMP);
+		pWorldBMP = nullptr;
+    }
+	//Open file
+	std::ifstream file(strFileName.c_str(), std::ios::binary);
+	if (!file.is_open()) {
+		outtext1("ERROR: Image could not be opened.");
+		return 0;
+	}
+
+	pWorldBMP = new BMP();
+	// Read the BMP header
+	if (!file.read(reinterpret_cast<char*>(pWorldBMP->header), 54)) {
+		outtext1("ERROR: Not a correct BMP file.");
+		file.close();
+		delete (pWorldBMP);
+		return 0;
+	}
+	if (pWorldBMP->header[0] != 'B' || pWorldBMP->header[1] != 'M') {
+		outtext1("ERROR: Not a correct BMP file.");
+		file.close();
+		delete (pWorldBMP);
+		return 0;
+	}
+	//// Read ints from the byte array
+    pWorldBMP->dataPos = *(int*)&(pWorldBMP->header[0x0A]);
+    pWorldBMP->imageSize = *(int*)&(pWorldBMP->header[0x22]);
+    pWorldBMP->width = *(int*)&(pWorldBMP->header[0x12]);
+    pWorldBMP->height = *(int*)&(pWorldBMP->header[0x16]);
+	// Allocate memory for the data buffer
+	pWorldBMP->data = new unsigned char[pWorldBMP->imageSize];
+
+	// Check if memory allocation was successful
+	if (pWorldBMP->data == nullptr) {
+		outtext1("ERROR: Bad Memory Allocation.");
+		file.close();
+		delete (pWorldBMP);
+		return 0;
+	}
+
+	// Read the actual data from the file into the buffer
+	file.seekg(pWorldBMP->dataPos, file.beg);
+	if (!file.read(reinterpret_cast<char*>(pWorldBMP->data), pWorldBMP->imageSize))
+	{
+		outtext1("ERROR: Data Read Failure.");
+		delete[] pWorldBMP->data;
+		pWorldBMP->data = nullptr;
+		file.close();
+		return 0;
+	}
+
+	file.close(); // Close the file when done
+	return 1;
 }
+
+
+
+
+
+
 
 
 int DBase::S_ImportWG(FILE* pFile,CString inName)
@@ -12580,7 +15272,17 @@ void DBase::DeleteObj()
 					Dsp_RemGP(S_Buff[iCO]);
 				}
 			} 
-			else if ((S_Buff[iCO]->iObjType==321) || (S_Buff[iCO]->iObjType==322) || (S_Buff[iCO]->iObjType==323) || (S_Buff[iCO]->iObjType==324) || (S_Buff[iCO]->iObjType==325) || (S_Buff[iCO]->iObjType==326) || (S_Buff[iCO]->iObjType==327) || (S_Buff[iCO]->iObjType==328))
+			else if ((S_Buff[iCO]->iObjType==321) || 
+				(S_Buff[iCO]->iObjType==322) || 
+				(S_Buff[iCO]->iObjType==323) || 
+				(S_Buff[iCO]->iObjType==324) || 
+				(S_Buff[iCO]->iObjType==325) || 
+				(S_Buff[iCO]->iObjType==326) || 
+				(S_Buff[iCO]->iObjType==327) || 
+				(S_Buff[iCO]->iObjType==328) || 
+				(S_Buff[iCO]->iObjType==329) ||
+				(S_Buff[iCO]->iObjType==331) ||
+				(S_Buff[iCO]->iObjType==332))
 			{
 				ME_Object* Me = (ME_Object*) S_Buff[iCO]->pParent->pParent;
 				if (Me->DeleteBC((BCLD*) S_Buff[iCO])==TRUE)
@@ -12592,14 +15294,14 @@ void DBase::DeleteObj()
 			else if (S_Buff[iCO]->iObjType==1)
 			{
 				ME_Object* Me = (ME_Object*) S_Buff[iCO]->pParent;
-				if (Me->DeleteNd((Pt_Object*) S_Buff[iCO])==TRUE)
+				if (Me->DeleteNd((Node*) S_Buff[iCO])==TRUE)
 				{
 					//RemObj(S_Buff[iCO]);
 					Dsp_Rem(S_Buff[iCO]);
 					Dsp_RemGP(S_Buff[iCO]);
 				}
 			}  
-			else if((S_Buff[iCO]->iObjType==0) || (S_Buff[iCO]->iObjType==2) ||(S_Buff[iCO]->iObjType==5) || (S_Buff[iCO]->iObjType==6) ||(S_Buff[iCO]->iObjType==7)  || (S_Buff[iCO]->iObjType==15) || (S_Buff[iCO]->iObjType==18) || (S_Buff[iCO]->iObjType==500))
+			else if((S_Buff[iCO]->iObjType==0) || (S_Buff[iCO]->iObjType==2) ||(S_Buff[iCO]->iObjType==5) || (S_Buff[iCO]->iObjType==6) ||(S_Buff[iCO]->iObjType==7) || (S_Buff[iCO]->iObjType == 10) || (S_Buff[iCO]->iObjType==15) || (S_Buff[iCO]->iObjType==18) || (S_Buff[iCO]->iObjType==500))
 			{
 				if (S_Buff[iCO]->pParent==NULL)
 				{
@@ -12721,18 +15423,97 @@ void DBase::ExportMesh(FILE* pFile2)
 {
 if (this->pCurrentMesh!=NULL)
 {
-	pCurrentMesh->ExportUNV(pFile2,pSecs);
+  pCurrentMesh->ExportUNV(pFile2,pSecs);
   fprintf(pFile2,"%6s\n","-1");
 }
 fclose(pFile2);
 }
 
+void DBase::ExportMesh2STL(CString sFile)
+{
+	if (this->pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ExportSTL(sFile);
+	}
+
+}
+
+void DBase::ImportMesh2STL(CString sFile)
+{
+	if (this->pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ImportSTL(sFile);
+		InvalidateOGL();
+		ReDraw();
+	}
+
+}
+
+
+
+
+void DBase::ExportDXF(FILE* pFile2)
+{
+	outtext1("WARNING: DXF Output in Developement.");
+	int iCO;
+	fprintf(pFile2, "0\n");				// write a line with value 0
+	fprintf(pFile2, "SECTION\n");		// write the SECTION header
+	fprintf(pFile2, "2\n");				// write a line with value 2
+	fprintf(pFile2, "ENTITIES\n");		// write the ENTITIES header
+	fprintf(pFile2, "0\n");				// write a line with value 0
+	for (iCO = 0; iCO < DB_ObjectCount; iCO++)
+	{ 
+		//Curves and Points so far
+		if ((DB_Obj[iCO]->iObjType == 7) && (DB_Obj[iCO]->iType == 1))
+		{   //need to deal with trimmed curves
+
+			NCurve* pC = (NCurve*)DB_Obj[iCO];
+			NCurve* pC1 = nullptr;
+			NCurve* pC2 = nullptr;
+			NCurve* pC3 = nullptr;
+			NCurve* pC4 = nullptr;
+			NCurve* pT = nullptr;
+			C3dVector vs, ve;
+			vs = pC->GetPt(pC->ws);
+			ve = pC->GetPt(pC->we);
+			pT = pC;
+            if (pC->ws>0)
+			{
+				CurveDivide(pC, pC1, pC2, vs);
+				pT = pC2;
+			}
+			if (pC->we < 1)
+			{
+				CurveDivide(pT, pC3, pC4, ve);
+				pT = pC3;
+			}
+			pT->ExportDXF(pFile2);
+			delete(pC1);
+			delete(pC2);
+			delete(pC3);
+			delete(pC4);
+
+		}
+		else if ((DB_Obj[iCO]->iObjType == 0) 
+			    || (DB_Obj[iCO]->iObjType == 6)
+			    || (DB_Obj[iCO]->iObjType == 7)
+			    || (DB_Obj[iCO]->iObjType == 10))
+		{
+			DB_Obj[iCO]->ExportDXF(pFile2);
+		}
+
+	}
+	fprintf(pFile2, "ENDSEC\n");			// end the section
+	fprintf(pFile2, "0\n");				// write a line with value 0
+	fprintf(pFile2, "EOF\n");			// end the file
+	fclose(pFile2);
+}
 
 void DBase::ExportPermGroupsTXT(FILE* pFile2)
 {
 int i;
 int j;
-Pt_Object* pN;
+Node* pN;
 E_Object* pE;
  fprintf(pFile2,"%-10s%-10s%-10s%-10s%-10s\n","$ELEM","ID","COL","PID","TYPE");
  fprintf(pFile2,"%-10s%-10s%-10s%-10s%-10s\n","$NODE","ID","COL","DEF","OUT");
@@ -12746,7 +15527,7 @@ for (i=0;i<iNoGPs ;i++)
     {
       if ((Groups[i]->Objs[j]->iObjType==1) && (Groups[i]->Objs[j]->pParent==pCurrentMesh))
       {
-        pN=(Pt_Object*) Groups[i]->Objs[j];
+        pN=(Node*) Groups[i]->Objs[j];
         fprintf(pFile2,"%-10s%-10i%-10i%-10i%-10i\n","NODE",pN->iLabel,pN->iColour,pN->DefSys,pN->OutSys);
       }
       else if ((Groups[i]->Objs[j]->iObjType==3) && (Groups[i]->Objs[j]->pParent==pCurrentMesh))
@@ -12796,7 +15577,7 @@ fclose(pFile2);
 
 
 
-void DBase::ExportMeshNAS(FILE* pFile2)
+void DBase::ExportMeshNAS(FILE* pFile2, int iFile)
 {
 if (this->pCurrentMesh!=NULL)
 {
@@ -12810,22 +15591,30 @@ if (this->pCurrentMesh!=NULL)
     int Min=timeStart.GetMinute();
     int Sec=timeStart.GetSecond();
 
-    if (Year<2025)
+    if (Year<3000)
     {
     fprintf(pFile2,"%s\n","$**********************************************************");
     fprintf(pFile2,"%s\n","$      NASTRAN DECK EXPORTED FROM M3D");
-    fprintf(pFile2,"%s\n","$      VERSION 5.0");
+    fprintf(pFile2,"%s\n","$      VERSION 7.2");
     fprintf(pFile2,"%s\n","$      www.M3dFea.com");
     fprintf(pFile2,"%s %i:%i:%i\n","$      DATE",Day,Mon,Year);
     fprintf(pFile2,"%s %i:%i:%i\n","$      TIME",Hour,Min,Sec);
     fprintf(pFile2,"%s\n","$**********************************************************");
-    fprintf(pFile2, "%s\n", "BEGIN BULK");
-    fprintf(pFile2,"%s\n","$*********************MATERIALS****************************");
-    MatT->ExportNAS(pFile2);
-    fprintf(pFile2,"%s\n","$********************PROPERTIES****************************");
-	PropsT->ExportNAS(pFile2);
-    pCurrentMesh->ExportNAS(pFile2,pSecs);
-	fprintf(pFile2, "%s\n", "ENDDATA");
+	if (pCurrentMesh->pSOLS != NULL)
+		pCurrentMesh->ExportNASExec(pFile2, pSecs);
+	if (iFile == -1)
+	{
+		fprintf(pFile2, "%s\n", "BEGIN BULK");
+		fprintf(pFile2, "%s\n", "PARAM,POST,-1");
+	}
+	fprintf(pFile2, "%s\n", "$******************** MATERIALS ***************************");
+    MatT->ExportNAS(pFile2, iFile);
+    fprintf(pFile2,"%s\n","$******************* PROPERTIES ***************************");
+	PropsT->ExportNAS(pFile2, iFile);
+    pCurrentMesh->ExportNAS(pFile2,pSecs,iFile);
+	pCurrentMesh->ExportNAS_SETS(pFile2, pSecs, iFile);
+	if (iFile == -1)
+	   fprintf(pFile2, "%s\n", "ENDDATA");
     }
     else
     {
@@ -12850,11 +15639,11 @@ if (this->pCurrentMesh!=NULL)
     int Min=timeStart.GetMinute();
     int Sec=timeStart.GetSecond();
 
-    if (Year<2020)
+    if (Year<2030)
     {
       fprintf(pFile2,"%s\n","$**********************************************************");
       fprintf(pFile2,"%s\n","$      NASTRAN DECK EXPORTED FROM M3D");
-      fprintf(pFile2,"%s\n","$      VERSION 5.0");
+      fprintf(pFile2,"%s\n","$      VERSION 6.1");
       fprintf(pFile2,"%s\n","$      WWW.M3d.org.uk");
       fprintf(pFile2,"%s %i:%i:%i\n","$      DATE",Day,Mon,Year);
       fprintf(pFile2,"%s %i:%i:%i\n","$      TIME",Hour,Min,Sec);
@@ -12875,6 +15664,75 @@ if (this->pCurrentMesh!=NULL)
 }
 fclose(pFile2);
 }
+
+void DBase::ExportViewMat(FILE* pFile2)
+{
+  
+
+  if (pFile2 != nullptr)
+  {
+	  fprintf(pFile2, "%s\n", "MAT");
+	  fprintf(pFile2, "%lf %lf %lf %lf\n", pModelMat.m_00, pModelMat.m_01, pModelMat.m_02, pModelMat.m_03);
+	  fprintf(pFile2, "%lf %lf %lf %lf\n", pModelMat.m_10, pModelMat.m_11, pModelMat.m_12, pModelMat.m_13);
+	  fprintf(pFile2, "%lf %lf %lf %lf\n", pModelMat.m_20, pModelMat.m_21, pModelMat.m_22, pModelMat.m_23);
+	  fprintf(pFile2, "%lf %lf %lf %lf\n", pModelMat.m_30, pModelMat.m_31, pModelMat.m_32, pModelMat.m_33);
+	  fclose(pFile2);
+	  outtext1("View Matrix saved.");
+  }
+  else 
+  {
+	  outtext1("ERROR: Unable to save View Matrix.");
+  }
+}
+
+void DBase::ImportViewMat(FILE* pFile)
+{
+
+	char s1[200];
+	C3dMatrix mT;
+	int irc;
+	BOOL bErr = FALSE;
+
+	if (pFile != nullptr)
+	{
+		irc = fscanf(pFile, "%s", &s1);
+		if (irc != 1)
+			bErr = TRUE;
+		irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_00, &mT.m_01, &mT.m_02, &mT.m_03);
+		if (irc != 4)
+			bErr = TRUE;
+		if (!bErr)
+		    irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_10, &mT.m_11, &mT.m_12, &mT.m_13);
+		if (irc != 4)
+			bErr = TRUE;
+		if (!bErr)
+		    irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_20, &mT.m_21, &mT.m_22, &mT.m_23);
+		if (irc != 4)
+			bErr = TRUE;
+		if (!bErr)
+		    irc = fscanf(pFile, "%lf %lf %lf %lf", &mT.m_30, &mT.m_31, &mT.m_32, &mT.m_33);
+		if (irc != 4)
+			bErr = TRUE;
+		if (!bErr)
+		{
+			outtext1("View Matrix loaded.");
+			tOrient.PushMat(mT);
+			pModelMat = mT;
+			InvalidateOGL();
+			ReDraw();
+		}
+		else
+		{
+			outtext1("ERROR: Invalid Matrix Format.");
+		}
+	}
+	else 
+	{
+		outtext1("ERROR: Unable to load View Matrix.");
+	}
+}
+
+
 void DBase::BuildAssembly(CString sModName)
 {
 int iCO;
@@ -12975,6 +15833,7 @@ void DBase::KnotInsertion(NCurve* pC,C3dVector vPt)
   pM.Set(0.0, 1.0, 0.0);
   double p;  //order
   int r;
+  int k = 0;
   double dU;
   NCurve* pNewC=NULL;
 
@@ -12985,11 +15844,20 @@ void DBase::KnotInsertion(NCurve* pC,C3dVector vPt)
     dU = pC->MinWPt(vPt);
     if ((dU > 0) && (dU < 1))
     {
-      r = pC->knotInsertion(dU, 2, cPts, knots);
+      r = pC->knotInsertion(dU, pC->p+1,k, cPts, knots);
       pNewC = new NCurve();
       pNewC->GenerateExp(p, cPts, knots);
       pNewC->Move(pM);
+	  pNewC->iLabel = pC->iLabel;
       AddObj(pNewC);
+	  //Remove original
+	  if (pC->pParent == NULL)
+	  {
+		  RemObj(pC);
+		  Dsp_Rem(pC);
+		  Dsp_RemGP(pC);
+	  }
+	  InvalidateOGL();
       ReDraw();
     }
     else
@@ -13003,11 +15871,139 @@ void DBase::KnotInsertion(NCurve* pC,C3dVector vPt)
   }
 }
 
-C3dVector DBase::Intersect(BOOL &bErr)
+//Divide a curve into 2 at point
+//pC original
+//pC1 first new curve pC2 remainder of curve
+void DBase::CurveDivide(NCurve* pC, NCurve* &pC1, NCurve* &pC2, C3dVector vPt)
+{
+	double dU;
+	Vec<C4dVector> cPts;
+	Vec<double> knots;
+	Vec<C4dVector> cPtsSeg;
+	Vec<double> knotsSeg;
+	C3dVector pM;
+	pM.Set(0.0, 1.0, 0.0);
+	double p;  //order
+	double dTmp;
+	int r;
+	int i;
+	int k = 0;
+	p = pC->p;
+	dU = pC->MinWPt(vPt);
+	if ((dU > 0) && (dU < 1))
+	{
+		r = pC->knotInsertion(dU, pC->p + 1, k, cPts, knots);
+		cPtsSeg.Size(k + 1);
+		knotsSeg.Size(k + r + 1);
+		for (i = 0; i < k + 1; i++)
+			cPtsSeg[i] = cPts[i];
+		for (i = 0; i < k + r + 1; i++)
+		{
+			dTmp = knots[i] / knots[k + r];
+			knotsSeg[i] = dTmp;
+		}
+		if (pC->iType == 1)
+			pC1 = new NCurve();
+		else
+			pC1 = new NLine();
+		pC1->GenerateExp(p, cPtsSeg, knotsSeg);
+		pC1->iLabel = pC->iLabel;
+		//AddObj(pNewC);
+		cPtsSeg.DeleteAll();
+		knotsSeg.DeleteAll();
+		//cPts.DeleteAll();
+		//knots.DeleteAll();
+		//Second segment curve
+		int iSS;
+		cPtsSeg.Size(cPts.n - (k + 1));
+		knotsSeg.Size(cPtsSeg.n + r);
+		for (i = (k + 1); i < cPts.n; i++)
+			cPtsSeg[i - (k + 1)] = cPts[i];
+		for (i = k + 1; i < cPts.n + r; i++)
+		{
+			dTmp = (knots[i] - knots[k + 1]) / (knots[cPts.n + r - 1] - knots[k + 1]);
+			knotsSeg[i - (k + 1)] = dTmp;
+		}
+		if (pC->iType == 1)
+			pC2 = new NCurve();
+		else
+			pC2 = new NLine();
+		pC2->GenerateExp(p, cPtsSeg, knotsSeg);
+		pC2->iLabel = iCVLabCnt;
+		iCVLabCnt++;
+		//AddObj(pNewC);
+		cPtsSeg.DeleteAll();
+		knotsSeg.DeleteAll();
+
+	}
+	cPts.DeleteAll();
+    knots.DeleteAll();
+}
+
+
+void DBase::CurveSplit(NCurve* pC, C3dVector vPt)
+{
+	Vec<C4dVector> cPts;
+	double dU;
+	NCurve* pNewC1 = NULL;
+	NCurve* pNewC2 = NULL;
+	NCircle* pCir = NULL;
+	if (pC != NULL)
+	{
+		if (pC->iType == 3)
+		{
+			outtext1("Circle Split.");
+			dU = pC->MinWPt(vPt);
+			if ((dU > 0) && (dU < 1))
+			{
+				pCir = (NCircle *) pC->Copy(pC->pParent);
+				pCir->iLabel = iCVLabCnt;
+				iCVLabCnt++;
+				AddObj(pCir);
+				pCir->ws = dU;
+				pCir->we = pC->we;
+				pC->we = dU;
+			}
+			else
+			{
+				outtext1("ERROR: No Projection onto Circle.");
+			}
+		}
+		else
+		{
+			outtext1("Curve found for knot insertion.");
+			CurveDivide(pC, pNewC1, pNewC2, vPt);
+			if ((pNewC1 != nullptr) && (pNewC2 != nullptr))
+			{
+				AddObj(pNewC1);
+				AddObj(pNewC2);
+				//Remove original
+				if (pC->pParent == NULL)
+				{
+					RemObj(pC);
+					Dsp_Rem(pC);
+					Dsp_RemGP(pC);
+				}
+				InvalidateOGL();
+				S_Des();
+			}
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Curve Selected.");
+	}
+	S_Des();
+
+}
+
+C3dVector DBase::Intersect(BOOL &bErr, CPoint nPt)
 {
 C3dVector vRet;
 NCurve* Ln=NULL;
 NCurve* Ln1=NULL;
+C3dVector pN1;
+pN1 = PickPointToGlobal(nPt);
 bErr=FALSE;
 if (S_Count>1)
 {
@@ -13030,7 +16026,7 @@ if (S_Count>1)
   }
   if (!bErr)
   {
-    vRet=NLnInt(Ln,Ln1);
+    vRet=NLnInt3(Ln,Ln1,&pN1);
     S_Count--;
     S_Count--;
     ReDraw();
@@ -13082,295 +16078,536 @@ if (S_Count>1)
 }
 }
 
-void DBase::Corner(NLine* Ln,NLine* Ln1, C3dVector PNear1,C3dVector PNear2)
-{
+void DBase::Trim(CPoint PNear1, CPoint PNear2) {
+	char S1[200];
+	CString OutT;
+	double dU;
+	double dUse, dUse2;
+	NLine* Ln = nullptr;
+	NLine* Ln1 = nullptr;
+	NCurve* Cv = nullptr;
+	NCurve* Cv1 = nullptr;
+	BOOL bErr = FALSE;
+	NCircle* cCir;
+	cCir = nullptr;
+	C3dVector pN1, pN2, vRet;
+	pN1 = PickPointToGlobal(PNear1);
+	pN2 = PickPointToGlobal(PNear2);
 
-C3dVector p1;
-C3dVector p2;
-C3dVector p3;
-C3dVector pT;
-C3dVector vL1Dir;
-C3dVector* pLT1;
-C3dVector* pLT2;
-C3dVector v1;
-C3dVector v2;
-C3dVector v3;
+	if (S_Count > 1) {
+		// Check if both selected items are curves
+		if ((S_Buff[S_Count - 1]->iObjType == 7) && (S_Buff[S_Count - 2]->iObjType == 7)) {
+			if ((S_Buff[S_Count - 1]->iType == 2) && (S_Buff[S_Count - 2]->iType == 2)) { // Two lines, only 1 possible intersection
+				Ln = (NLine*)S_Buff[S_Count - 2];
+				Ln1 = (NLine*)S_Buff[S_Count - 1];
+				vRet = NLnInt2(Ln, Ln1, &pN1);
+				dU = Ln->MinWPt(vRet); // U at intersect
+				dUse = Ln->MinWPt(pN1);
+				sprintf_s(S1, " Debug W: ,%f,%f", dU, dUse);
+				if ((dUse < dU) && (Ln->we > dU)) // This is trim
+					Ln->ws = dU;
+				else if ((dUse > dU) && (Ln->ws < dU))
+					Ln->we = dU;
+				else if ((dUse > dU) && (Ln->ws > dU)) // This is extend
+					Ln->ws = dU;
+				else if ((dUse < dU) && (Ln->we < dU))
+					Ln->we = dU;
+				S_Count -= 2;
+				InvalidateOGL();
+				ReDraw();
+			}
+			else { // Two curves, possible multiple intersections
+				int iNoInts = 0;
+				C3dVector vInts[10];
+				double uInts[10];
+				outtext1("Search for multiple intersections.");
+				Cv = (NCurve*)S_Buff[S_Count - 2];
+				Cv1 = (NCurve*)S_Buff[S_Count - 1];
+				if (Cv->iType == 3)
+					cCir = (NCircle*)Cv;
+				// iNoInts = TentativeInt(Cv, Cv1, vInts, uInts);
+				dUse = Cv->MinWPt(pN1);
+				dUse2 = Cv->MinWPt(pN2);
+				if (iNoInts > 0) {
+					int pNr = FindNearest(iNoInts, uInts, dUse2);
+					dU = uInts[pNr];
+				}
+				else {
+					dU = dUse2;
+				}
+				C3dVector pNr2;
+				pNr2 = Cv->GetPt(dU);
+				vRet = NLnInt3(Cv, Cv1, &pNr2);
+				dU = Cv->MinWPt(vRet); // U at intersect
+				sprintf_s(S1, " Debug W: ,%f,%f", dU, dUse);
+				if (cCir != nullptr)
+				{
+					//if ((dUse < dU) && (Cv->we > dU)) // This is trim
+					if (abs(Cv->ws - dUse) < abs(Cv->we-dUse))
+					    cCir->RotateToUS(dU);
+					else if ((dUse > dU) && (Cv->ws < dU))
+						Cv->we = dU;
+					// else if ((dUse > dU) && (Cv->ws > dU)) // This is extend
+					//	cCir->RotateToUS(dU);
+					else if ((dUse < dU) && (Cv->we < dU))
+						Cv->we = dU;
+					if (Cv->we - Cv->ws < 0)
+					{
 
-// The intersection of the lines
-p2=NLnInt(Ln,Ln1);
-//choose the other ends of lines to keep
-//choose the ones with longest distance
-pT=Ln->cPts[0]->Pt_Point;
-v1=pT-p2;
-v2=PNear1-p2;
-pT=Ln->cPts[1]->Pt_Point;
-v3=pT-p2;
-//both point are the ame side
-if (v3.Dot(v1)>0)
-{
-  if (v1.Mag()<v3.Mag())
-  {
-   {p1=Ln->cPts[1]->Pt_Point;
-    pLT1=Ln->cPts[0]->Pt_Point;}
-  }
-  else
-  {
-    {p1=Ln->cPts[0]->Pt_Point;
-    pLT1=Ln->cPts[1]->Pt_Point;}
-  }
-}
-else
-{
-if (v1.Dot(v2)>0)
-  {p1=Ln->cPts[0]->Pt_Point;
-   pLT1=Ln->cPts[1]->Pt_Point;}
-else
-  {p1=Ln->cPts[1]->Pt_Point;
-   pLT1=Ln->cPts[0]->Pt_Point;}
-}
-vL1Dir=pLT1;
-vL1Dir-=p1;
-vL1Dir.Normalize();
-
-pT=Ln1->cPts[0]->Pt_Point;
-v1=pT-p2;
-v2=PNear2-p2;
-pT=Ln1->cPts[1]->Pt_Point;
-v3=pT-p2;
-//both point are the ame side
-if (v3.Dot(v1)>0)
-{
-  if (v1.Mag()<v3.Mag())
-  {
-   {p3=Ln1->cPts[1]->Pt_Point;
-    pLT2=Ln1->cPts[0]->Pt_Point;}
-  }
-  else
-  {
-    {p3=Ln1->cPts[0]->Pt_Point;
-    pLT2=Ln1->cPts[1]->Pt_Point;}
-  }
-}
-else
-{
-if (v1.Dot(v2)>0)
-  {p3=Ln1->cPts[0]->Pt_Point;
-   pLT2=Ln1->cPts[1]->Pt_Point;}
-else
-  {p3=Ln1->cPts[1]->Pt_Point;
-   pLT2=Ln1->cPts[0]->Pt_Point;}
-}
-pLT1->Set(p2.x,p2.y,p2.z);  //trim the end point
-pLT2->Set(p2.x,p2.y,p2.z);  //trim the end point
-
-}
-
-NCircle* DBase::Fillet2(double dR,CPoint PNear1,CPoint PNear2)
-{
-//double R;
-//R=dR;
-NLine* Ln=NULL;
-NLine* Ln1=NULL;
-BOOL bErr=FALSE;
-NCircle* cCir;
-cCir=NULL;
-C3dVector pN1,pN2;
-pN1=PickPointToGlobal(PNear1);
-pN2=PickPointToGlobal(PNear2);
-if (dR>0)
-{
-if (S_Count>1)
-{
-  if ((S_Buff[S_Count-2]->iObjType==7) &&
-	  (S_Buff[S_Count - 2]->iType == 2))
-  {
-    Ln=(NLine*) S_Buff[S_Count-2];
-  }
-  else
-  {
-    bErr=TRUE;  
-  }
-  if ((S_Buff[S_Count-1]->iObjType==7) &&
-	  (S_Buff[S_Count - 2]->iType == 2))
-  {
-    Ln1=(NLine*) S_Buff[S_Count-1];
-  }
-  else
-  {
-    bErr=TRUE; 
-  }
-  if (!bErr)
-  {
-    cCir=Fillet(Ln,Ln1,dR,pN1,pN2);
-	cCir->iLabel= iCVLabCnt;
-    iCVLabCnt++;
-    S_Count--;
-    S_Count--;
-    AddObj(cCir);
-    InvalidateOGL();
-    ReDraw();
-  }
-}
-}
-return(cCir);
+						Cv->ws = 0;
+						Cv->we = 1;
+					}
+				}
+				else
+				{
+					if ((dUse < dU) && (Cv->we > dU)) // This is trim
+						Cv->ws = dU;
+					else if ((dUse > dU) && (Cv->ws < dU))
+						Cv->we = dU;
+					else if ((dUse > dU) && (Cv->ws > dU)) // This is extend
+						Cv->ws = dU;
+					else if ((dUse < dU) && (Cv->we < dU))
+						Cv->we = dU;
+				}
+				S_Count -= 2;
+				InvalidateOGL();
+				ReDraw();
+			}
+		}
+		else {
+			outtext1("ERROR: Two curves must be selected.");
+			S_Count -= 2;
+			ReDraw();
+		}
+	}
+	else {
+		outtext1("ERROR: .");
+	}
 }
 
-NCircle* DBase::Fillet(NLine* Ln,NLine* Ln1,double dR, C3dVector PNear1,C3dVector PNear2)
-{
-double R;
-R=dR;
-C3dVector p1;
-C3dVector p2;
-C3dVector p3;
-C3dVector pT;
-C3dVector vL1Dir;
-C3dVector* pLT1;
-C3dVector* pLT2;
-C3dVector v1;
-C3dVector v2;
-C3dVector v3;
 
-// The intersection of the lines
-p2=NLnInt(Ln,Ln1);
-//choose the other ends of lines to keep
-//choose the ones with longest distance
-pT=Ln->cPts[0]->Pt_Point;
-v1=pT-p2;
-v2=PNear1-p2;
-pT=Ln->cPts[1]->Pt_Point;
-v3=pT-p2;
-//both point are the ame side
-if (v3.Dot(v1)>0)
-{
-  if (v1.Mag()<v3.Mag())
-  {
-   {p1=Ln->cPts[1]->Pt_Point;
-    pLT1=Ln->cPts[0]->Pt_Point;}
-  }
-  else
-  {
-    {p1=Ln->cPts[0]->Pt_Point;
-    pLT1=Ln->cPts[1]->Pt_Point;}
-  }
-}
-else
-{
-if (v1.Dot(v2)>0)
-  {p1=Ln->cPts[0]->Pt_Point;
-   pLT1=Ln->cPts[1]->Pt_Point;}
-else
-  {p1=Ln->cPts[1]->Pt_Point;
-   pLT1=Ln->cPts[0]->Pt_Point;}
-}
-vL1Dir=pLT1;
-vL1Dir-=p1;
-vL1Dir.Normalize();
 
-pT=Ln1->cPts[0]->Pt_Point;
-v1=pT-p2;
-v2=PNear2-p2;
-pT=Ln1->cPts[1]->Pt_Point;
-v3=pT-p2;
-//both point are the ame side
-if (v3.Dot(v1)>0)
-{
-  if (v1.Mag()<v3.Mag())
-  {
-   {p3=Ln1->cPts[1]->Pt_Point;
-    pLT2=Ln1->cPts[0]->Pt_Point;}
-  }
-  else
-  {
-    {p3=Ln1->cPts[0]->Pt_Point;
-    pLT2=Ln1->cPts[1]->Pt_Point;}
-  }
-}
-else
-{
-if (v1.Dot(v2)>0)
-  {p3=Ln1->cPts[0]->Pt_Point;
-   pLT2=Ln1->cPts[1]->Pt_Point;}
-else
-  {p3=Ln1->cPts[1]->Pt_Point;
-   pLT2=Ln1->cPts[0]->Pt_Point;}
+
+
+
+
+void DBase::Corner(NLine* Ln, NLine* Ln1, C3dVector PNear1, C3dVector PNear2) {
+	double w = 0;
+	double wNr = 0;
+	C3dVector pt;
+	double d1, d2;
+	C3dVector vE1, vE2, vV;
+
+	// The intersection of the lines
+	pt = NLnInt(Ln, Ln1, NULL);
+
+	// Find line end nearest to pt LINE 1
+	vE1 = Ln->cPts[0]->Get_Centroid();
+	vE2 = Ln->cPts[1]->Get_Centroid();
+	vV = vE1;
+	vV -= PNear1;
+	d1 = vV.Mag();
+	vV = vE2;
+	vV -= PNear1;
+	d2 = vV.Mag();
+	if (d1 < d2) 
+	{
+		d1 = Ln->getLen();
+		Ln->cPts[0]->Pt_Point->Set(pt.x, pt.y, pt.z);
+		d2 = Ln->getLen();
+		Ln->ws = 0;
+		Ln->we = 1 - (1 - Ln->we) * d1 / d2;
+	}
+	else 
+	{
+		d1 = Ln->getLen();
+		Ln->cPts[1]->Pt_Point->Set(pt.x, pt.y, pt.z);
+		d2 = Ln->getLen();
+		Ln->we = 1;
+		Ln->ws = Ln->ws * d1 / d2;
+	}
+
+	// Find line end nearest to pt LINE 2
+	vE1 = Ln1->cPts[0]->Get_Centroid();
+	vE2 = Ln1->cPts[1]->Get_Centroid();
+	vV = vE1;
+	vV -= PNear2;
+	d1 = vV.Mag();
+	vV = vE2;
+	vV -= PNear2;
+	d2 = vV.Mag();
+	if (d1 < d2) 
+	{
+		d1 = Ln1->getLen();
+		Ln1->cPts[0]->Pt_Point->Set(pt.x, pt.y, pt.z);
+		d2 = Ln1->getLen();
+		Ln1->ws = 0;
+		Ln1->we = 1 - (1 - Ln1->we) * d1 / d2;
+	}
+	else 
+	{
+		d1 = Ln1->getLen();
+		Ln1->cPts[1]->Pt_Point->Set(pt.x, pt.y, pt.z);
+		d2 = Ln1->getLen();
+		Ln1->we = 1;
+		Ln1->ws = Ln1->ws * d1 / d2;
+	}
 }
 
-v1=p2;
-v1-=p1;
 
-v2=p3;
-v2-=p2;
-
-C3dVector vn;
-vn=v1.Cross(v2);
-vn.Normalize();
-C3dVector v1o;
-C3dVector v2o;
-
-v1o=v1.Cross(vn);
-v2o=v2.Cross(vn);
-v1o.Normalize();
-v2o.Normalize();
-v1o*=R;
-v2o*=R;
-if (v1o.Dot(v2)<0)
-  v1o*=-1;
-if (v2o.Dot(v1)>0)
-  v2o*=-1;
-C3dVector p1o;
-C3dVector p2o;
-C3dVector p3o;
-C3dVector p4o;
-
-p1o=p1;
-p1o+=v1o;
-p2o=p2;
-p2o+=v1o;
-p3o=p2;
-p3o+=v2o;
-p4o=p3;
-p4o+=v2o;
-NLine* Ln2 = new NLine;
-Ln2->Create(p1o,p2o,1,NULL);
-NLine* Ln3 = new NLine;
-Ln3->Create(p3o,p4o,1,NULL);
-C3dVector IntPt;
-IntPt=NLnInt(Ln2,Ln3);
-NCircle* cCir = new NCircle();
-cCir->Create(vn,IntPt,R,-1,NULL);
-
-C3dVector IntPt1;
-IntPt1=Ln->MinPt(IntPt);
-pLT1->Set(IntPt1.x,IntPt1.y,IntPt1.z);  //trim the end point
-C3dVector IntPt2;
-IntPt2=Ln1->MinPt(IntPt);
-pLT2->Set(IntPt2.x,IntPt2.y,IntPt2.z);  //trim the end point
-double d1q;
-d1q=cCir->MinWPt(IntPt1);
-C3dVector vRef;
-C3dVector vDir;
-vRef=IntPt1;
-vDir=cCir->GetDir(d1q);
-vDir.Normalize();
-vRef-=cCir->vCent;
-vRef.Normalize();
-if (vDir.Dot(vL1Dir)<0)
+NCircle* DBase::Fillet2(double dR, CPoint PNear1, CPoint PNear2)
 {
-  vn*=-1;
-}
-delete (cCir);
-cCir = new NCircle();
-cCir->Create2(vn,IntPt,vRef,R,-1,NULL);
-//d1q=cCir->MinWPt(IntPt1);
-double d2q;
-d2q=cCir->MinWPt(IntPt2);
-cCir->we=d2q;
+	NLine* Ln = nullptr;
+	NLine* Ln1 = nullptr;
+	BOOL bErr = FALSE;
+	NCircle* cCir = nullptr;
 
-delete (Ln2);
-delete (Ln3);
+	C3dVector pN1 = PickPointToGlobal(PNear1);
+	C3dVector pN2 = PickPointToGlobal(PNear2);
 
-return(cCir);
+
+	if (dR > 0)
+	{
+		if (S_Count > 1)
+		{
+			if ((S_Buff[S_Count - 2]->iObjType == 7))
+				Ln = (NLine*)S_Buff[S_Count - 2];
+			else
+				bErr = TRUE;
+			if ((S_Buff[S_Count - 1]->iObjType == 7))
+				Ln1 = (NLine*)S_Buff[S_Count - 1];
+			else
+				bErr = TRUE;
+			if (!bErr)
+			{
+				if ((Ln->iType==2) && (Ln1->iType == 2))
+				   cCir = Fillet(Ln, Ln1, dR, pN1, pN2);	//for lines only
+				else
+				   cCir = FilletIter(Ln, Ln1, dR, pN1, pN2); //for lines only
+				if (cCir != nullptr)
+				{
+					AddObj(cCir);
+					cCir->iLabel = iCVLabCnt;
+					iCVLabCnt++;
+					InvalidateOGL();
+				}
+				S_Count--;
+				S_Count--;
+				ReDraw();
+
+			}
+		}
+	}
+	return cCir;
 }
+
+NCircle* DBase::Fillet(NLine* Ln, NLine* Ln1, double dR, C3dVector PNear1, C3dVector PNear2)
+{
+	double R = dR;
+	BOOL LStart = TRUE;
+	BOOL L1Start = TRUE;
+	double wL = 0;
+	double wL1 = 0;
+	C3dVector p1, p2, p3, pT, vL1Dir, * pLT1, * pLT2, v1, v2, v3;
+
+	// The intersection of the lines
+	p2 = NLnInt(Ln, Ln1, NULL);
+
+	// Choose the other ends of lines to keep
+	// Choose the ones with the longest distance
+	pT = Ln->cPts[0]->Pt_Point;
+	v1 = pT - p2;
+	v2 = PNear1 - p2;
+	pT = Ln->cPts[1]->Pt_Point;
+	v3 = pT - p2;
+
+	// Both points are on the same side
+	if (v3.Dot(v1) > 0)
+	{
+		if (v1.Mag() < v3.Mag())
+		{
+			p1 = Ln->cPts[1]->Pt_Point;
+			pLT1 = Ln->cPts[0]->Pt_Point;
+		}
+		else
+		{
+			p1 = Ln->cPts[0]->Pt_Point;
+			pLT1 = Ln->cPts[1]->Pt_Point;
+			LStart = FALSE;
+		}
+	}
+	else
+	{
+		if (v1.Dot(v2) > 0)
+		{
+			p1 = Ln->cPts[0]->Pt_Point;
+			pLT1 = Ln->cPts[1]->Pt_Point;
+			LStart = FALSE;
+		}
+		else
+		{
+			p1 = Ln->cPts[1]->Pt_Point;
+			pLT1 = Ln->cPts[0]->Pt_Point;
+		}
+	}
+
+	vL1Dir = pLT1;
+	vL1Dir -= p1;
+	vL1Dir.Normalize();
+
+	pT = Ln1->cPts[0]->Pt_Point;
+	v1 = pT - p2;
+	v2 = PNear2 - p2;
+	pT = Ln1->cPts[1]->Pt_Point;
+	v3 = pT - p2;
+
+	// Both points are on the same side
+	if (v3.Dot(v1) > 0)
+	{
+		if (v1.Mag() < v3.Mag())
+		{
+			p3 = Ln1->cPts[1]->Pt_Point;
+			pLT2 = Ln1->cPts[0]->Pt_Point;
+		}
+		else
+		{
+			p3 = Ln1->cPts[0]->Pt_Point;
+			pLT2 = Ln1->cPts[1]->Pt_Point;
+			L1Start = FALSE;
+		}
+	}
+	else
+	{
+		if (v1.Dot(v2) > 0)
+		{
+			p3 = Ln1->cPts[0]->Pt_Point;
+			pLT2 = Ln1->cPts[1]->Pt_Point;
+			L1Start = FALSE;
+		}
+		else
+		{
+			p3 = Ln1->cPts[1]->Pt_Point;
+			pLT2 = Ln1->cPts[0]->Pt_Point;
+		}
+	}
+
+	v1 = p2;
+	v1 -= p1;
+	v2 = p3;
+	v2 -= p2;
+
+	C3dVector vn = v1.Cross(v2);
+	vn.Normalize();
+	C3dVector v1o, v2o;
+	v1o = v1.Cross(vn);
+	v2o = v2.Cross(vn);
+	v1o.Normalize();
+	v2o.Normalize();
+	v1o *= R;
+	v2o *= R;
+
+	if (v1o.Dot(v2) < 0)
+		v1o *= -1;
+	if (v2o.Dot(v1) > 0)
+		v2o *= -1;
+
+	C3dVector p1o, p2o, p3o, p4o;
+	p1o = p1;
+	p1o += v1o;
+	p2o = p2;
+	p2o += v1o;
+	p3o = p2;
+	p3o += v2o;
+	p4o = p3;
+	p4o += v2o;
+
+	NLine* Ln2 = new NLine;
+	Ln2->Create(p1o, p2o, 1, NULL);
+	NLine* Ln3 = new NLine;
+	Ln3->Create(p3o, p4o, 1, NULL);
+
+	C3dVector IntPt;
+	IntPt = NLnInt(Ln2, Ln3, NULL);
+	NCircle* cCir = new NCircle();
+	cCir->Create(vn, IntPt, R, -1, NULL);
+
+	C3dVector IntPt1;
+	IntPt1 = Ln->MinPt(IntPt);
+	//pLT1->Set(IntPt1.x, IntPt1.y, IntPt1.z);  // Trim the end point
+	wL= Ln->MinWPt(IntPt);
+	if (LStart)
+		Ln->ws = wL;
+	else
+		Ln->we = wL;
+		
+	C3dVector IntPt2;
+	IntPt2 = Ln1->MinPt(IntPt);
+	//pLT2->Set(IntPt2.x, IntPt2.y, IntPt2.z);  // Trim the end point
+	wL1 = Ln1->MinWPt(IntPt2);
+	if (L1Start)
+		Ln1->ws = wL1;
+	else
+		Ln1->we = wL1;
+	double d1q;
+	d1q = cCir->MinWPt(IntPt1);
+	C3dVector vRef;
+	C3dVector vDir;
+	vRef = IntPt1;
+	vDir = cCir->GetDir(d1q);
+	vDir.Normalize();
+	vRef -= cCir->vCent;
+	vRef.Normalize();
+	if (vDir.Dot(vL1Dir) < 0)
+	{
+		vn *= -1;
+	}
+	delete (cCir);
+	cCir = new NCircle();
+	cCir->Create2(vn, IntPt, vRef, R, -1, NULL);
+	double d2q;
+	d2q = cCir->MinWPt(IntPt2);
+	cCir->we = d2q;
+	delete (Ln2);
+	delete (Ln3);
+
+	return cCir;
+}
+
+
+//Fillet between 2 arbitrary curves
+//need to iterate for rad circle centre
+NCircle* DBase::FilletIter(NLine* Ln1, NLine* Ln2, double dR, C3dVector PNear1, C3dVector PNear2)
+{
+	NCircle* cCir = nullptr;
+	int iter = 0;
+	CvPt_Object* pPt;
+	BOOL bErr;
+	double dDir1c = 1;      //Direction check
+	double dDir2c = 1;      //Direction check
+	double dMinDist, dDist;
+	double dTD;
+	double w1, w2;				//the w values of the near point on the 2 curves
+	double Deltaw1, Deltaw2;
+	int i;
+	C3dVector v1, v2;			//The actual points on curve
+	C3dVector vCur1, vCur2;
+	C3dVector vD1, vD2, vDir1, vDir2;;			//The direction vectors
+	C3dVector vBet1, vBet2;
+	C3dVector vAC;				//Apperent interection
+	C3dVector vAN;              //Apperent Normal
+	C3dVector vAD1, vAD2;       //Apperent Directions
+	C3dVector vBet;             //Between point v1,v2
+	C3dVector vX1,vX2;
+	w1 = Ln1->MinWPt(PNear1);
+	w2 = Ln2->MinWPt(PNear2);
+	v1 = Ln1->GetPt(w1);
+	v2 = Ln2->GetPt(w2);
+	vDir1 = Ln1->GetDir(w1); vDir1.Normalize();
+	vDir2 = Ln2->GetDir(w2); vDir2.Normalize();
+	vD1 = vDir1; vD2 = vDir2;
+	vD1 += v1; vD2 += v2;
+	bErr = LnIntByPoints(v1, vD1, v2, vD2, vAC);
+	if (bErr)
+	{
+		vAD1 = (v1 - vAC); vAD1.Normalize();
+		vAD2 = (v2 - vAC); vAD2.Normalize();
+		vAN = vAD1.Cross(vAD2);
+		vAN.Normalize();
+		//Direction Check between point
+		vBet = v1; vBet += v2; vBet *= 0.5;
+		//pPt = AddPt(vBet, -1, TRUE);
+		vX1 = vDir1.Cross(vAN); vX1.Normalize();
+		vX2 = vDir2.Cross(vAN); vX2.Normalize();
+
+		//Need to check both vX vectors point to between point
+		vBet1 = vBet - v1;
+		vBet1.Normalize();
+		vBet2 = vBet -v2;
+		vBet2.Normalize();
+		if (vBet1.Dot(vX1) < 0)
+			dDir1c = -1;  //Direction need reversing
+		if (vBet2.Dot(vX2) < 0)
+			dDir2c = -1;
+		vX1 *= dDir1c;
+		vX2 *= dDir2c;
+		//Start of iteration.
+		//The initial centre ooints
+		vX1 *= dR;
+		vX2 *= dR;
+		vCur1 = v1 + vX1;
+		vCur2 = v2 + vX2;
+		dMinDist = vCur1.Dist(vCur2);
+		Deltaw1 = 0.005;
+		Deltaw2 = 0.005;
+		do
+		{
+			w1 += Deltaw1;
+			w2 += Deltaw2;
+			if (w1 < 0)
+				w1 = 0;
+			else if (w1 > 1)
+				w1 = 1;
+			if (w2 < 0)
+				w2 = 0;
+			else if (w2 > 1)
+				w2 = 1;
+
+			//need to do one point at a time
+			v1 = Ln1->GetPt(w1);
+			vDir1 = Ln1->GetDir(w1); vDir1.Normalize();
+			vX1 = vDir1.Cross(vAN); vX1.Normalize();
+			vX1 *= dDir1c;
+			vX1 *= dR;
+			vCur1 = v1 + vX1;
+			dTD = vCur1.Dist(vCur2);
+			if (dTD < dMinDist)
+			{
+				dMinDist = dTD;
+			}
+			else 
+			{
+				dMinDist = dTD;
+				Deltaw1 *= -0.75;
+			}
+			// Second Curve
+			v2 = Ln2->GetPt(w2);
+			vDir2= Ln2->GetDir(w2); vDir2.Normalize();
+			vX2 = vDir2.Cross(vAN); vX2.Normalize();
+			vX2 *= dDir2c;
+			vX2 *= dR;
+			vCur2 = v2 + vX2;
+			dTD = vCur1.Dist(vCur2);
+			if (dTD < dMinDist)
+			{
+				dMinDist = dTD;
+			}
+			else
+			{
+				dMinDist = dTD;
+				Deltaw2 *= -0.75;
+			}
+			
+			iter++;
+		} while ((dMinDist > dTol) && (iter<1000000));
+		pPt = AddPt(vCur2, -1, TRUE);
+		char buff[200];
+		sprintf_s(buff, "Interation to Intersect %i Tol %g", iter, dMinDist);
+		outtext1(buff);
+		if (iter < 1000000)
+		{
+			//create the circle
+			
+			cCir = new NCircle();
+			cCir->Create(vAN, vCur2, dR, -1, NULL);
+		}
+	}
+	else
+	{
+		outtext1("ERROR: Intersection Error.");
+	}
+	return (cCir);
+}
+
 
 
 NCircle* DBase::Circ3Pts(C3dVector p1,C3dVector p2,C3dVector p3)
@@ -13418,7 +16655,7 @@ if (dDot<0.9999)
   NLine* Ln2 = new NLine;
   Ln2->Create(vMid2,v2D,1,NULL);
   C3dVector IntPt;
-  IntPt=NLnInt(Ln1,Ln2);
+  IntPt=NLnInt(Ln1,Ln2,NULL);
   C3dVector vRef;
   vRef=p1;
   vRef-=IntPt;
@@ -13492,7 +16729,7 @@ if (dDot<0.9999)
   NLine* Ln2 = new NLine;
   Ln2->Create(vMid2,v2D,1,NULL);
   C3dVector IntPt;
-  IntPt=NLnInt(Ln1,Ln2);
+  IntPt=NLnInt(Ln1,Ln2,NULL);
   C3dVector vRef;
   vRef=p1;
   vRef-=IntPt;
@@ -13683,7 +16920,7 @@ int i6;
 int i;
 int iT=0;
 iStop = 0;
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 do
   {
   d1=0;
@@ -13792,7 +17029,8 @@ return (drc);
 
 CoordSys* NASReadCoord(ME_Object* pM,
                        NasCard& oC,
-                       int iType)
+                       int iType,
+	                   int iF)
 {
 
   int iID;
@@ -13818,7 +17056,9 @@ CoordSys* NASReadCoord(ME_Object* pM,
   X-=Org;
   X.Normalize();
   Z.Normalize();
-  Y = Z.Cross(X);
+  Y = Z.Cross(X); 
+  //Normalize below added
+  Y.Normalize();
   X = Y.Cross(Z);
   rMat.MakeUnit();
   rMat.m_00 = X.x;
@@ -13831,12 +17071,14 @@ CoordSys* NASReadCoord(ME_Object* pM,
   rMat.m_12 = Z.y;
   rMat.m_22 = Z.z;
   pRet = pM->AddSys(Org,rMat,iRID,iType,iID,12);
+  pRet->iFile = iF;
   return (pRet);
 }
 
 void NASReadGRID(ME_Object* pM,
                  NasCard& oC,
-                 int iType)
+                 int iType,
+	             int iF)
 {
 int iID;
 int iDef;
@@ -13844,6 +17086,7 @@ int iOut;
 double d1;
 double d2;
 double d3;
+Node* pRet;
 C3dVector vPtIn;
 iID=atoi(oC.GetField(0));
 iDef=atoi(oC.GetField(1));
@@ -13858,15 +17101,18 @@ if (iID==6821383)
 {
   iID=iID;
 }
-pM->AddNode(vPtIn, iID,1,1,1,iDef,iOut);
+pRet=pM->AddNode(vPtIn, iID,1,1,1,iDef,iOut);
+pRet->iFile = iF;
 }
 
 void NASReadGRIDD(ME_Object* pM,
                  FILE* pFile,
                  CString* L1, 
                  CString* LNext,
-                 int iType)
+                 int iType,
+	             int iF)
 {
+Node* pRet;
 int iID;
 int iDef;
 int iOut;
@@ -13887,16 +17133,18 @@ iOut=atoi(L1->Mid(24,16));
 vPtIn.x = d1;
 vPtIn.y = d2;
 vPtIn.z = d3;
-pM->AddNode(vPtIn, iID,1,1,1,iDef,iOut);
+pRet=pM->AddNode(vPtIn, iID,1,1,1,iDef,iOut);
+pRet->iFile = iF;
 }
 
 
 E_Object* NASReadCHEXA(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
-                        int iType)
+                        int iType,
+	                    int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 iID=atoi(oC.GetField(0));
@@ -13913,6 +17161,7 @@ iNlabs[6] = atoi(oC.GetField(8));
 iNlabs[7] = atoi(oC.GetField(9));
 E_Object* El=(E_Object*) pM->AddEl2(iNlabs,iID,159,115,iPID,1,8,0,0,0,-1,0);
 El->PIDunv=iPID;
+El->iFile = iF;
 return (El);
 }
 
@@ -13920,9 +17169,10 @@ return (El);
 E_Object* NASReadCONM2(NasCard& oC,
                        ME_Object* pM,
                        NEList* newPids,
-                       int iType)
+                       int iType,
+	                   int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 E_Object1* pE;
 iID=atoi(oC.GetField(0));
@@ -13943,15 +17193,49 @@ if (oC.iNo>8)
   pE->dI33= (ae(oC.GetField(13)));
 }
 pE->PIDunv=-1;
+pE->iFile = iF;
 return (pE);
+}
+
+E_Object* NASReadCONM1(NasCard& oC,
+                       ME_Object* pM,
+                       NEList* newPids,
+                       int iType,
+	                   int iF)
+{
+	outtext1("WARNING: CONM1 is not supported.");
+	int iNlabs[MaxSelNodes];
+	int iID;
+	E_Object1* pE;
+	iID = atoi(oC.GetField(0));
+	iNlabs[0] = atoi(oC.GetField(1));
+	pE = (E_Object1*)(pM->AddEl2(iNlabs, iID, 159, 161, -1, 1, 1, 0, 0, 0, -1, 0));
+	pE->iCID = atoi(oC.GetField(2));
+	pE->dM = (ae(oC.GetField(3)));
+	//pE->dX1 = (ae(oC.GetField(4)));
+	//pE->dX2 = (ae(oC.GetField(5)));
+	//pE->dX3 = (ae(oC.GetField(6)));
+	//if (oC.iNo > 8)
+	//{
+	//	pE->dI11 = (ae(oC.GetField(8)));
+	//	pE->dI21 = (ae(oC.GetField(9)));
+	//	pE->dI22 = (ae(oC.GetField(10)));
+	//	pE->dI31 = (ae(oC.GetField(11)));
+	//	pE->dI32 = (ae(oC.GetField(12)));
+	//	pE->dI33 = (ae(oC.GetField(13)));
+	//}
+	pE->PIDunv = -1;
+	pE->iFile = iF;
+	return (pE);
 }
 
 E_Object* NASReadCQUAD4(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
-                        int iType)
+                        int iType,
+	                    int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 int MCID;
@@ -13966,30 +17250,32 @@ iNlabs[1] = atoi(oC.GetField(3));
 iNlabs[2] = atoi(oC.GetField(4));
 iNlabs[3] = atoi(oC.GetField(5));
 sT=oC.GetField(6);
-if (sT.Find("."))
+if ((sT.Find('.') > -1) || (sT.Find("        ") > -1) || (sT=="\n"))
 {
-   dAng=atofNAS(sT);
-   MCID=-1;
+	dAng = atofNAS(sT);
+	MCID = -1;
 }
 else
 {
-   dAng=0;
-   MCID=atoi(sT);;
+	dAng = 0;
+	MCID = atoi(sT);;
 }
 double dZ;
 dZ = ae(oC.GetField(7));
 E_Object4* El= (E_Object4*) pM->AddEl2(iNlabs,iID,157,94,iPID,1,4,0,0,0,MCID,dAng);
 El->dZOFFS=dZ;
 El->PIDunv=iPID;
+El->iFile = iF;
 return (El);
 }
 
 E_Object* NASReadCTRIA3(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
-                        int iType)
+                        int iType,
+	                    int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 int MCID;
@@ -14003,14 +17289,14 @@ iNlabs[0] = atoi(oC.GetField(2));
 iNlabs[1] = atoi(oC.GetField(3));
 iNlabs[2] = atoi(oC.GetField(4));
 sT=oC.GetField(5);
-if (sT.Find("."))
+if ((sT.Find('.') > -1) || (sT.Find("        ") > -1) || (sT == "\n"))
 {
    dAng=atofNAS(sT);
    MCID=-1;
 }
 else
 {
-   dAng=DBL_MAX;
+   dAng=0;
    MCID=atoi(sT);;
 }
 double dZ;
@@ -14018,6 +17304,7 @@ dZ = ae(oC.GetField(6));
 E_Object3* El=(E_Object3*) pM->AddEl2(iNlabs,iID,156,91,iPID,1,3,0,0,0,MCID,dAng);
 El->dZOFFS=dZ;
 El->PIDunv=iPID;
+El->iFile = iF;
 return (El);
 }
 
@@ -14026,9 +17313,10 @@ E_Object* NASReadCQUAD4D(ME_Object* pM,
                   FILE* pFile,
                   CString* L1, 
                   CString* LNext,
-                  int iType)
+                  int iType,
+	              int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 char s1[200];
 int iID;
 int iPID;
@@ -14047,19 +17335,20 @@ fgets(s1,200,pFile);
 iNlabs[2] = atoi(L1->Mid(8,16));
 iNlabs[3] = atoi(L1->Mid(24,16));
 sT=L1->Mid(40,16);
-if (sT.Find("."))
+if ((sT.Find('.') > -1) || (sT.Find("        ") > -1) || (sT == "\n"))
 {
    dAng=atofNAS(sT);
    MCID=-1;
 }
 else
 {
-   dAng=DBL_MAX;
+   dAng=0;
    MCID=atoi(sT);;
 }
 
 E_Object* pE=(E_Object*) pM->AddEl2(iNlabs,iID,7,94,iPID,1,4,0,0,0,MCID,dAng);
 pE->PIDunv=iPID;
+pE->iFile = iF;
 return (pE);
 }
 
@@ -14067,9 +17356,10 @@ return (pE);
 E_Object* NASReadCPENTA(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
-                        int iType)
+                        int iType,
+                        int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 
@@ -14084,6 +17374,7 @@ iNlabs[4] = atoi(oC.GetField(6));
 iNlabs[5] = atoi(oC.GetField(7));
 E_Object* pE=(E_Object*) pM->AddEl2(iNlabs,iID,159,112,iPID,1,6,0,0,0,-1,0);
 pE->PIDunv=iPID;
+pE->iFile = iF;
 return (pE);
 }
 
@@ -14092,9 +17383,10 @@ E_Object2* NASReadCBUSH(NasCard& oC,
                        NEList* newPids,
                        int iType,
 					   int& iONID,
-					   C3dVector& pUp)
+					   C3dVector& pUp,
+	                   int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 CString sOmid;
@@ -14113,11 +17405,12 @@ sOmid=oC.GetField(4);
 iONID=-1;
 if (sOmid.Find(".")==-1)
 {
-  iONID=atoi(oC.GetField(4));
+  iONID=atoi(oC.GetField(7));
 }
 
-E_Object2* pE=(E_Object2*) pM->AddEl2(iNlabs,iID,7,136,iPID,1,2,0,0,0,-1,0);
+E_Object2* pE=(E_Object2*) pM->AddEl2(iNlabs,iID,7,136,iPID,1,2,0,0,0, iONID,0);
 pE->PIDunv=iPID;
+pE->iFile = iF;
 return(pE);
 }
 
@@ -14128,9 +17421,10 @@ E_Object2B* NASReadCBAR(NasCard& oC,
 					   int& iONID,
 					   C3dVector& pUp,
 					   C3dVector& OffA,
-					   C3dVector& OffB)
+					   C3dVector& OffB,
+	                   int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 CString sOmid;
@@ -14174,6 +17468,7 @@ if (oC.iNo>8)
 pB->SetDOFStringA(Pin1);
 pB->SetDOFStringB(Pin2);
 pB->PIDunv=iPID;
+pB->iFile = iF;
 return (pB);
 }
 
@@ -14184,9 +17479,10 @@ E_Object2B* NASReadCBEAM(NasCard& oC,
 					   int& iONID,
 					   C3dVector& pUp,
 					   C3dVector& OffA,
-					   C3dVector& OffB)
+					   C3dVector& OffB,
+	                   int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
 CString sOmid;
@@ -14233,6 +17529,7 @@ if (oC.iNo>8)
 pB->SetDOFStringA(Pin1);
 pB->SetDOFStringB(Pin2);
 pB->PIDunv=iPID;
+pB->iFile = iF;
 return (pB);
 }
 
@@ -14240,11 +17537,13 @@ return (pB);
 E_Object* NASReadCTETRA(NasCard& oC,
                         ME_Object* pM,
                         NEList* newPids,
-                        int iType)
+                        int iType,
+                        int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID;
+
 iID=atoi(oC.GetField(0));
 iPID=atoi(oC.GetField(1)); 
 iPID=newPids->Get(iPID);
@@ -14252,24 +17551,37 @@ iNlabs[0] = atoi(oC.GetField(2));
 iNlabs[1] = atoi(oC.GetField(3));
 iNlabs[2] = atoi(oC.GetField(4));
 iNlabs[3] = atoi(oC.GetField(5));
-E_Object* pE=(E_Object*) pM->AddEl2(iNlabs,iID,162,111,iPID,1,4,0,0,0,-1,0);
+iNlabs[4] = atoi(oC.GetField(6));
+iNlabs[5] = atoi(oC.GetField(7));
+iNlabs[6] = atoi(oC.GetField(8));
+iNlabs[7] = atoi(oC.GetField(9));
+iNlabs[8] = atoi(oC.GetField(10));
+iNlabs[9] = atoi(oC.GetField(11));
+E_Object* pE;
+if (iNlabs[5]==0)
+   pE=(E_Object*) pM->AddEl2(iNlabs,iID,162,111,iPID,1,4,0,0,0,-1,0);
+else
+   pE = (E_Object*)pM->AddEl2(iNlabs, iID, 162, 310, iPID, 1, 10, 0, 0, 0, -1, 0);
 pE->PIDunv=iPID;
+pE->iFile = iF;
 return (pE);
 }
 
 E_Object* NASReadRBE2(NasCard& oC,
                       ME_Object* pM,
                       NEList* newPids,
-                      int iType)
+                      int iType,
+	                  int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 int iID;
 int iPID=0;
 int iFN;
 int i;
 int iNDID;
+double dCTE = 0.0;
 CString sDof;
-
+CString sF;
 iID=atoi(oC.GetField(0));
 iNlabs[0] = atoi(oC.GetField(1));
 sDof=oC.GetField(2); 
@@ -14277,16 +17589,28 @@ iFN=4;
 int iCnt=1;
 for (i=3;i<oC.iNo;i++)
 {
-  iNDID= atoi(oC.GetField(i));
-  if ((iNDID>0) && (oC.GetField(i).Find(".")==-1))
+  sF = oC.GetField(i);
+  iNDID= atoi(sF);
+  if ((iNDID>0) && (sF.Find(".")==-1))
   {
     iNlabs[iCnt] = iNDID;
     iCnt++;
-  }
+	if (iCnt > 199) 
+	   {
+		outtext1("ERROR: Max Number of Nodes in RBE2 Reached.");
+		break;
+	   }
+  } 
+  else if (sF.Find(".") != -1)
+	  dCTE = atofNAS(sF);
 }
+//sF = oC.GetField(oC.iNo-3);
+
 
 E_ObjectR* pR =(E_ObjectR*) pM->AddEl2(iNlabs,iID,160,122,iPID,1,iCnt,0,0,0,-1,0);
 pR->SetDOFString(sDof);
+pR->dALPHA = dCTE;
+pR->iFile = iF;
 return (pR);
 }
 
@@ -14294,9 +17618,10 @@ return (pR);
 E_Object* NASReadRBAR(NasCard& oC,
                       ME_Object* pM,
                       NEList* newPids,
-                      int iType)
+                      int iType,
+	                  int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 
 int iID;
 int iPID=0;
@@ -14321,15 +17646,17 @@ ALPHA= atofNAS(oC.GetField(7));
 
 E_ObjectR2* pR =(E_ObjectR2*) pM->AddEl2(iNlabs,iID,160,121,iPID,1,2,0,0,0,-1,0);
 pR->SetOther(CNA,CNB,CMA,CMA,ALPHA);
+pR->iFile = iF;
 return (pR);
 }
 
 E_Object* NASReadCROD(NasCard& oC,
                       ME_Object* pM,
                       NEList* newPids,
-                      int iType)
+                      int iType,
+                      int iF)
 {
-int iNlabs[200];
+int iNlabs[MaxSelNodes];
 
 int iID;
 int iPID=0;
@@ -14341,16 +17668,320 @@ iNlabs[0] = atoi(oC.GetField(2));
 iNlabs[1] = atoi(oC.GetField(3));
 
 E_ObjectR2* pR =(E_ObjectR2*) pM->AddEl2(iNlabs,iID,160,11,iPID,1,2,0,0,0,-1,0);
-
+pR->iFile = iF;
 return (pR);
 }
 
+void NASReadSPC(NasCard& oC,
+	            ME_Object* pM,
+	            int iF)
+{
+	char S1[200];
+	cLinkedListB* pBCSET = nullptr;
+	Node* pN = nullptr;
+	int iID;
+	int iND;
+	double dEnf;
+	int iSet;
+	CString sDOF;
+	BOOL xon, yon, zon, rxon, ryon, rzon;
+	xon = FALSE; yon = FALSE; zon = FALSE;
+	rxon = FALSE; ryon = FALSE; rzon = FALSE;
+
+	iID = atoi(oC.GetField(0));
+	iND = atoi(oC.GetField(1));
+	sDOF = oC.GetField(2);
+	dEnf = atofNAS(oC.GetField(3));
+
+	//if it exists get the BC Set else create one
+	pBCSET = pM->GetBC(iID);
+	if (pBCSET == nullptr)
+	{
+		sprintf_s(S1, "BC SET : %i", iID);
+		iSet = pM->CreateBC(iID, S1);
+		pBCSET = pM->GetBC(iID);
+	}
+	pN = pM->GetNode(iND);
+	if ((pN != nullptr) && (pBCSET != nullptr))
+	{
+		if (sDOF.Find("1", 0))
+			xon = TRUE;
+		if (sDOF.Find("2", 0))
+			yon = TRUE;
+		if (sDOF.Find("3", 0))
+			zon = TRUE;
+		if (sDOF.Find("4", 0))
+			rxon = TRUE;
+		if (sDOF.Find("5", 0))
+			ryon = TRUE;
+		if (sDOF.Find("6", 0))
+			rzon = TRUE;
+		G_Object* cAddedR = pM->AddRestraint(pN, xon, yon, zon, rxon, ryon, rzon, iID);
+
+	}
+	else
+	{
+		outtext1("ERROR: In Creating SPC.");
+		return;
+	}	
+}
+
+void NASReadFORCE(NasCard& oC,
+	              ME_Object* pM,
+	              int iF)
+{
+	char S1[200];
+	cLinkedList* pLCSET = nullptr;
+	Node* pN = nullptr;
+	int iID;
+	int iND;
+	int iCID = 0;
+	double dS = 0;
+	C3dMatrix TMat;
+	TMat.MakeUnit();
+	C3dVector F;
+	F.Set(0, 0, 0);
+	int iSet;
+	iID = atoi(oC.GetField(0));
+	iND = atoi(oC.GetField(1));
+	iCID = atoi(oC.GetField(2));
+	dS = atofNAS(oC.GetField(3));
+	F.x = atofNAS(oC.GetField(4));
+	F.y = atofNAS(oC.GetField(5));
+	F.z = atofNAS(oC.GetField(6));
+	//if it exists get the BC Set else create one
+	pLCSET = pM->GetLC(iID);
+	if (pLCSET == nullptr)
+	{
+		sprintf_s(S1, "LC SET : %i", iID);
+		iSet = pM->CreateLC(iID, S1);
+		pLCSET = pM->GetLC(iID);
+	}
+	pN = pM->GetNode(iND);
+	if ((pN != nullptr) && (pLCSET != nullptr))
+	{
+		if (pN->OutSys != 0)
+		{
+			TMat = pM->GetNodalSys(pN);
+		}
+		G_Object* cAddedF = pM->AddForce((Node*)pN, TMat * F, iID);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating FORCE.");
+		return;
+	}
+}
+
+void NASReadMOMENT(NasCard& oC,
+	ME_Object* pM,
+	int iF)
+{
+	char S1[200];
+	cLinkedList* pLCSET = nullptr;
+	Node* pN = nullptr;
+	int iID;
+	int iND;
+	int iCID = 0;
+	double dS = 0;
+	C3dMatrix TMat;
+	TMat.MakeUnit();
+	C3dVector F;
+	F.Set(0, 0, 0);
+	int iSet;
+	iID = atoi(oC.GetField(0));
+	iND = atoi(oC.GetField(1));
+	iCID = atoi(oC.GetField(2));
+	dS = atofNAS(oC.GetField(3));
+	F.x = atofNAS(oC.GetField(4));
+	F.y = atofNAS(oC.GetField(5));
+	F.z = atofNAS(oC.GetField(6));
+	//if it exists get the BC Set else create one
+	pLCSET = pM->GetLC(iID);
+	if (pLCSET == nullptr)
+	{
+		sprintf_s(S1, "LC SET : %i", iID);
+		iSet = pM->CreateLC(iID, S1);
+		pLCSET = pM->GetLC(iID);
+	}
+	pN = pM->GetNode(iND);
+	if ((pN != nullptr) && (pLCSET != nullptr))
+	{
+		if (pN->OutSys != 0)
+		{
+			TMat = pM->GetNodalSys(pN);
+		}
+		G_Object* cAddedF = pM->AddMoment((Node*)pN, TMat * F, iID);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating MOMENT.");
+		return;
+	}
+}
+
+
+void NASReadPLOAD(NasCard& oC,
+	ME_Object* pM,
+	int iF)
+{
+	char S1[200];
+	cLinkedList* pLCSET = nullptr;
+	E_Object* pE = nullptr;
+	int iID;
+	int iN1 = -1;
+	int iN2 = -1;
+	int iN3 = -1;
+	int iN4 = -1;
+	int iSet;
+	double dPr = 0;
+	C3dVector vP;
+	iID = atoi(oC.GetField(0));
+	dPr = atofNAS(oC.GetField(1));
+	iN1 = atoi(oC.GetField(2));
+	iN2 = atoi(oC.GetField(3));
+	iN3 = atoi(oC.GetField(4));
+	iN4 = atoi(oC.GetField(5));
+	//if it exists get the BC Set else create one
+	pLCSET = pM->GetLC(iID);
+	if (pLCSET == nullptr)
+	{
+		sprintf_s(S1, "LC SET : %i", iID);
+		iSet = pM->CreateLC(iID, S1);
+		pLCSET = pM->GetLC(iID);
+	}
+	//pE=pM->FindElement()
+	pE = pM->GetShellFromNodes(iN1, iN2, iN3);
+	if ((pE != nullptr) && (pLCSET != nullptr))
+	{
+		//presure is stored in vector x only
+		vP.x = dPr; vP.y = 0; vP.z = 0;
+		G_Object* PLoad = pM->AddPressure((E_Object*)pE, vP, iID);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating PLOAD.");
+		return;
+	}
+}
+
+void NASReadTEMP(NasCard& oC,
+	             ME_Object* pM,
+	             int iF)
+{
+	char S1[200];
+	cLinkedList* pTSET = nullptr;
+	Node* pN = nullptr;
+	int iSID = -1;
+	int iID = -1;
+	int iSet = -1;
+	double dT = 0;
+	C3dVector vP;
+	iSID = atoi(oC.GetField(0));
+	iID = atoi(oC.GetField(1));
+	dT = atofNAS(oC.GetField(2));
+
+	//if it exists get the BC Set else create one
+	pTSET = pM->GetTSET(iSID);
+	if (pTSET == nullptr)
+	{
+		sprintf_s(S1, "TSET : %i", iSID);
+		iSet = pM->CreateTSET(iSID, S1);
+		pTSET = pM->GetTSET(iSID);
+	}
+	//pE=pM->FindElement()
+	pN = pM->GetNode(iID);
+	if ((pN != nullptr) && (pTSET != nullptr))
+	{
+		G_Object* pT = pM->AddTemperature(pN,dT, iSet);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating TEMP.");
+		return;
+	}
+}
+
+void NASReadTEMPD(NasCard& oC,
+	ME_Object* pM,
+	int iF)
+{
+	char S1[200];
+	cLinkedList* pTSET = nullptr;
+	//Node* pN = nullptr;
+	int iSID = -1;
+	int iSet = -1;
+	//int iID = -1;
+	double dT = 0;
+	iSID = atoi(oC.GetField(0));
+
+	dT = atofNAS(oC.GetField(1));
+
+	////if it exists get the BC Set else create one
+	pTSET = pM->GetTSET(iSID);
+	if (pTSET == nullptr)
+	{
+		sprintf_s(S1, "TEMPD : %i", iSID);
+		iSet = pM->CreateTSET(iSID, S1);
+		pTSET = pM->GetTSET(iSID);
+	}
+
+	if (pTSET != nullptr)
+	{
+		G_Object* pT = pM->AddTempD(dT, iSID);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating TEMPD.");
+		return;
+	}
+}
+
+
+void NASReadGRAV(NasCard& oC,
+	             ME_Object* pM,
+	             int iF)
+{
+	char S1[200];
+	cLinkedList* pLSET = nullptr;
+	int iSID = -1;
+	int iCID = -1;
+	int iSet = -1;
+	double dScl = 0;
+	C3dVector vV;
+	iSID = atoi(oC.GetField(0));
+	iCID = atoi(oC.GetField(1));
+	dScl = atofNAS(oC.GetField(2));
+	vV.x = atofNAS(oC.GetField(3));
+	vV.y = atofNAS(oC.GetField(4));
+	vV.z = atofNAS(oC.GetField(5));
+
+	////if it exists get the BC Set else create one
+	pLSET = pM->GetLC(iSID);
+	if (pLSET == nullptr)
+	{
+		sprintf_s(S1, "GRAV : %i", iSID);
+		iSet = pM->CreateLC(iSID, S1);
+		pLSET = pM->GetLC(iSID);
+	}
+
+	if (pLSET != nullptr)
+	{
+		G_Object* pT = pM->AddGRAV(iSID, iCID, dScl,vV);
+	}
+	else
+	{
+		outtext1("ERROR: In Creating GRAV.");
+		return;
+	}
+}
 
 void NASReadPSHELL(NasCard& oC,
                    PropTable* pM,
                    NEList* cPID,
                    int iType,
-                   BOOL Relab)
+                   BOOL Relab,
+	               int iF)
 {
 
 PSHELL* pS=new PSHELL();
@@ -14379,6 +18010,7 @@ else
  NextID=pS->iID;
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -14386,7 +18018,8 @@ void NASReadPBAR(NasCard& oC,
                  PropTable* pM,
                  NEList* cPID,
                  int iType,
-                 BOOL Relab)
+                 BOOL Relab,
+	             int iF)
 {
 PBAR* pS=new PBAR();
 pS->iType=4;
@@ -14423,6 +18056,7 @@ else
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
 pS->CreateSec();
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -14431,7 +18065,8 @@ void NASReadPROD(NasCard& oC,
                  PropTable* pM,
                  NEList* cPID,
                  int iType,
-                 BOOL Relab)
+                 BOOL Relab,
+	             int iF)
 {
 PROD* pS=new PROD();
 pS->iType=11;
@@ -14449,10 +18084,44 @@ else
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
 pS->CreateSec();
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
-BOOL NASReadPBEAM_C2(FILE* pFile,CString* L1,CString* LNext,PBEAM* pS)
+void NASReadPBUSH(NasCard& oC,
+	              PropTable* pM,
+	              NEList* cPID,
+	              int iType,
+	              BOOL Relab,
+	              int iF)
+{
+	PBUSH* pS = new PBUSH();
+	pS->iType = 138;
+	pS->sTitle = "PBUSH CARD";
+	pS->sFlg = "K";
+	pS->iID = atoi(oC.GetField(0));
+	pS->dK1 = (ae(oC.GetField(2)));
+	pS->dK2 = (ae(oC.GetField(3)));
+	pS->dK3 = (ae(oC.GetField(4)));
+	pS->dK4 = (ae(oC.GetField(5)));
+	pS->dK5 = (ae(oC.GetField(6)));
+	pS->dK6 = (ae(oC.GetField(7)));
+	int NextID;
+	if (Relab)
+		NextID = pM->NextID();
+	else
+		NextID = pS->iID;
+	cPID->Add(pS->iID, NextID);
+	pS->iID = NextID;
+	pS->iFile = iF;
+	pM->AddItem(pS);
+}
+
+BOOL NASReadPBEAM_C2(FILE* pFile,
+	                 CString* L1,
+	                 CString* LNext,
+	                 PBEAM* pS,
+	                 int iF)
 {
 char s1[200];
 BOOL bN=FALSE;
@@ -14495,6 +18164,7 @@ if ((SONext.Find ("NO")>-1) ||
     
   }
   pS->iNo++;
+  pS->iFile = iF;
 }
 return (bRet);
 }
@@ -14503,7 +18173,8 @@ void NASReadPBEAM(NasCard& oC,
                   PropTable* pM,
                   NEList* cPID,
                   int iType,
-                  BOOL Relab)
+                  BOOL Relab,
+	              int iF)
 {
 PBEAM* pS=new PBEAM();
 pS->iType=6;
@@ -14577,6 +18248,7 @@ else
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
 pS->CreateSec();
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -14584,7 +18256,8 @@ void NASReadPBARL(NasCard& oC,
                    PropTable* pM,
                    NEList* cPID,
                    int iType,
-                   BOOL Relab)
+                   BOOL Relab,
+	               int iF)
 {
 PBARL* pS=new PBARL();
 pS->iType=5;
@@ -14613,6 +18286,7 @@ else
  NextID=pS->iID;
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -14621,7 +18295,8 @@ void NASReadPSOLID(NasCard& oC,
                    PropTable* pM,
                    NEList* cPID,
                    int iType,
-                   BOOL Relab)
+                   BOOL Relab,
+	               int iF)
 {
 PSOLID* pS=new PSOLID();
 pS->iType=3;
@@ -14641,6 +18316,7 @@ else
  NextID=pS->iID;
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -14648,14 +18324,18 @@ void NASReadMAT1(NasCard& oC,
                  MatTable* pM,
                  NEList* nMats,
                  int iType,
-                 BOOL Relab)
+                 BOOL Relab,
+	             int iF)
 {
 MAT1* pS=new MAT1();
 pS->iType=1;
 pS->sTitle="MAT1 CARD";
 pS->iID=atoi(oC.GetField(0));
 pS->dE=(ae(oC.GetField(1)));
-pS->dG=(aeB(oC.GetField(2)));
+if (oC.GetField(2)!="        ")
+  pS->dG=(aeB(oC.GetField(2)));
+else
+  pS->dG = 0;
 pS->dNU=atof(oC.GetField(3));
 pS->dRHO=atof(oC.GetField(4));
 pS->dA=(ae(oC.GetField(5)));
@@ -14673,6 +18353,7 @@ else
  NextID=pS->iID;
 nMats->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -14680,7 +18361,8 @@ void NASReadMAT8(NasCard& oC,
                  MatTable* pM,
                  NEList* nMats,
                  int iType,
-                 BOOL Relab)
+                 BOOL Relab,
+	             int iF)
 {
 MAT8* pS=new MAT8();
 pS->iType=8;
@@ -14717,6 +18399,7 @@ else
  NextID=pS->iID;
 nMats->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 }
 
@@ -14724,14 +18407,15 @@ void NASReadPCOMP(NasCard& oC,
                   PropTable* pM,
                   NEList* cPID,
                   int iType,
-                  BOOL Relab)
+                  BOOL Relab,
+	              int iF)
 {
 int iFT;
 int iStop=0;
 int iM;
 double dThk;
 double dTh;
-bool bOut;
+bool bOut=FALSE;
 CString sT;
 
 PCOMP* pS=new PCOMP();
@@ -14779,6 +18463,8 @@ do
     bOut=TRUE;
   else if (sT.Find("NO") >= 0)
     bOut=FALSE;
+  else
+	bOut = FALSE;
   if (iM!=0)
     pS->AddLayer(iM,dThk,dTh,bOut);
   iCnt=iCnt+4;
@@ -14796,9 +18482,96 @@ else
  NextID=pS->iID;
 cPID->Add(pS->iID,NextID);
 pS->iID=NextID;
+pS->iFile = iF;
 pM->AddItem(pS);
 
 }
+
+void NASReadPCOMPG(NasCard& oC,
+	               PropTable* pM,
+	               NEList* cPID,
+	               int iType,
+	               BOOL Relab,
+	               int iF)
+{
+	int iFT;
+	int iStop = 0;
+	int iPlyID;
+	int iM;
+	double dThk;
+	double dTh;
+	bool bOut = FALSE;
+	CString sT;
+
+	PCOMPG* pS = new PCOMPG();
+	pS->iType = 222;
+	pS->sTitle = "PCOMPG CARD";
+	pS->iID = atoi(oC.GetField(0));
+
+	pS->dNSM = atofNAS(oC.GetField(2));
+	pS->dSB = atofNAS(oC.GetField(3));
+	sT = oC.GetField(4);
+	if (sT.Find("HILL") >= 0)
+		iFT = 1;
+	else if (sT.Find("HOFF") >= 0)
+		iFT = 2;
+	else if (sT.Find("TSAI") >= 0)
+		iFT = 3;
+	else if (sT.Find("STRESS") >= 0)
+		iFT = 4;
+	else if ((sT.Find("STRAIN") >= 0) || (sT.Find("STRN") >= 0))
+		iFT = 5;
+	else if (sT.Find("LARCO2") >= 0)
+		iFT = 6;
+	else if (sT.Find("PUCK") >= 0)
+		iFT = 7;
+	else if (sT.Find("MCT") >= 0)
+		iFT = 8;
+	else
+		iFT = 0;
+	pS->FT = iFT;
+	pS->dRefT = atofNAS(oC.GetField(5));
+	pS->dGE = atofNAS(oC.GetField(6));
+	sT = oC.GetField(7);
+	if (sT.Find("SYM") >= 0)
+		pS->bLAM = TRUE;
+	else
+		pS->bLAM = FALSE;
+	int iCnt = 8;
+	do
+	{
+		iPlyID = atoi(oC.GetField(iCnt));
+		iM = atoi(oC.GetField(iCnt+1));
+		dThk = atofNAS(oC.GetField(iCnt + 2));
+		dTh = atofNAS(oC.GetField(iCnt + 3));
+		sT = oC.GetField(iCnt + 4);
+		if (sT.Find("YES") >= 0)
+			bOut = TRUE;
+		else if (sT.Find("NO") >= 0)
+			bOut = FALSE;
+		else
+			bOut = FALSE;
+		if (iM != 0)
+			pS->AddLayer(iPlyID,iM, dThk, dTh, bOut);
+		iCnt = iCnt + 8;
+	} while (iCnt < oC.iNo);
+	if (oC.isVoid(1))
+		pS->dZ0 = -pS->GetThk() / 2;
+	else
+		pS->dZ0 = atofNAS(oC.GetField(1));
+
+	int NextID;
+	if (Relab)
+		NextID = pM->NextID();
+	else
+		NextID = pS->iID;
+	cPID->Add(pS->iID, NextID);
+	pS->iID = NextID;
+	pS->iFile = iF;
+	pM->AddItem(pS);
+
+}
+
 //***************************************************
 // Pre :file pointer and name
 // Post :Nastran file read and the mesh returned
@@ -14820,7 +18593,7 @@ if (pM!=NULL)
   vX.Normalize();
   if (iONID!=-1)
   {
-    Pt_Object* pN=pM->GetNode(iONID);
+    Node* pN=pM->GetNode(iONID);
     if (pN!=NULL)
     {
       vY=pM->GetNode(iONID)->GetCoords();
@@ -14957,6 +18730,8 @@ else if ((s8 == "SPCD    ") || (s8 == "SPCD*   "))
   brc = TRUE;
 else if ((s8 == "RBE2    ") || (s8 == "RBE2*   ")) 
   brc = TRUE;
+else if ((s8 == "SPC     ") || (s8 == "SPC*    "))
+brc = TRUE;
 return (brc);
 };
 
@@ -14977,9 +18752,13 @@ else if ((s8 == "PSHELL  ") || (s8 == "PSHELL* "))
   brc = TRUE;
 else if ((s8 == "PCOMP   ") || (s8 == "PCOMP*  ")) 
   brc = TRUE;
+else if ((s8 == "PCOMPG  ") || (s8 == "PCOMPG* "))
+  brc = TRUE;
 else if ((s8 == "PSOLID  ") || (s8 == "PSOLID* ")) 
   brc = TRUE;
 else if ((s8 == "PBAR    ") || (s8 == "PBAR*   ")) 
+  brc = TRUE;
+else if ((s8 == "PBUSH   ") || (s8 == "PBUSH*  "))
   brc = TRUE;
 else if ((s8 == "PROD    ") || (s8 == "PROD*   ")) 
   brc = TRUE;
@@ -15025,6 +18804,8 @@ else if ((s8 == "CHEXA   ") || (s8 == "CHEXA*  "))
   brc = TRUE;
 else if ((s8 == "CONM2   ") || (s8 == "CONM2*  ")) 
   brc = TRUE;
+else if ((s8 == "CONM1   ") || (s8 == "CONM1*  "))
+brc = TRUE;
 else if ((s8 == "CPENTA  ") || (s8 == "CPENTA* ")) 
   brc = TRUE;
 else if ((s8 == "RBE2    ") || (s8 == "RBE2*   ")) 
@@ -15043,12 +18824,272 @@ else if ((s8 == "CBAR    ") || (s8 == "CBAR*   "))
   brc = TRUE;
 else if ((s8 == "CBEAM   ") || (s8 == "CBEAM*  ")) 
   brc = TRUE;
+else if ((s8 == "SPC     ") || (s8 == "SPC*    "))
+brc = TRUE;
+else if ((s8 == "FORCE   ") || (s8 == "FORCE*  "))
+brc = TRUE;
+else if ((s8 == "MOMENT  ") || (s8 == "MOMENT* "))
+brc = TRUE;
+else if ((s8 == "PLOAD   ") || (s8 == "PLOAD*  "))
+brc = TRUE;
+else if ((s8 == "TEMP    ") || (s8 == "TEMP*   "))
+brc = TRUE;
+else if ((s8 == "TEMPD   ") || (s8 == "TEMPD*  "))
+brc = TRUE;
+else if ((s8 == "GRAV    ") || (s8 == "GRAV*   "))
+brc = TRUE;
 return (brc);
 };
+
+//chatgpt written
+int ExtractIntegerFromCString(const CString& str) {
+	// Find the position of the first digit
+	int startIndex = str.FindOneOf(_T("0123456789"));
+
+	if (startIndex != -1) 
+	{
+		// Extract the substring containing the number
+		CString numStr = str.Mid(startIndex);
+		// Convert CString to integer
+		int num = _tstoi(numStr);
+		return num;
+	}
+	else 
+	{
+		// Return a default value or handle the case as needed
+		return -1; // Or any other suitable default value
+	}
+}
+
+bool hasNoCharactersBeforeKeyword(const CString& str, const CString& keyword) {
+	// Find the position of the keyword in the string
+	int keywordPos = str.Find(keyword);
+	if (keywordPos == -1) 
+	{
+		// Keyword not found in the string
+		return false;
+	}
+
+	// Check if there are only spaces or no characters before the keyword
+	return std::all_of(str.GetString(), str.GetString() + keywordPos, [](TCHAR c) { return std::isspace(c); });
+}
+
+//this is the chatgpt simplified version - old version below
+void DBase::ImportNASTRAN_SOL(CString inName, ME_Object* pME) {
+	BOOL bSOL101 = FALSE;
+	BOOL bSBUB = FALSE;
+	BOOL bret = FALSE;
+	int iSUBID = -1;
+	int iLC = -1;
+	int iBC = -1;
+	int iTS = -1;
+	char s1[200];
+	int iCurFileNo = -1;
+	FILE* pFile;
+	CString datline;
+	CString datlineNxt;
+	CString sInc;
+	CString sLine;
+	CString sKeyWrd;
+	CString sTit;
+	NasCard oCard;
+	BOOL bDone = FALSE;
+	pFile = fopen(inName, "r");
+
+	if (pFile != NULL) {
+		iCurFileNo = GetFileByNo(inName);
+		if (iCurFileNo == -1) {
+			sFiles[iFileNo] = inName;
+			iCurFileNo = iFileNo;
+			iFileNo++;
+		}
+
+		do {
+			if (feof(pFile)) {
+				bDone = TRUE;
+			}
+			else {
+				fgets(s1, 200, pFile);
+				datlineNxt = s1;
+			}
+
+			if (IsInclude(datline)) {
+				sInc = GetIncName(datline);
+				ImportNASTRAN_SOL(sInc, pME);
+			}
+
+			sLine = datline;
+			sKeyWrd = "BEGIN BULK";
+			if ((sLine.Find(sKeyWrd) > -1) && hasNoCharactersBeforeKeyword(sLine, sKeyWrd)) {
+				bDone = TRUE;
+				if (bSOL101) {
+					sTit.Format(_T("SUBCASE %d"), iSUBID);
+					pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
+					bret = pME->pSOLS->SetCurStep(iSUBID - 1);
+				}
+			}
+
+			sKeyWrd = "SOL";
+			if ((sLine.Find(sKeyWrd) > -1) && (sLine.Find("101") > -1) && hasNoCharactersBeforeKeyword(sLine, sKeyWrd)) {
+				//Linear static solve
+				bSOL101 = TRUE;
+				pME->pSOLS->AddSolution(0, "SOL 101 STATICS", gDEF_SOL_TOL);
+				outtext1("Solution Added and Set as Active.");
+			}
+
+			if (bSOL101) {
+				if ((sLine.Find("SUBCASE") > -1) && hasNoCharactersBeforeKeyword(sLine, "SUBCASE")) {
+					iSUBID = ExtractIntegerFromCString(sLine);
+					iLC = iBC = iTS = -1; // Resetting the values
+					if (bSBUB) {
+						sTit.Format(_T("SUBCASE %d"), iSUBID);
+						pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
+						bret = pME->pSOLS->SetCurStep(iSUBID - 1);
+					}
+					bSBUB = !bSBUB;
+				}
+				else if ((sLine.Find("LOAD") > -1) && hasNoCharactersBeforeKeyword(sLine, "LOAD")) {
+					iLC = ExtractIntegerFromCString(sLine);
+				}
+				else if ((sLine.Find("SPC") > -1) && hasNoCharactersBeforeKeyword(sLine, "SPC")) {
+					iBC = ExtractIntegerFromCString(sLine);
+				}
+				else if ((sLine.Find("TEMP") > -1) && hasNoCharactersBeforeKeyword(sLine, "TEMP")) {
+					iTS = ExtractIntegerFromCString(sLine);
+				}
+			}
+
+			datline = datlineNxt;
+		} while (!bDone);
+
+		fclose(pFile);
+	}
+}
+
+
+//void DBase::ImportNASTRAN_SOL(CString inName, ME_Object* pME)
+//{
+//	BOOL bSOL101 = FALSE;
+//	BOOL bSBUB = FALSE;
+//	BOOL bret = FALSE;
+//	int iSUBID = -1;
+//	int iSUB = -1;
+//	int iLC = -1;;
+//	int iBC = -1;;
+//	int iTS = -1;
+//	char s1[200];
+//	int iCurFileNo = -1;
+//	FILE* pFile;
+//	CString datline;
+//	CString datlineNxt;
+//	CString sInc;
+//	CString sLine;
+//	CString sKeyWrd;
+//	CString sTit;
+//	NasCard oCard;
+//	BOOL bDone = FALSE;
+//	CoordSys* pRet;
+//	pFile = fopen(inName, "r");
+//	if (pFile != NULL)
+//	{
+//		iCurFileNo = GetFileByNo(inName);
+//		if (iCurFileNo == -1)
+//		{
+//			sFiles[iFileNo] = inName;
+//			iCurFileNo = iFileNo;
+//			iFileNo++;
+//		}
+//		do
+//		{
+//			if (feof(pFile))
+//			{
+//				bDone = TRUE;
+//			}
+//			else
+//			{
+//				fgets(s1, 200, pFile);
+//				datlineNxt = s1;
+//			}
+//
+//			if (IsInclude(datline) == TRUE)
+//			{
+//				sInc = GetIncName(datline);
+//				ImportNASTRAN_SOL(sInc, pME);
+//			}
+//			sLine = datline;
+//			sKeyWrd = "BEGIN BULK";
+//			if ((sLine.Find(sKeyWrd) > -1) && 
+//				hasNoCharactersBeforeKeyword(sLine, sKeyWrd))
+//			{
+//				bDone = TRUE;
+//				if (bSOL101)
+//				{
+//					sTit.Format(_T("SUBCASE %d"), iSUBID);
+//					pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
+//					bret = pME->pSOLS->SetCurStep(iSUBID-1);
+//				}
+//			}
+//			sKeyWrd = "SOL";
+//			if ((sLine.Find(sKeyWrd) > -1) && (sLine.Find("101") > -1) &&
+//				hasNoCharactersBeforeKeyword(sLine, sKeyWrd))
+//			{
+//				//Linear static solve
+//				bSOL101 = TRUE;
+//				pME->pSOLS->AddSolution(0,"SOL 101 STATICS", gDEF_SOL_TOL);
+//				outtext1("Solution Added and Set as Active.");
+//			}
+//			if (bSOL101)  //look for subcases
+//			{
+//				if ((sLine.Find("SUBCASE") > -1)  &&
+//					hasNoCharactersBeforeKeyword(sLine, "SUBCASE"))
+//				{
+//					iSUBID = ExtractIntegerFromCString(sLine);
+//					int iLC = -1;;
+//					int iBC = -1;;
+//					int iTS = -1;
+//					if (!bSBUB)
+//					{
+//						bSBUB = TRUE;
+//					}
+//					else
+//					{
+//						bSBUB = FALSE;
+//						if (bSOL101)
+//						{
+//							sTit.Format(_T("SUBCASE %d"), iSUBID);
+//							pME->pSOLS->AddStep(sTit, iLC, iBC, iTS, FALSE);
+//							bret = pME->pSOLS->SetCurStep(iSUBID-1);
+//						}
+//					}
+//				}
+//				else if ((sLine.Find("LOAD") > -1) && 
+//					      hasNoCharactersBeforeKeyword(sLine, "LOAD"))
+//				{
+//					iLC = ExtractIntegerFromCString(sLine);
+//				}
+//				else if ((sLine.Find("SPC") > -1) &&
+//					      hasNoCharactersBeforeKeyword(sLine, "SPC"))
+//				{
+//					iBC = ExtractIntegerFromCString(sLine);
+//				}
+//				else if ((sLine.Find("TEMP") > -1) &&
+//					      hasNoCharactersBeforeKeyword(sLine, "TEMP"))
+//				{
+//					iTS = ExtractIntegerFromCString(sLine);
+//				}
+//			}
+//
+//			datline = datlineNxt;
+//		} while (bDone == FALSE);
+//		fclose(pFile);
+//	}
+//
+//}
 
 void DBase::ImportNASTRANFirstPass(CString inName, ME_Object* pME,NEList* PIDs,NEList* MATs)
 {
 char s1[200];
+int iCurFileNo = -1;
 FILE* pFile;
 CString datline;  
 CString datlineNxt;
@@ -15061,6 +19102,13 @@ CoordSys* pRet;
 pFile = fopen(inName,"r");
 if (pFile!=NULL)
 {
+	iCurFileNo = GetFileByNo(inName);
+	if (iCurFileNo == -1)
+	{
+		sFiles[iFileNo] = inName;
+		iCurFileNo = iFileNo;
+		iFileNo++;
+	}
   do
   {
    if (feof(pFile)) 
@@ -15094,29 +19142,33 @@ if (pFile!=NULL)
       oCard.Clear();
       oCard.Read(pFile,datline,datlineNxt);
       if ((sKwrd.Find("CORD2R") == 0) && (datline.Find(",") == -1))
-        {pRet = NASReadCoord(pME,oCard,1);}
+        {pRet = NASReadCoord(pME,oCard,1,iCurFileNo);}
       else if ((sKwrd.Find("CORD2C") == 0))
-        {pRet = NASReadCoord(pME,oCard,2);}
+        {pRet = NASReadCoord(pME,oCard,2, iCurFileNo);}
       else if ((sKwrd.Find("CORD2S") == 0))
-        {pRet = NASReadCoord(pME,oCard,3);}
+        {pRet = NASReadCoord(pME,oCard,3, iCurFileNo);}
       else if ((sKwrd.Find("PSHELL") == 0))
-        {NASReadPSHELL(oCard,PropsT,PIDs,2,FALSE);}
-      else if ((sKwrd.Find("PCOMP ") == 0))
-        {NASReadPCOMP(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPSHELL(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
+	  else if ((sKwrd.Find("PCOMPG") == 0))
+	  {NASReadPCOMPG(oCard, PropsT, PIDs, 2, FALSE, iCurFileNo);}
+      else if ((sKwrd.Find("PCOMP") == 0))
+        {NASReadPCOMP(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PSOLID") == 0))
-        {NASReadPSOLID(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPSOLID(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PBARL") == 0))
-        {NASReadPBARL(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPBARL(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PBAR ") == 0))
-        {NASReadPBAR(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPBAR(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PROD ") == 0))
-        {NASReadPROD(oCard,PropsT,PIDs,2,FALSE);}
+        {NASReadPROD(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);}
+	  else if ((sKwrd.Find("PBUSH") == 0))
+	    {NASReadPBUSH(oCard, PropsT, PIDs, 2, FALSE, iCurFileNo);}
       else if ((sKwrd.Find("PBEAM") == 0))
-        {NASReadPBEAM(oCard,PropsT,PIDs,2,FALSE);} //NOT DONE
+        {NASReadPBEAM(oCard,PropsT,PIDs,2,FALSE, iCurFileNo);} //NOT DONE
      else if ((sKwrd.Find("MAT1") == 0))
-        {NASReadMAT1(oCard,MatT,MATs,2,FALSE);}
+        {NASReadMAT1(oCard,MatT,MATs,2,FALSE, iCurFileNo);}
      else if ((sKwrd.Find("MAT8") == 0))
-        {NASReadMAT8(oCard,MatT,MATs,2,FALSE);}
+        {NASReadMAT8(oCard,MatT,MATs,2,FALSE, iCurFileNo);}
     }
     datline = datlineNxt;
   } 
@@ -15128,6 +19180,7 @@ if (pFile!=NULL)
 
 void DBase::ImportNASTRANGRID(CString inName, ME_Object* pME)
 {
+int iCurFileNo = -1;
 char s1[200];
 FILE* pFile;
 CString datline;
@@ -15140,6 +19193,13 @@ BOOL bDone=FALSE;
 pFile = fopen(inName,"r");
 if (pFile!=NULL)
 {
+	iCurFileNo = GetFileByNo(inName);
+	if (iCurFileNo == -1)
+	{
+		sFiles[iFileNo] = inName;
+		iCurFileNo = iFileNo;
+		iFileNo++;
+	}
   do
   {
    if (feof(pFile)) 
@@ -15172,7 +19232,7 @@ if (pFile!=NULL)
       oCard.Clear();
       oCard.Read(pFile,datline,datlineNxt);
       if ((sKwrd.Find("GRID") == 0))
-          NASReadGRID(pME,oCard,1);
+          NASReadGRID(pME,oCard,1, iCurFileNo);
     }
     datline = datlineNxt;
   } 
@@ -15185,6 +19245,7 @@ if (pFile!=NULL)
 
 void DBase::ImportNASTRANELEM(CString inName, ME_Object* pME,NEList* PIDs)
 {
+int iCurFileNo = -1;
 char s1[200];
 E_Object* El;
 FILE* pFile;
@@ -15198,8 +19259,16 @@ BOOL bDone=FALSE;
 pFile = fopen(inName,"r");
 if (pFile!=NULL)
 {
+	iCurFileNo = GetFileByNo(inName);
+	if (iCurFileNo == -1)
+	{
+		sFiles[iFileNo] = inName;
+		iCurFileNo = iFileNo;
+		iFileNo++;
+	}
   do
   {
+
    if (feof(pFile)) 
    {
      bDone = TRUE;
@@ -15230,33 +19299,35 @@ if (pFile!=NULL)
       oCard.Clear();
       oCard.Read(pFile,datline,datlineNxt);
       if ((sKwrd.Find("CQUAD4") == 0))
-          El = NASReadCQUAD4(oCard,pME,PIDs,2);
+          El = NASReadCQUAD4(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CONM2") == 0))
-          El = NASReadCONM2(oCard,pME,PIDs,2);
+          El = NASReadCONM2(oCard,pME,PIDs,2, iCurFileNo);
+	  else if ((sKwrd.Find("CONM1") == 0))
+		  El = NASReadCONM1(oCard, pME, PIDs, 2, iCurFileNo);
 	  else if ((sKwrd.Find("CHEXA") == 0))
-          El = NASReadCHEXA(oCard,pME,PIDs,2);
+          El = NASReadCHEXA(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CPENTA") == 0))
-          El = NASReadCPENTA(oCard,pME,PIDs,2);
+          El = NASReadCPENTA(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("RBE2") == 0))
-          El = NASReadRBE2(oCard,pME,PIDs,2);
+          El = NASReadRBE2(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("RBAR") == 0))
-          El = NASReadRBAR(oCard,pME,PIDs,2);
+          El = NASReadRBAR(oCard,pME,PIDs,2, iCurFileNo);
     else if ((sKwrd.Find("CROD") == 0))
-          El = NASReadCROD(oCard,pME,PIDs,2);
+          El = NASReadCROD(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CTETRA") == 0))
-          El = NASReadCTETRA(oCard,pME,PIDs,2);
+          El = NASReadCTETRA(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CBUSH ") == 0))
 	  { 
 		  E_Object2* EB;
 		  C3dVector vUP;
 		  C3dVector pUp;
 		  int iONID;
-          EB = NASReadCBUSH(oCard,pME,PIDs,2,iONID,pUp);
+          EB = NASReadCBUSH(oCard,pME,PIDs,2,iONID,pUp, iCurFileNo);
 		  vUP=CalcBeamUpVec(EB,iONID,pUp);
           EB->vUp=vUP;
 	  }
 	  else if ((sKwrd.Find("CTRIA3") == 0))
-          El = NASReadCTRIA3(oCard,pME,PIDs,2);
+          El = NASReadCTRIA3(oCard,pME,PIDs,2, iCurFileNo);
 	  else if ((sKwrd.Find("CBAR ") == 0))
 	  {
 		 E_Object2B* EB;
@@ -15265,7 +19336,7 @@ if (pFile!=NULL)
 		 C3dVector OffA;
 		 C3dVector OffB;
 		 C3dVector vUP;
-		 EB = NASReadCBAR(oCard,pME,PIDs,2,iONID,pUp,OffA,OffB);
+		 EB = NASReadCBAR(oCard,pME,PIDs,2,iONID,pUp,OffA,OffB, iCurFileNo);
 		 vUP=CalcBeamUpVec(EB,iONID,pUp);
          SetBeamOffs(EB,OffA,OffB);
          EB->vUp=vUP;
@@ -15278,12 +19349,25 @@ if (pFile!=NULL)
 		 C3dVector OffA;
 		 C3dVector OffB;
 		 C3dVector vUP;
-		 EB = NASReadCBEAM(oCard,pME,PIDs,2,iONID,pUp,OffA,OffB);
+		 EB = NASReadCBEAM(oCard,pME,PIDs,2,iONID,pUp,OffA,OffB, iCurFileNo);
 		 vUP=CalcBeamUpVec(EB,iONID,pUp);
          SetBeamOffs(EB,OffA,OffB);
          EB->vUp=vUP;
-	  }
-
+	  }  //LOADS AND BOUNDARY CONDITIONS
+	  else if ((sKwrd.Find("SPC") == 0))
+		 NASReadSPC(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("FORCE") == 0))
+		  NASReadFORCE(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("MOMENT") == 0))
+		  NASReadMOMENT(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("PLOAD") == 0))
+		  NASReadPLOAD(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("TEMP ") == 0))
+		  NASReadTEMP(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("TEMPD") == 0))
+		  NASReadTEMPD(oCard, pME, iCurFileNo);
+	  else if ((sKwrd.Find("GRAV") == 0))
+		  NASReadGRAV(oCard, pME, iCurFileNo);
     }
     datline = datlineNxt;
   } 
@@ -15296,6 +19380,8 @@ if (pFile!=NULL)
 
 ME_Object* DBase::ImportNASTRAN(CString inName)
 {
+int i;
+iFileNo = 0;
 CString sP;
 CString sF;
 int iRC;
@@ -15312,6 +19398,7 @@ RetMesh->TempList = new ObjTempList();
 NEList* newPids = new NEList();
 NEList* newMats = new NEList();
 //*************************************************************************
+ImportNASTRAN_SOL(sF, RetMesh);
 ImportNASTRANFirstPass(sF,RetMesh,newPids,newMats);
 ImportNASTRANGRID(sF,RetMesh);
 ImportNASTRANELEM(sF,RetMesh,newPids);
@@ -15320,7 +19407,17 @@ ImportNASTRANELEM(sF,RetMesh,newPids);
 delete(RetMesh->TempList);
 RetMesh->TempList = NULL;
 RetMesh->UpdatePropRef(PropsT);
+RetMesh->CoordToGlocal();
 outtext1("Finished Read.");
+RetMesh->iFileNo = iFileNo;
+char buff[200];
+for (i = 0; i < iFileNo; i++)
+{
+	RetMesh->sFiles[i] = sFiles[i];
+	sprintf_s(buff, "File No %i %s", i, sFiles[i]);
+	outtext1(buff);
+}
+
 delete (newPids);
 delete (newMats);
 return (RetMesh);
@@ -15345,6 +19442,7 @@ RetMesh->TempList = new ObjTempList();
 NEList* newPids = new NEList();
 NEList* newMats = new NEList();
 //*************************************************************************
+ImportNASTRAN_SOL(sF, RetMesh);
 ImportNASTRANFirstPass(sF,RetMesh,newPids,newMats);
 ImportNASTRANGRID(sF,RetMesh);
 ImportNASTRANELEM(sF,RetMesh,newPids);
@@ -15362,7 +19460,7 @@ return (RetMesh);
 
 ME_Object* DBase::ImportNAS(FILE* pFile,CString inName,BOOL ReLab)
 {
-
+int iCurFileNo = -1;
 char s1[200];
 CString sKeyWrd;
 CString sKeyWrdNext;
@@ -15456,7 +19554,7 @@ do
     }
     else if (sKeyWrd.Find("GRID*") == 0)
 	{
-      NASReadGRIDD(RetMesh,pFile,&sKeyWrd,&sKeyWrdNext,1);
+      NASReadGRIDD(RetMesh,pFile,&sKeyWrd,&sKeyWrdNext,1, iCurFileNo);
 	}
   }
   if (feof(pFile))
@@ -15480,7 +19578,11 @@ do
     {
      // El = NASReadCONM2(RetMesh,pFile,&sKeyWrd,&sKeyWrdNext,2);
     }
-	  if ((sKeyWrd.Find("CHEXA") == 0) && (sKeyWrd.Find(",") == -1))
+	if ((sKeyWrd.Find("CONM1") == 0) && (sKeyWrd.Find(",") == -1))
+	{
+		// El = NASReadCONM2(RetMesh,pFile,&sKeyWrd,&sKeyWrdNext,2);
+	}
+	if ((sKeyWrd.Find("CHEXA") == 0) && (sKeyWrd.Find(",") == -1))
     {
     //  El = NASReadCHEXA(RetMesh,newPids,pFile,&sKeyWrd,&sKeyWrdNext,2);
     }
@@ -15510,7 +19612,7 @@ do
     }
     else if ((sKeyWrd.Find("CQUAD4* ") == 0) && (sKeyWrd.Find(",") == -1))
     {
-      El = NASReadCQUAD4D(RetMesh,newPids,pFile,&sKeyWrd,&sKeyWrdNext,2);
+      El = NASReadCQUAD4D(RetMesh,newPids,pFile,&sKeyWrd,&sKeyWrdNext,2, iCurFileNo);
     }
 	  else if ((sKeyWrd.Find("CTRIA3") == 0) && (sKeyWrd.Find(",") == -1))
     {
@@ -15806,6 +19908,53 @@ else
   outtext1("ERROR: No Mesh Active.");
 }
 }
+void DBase::ResSetScale(CString sSeq, double dS)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ResSetScale(sSeq, dS);
+	}
+	else
+	{
+		outtext1("ERROR: No Mesh Active.");
+	}
+}
+
+void DBase::ResSetDivInTo(CString sSeq, double dS)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ResSetDivInTo(sSeq, dS);
+	}
+	else
+	{
+		outtext1("ERROR: No Mesh Active.");
+	}
+}
+
+void DBase::ResSetEnvMax(CString sSeq[],int iNo)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ResEnvMax(sSeq, iNo);
+	}
+	else
+	{
+		outtext1("ERROR: No Mesh Active.");
+	}
+}
+
+void DBase::ResSetEnvMin(CString sSeq[], int iNo)
+{
+	if (pCurrentMesh != NULL)
+	{
+		pCurrentMesh->ResEnvMin(sSeq, iNo);
+	}
+	else
+	{
+		outtext1("ERROR: No Mesh Active.");
+	}
+}
 
 void DBase::SetCurrentResSet(int iRS,int iRV,int iOPT)
 {
@@ -16020,7 +20169,7 @@ ReDraw();
 }
 
 //set relative displacement offset
-void DBase::SetResDispOff(Pt_Object* pN)
+void DBase::SetResDispOff(Node* pN)
 {
 
 	if (pCurrentMesh != NULL)
@@ -16125,6 +20274,24 @@ for (iCO = 0; iCO < iDspLstCount; iCO++)
 ReDraw();
 }
 
+void DBase::SelCursbyLAY(int iLAY)
+{
+
+	int iCO;
+	for (iCO = 0; iCO < iDspLstCount; iCO++)
+	{
+		if ((Dsp_List[iCO]->iObjType == 0) || (Dsp_List[iCO]->iObjType == 6) || (Dsp_List[iCO]->iObjType == 7) || (Dsp_List[iCO]->iObjType == 10))
+		{
+			if (Dsp_List[iCO]->iFile == iLAY)
+			{
+				S_Buff[S_Count] = Dsp_List[iCO];
+				S_Count++;
+			}
+		}
+	}
+	ReDraw();
+}
+
 void DBase::EditMat(int MID,BOOL bPID)
 {
   Property* P = NULL;
@@ -16148,6 +20315,8 @@ void DBase::EditMat(int MID,BOOL bPID)
     CEntEditDialog Dlg;
     Dlg.pEnt = M;
     Dlg.DoModal();
+	if (Dlg.bDel == TRUE)
+		MatT->Delete(M);
   }
   else
   {
@@ -16161,17 +20330,48 @@ void DBase::EditProp(int PID)
   P = PropsT->GetItem(PID);
   if (P != NULL)
   {
-    CEntEditDialog Dlg;
-    Dlg.pEnt = P;
-    Dlg.DoModal();
-	InvalidateOGL();
-	ReGen();
+    CEntEditDialog* Dlg = NULL;
+	Dlg = new CEntEditDialog();
+	if (Dlg != NULL)
+	{
+		Dlg->pEnt = P;
+		Dlg->DoModal();
+		if (Dlg->bDel == TRUE)
+			PropsT->Delete(P);
+		delete (Dlg);
+		Dlg = NULL;
+		InvalidateOGL();
+		ReGen();
+	}
   }
   else
   {
 
   }
 }
+
+void DBase::ViewLam(int iP)
+{
+	Property* P = NULL;
+	P = PropsT->GetItem(iP);
+	if (P != NULL)
+	{
+		if (P->iType == 2)
+		{
+			CPcompEditor* Dlg = new CPcompEditor();
+			Dlg->pEnt = P;
+			Dlg->DoModal();
+			delete (Dlg);
+			InvalidateOGL();
+			ReGen();
+		}
+	}
+	else
+	{
+
+	}
+}
+
 
 void DBase::EditObject()
 {
@@ -16195,6 +20395,36 @@ void DBase::EditObject()
 	}
 
 }
+
+
+void DBase::EditGlobals()
+{
+	//need to create a dummy G_Object with all
+	//global values in
+	G_ObjectDUM* pO = new G_ObjectDUM();
+
+	if (pO != NULL)
+	{
+		CEntEditDialog Dlg;
+		//PropTable* PropsT
+		Dlg.PT = PropsT;
+		Dlg.pO = pO;
+		Dlg.DoModal();
+		S_Count--;
+		InvalidateOGL();
+		ReGen();
+		delete (pO);
+
+	}
+	else
+	{
+
+	}
+
+}
+
+
+
 
 void DBase::ListMat(int MID, BOOL bPID)
 {
@@ -16243,21 +20473,21 @@ void DBase::lMeasure(C3dVector v1,C3dVector v2)
   CString OutT;
   WP_Object* pWPlane = (WP_Object*) DB_Obj[iWP];
   outtext1("LINEAR DISTANCE (GLOBAL)"); 
-  sprintf_s(S1,"GL:X,%f,Y,%f,Z,%f",v.x,v.y,v.z);
+  sprintf_s(S1,"GL: X,%f,Y,%f,Z,%f",v.x,v.y,v.z);
   OutT=S1;
   outtext1(OutT); 
   if (pWPlane->iWPMode == 1)
   {
     
-    sprintf_s(S1,"WP:R,%f,T,%f,Z,%f",vg.x,vg.y,vg.z);
+    sprintf_s(S1,"WP: R,%f,T,%f,Z,%f",vg.x,vg.y,vg.z);
   }
   else
   {
-    sprintf_s(S1,"WP:X,%f,Y,%f,Z,%f",vg.x,vg.y,vg.z);
+    sprintf_s(S1,"WP: X,%f,Y,%f,Z,%f",vg.x,vg.y,vg.z);
   }
   OutT=S1;
   outtext1(OutT); 
-  sprintf_s(S1,"MAG:,%f",vg.Mag());
+  sprintf_s(S1,"MAG: %f",vg.Mag());
   OutT=S1;
   outtext1(OutT); 
 
@@ -16358,7 +20588,15 @@ pObj->Clear();
 int i,j;
 for (j=0;j<S_Count;j++)
 {
-  if (S_Buff[j]->pParent!=NULL)
+  if ((S_Buff[j]->iObjType == 8) && (iType == 1))
+  {
+	S_Buff[j]->RelTo(S_Buff[j], pObj, iType);
+  }
+  else if ((S_Buff[j]->iObjType == 9) && (iType == 1))
+  {
+	S_Buff[j]->RelTo(S_Buff[j], pObj, iType);
+  }
+  else if (S_Buff[j]->pParent!=NULL)
   {
     S_Buff[j]->pParent->RelTo(S_Buff[j],pObj,iType);       //all 
   }
@@ -16426,7 +20664,7 @@ for (j=0;j<S_Count;j++)
         rMat.m_12 = vZ.y;
         rMat.m_22 = vZ.z;
         CoordSys* pRet = pCurrentMesh->AddSys(vO,rMat,-1,1,S_Buff[j]->iLabel,55);
-        Pt_Object* pN = (Pt_Object*) S_Buff[j];
+        Node* pN = (Node*) S_Buff[j];
         pN->OutSys = pRet->iLabel;
         pObj->Add(pRet);
         S_Buff[j]->iColour=124;
@@ -16519,6 +20757,62 @@ void DBase::AddToGroupbyPID(int PID)
   delete (PIDS);
 }
 
+void DBase::ColourByPID(int PID)
+{
+	NEList* PIDS = new NEList();
+	CString sTit;
+	CString sNum;
+	int iCurCol = 2;
+	int iPID;
+	int iCO;
+	int iCol;
+	for (iCO = 0; iCO < pCurrentMesh->iElNo; iCO++)
+	{
+		iPID = pCurrentMesh->pElems[iCO]->PID;
+		iCol = PIDS->Get(iPID);  
+		if (iCol == -1)
+		{
+			PIDS->Add(iPID, iCurCol);
+			iCol = iCurCol;
+			iCurCol++;
+			if (iCurCol > 122)
+				iCurCol = 2;
+		}
+		pCurrentMesh->pElems[iCO]->iColour = iCol;
+	}
+	delete (PIDS);
+	InvalidateOGL();
+	ReDraw();
+}
+
+void DBase::ColourByINC(int PID)
+{
+	NEList* PIDS = new NEList();
+	CString sTit;
+	CString sNum;
+	int iCurCol = 2;
+	int iINC;
+	int iCO;
+	int iCol;
+	for (iCO = 0; iCO < pCurrentMesh->iElNo; iCO++)
+	{
+		iINC = pCurrentMesh->pElems[iCO]->iFile;
+		iCol = PIDS->Get(iINC);
+		if (iCol == -1)
+		{
+			PIDS->Add(iINC, iCurCol);
+			iCol = iCurCol;
+			iCurCol++;
+			if (iCurCol > 122)
+				iCurCol = 2;
+		}
+		pCurrentMesh->pElems[iCO]->iColour = iCol;
+	}
+	delete (PIDS);
+	InvalidateOGL();
+	ReDraw();
+}
+
 
 void DBase::ChkNegJac()
 {
@@ -16583,6 +20877,23 @@ else
 {
 }
 }
+
+void DBase::GPByInclude(int iFile)
+{
+
+	CString sTit;
+	CString sNum;
+	int iCO;
+	int iGP;
+
+	sNum.Format(_T("%d"), iFile);
+	sTit = "INCLUDE ";
+	sTit += sNum;
+	iGP = AddGp(sTit);
+	pCurrentMesh->IncludeToGroup(iFile,Groups[iGP]);
+
+}
+
 
 void DBase::AddToGroupbyCol(int PID)
 {
@@ -16763,6 +21074,119 @@ ReDraw();
 }
 }
 
+void DBase::ModIncludeNo(int iF)
+{
+	int iNoC = 0;
+	char s1[200];
+	int iCO;
+    for (iCO = 0; iCO < S_Count; iCO++)
+	{
+		if ((S_Buff[iCO]->iObjType == 0) || (S_Buff[iCO]->iObjType == 7))
+		{
+			//IGNORE AS ARE USED FOR DXF LAY NO
+		}
+		else
+		{
+			S_Buff[iCO]->iFile = iF;
+			iNoC++;
+		}
+	}
+	sprintf_s(s1, "%s%i", "Number of Entities Modified : ", iNoC);
+	outtext1(_T(s1));
+
+}
+
+void DBase::ModLayerNo(int iF)
+{
+	int iNoC = 0;
+	char s1[200];
+	int iCO = 0;
+	for (iCO = 0; iCO < S_Count; iCO++)
+	{
+		if ((S_Buff[iCO]->iObjType == 0) || (S_Buff[iCO]->iObjType == 7) || (S_Buff[iCO]->iObjType == 6) || (S_Buff[iCO]->iObjType == 10))
+		{
+			S_Buff[iCO]->ModLayNo(iF); //iFile is used as layer for point and curves
+			iNoC++;
+		}
+	}
+	sprintf_s(s1, "%s%i", "Number of Entities Modified : ", iNoC);
+	outtext1(_T(s1));
+
+}
+
+void DBase::CountItems()
+{
+	char S1[200];
+	int iNode = 0;
+	int iEl = 0;
+	int iCYS = 0;
+	int iNodeMin = 99999999;
+	int iElMin = 99999999;
+	int iCYSMin = 99999999;
+	int iNodeMax = 0;
+	int iElMax = 0;
+	int iCYSMax = 0;
+
+	int iCO;
+	for (iCO = 0; iCO < S_Count; iCO++)
+	{
+		if (S_Buff[iCO]->iObjType == 1)
+		{
+			iNode++;
+			if (S_Buff[iCO]->iLabel < iNodeMin)
+				iNodeMin = S_Buff[iCO]->iLabel;
+			if (S_Buff[iCO]->iLabel > iNodeMax)
+				iNodeMax = S_Buff[iCO]->iLabel;
+		}
+		else if (S_Buff[iCO]->iObjType == 3)
+		{
+			iEl++;
+			if (S_Buff[iCO]->iLabel < iElMin)
+				iElMin = S_Buff[iCO]->iLabel;
+			if (S_Buff[iCO]->iLabel > iElMax)
+				iElMax = S_Buff[iCO]->iLabel;
+		}
+		else if (S_Buff[iCO]->iObjType == 12)
+		{
+			iCYS++;
+			if (S_Buff[iCO]->iLabel < iCYSMin)
+				iCYSMin = S_Buff[iCO]->iLabel;
+			if (S_Buff[iCO]->iLabel > iCYSMax)
+				iCYSMax = S_Buff[iCO]->iLabel;
+		}
+
+	}
+	if (iNodeMin == 99999999)
+		iNodeMin = 0;
+	if (iElMin == 99999999)
+		iElMin = 0;
+	if (iCYSMin == 99999999)
+		iCYSMin = 0;
+
+	outtext1("Count of Selected F.E. Items:-");
+	sprintf_s(S1, "%s%i", "Number of Nodes : ", iNode);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Number of Elements : ", iEl);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Number of Coord-Systems : ", iCYS);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Min Node Label : ", iNodeMin);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Min Elem Label : ", iElMin);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Min CSYS Label : ", iCYSMin);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Max Node Label : ", iNodeMax);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Max Elem Label : ", iElMax);
+	outtext1(S1);
+	sprintf_s(S1, "%s%i", "Max CSYS Label : ", iCYSMax);
+	outtext1(S1);
+	ReDraw();
+
+}
+
+
 
 void DBase::LabEnt()
 {
@@ -16867,6 +21291,36 @@ if (bReGen==TRUE)
 }
 }
 
+void DBase::SelRBENode(ObjList* Items)
+{
+	int iNoC=0;
+	char s1[200];
+	CString OutT;
+	BOOL bReGen = FALSE;
+	BOOL bC = FALSE;
+	int i = 0;
+	for (i = 0; i < Items->iNo; i++)
+	{
+		if (Items->Objs[i]->iObjType == 3)
+		{
+			E_Object* pE = (E_Object*)Items->Objs[i];
+			if (pE->iType == 122)
+			{
+				E_ObjectR* pR = (E_ObjectR*)pE;
+				if (pR->pVertex[0] != NULL)
+				{
+					S_BuffAdd(pR->pVertex[0]);
+					iNoC++;
+				}
+			}
+		}
+	}
+	sprintf_s(s1, "%s%i", "Number of RBE Nodes Found : ", iNoC);
+	outtext1(_T(s1));
+	Items->Clear();
+	ReDraw();
+}
+
 void DBase::SpringMoCSys(int iSys)
 {
 int iCO;
@@ -16888,7 +21342,7 @@ int iCnt=0;
         {
           if (pSYS->pParent==pE->pParent)
           {
-            if ((pE->iType==136) || (pE->iType==137))
+            if ((pE->iType==136) || (pE->iType==137) || (pE->iType == 138))
             {
               E_Object2* pE2=(E_Object2*) pE;
               pE2->iCSYS=iSys;
@@ -16941,12 +21395,14 @@ void DBase::ShellMoCSys(int iSys)
             {
               E_Object3* pE3 = (E_Object3*) pE;
               pE3->iMCys = iSys;
+			  pE3->MAng = 0.0;
               iCnt++;
             }
             else if (pE->iType == 94)
             {
               E_Object4* pE4 = (E_Object4*)pE;
               pE4->iMCys = iSys;
+			  pE4->MAng = 0.0;
               iCnt++;
             }
           }
@@ -16979,15 +21435,20 @@ void DBase::ShellMoCSys(int iSys)
 
 void DBase::NodeMoOSys(int iSys)
 {
-int iCO;
+int iCO=0;
+int iNoC=0;
+char s1[200];
 for (iCO=0;iCO<S_Count;iCO++)
 {
   if (S_Buff[iCO]->iObjType == 1)
   {
-    Pt_Object* pN = (Pt_Object*) S_Buff[iCO];  
+    Node* pN = (Node*) S_Buff[iCO];  
     pN->OutSys=iSys;
+	iNoC++;
   }
 }
+sprintf_s(s1, "%s%i", "Number of Nodes Modified : ", iNoC);
+outtext1(_T(s1));
 }
 
 void DBase::ElementMoLab(int iN)
@@ -17067,12 +21528,12 @@ for (iCO=0;iCO<S_Count;iCO++)
 {
   if (S_Buff[iCO]->iObjType == 1)
   {
-    Pt_Object* pN = (Pt_Object*) S_Buff[iCO];  
+    Node* pN = (Node*) S_Buff[iCO];  
     iNewLab=pN->iLabel+iN;
     if (pCurrentMesh==pN->pParent)
     {
       //Check to see if the node exists;
-      Pt_Object* pNC=pCurrentMesh->GetNode(iNewLab);
+      Node* pNC=pCurrentMesh->GetNode(iNewLab);
       if (pNC==NULL)
       {
         pN->iLabel=iNewLab;
@@ -17102,11 +21563,11 @@ for (iCO=0;iCO<S_Count;iCO++)
 {
   if (S_Buff[iCO]->iObjType == 1)
   {
-    Pt_Object* pN = (Pt_Object*) S_Buff[iCO];  
+    Node* pN = (Node*) S_Buff[iCO];  
     if (pCurrentMesh==pN->pParent)
     {
       //Check to see if the node exists;
-      Pt_Object* pNC=pCurrentMesh->GetNode(iNewLab);
+      Node* pNC=pCurrentMesh->GetNode(iNewLab);
       if (pNC==NULL)
       {
         pN->iLabel=iNewLab;
@@ -17129,15 +21590,20 @@ ReDraw();
 
 void DBase::NodeMoRSys(int iSys)
 {
-int iCO;
+int iCO=0;
+int iNoC=0;
+char s1[200];
 for (iCO=0;iCO<S_Count;iCO++)
 {
   if (S_Buff[iCO]->iObjType == 1)
   {
-    Pt_Object* pN = (Pt_Object*) S_Buff[iCO];  
+    Node* pN = (Node*) S_Buff[iCO];  
     pN->DefSys=iSys;
+	iNoC++;
   }
 }
+sprintf_s(s1, "%s%i", "Number of Nodes Modified : ", iNoC);
+outtext1(_T(s1));
 }
 void DBase::Dsp_RemGP(G_Object* gIn)
 {
@@ -17246,6 +21712,63 @@ PropsT->AddItem(pShell);
 outtext1("New Shell Property Created.");
 }
 
+//iP ith to extract
+CString ExtractSubString(int iP,CString sIn)
+{
+	sIn.Replace(",", " ");
+	int i;
+	int iS = 0;
+	int iLen = sIn.GetLength();
+	CString sOut;
+	int iOCnt = 0;
+	int iCBlock = 0;
+	BOOL bF = FALSE;
+	for (i = 0; i < iLen ; i++)
+	{
+		if (sIn[i] != ' ')
+		{
+			if (bF == FALSE)
+			{
+				bF = TRUE;
+				iCBlock++;
+			}
+			
+			if (iCBlock == iP)
+			{
+				sOut += sIn[i];
+				iOCnt++;
+			}
+		}
+		else
+		{
+			bF = FALSE;
+		}
+	}
+	return(sOut);
+}
+
+void DBase::CreatePrPCOMP(CString sT, int iPID, double dNSM,int iNoLay, CString sLay[])
+{
+	int i;
+	int iMID;
+	double dThk;
+	double dTheta;
+	CString s;
+	PCOMP* pC = new PCOMP();
+	pC->sTitle = sT;
+	pC->iID = iPID;
+	pC->dNSM = dNSM;
+	for (i = 0; i < iNoLay; i++)
+	{
+		iMID = atoi(ExtractSubString(1, sLay[i]));
+		dThk = atof(ExtractSubString(2, sLay[i]));
+		dTheta = atof(ExtractSubString(3, sLay[i]));
+		pC->AddLayer(iMID, dThk, dTheta, 0);
+	}
+	PropsT->AddItem(pC);
+	outtext1("New PCOMP Property Created.");
+}
+
 void DBase::CreatePrSpringT(CString sT,int iPID,double dkx,double dky,double dkz,double dkt)
 {
 PSPRINGT* pST = new PSPRINGT();
@@ -17257,6 +21780,21 @@ pST->dkz=dkz;
 pST->dkcoeff=dkt;
 PropsT->AddItem(pST);
 outtext1("New Translational Spring Property Created.");
+}
+
+void DBase::CreatePrBUSH(CString sT, int iPID, double dk1, double dk2, double dk3, double dk4, double dk5, double dk6)
+{
+	PBUSH* pST = new PBUSH();
+	pST->sTitle = sT;
+	pST->iID = iPID;
+	pST->dK1 = dk1;
+	pST->dK2 = dk2;
+	pST->dK3 = dk3;
+	pST->dK4 = dk4;
+	pST->dK5 = dk5;
+	pST->dK6 = dk6;
+	PropsT->AddItem(pST);
+	outtext1("New Nastran PBUSH Property Created.");
 }
 
 void DBase::CreatePrLumpedMass(CString sT, int iPID, double dM)
@@ -17383,6 +21921,20 @@ void DBase::ChkTetCollapse(ObjList* Elems, double dT, BOOL bList)
   outtext1(sNum);
 }
 
+void DBase::GetClosestNodes(ObjList* pSource,C3dVector pTrg, ObjList* pRes, double dTol)
+{
+	int i;
+	double dDist;
+	C3dVector pN;
+	pRes->Clear();
+	for (i = 0; i < pSource->iNo; i++)
+	{
+		pN = pSource->Objs[i]->Get_Centroid();
+		dDist = pN.Dist(pTrg);
+		if (dDist < dTol)
+			pRes->Add(pSource->Objs[i]);
+	}
+}
 
 void DBase::CNodesMerge2(ObjList* Nodes,double dTol,BOOL UpLab,BOOL bDel)
 {
@@ -17408,14 +21960,14 @@ else
 {
     outtext1("ERROR: Unable to Merge - No Current Mesh.");
 }
-Pt_Object* pKeep=NULL;
+Node* pKeep=NULL;
 if (ChkNodes->iNo>0)
 {
   outtext1("Coincident Node List:-");
   do
   {
-    Pt_Object* pN = (Pt_Object*) ChkNodes->Objs[0];
-    pCurrentMesh->GetClosestNodes(pN->GetCoords(),CNodes,dTol);
+    Node* pN = (Node*) ChkNodes->Objs[0];
+    GetClosestNodes(ChkNodes,pN->GetCoords(),CNodes,dTol);
     ChkNodes->RemoveGP(CNodes);
     if (CNodes->iNo>1)
     {
@@ -17423,14 +21975,14 @@ if (ChkNodes->iNo>0)
       if (bDel)         //Thean merge else just list
       {
         if (UpLab)
-          pKeep=(Pt_Object*) CNodes->GetMaxLabItem();
+          pKeep=(Node*) CNodes->GetMaxLabItem();
         else
-          pKeep=(Pt_Object*) CNodes->GetMinLabItem();
+          pKeep=(Node*) CNodes->GetMinLabItem();
         if (pKeep!=NULL)
         {
           for (i=0;i<CNodes->iNo;i++)
           {
-            pCurrentMesh->RepNodeInEl((Pt_Object*) CNodes->Objs[i],pKeep);
+            pCurrentMesh->RepNodeInEl((Node*) CNodes->Objs[i],pKeep);
           }
         }
       }
@@ -17442,6 +21994,73 @@ delete (CNodes);
 delete (ChkNodes);
 InvalidateOGL();
 ReDraw();
+}
+
+void DBase::EqLab(ObjList* Nodes, double dTol, BOOL UpLab, BOOL bDel)
+{
+	char S1[200];
+	int i;
+	CString OutT;
+	ObjList* CNodes = new ObjList();
+	ObjList* ChkNodes = new ObjList();
+	sprintf_s(S1, "%s%f", "Relabeling Coincident Nodes Across Meshes, Tol:", dTol);
+
+
+
+	for (i = 0; i < Nodes->iNo; i++)
+	{
+		if (Nodes->Objs[i]->iObjType == 1) 
+		{
+			ChkNodes->Add(Nodes->Objs[i]);
+		}
+	}
+
+	Node* pKeep = NULL;
+	if (ChkNodes->iNo > 0)
+	{
+		outtext1("Coincident Node List:-");
+		do
+		{
+			Node* pN = (Node*)ChkNodes->Objs[0];
+			GetClosestNodes(ChkNodes, pN->GetCoords(), CNodes, dTol);
+			ChkNodes->RemoveGP(CNodes);
+			int iLabN;
+			if (CNodes->iNo > 1)
+			{
+				CNodes->ListIDs();
+                for (i = 0; i < CNodes->iNo; i++)
+				{
+					if (CNodes->Objs[i]->pParent != pCurrentMesh)
+					{
+						iLabN = CNodes->Objs[i]->iLabel;
+						break;
+					}
+				}
+				Node* pRetPt;
+				for (i = 0; i < CNodes->iNo; i++)
+				{
+					if (CNodes->Objs[i]->pParent == pCurrentMesh)
+					{
+						pRetPt=pCurrentMesh->GetNode(iLabN);
+						if (pRetPt != NULL)
+						{
+							sprintf_s(S1, "%s %i %s %i", "WARNING: Node", iLabN, "Exists Renaming to", pCurrentMesh->iNodeLab);
+							pRetPt->iLabel = pCurrentMesh->iNodeLab;
+							pCurrentMesh->iNodeLab++;
+							outtext1(S1);
+						}
+						CNodes->Objs[i]->iLabel = iLabN;
+						CNodes->Objs[i]->iColour = 124;
+						break;
+					}
+				}
+			}
+		}   while (ChkNodes->iNo > 0);
+	}
+	delete (CNodes);
+	delete (ChkNodes);
+	InvalidateOGL();
+	ReDraw();
 }
 
 UINT MyThreadProc( LPVOID pParam )
@@ -17599,6 +22218,78 @@ pBar->dDIMs[3]=dHT;
 pBar->CreateSec();
 PropsT->AddItem(pBar);
 outtext1("New BAR Section Created.");
+}
+
+void DBase::CreatePrL(CString sT, int iPID, int iMID, double dW, double dH, double dWT, double dHT)
+{
+	//NOTE this element is not support in NASTRAN but added fot
+	//M3d solver
+	PBARL* pBar = new PBARL();
+	pBar->sSecType = "L ";
+	pBar->sTitle = sT;
+	pBar->iMID = iMID;
+	pBar->iID = iPID;
+	pBar->iNoDims = 4;
+	pBar->dDIMs[0] = dW;
+	pBar->dDIMs[1] = dH;
+	pBar->dDIMs[2] = dWT;
+	pBar->dDIMs[3] = dHT;
+	pBar->CreateSec();
+	PropsT->AddItem(pBar);
+	outtext1("New BAR Section Created.");
+}
+
+void DBase::CreatePrT2(CString sT, int iPID, int iMID, double dW, double dH, double dWT, double dHT)
+{
+	PBARL* pBar = new PBARL();
+	pBar->sSecType = "T2";
+	pBar->sTitle = sT;
+	pBar->iMID = iMID;
+	pBar->iID = iPID;
+	pBar->iNoDims = 4;
+	pBar->dDIMs[0] = dW;
+	pBar->dDIMs[1] = dH;
+	pBar->dDIMs[2] = dWT;
+	pBar->dDIMs[3] = dHT;
+	pBar->CreateSec();
+	PropsT->AddItem(pBar);
+	outtext1("New T2 Beam Section Created.");
+}
+
+void DBase::CreatePrCHAN2(CString sT, int iPID, int iMID, double dW, double dH, double dWT, double dHT)
+{
+	PBARL* pBar = new PBARL();
+	pBar->sSecType = "CHAN2";
+	pBar->sTitle = sT;
+	pBar->iMID = iMID;
+	pBar->iID = iPID;
+	pBar->iNoDims = 4;
+	pBar->dDIMs[0] = dHT;
+	pBar->dDIMs[1] = dWT;
+	pBar->dDIMs[2] = dH;
+	pBar->dDIMs[3] = dW;
+	pBar->CreateSec();
+	PropsT->AddItem(pBar);
+	outtext1("New CHAN2 Beam Section Created.");
+}
+
+void DBase::CreatePrI2(CString sT, int iPID, int iMID, double d1, double d2, double d3, double d4, double d5, double d6)
+{
+	PBARL* pBar = new PBARL();
+	pBar->sSecType = "I ";
+	pBar->sTitle = sT;
+	pBar->iMID = iMID;
+	pBar->iID = iPID;
+	pBar->iNoDims = 6;
+	pBar->dDIMs[0] = d1;
+	pBar->dDIMs[1] = d2;
+	pBar->dDIMs[2] = d3;
+	pBar->dDIMs[3] = d4;
+	pBar->dDIMs[4] = d5;
+	pBar->dDIMs[5] = d6;
+	pBar->CreateSec();
+	PropsT->AddItem(pBar);
+	outtext1("New I2 Beam Section Created.");
 }
 
 
@@ -17887,6 +22578,8 @@ END_MESSAGE_MAP()
 
 BEGIN_DISPATCH_MAP(DBase, CCmdTarget)
 	DISP_FUNCTION_ID(DBase, "GetNo", dispidGetNo, GetNo, VT_I4, VTS_NONE)
+	DISP_FUNCTION_ID(DBase, "AddNode", dispidAddNode, API_AddNode, VT_EMPTY, VTS_R8 VTS_R8 VTS_R8 VTS_I4 VTS_I4)
+	DISP_FUNCTION_ID(DBase, "ReDrawWindow", dispidReDrawWindow, ReDrawWindow, VT_EMPTY, VTS_NONE)
 END_DISPATCH_MAP()
 
 // Note: we add support for IID_IDBase to support typesafe binding
@@ -17908,7 +22601,7 @@ LONG DBase::GetNo(void)
 {
 	AFX_MANAGE_STATE(AfxGetAppModuleState());
 	// TODO: Add your dispatch handler code here
-	return 999;
+	return DB_ObjectCount;
 }
 
 
@@ -18695,31 +23388,40 @@ void DBase::AddSymbol(Symbol* pSym)
 }
 
 
-Symbol* DBase::GetSymbol(int iLab)
-{
-Symbol* pRet=NULL;
-int i;
-  if (iNoSymbols>0)
-  {
-    for(i=0;i<iNoSymbols;i++)
-    {
-      if (pSymTable[i]->iLabel==iLab)
-	  {
-         pRet=pSymTable[i];
-		 break;
-	  }
-    }
-  }
 
-return (pRet);
+
+//*********************************************************
+// Text to be inserted at vInPt and transformed to vN
+//*********************************************************
+void DBase::AddText(C3dVector vN, C3dVector vDir, C3dVector vInPt, CString inText, double dH)
+{
+	Text* pText = new Text(vInPt,vN,vDir,iTxtLabCnt,inText, dH,nullptr);
+	iTxtLabCnt++;
+	if (pText != nullptr)
+	{
+		AddObj(pText);
+		ReDraw();
+	}
 }
+
+
+
+
 
 void DBase::displaySymTable()
 {
 int i;
+C3dVector vM;
+vM.Set(0, 0, 0);
+Symbol* pSym;
+Symbol* pSymN;
 for (i=0;i<iNoSymbols;i++)
 {
-  AddObj (pSymTable[i]->Copy(NULL));
+	pSym = pSymTable[i];
+	pSymN = (Symbol*) pSym->Copy(NULL);
+	pSymN->Translate(vM);
+    AddObj (pSymN);
+	vM.x += 1.25*pSym->w;
 }
 ReDraw();
 }
@@ -18727,11 +23429,32 @@ ReDraw();
 void DBase::SymTableCalcMetrics()
 {
 int i;
-for (i=0;i<this->iNoSymbols;i++)
+//These are the average symbol heights and widths
+dAveH=0;
+dAveW=0;
+Symbol* pS = NULL;
+if (iNoSymbols > 0)
 {
-  this->pSymTable[i]->CalculateMetrics();
+	for (i = 0; i < iNoSymbols; i++)
+	{
+		pSymTable[i]->CalculateMetrics();
+		dAveH += pSymTable[i]->h;
+		dAveW += pSymTable[i]->w;
+	}
+	dAveH /= iNoSymbols;
+	dAveW /= iNoSymbols;
+	//Set space width, which will calculated as 0
+	//pS = GetSymbol(32);
+	//pS->w = dAveW;
+	for (i = 0; i < iNoSymbols; i++)
+	{
+		if (pSymTable[i]->iLabel == 32)
+		{
+			pSymTable[i]->w= dAveW;;
+			break;
+		}
+	}
 }
-
 }
 
 
@@ -18742,11 +23465,13 @@ int iStop =0;
 char s1[1000];
 char s2[20];
 char s3[20]; 
-
+//These are globals
+iNoSymbols = 0;
+dAveW = 1;
+dAveH = 1;
+//******************
 C3dVector vP1;
 C3dVector vP2;
-
-
 
 int iLab;
 Symbol* pSym;
@@ -18788,6 +23513,61 @@ C3dVector vPt(0,0,0);
   while (iStop == 0);
 SymTableCalcMetrics();
 displaySymTable();
+}
+
+//********************************************************************
+// Pre: TRUE
+// Post: Symbols table loaded from SymTable.h stored internally
+//********************************************************************
+void DBase::LoadSymbolsInternal()
+{
+	int iStop = 0;
+	CString s1;
+	char s2[20];
+	char s3[20];
+
+	C3dVector vP1;
+	C3dVector vP2;
+
+	int iLab;
+	int i = 0;
+	Symbol* pSym;
+	//outtext1("Loading Internal Symbols Table.");
+	ClearSymTable();
+	C3dVector vPt(0, 0, 0);
+	do
+	{
+		s1 = SymTableData[i];
+		i++;
+		if ((s1[0] == 'E') && (s1[1] == 'N') && (s1[2] == 'D'))
+		{
+			iStop = 1;
+		}
+		else if ((s1[0] == 'S') && (s1[1] == 'Y') && (s1[2] == 'M'))
+		{
+			pSym = new Symbol();
+			sscanf(s1, "%s%s", s2, s3);
+			iLab = atoi(s3);
+			pSym->Create(iLab, vPt, NULL);
+			AddSymbol(pSym);
+		}
+		else
+		{
+			sscanf(s1, "%s%s", s2, s3);
+			vP1.x = atof(s2);
+			vP1.y = atof(s3);
+			vP1.z = 0;
+			s1 = SymTableData[i];
+			i++;
+			sscanf(s1, "%s%s", s2, s3);
+			vP2.x = atof(s2);
+			vP2.y = atof(s3);
+			vP2.z = 0;
+			pSym->addSeg(vP1, vP2);
+		}
+	} while (iStop == 0);
+	SymTableCalcMetrics();
+	//displaySymTable();
 }
 
 void DBase::FreeMeshTri(double dS)
@@ -19036,15 +23816,15 @@ BOOL DBase::UpdateFront(NSurf* pSf, int &iNodeLab, int &iSegLab, BOOL isNewNd, c
 //but for now just createing nodes and element
 //for debugging mesh generator
 CONST int MAX_PTS_2D = 50000;
-cFaceList* DBase::GenTesselation(ObjList* pN, ObjList* pE)
+eFaceList* DBase::GenTesselation(ObjList* pN, ObjList* pE)
 {
-	Pt_Object* PtRealXYX[MAX_PTS_2D];
+	Node* PtRealXYX[MAX_PTS_2D];
 	int i;
 	int N1,N2,N3;
 	NSurf* pS;
 	c2dParPt* pPt;
 	C3dVector ptXYZ;
-	Pt_Object* pENodes[100];
+	Node* pENodes[100];
 	E_Object3* pRet;
 	if (pN->iNo < MAX_PTS_2D)
 	{
@@ -19057,6 +23837,9 @@ cFaceList* DBase::GenTesselation(ObjList* pN, ObjList* pE)
 			pPt = (c2dParPt*)pN->Objs[i];
 			pS = (NSurf*)pPt->pParent;
 			ptXYZ = pS->GetPt(pPt->PP.x, pPt->PP.y);
+			//ptXYZ.x = pPt->PP.x;  // to be deleted
+			//ptXYZ.y = pPt->PP.y;  // to be deleted
+			//ptXYZ.z = 0;  // to be deleted
 			PtRealXYX[i] = pCurrentMesh->AddNode(ptXYZ, pCurrentMesh->iNodeLab, 0, 0, 50, 0, 0);
 			pCurrentMesh->iNodeLab++;
 		}
@@ -19214,6 +23997,61 @@ BOOL DBase::isNodeInCircle2d(ObjList* pN, int iExclude, double dRad, C2dVector C
 	}
 
 	return (bRet);
+}
+
+//***************************************************************************
+//                     EXPERIMENTAL QMORPH
+// Cpnvert tri mesh to quads
+// Advancing Front Quadrilateral Meshing Using Triangle Transformations
+// Steven J. Owen1,2, Matthew L. Staten2, Scott A. Canann1,2 and Sunil Saigal1
+//***************************************************************************
+void DBase::QMorph(ObjList* Els)
+{
+	int i;
+	eEdgeList* LkList = NULL;
+	ObjList* Els2 = new ObjList();
+	for (i = 0; i < Els->iNo; i++)
+	{
+		if ((Els->Objs[i]->iObjType == 3) && (Els->Objs[i]->pParent == this->pCurrentMesh))
+		{
+			E_Object* pE = (E_Object*)Els->Objs[i];
+			//TRI ELEMENTS ONLY
+			if (pE->iType == 91)
+			{
+				Els2->Add(pE);
+			}
+		}
+	}
+	if (Els2->iNo == 0)
+	{
+		outtext1("ERROR: No Valid Elements Selected.");
+	}
+	else
+	{
+		//Start QMORPHing
+		if (pCurrentMesh->LkList != NULL)
+		{
+			Dsp_Rem(pCurrentMesh->LkList);
+			RemTempGraphics(pCurrentMesh->LkList);
+			delete(pCurrentMesh->LkList);
+			pCurrentMesh->LkList = NULL;
+		}
+		LkList = FindEdges(Els2);
+		if ((pCurrentMesh->LkList == NULL) && (LkList != NULL))
+		{
+			pCurrentMesh->LkList = LkList;
+			eEdge* pNext = LkList->Head;
+			while (pNext != NULL)
+			{
+				Dsp_Add(pNext);
+				pNext = (eEdge*)pNext->next;
+			}
+			InvalidateOGL();
+			ReDraw();
+		}
+	}
+	delete(Els2);
+	//delete(LkList);
 }
 
 //*****************************************************************************
@@ -19394,7 +24232,7 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 	double RR;
 	double RRF;
 	BOOL bIs;
-	cFaceList* pTesselation;
+	eFaceList* pTesselation;
 	ObjList* Pts = new ObjList();
 	cLinkedList* Segs = new cLinkedList();  //The FRONT
 	ObjList* pCandidateSegs = new ObjList();
@@ -19448,31 +24286,26 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 			//U only at present
 			pSeg = (cSeg*)Segs->Head;
 			//**********Need to CHECK***********
-			//pS->deriveAt(0, 0, 1, der);
-			//v1 = der(1, 0);
-			//v2 = der(0, 1);
-			//der.DeleteAll();
+
 			//**********************************
-			dSSpc1 = pS->GetPt(0.01, 0);
-			dSSpc2 = pS->GetPt(0, 0);
-			dSSpc1 -= dSSpc2;
-			dSclU = 0.01*dS / dSSpc1.Mag();
-			dSclPU = dSSpc1.Mag() / 0.01;
-			dSSpc1 = pS->GetPt(0, 0.01);
-			dSSpc2 = pS->GetPt(0, 0);
-			dSSpc1 -= dSSpc2;
-			dSclV = 0.01*dS / dSSpc1.Mag();
-			dSclPV = dSSpc1.Mag() / 0.01;
 			do
 			{
-				if (j == 168)
+				if (j == 30)
 					j = j;
 				pSeg = (cSeg*)Segs->Head;
 				//Calculate a node position away from seg
 				if (pSeg != NULL)
 				{
 					//local scale factor
-
+					pS->deriveAt(pSeg->MpT.x, pSeg->MpT.y, 1, der);
+					v1 = der(1, 0);
+					dSclPU = v1.Mag();
+					dSclU = dS / dSclPU;
+					v2 = der(0, 1);
+					dSclPV = v2.Mag();
+					dSclV = dS / dSclPV;
+					der.DeleteAll(); 
+					//end local scale factor
 					vD.x = pSeg->pt[0]->PP.y - pSeg->pt[1]->PP.y;
 					vD.y = pSeg->pt[1]->PP.x - pSeg->pt[0]->PP.x;
 					vD.Normalize();
@@ -19492,7 +24325,7 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 					//pRealPt->iLabel = iNodeLab; iNodeLab++;
 					pCandidateSegs->iNo=0;
 					pFrontNodes->iNo = 0;
-					GetCandiatesSeg2d(pSeg,Segs, pC, 3*RR, pCandidateSegs, dSclPU, dSclPV);
+					GetCandiatesSeg2d(pSeg,Segs, pC, 2*RR, pCandidateSegs, dSclPU, dSclPV);
 					GetCandiatesNodes2d(pSeg,pCandidateSegs, pC, 2*RR, pFrontNodes, dSclPU, dSclPV);
 					//Get Best node from boundary short list
 					dMinR = RR;
@@ -19543,6 +24376,11 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 								  break;
 							  }
 							}
+							else
+							{
+								//outtext1("ERROR: Node in Circumcircle.");
+								//bExitFail = TRUE;
+							}
 						}
 					}
 					//if an acceptable node from the boundary is available use it
@@ -19557,15 +24395,17 @@ void DBase::MeshSurfAF(ObjList* pSurfs, double dSz)
 					  UpdateFront(pS,iNodeLab, iSegLab,isNewNd,pSeg,Pts, Segs, pbFNd, pTmp, pEls);
 				}
 				//if (j>1)
-				  //DELAY(1);
-				j++;
 
+				j++;
+				//if (j==155)
+				//   bExitFail = TRUE;
 			} while  ((Segs->iCnt > 0) && (!bExitFail));
 		}
 		//Smoothing Cycle
 		outtext1("Performing 1 Smoothing Cycle");
 		//PrintTime("TIME: ");
-		Smooth(Pts, pEls);
+		if (!bExitFail)
+		   Smooth(Pts, pEls);
 		//Generate Faces from pEls
 		iNoEls = pEls->iNo / 3;
 		pTesselation = GenTesselation(Pts, pEls);
@@ -19825,38 +24665,47 @@ void DBase::GetCandiatesNodes2d(cSeg* pNot, ObjList* pFrom, C2dVector vC, double
 	vB.y *= dSY;
 	vB.Normalize();
 	//vB is base segement direction vector;
-
+	BOOL bb = FALSE;
 	for (i = 0; i < pFrom->iNo; i++)
 	{
 		pO = pFrom->Objs[i];
+		pSeg = (cSeg*) pO;
+		if (pSeg == pNot)
+			bb = TRUE;
+
 		if (pO != NULL)
 		{
-			pSeg = (cSeg*)pO;
 			N = pSeg->pt[0];
-			if ((N != pNot->pt[0]) && (N != pNot->pt[1]))
+			if (!CheckInt(pFrom, pNot, N))
 			{
-				vT.x = N->PP.x;
-				vT.y = N->PP.y;
-				vT -= pNot->pt[0]->PP;
-				vT.x *= dSX;
-				vT.y *= dSY;
-				vT.Normalize();
-				dCross = vB.Cross(vT);  //is to right
-				if (dCross > 0.05)       // if node is smaller than critical distance it a posible
-					pRes->AddEx(N);
+				if ((N != pNot->pt[0]) && (N != pNot->pt[1]))
+				{
+					vT.x = N->PP.x;
+					vT.y = N->PP.y;
+					vT -= pNot->pt[0]->PP;
+					vT.x *= dSX;
+					vT.y *= dSY;
+					vT.Normalize();
+					dCross = vB.Cross(vT);  //is to right
+					if (dCross > 0.05)       // if node is smaller than critical distance it a posible
+						pRes->AddEx(N);
+				}
 			}
 			N = pSeg->pt[1];
-			if ((N != pNot->pt[0]) && (N != pNot->pt[1]))
+			if (!CheckInt(pFrom, pNot, N))
 			{
-				vT.x = N->PP.x;
-				vT.y = N->PP.y;
-				vT -= pNot->pt[0]->PP;
-				vT.x *= dSX;
-				vT.y *= dSY;
-				vT.Normalize();
-				dCross = vB.Cross(vT);  //is to right
-				if (dCross > 0.05)         // if node is smaller than critical distance it a posible
-					pRes->AddEx(N);
+				if ((N != pNot->pt[0]) && (N != pNot->pt[1]))
+				{
+					vT.x = N->PP.x;
+					vT.y = N->PP.y;
+					vT -= pNot->pt[0]->PP;
+					vT.x *= dSX;
+					vT.y *= dSY;
+					vT.Normalize();
+					dCross = vB.Cross(vT);  //is to right
+					if (dCross > 0.05)         // if node is smaller than critical distance it a posible
+						pRes->AddEx(N);
+				}
 			}
 		}
 	}
@@ -19919,13 +24768,20 @@ void DBase::CreateBSegs(ObjList* pP, cLinkedList* pS, double dS, NSurf* pSf)
 		if (iInc == -1)
 		{
 			dL = pSf->pExtLoop[i]->getLen();
-			iInc = dL / dS;
-			if ((pSf->iNoExtCvs == 1) && (iInc < 4))
+			if (dL > dTol)
 			{
-				iInc = 4;
+				iInc = dL / dS;
+				if ((pSf->iNoExtCvs == 1) && (iInc < 4))
+				{
+					iInc = 4;
+				}
+				if (iInc < 1)
+					iInc = 1;
 			}
-			if (iInc < 1)
-				iInc = 1;
+			else
+			{
+				iInc = -1;
+			}
 		}
 		dSInc = (pSf->pExtLoop[i]->we- pSf->pExtLoop[i]->ws)/iInc;
 		dSp = pSf->pExtLoop[i]->ws;
@@ -20032,6 +24888,70 @@ void DBase::GenPts(NSurf* pS, ObjList* Pts)
 			AddObj(pThePt);
 		}
 	}
+}
+
+void DBase::LabGapsMP(int iGap)
+{
+	//PropTable* PropsT;
+	//MatTable* MatT;
+	char buff[200];
+	int i = 0;
+	int iCur;
+	int iS;
+	vector<int> iLabs;
+	sprintf_s(buff, "%s %i", "Finding Material Labeling Gaps > ", iGap);
+	outtext1(buff);
+	//Material label sparsity
+	if ((MatT->iNo > 2) && (iGap > 0))
+	{
+		for (i = 0; i < MatT->iNo; i++)
+			iLabs.push_back(MatT->pEnts[i]->iID);
+		sort(iLabs.begin(), iLabs.end());
+
+		for (i = 1; i < iLabs.size(); i++)
+		{
+			iCur = iLabs.at(i - 1);
+			iS = iLabs.at(i) - iCur;
+			if (iS > iGap)
+			{
+				sprintf_s(buff, "%s %i to %i size %i", "Gap Found at:  ", iCur + 1, iLabs.at(i) - 1, iS - 1);
+				outtext1(buff);
+				iCur = iLabs.at(i);
+			}
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Node Gaps Found.");
+	}
+	iLabs.clear();
+	//Property label sparsity
+	sprintf_s(buff, "%s %i", "Finding Property Labeling Gaps > ", iGap);
+	outtext1(buff);
+	if ((PropsT->iNo > 2) && (iGap > 0))
+	{
+		for (i = 0; i < PropsT->iNo; i++)
+			iLabs.push_back(PropsT->pEnts[i]->iID);
+		sort(iLabs.begin(), iLabs.end());
+
+		for (i = 1; i < iLabs.size(); i++)
+		{
+			iCur = iLabs.at(i - 1);
+			iS = iLabs.at(i) - iCur;
+			if (iS > iGap)
+			{
+				sprintf_s(buff, "%s %i to %i size %i", "Gap Found at:  ", iCur + 1, iLabs.at(i) - 1, iS - 1);
+				outtext1(buff);
+				iCur = iLabs.at(i);
+			}
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Node Gaps Found.");
+	}
+
+
 }
 
 //********************************************************************
@@ -20176,3 +25096,26 @@ void DBase::GenPts(NSurf* pS, ObjList* Pts)
 //Sol.DeleteAll();
 //}
 
+
+
+void DBase::API_AddNode(DOUBLE X, DOUBLE Y, DOUBLE Z, LONG ID, LONG COL)
+{
+	AFX_MANAGE_STATE(AfxGetAppModuleState());
+
+	// TODO: Add your dispatch handler code here
+	C3dVector v;
+	if (pCurrentMesh != NULL)
+	{
+		v.Set(X, Y, Z);
+		pCurrentMesh->AddNode(v, ID, -1, -1, COL, 0, 0);
+	}
+}
+
+
+void DBase::ReDrawWindow()
+{
+	AFX_MANAGE_STATE(AfxGetAppModuleState());
+	InvalidateOGL();
+	ReDraw();
+	// TODO: Add your dispatch handler code here
+}

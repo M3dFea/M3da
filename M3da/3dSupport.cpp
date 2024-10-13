@@ -3,6 +3,7 @@
 #include "3dSupport.h"
 #include <math.h>
 #define D2R  0.01745329251994
+#define R2D  57.2957795130931
 double Pi = 3.1415926535;
 
 
@@ -11,13 +12,7 @@ double Pi = 3.1415926535;
 
 
 
-// 3dMatrix.cpp
-//
-// Copyright (c) Nigel Thompson 1996
-//
-// Implementation for:
-// C3dMatrix
-//
+
 
 IMPLEMENT_DYNAMIC(C3dObject, CObject)
 
@@ -48,13 +43,7 @@ double RadToDeg(double dARad)
 
 
 
-// 3dVector.cpp
-//
-// Copyright (c) Nigel Thompson 1996
-//
-// Implementation for:
-// C3dVector
-//
+
 
 //////////////////////////////////////////////////////////////////
 // C3dVector
@@ -159,6 +148,7 @@ double C2dVector::Cross(C2dVector vIn)
 	drc = x * vIn.y - vIn.x*y;
 	return (drc);
 }
+
 
 double C2dVector::Dist(C2dVector inPt)
 {
@@ -376,7 +366,7 @@ double C3dVector::Ang(const C3dVector& r)
 	if (dc !=  0) 
 	  {
 	  
-		db = acos(da/dc)*2*Pi/360;
+		db = acos(da/dc)*R2D;
 		if (da/dc < 0)
 		  {
 		  db = db+90;	
@@ -389,6 +379,30 @@ double C3dVector::Ang(const C3dVector& r)
 	return (db);
 }
 
+double C3dVector::AngSigned(C3dVector r, C3dVector vN)
+{
+	double dot = this->Dot(r);
+	double magV1 = this->Mag();
+	double magV2 = r.Mag();
+
+	// Using the dot product formula to find the angle between the vectors
+	double angle = acos(dot / (magV1 * magV2));
+
+	// Convert the angle to degrees
+	double angleDegrees = angle * R2D;
+
+	// Determine the sign of the angle
+	C3dVector crossProduct;
+	crossProduct = this->Cross(r);
+
+	if (vN.Dot(crossProduct) < 0)
+	{
+		angleDegrees = 360-angleDegrees;
+
+	}
+
+	return angleDegrees;
+}
 
 void C3dVector::Rotate(C3dVector vA1,C3dVector vA2,double dAng)
 {
@@ -535,6 +549,7 @@ C3dVector& C3dVector::TGet()
 {
 return (*this);
 }
+
 double C3dVector::Dist(C3dVector inPt)
 {
 double dx;
@@ -1752,10 +1767,48 @@ mOrientMat.m_22 = vAxisPts[3].z;
 ReSet();
 ApplyTransform(mOrientMat);
 mOrientMat.Scale(dSclFact,dSclFact,dSclFact);
+
 return (mOrientMat);
 }
 
+void DSP_Triad::PushMat(C3dMatrix mT)
+{
+	C3dVector vS;
+	double dS;
+	double dS2;
+	vS.x = mT.m_00;
+	vS.y = mT.m_10;
+	vS.z = mT.m_20;
+	dS = vS.Mag();
+	vS.x = mT.m_01;
+	vS.y = mT.m_11;
+	vS.z = mT.m_21;
+	dS2 = vS.Mag();
 
+	//dSclFact = mT.m_00;
+	dSclFact = dS;
+	mT.Scale(1 / dSclFact, 1 / dSclFact, 1 / dSclFact);
+
+	vAxisPts[0].x = mT.m_30;
+	vAxisPts[0].y = mT.m_31;
+	vAxisPts[0].z = mT.m_32;
+
+	vAxisPts[1].x= mT.m_00;
+	vAxisPts[1].y= mT.m_10;
+	vAxisPts[1].z= mT.m_20;
+	vAxisPts[1] += vAxisPts[0];
+
+	vAxisPts[2].x = mT.m_01;
+	vAxisPts[2].y = mT.m_11;
+	vAxisPts[2].z = mT.m_21;
+	vAxisPts[2] += vAxisPts[0];
+
+	vAxisPts[3].x = mT.m_02;
+	vAxisPts[3].y = mT.m_12;
+	vAxisPts[3].z = mT.m_22;
+	vAxisPts[3] += vAxisPts[0];
+
+}
 
 
 Mat::Mat()
@@ -2007,7 +2060,7 @@ void Mat::diag()
 FILE* pFile;
 int i;
 int j;
-pFile = fopen("MAT_DIAG.txt","w");
+pFile = fopen("C:/SCRATCH/MIN3/MAT_DIAG_MIN3.txt","w");
 
 fprintf(pFile,"%s\n","MATRIX");
 fprintf(pFile,"%s%i%s%i\n","M",m,"N",n);
@@ -2016,9 +2069,9 @@ for (i=0;i<m;i++)
 {
   for (j=0;j<n;j++)
   {
-  fprintf(pFile,"%f,",*mn(i+1,j+1));
+  fprintf(pFile,"%g,",*mn(i+1,j+1));
   }
-fprintf(pFile,"\n","");
+fprintf(pFile,"\n");
 }
 fclose(pFile);
 }

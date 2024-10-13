@@ -71,6 +71,11 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zORTHO_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
 
 
 class zKEY_Mnu: public zMnu
@@ -98,7 +103,15 @@ class zELCR_Mnu: public zMnu
 public:
 E_Object* pE;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
-};
+}; 
+
+class zELINSSPG_Mnu : public zMnu
+{
+public:
+	E_Object* pE;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+}; 
+
 
 class zCVCR_Mnu: public zMnu
 {
@@ -206,9 +219,18 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zTRIM_Mnu : public zMnu
+{
+	CPoint PNear1;
+	CPoint PNear2;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zINT_Mnu: public zMnu
 {
 public:
+CPoint PNear1;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
@@ -224,6 +246,14 @@ class zKNOTINS_Mnu : public zMnu
 public:
   virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
+
+class zCVSPLIT_Mnu : public zMnu
+{
+	NCurve* pC = NULL;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 
 class zKNOTMOD_Mnu : public zMnu
 {
@@ -277,6 +307,21 @@ public:
 int iCnt;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
+
+class zMESHINT_Mnu : public zMnu
+{
+public:
+	int iCnt;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zMESHINTWP_Mnu : public zMnu
+{
+public:
+	int iCnt;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 
 class zMMESHT_Mnu: public zMnu
 {
@@ -374,6 +419,18 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zBOFFY_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zBOFFZ_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zFILET_Mnu: public zMnu
 {
 public:
@@ -390,6 +447,60 @@ class zQSIZE_Mnu: public zMnu
 {
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zPTSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zEDSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zFCSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zNDSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zTXTSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zBMSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zWPSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zELSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zLMSIZE_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
 class zMOVE_Mnu: public zMnu
@@ -423,6 +534,19 @@ class zELSWEEP_Mnu: public zMnu
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
+
+class zELSWEEPNDS_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zELSWEEPNDB_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 
 class zELSWEEPB_Mnu : public zMnu
 {
@@ -495,6 +619,13 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zGRAV_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+
 class zRACR_Mnu : public zMnu
 {
 public:
@@ -505,6 +636,12 @@ class zTCR_Mnu: public zMnu
 {
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zTEMPD_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
 class zTBCR_Mnu: public zMnu
@@ -582,6 +719,12 @@ public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zQMORPH_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zELMASS_Mnu : public zMnu
 {
 public:
@@ -635,6 +778,15 @@ BOOL bDel;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zNDEQLAB_Mnu : public zMnu
+{
+public:
+	double dTol;
+	BOOL bUp;
+	BOOL bDel;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zCHKSHELLASP_Mnu : public zMnu
 {
 public:
@@ -659,6 +811,12 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zCHKCOUNT_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zLABENT_Mnu: public zMnu
 {
 public:
@@ -669,6 +827,12 @@ class zELMOPID_Mnu: public zMnu
 {
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zSELRBENODE_Mnu : public zMnu
+{
+public:
+virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
 class zNDMOOSYS_Mnu: public zMnu
@@ -694,6 +858,8 @@ class zNDMOLAB_Mnu: public zMnu
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
+
+
 
 class zELMOLAB_Mnu: public zMnu
 {
@@ -731,7 +897,7 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
-class zWPSIZE_Mnu: public zMnu
+class zWPLSIZE_Mnu: public zMnu
 {
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
@@ -742,7 +908,16 @@ class zCIRCR_Mnu: public zMnu
 {
 public:
 C3dVector vR;
+double dRad;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zTEXTCR_Mnu : public zMnu
+{
+	C3dVector p1;
+	CString sText;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
 class zCIRCPT_Mnu: public zMnu
@@ -752,12 +927,116 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zCIRCR2_Mnu : public zMnu
+{
+	C3dVector p1;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zLNTANCIR_Mnu : public zMnu
+{
+	CPoint PNear1;
+	C3dVector p1;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zLNTAN2CIR_Mnu : public zMnu
+{
+	CPoint PNear1;
+	CPoint PNear2;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zLN_Mnu: public zMnu
 {
 C3dVector p1;
+C3dVector p2;
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
+
+class zDIMA_Mnu : public zMnu
+{
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector p3;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zDIMANG_Mnu : public zMnu
+{
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector p3;
+	C3dVector pIns;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zDIMH_Mnu : public zMnu
+{
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector p3;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zDIMV_Mnu : public zMnu
+{
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector p3;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zDIML_Mnu : public zMnu
+{
+	CString sText;
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector p3;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zDIMR_Mnu : public zMnu
+{
+C3dVector p2;
+NCircle* pC = nullptr;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zDIMCL_Mnu : public zMnu
+{
+	C3dVector p2;
+	NCircle* pC = nullptr;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zDIMDRAG_Mnu : public zMnu
+{
+	C3dVector p1;
+	DIM* pD = nullptr;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zDIMD_Mnu : public zMnu
+{
+	C3dVector p2;
+	NCircle* pC = nullptr;
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 
 class zLNC_Mnu : public zMnu
 {
@@ -818,6 +1097,8 @@ virtual	int DoMenu(CString CInMsg,CPoint Pt);
 
 class zTVEC_Mnu: public zMnu
 {
+C3dVector p1;
+C3dVector p2;
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
@@ -894,10 +1175,23 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zPTSONCIR_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+
 class zTEST_Mnu: public zMnu
 {
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zDSPLAM_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
 class zCVMOW_Mnu: public zMnu
@@ -926,11 +1220,23 @@ public:
   virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
+class zDEL_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 
 class zTRAN_Mnu: public zMnu
 {
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zPTRAN_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
 class zONSCR_Mnu: public zMnu
@@ -986,6 +1292,19 @@ class zMSHACT_Mnu : public zMnu
 public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
+
+class zLABGAP_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zLABGAPMP_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 
 class zMSHVIS_Mnu : public zMnu
 {
@@ -1059,6 +1378,19 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zCOLPID_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zCOLINC_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+
 class zCHKJAC_Mnu : public zMnu
 {
 public:
@@ -1113,6 +1445,7 @@ class zGPBYTYPE_Mnu: public zMnu
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
+
 
 class zSELBYPID_Mnu: public zMnu
 {
@@ -1258,6 +1591,18 @@ CString sTit;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zPRPCOMP_Mnu : public zMnu
+{
+public:
+	int  iNLab;
+	int iPID;
+	int iNoLay = 0;
+	CString sLay[50];
+	double dNSM;
+	CString sTit;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zPRSPGT_Mnu: public zMnu
 {
 public:
@@ -1269,6 +1614,21 @@ double dkz;
 double dkt;
 CString sTit;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zPRBUSH_Mnu : public zMnu
+{
+public:
+	int  iNLab;
+	int iPID;
+	double dk1;
+	double dk2;
+	double dk3;
+	double dk4;
+	double dk5;
+	double dk6;
+	CString sTit;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
 class zPRMASS_Mnu : public zMnu
@@ -1332,6 +1692,64 @@ double dWT;
 double dHT;
 CString sTit;
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zPRBL_Mnu : public zMnu
+{
+public:
+	int iNLab;
+	int iPID;
+	int iMID;
+	double dW;
+	double dH;
+	double dWT;
+	double dHT;
+	CString sTit;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zPRBT2_Mnu : public zMnu
+{
+public:
+	int iNLab;
+	int iPID;
+	int iMID;
+	double dW;
+	double dH;
+	double dWT;
+	double dHT;
+	CString sTit;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zPRBCHAN2_Mnu : public zMnu
+{
+public:
+	int iNLab;
+	int iPID;
+	int iMID;
+	double dW;
+	double dH;
+	double dWT;
+	double dHT;
+	CString sTit;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zPRBI2_Mnu : public zMnu
+{
+public:
+	int iNLab;
+	int iPID;
+	int iMID;
+	double d1;
+	double d2;
+	double d3;
+	double d4;
+	double d5;
+	double d6;
+	CString sTit;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
 class zMMAT1_Mnu: public zMnu
@@ -1426,6 +1844,13 @@ class zSELCURCOL_Mnu: public zMnu
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 }; 
+
+class zSELCURLAY_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zGPBYCOL_Mnu: public zMnu
 {
 public:
@@ -1492,6 +1917,13 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zHLIMIT_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+
 class zECHO_Mnu : public zMnu
 {
 public:
@@ -1505,6 +1937,24 @@ public:
 };
 
 class zRESLSTRESP_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zRESGRAPHRESP_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zRESLABRESP_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zRESLSTRESPFULL_Mnu : public zMnu
 {
 public:
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
@@ -1571,6 +2021,41 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zRESENVMAX_Mnu : public zMnu
+{
+
+public:
+	int iNo = 0;
+	CString sSeq[50];
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zRESDIVINTO_Mnu : public zMnu
+{
+
+public:
+	CString sSeq;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zRESSCALE_Mnu : public zMnu
+{
+
+public:
+	int iNo = 0;
+	CString sSeq;
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zRESENVMIN_Mnu : public zMnu
+{
+
+public:
+	int iNo = 0;
+	CString sSeq[50];
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zRESVEC_Mnu : public zMnu
 {
 public:
@@ -1596,6 +2081,12 @@ public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
 };
 
+class zDIMSCL_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
 class zRESSETVECSCL_Mnu : public zMnu
 {
 public:
@@ -1606,7 +2097,7 @@ public:
 class zRESDISPOFF_Mnu : public zMnu
 {
 public:
-	Pt_Object* pN;
+	Node* pN;
 	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };
 
@@ -1665,4 +2156,28 @@ class zGPREM_Mnu: public zMnu
 {
 public:
 virtual	int DoMenu(CString CInMsg,CPoint Pt);
+};
+
+class zEXPINC_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zGPBYINC_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zMODINCNO_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
+};
+
+class zMODLAYNO_Mnu : public zMnu
+{
+public:
+	virtual	int DoMenu(CString CInMsg, CPoint Pt);
 };

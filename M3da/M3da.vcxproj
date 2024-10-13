@@ -85,6 +85,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>M3d74</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -193,7 +194,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -210,11 +211,11 @@
     <Link>
       <RegisterOutput>true</RegisterOutput>
       <AdditionalDependencies>opengl32.lib;glu32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(OutDir)$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <Version>66</Version>
     </Link>
     <ProjectReference>
       <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
@@ -234,6 +235,7 @@
     <ClCompile Include="Mnu.cpp" />
     <ClCompile Include="MyEdit.cpp" />
     <ClCompile Include="MyEditBasicFnc.cpp" />
+    <ClCompile Include="Parser.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -247,6 +249,7 @@
     <ClInclude Include="EditBasic.h" />
     <ClInclude Include="EEdit.h" />
     <ClInclude Include="FONT_DEF.h" />
+    <ClInclude Include="GLOBAL_VARS.h" />
     <ClInclude Include="G_object.h" />
     <ClInclude Include="InputPane.h" />
     <ClInclude Include="M3da.h" />
@@ -257,7 +260,9 @@
     <ClInclude Include="MyEdit.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="SymTable.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Undo.h" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="M3da.idl" />
@@ -272,6 +277,8 @@
     <Image Include="res\bmp00007.bmp" />
     <Image Include="res\bmp00008.bmp" />
     <Image Include="res\bmp00009.bmp" />
+    <Image Include="res\bmp00010.bmp" />
+    <Image Include="res\bmp00011.bmp" />
     <Image Include="res\icon1.ico" />
     <Image Include="res\M3da.ico" />
     <Image Include="res\M3daDoc.ico" />

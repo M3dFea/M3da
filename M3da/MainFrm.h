@@ -46,6 +46,8 @@ protected:  // control bar embedded members
   CMFCToolBar       m_POST;
   CMFCToolBar       m_Projection;
   CMFCToolBar       m_Utils;
+  CMFCToolBar       m_QFilter;
+  CMFCToolBar       m_DIMS;
 // Generated message map functions
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

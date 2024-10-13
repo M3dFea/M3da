@@ -67,6 +67,18 @@ CMainFrame::~CMainFrame()
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
+	int iIDR;
+	iIDR=IDR_DRAW;
+	iIDR = IDR_CREATE;
+	iIDR = IDR_EDIT;
+	iIDR = IDR_FE;
+	iIDR = IDR_GROUP;
+	iIDR = IDR_BC;
+	iIDR = IDR_ELTYPE;
+	iIDR = IDR_POST;
+	iIDR = IDR_PROJ;
+	iIDR = IDR_UTILITIES;
+	iIDR = IDR_QFILTER;
 	if (CFrameWndEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
@@ -157,64 +169,73 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     TRACE0("Failed to create toolbar\n");
     return -1;      // fail to create
   }
-	//if (!m_Qwanta.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(1,1,1,1), AFX_IDW_MENUBAR+6) ||
-	//	!m_Qwanta.LoadToolBar(IDR_QWANTA))
-	//{
-	//	TRACE0("Failed to create toolbar\n");
-	//	return -1;      // fail to create
-	//}
+	if (!m_QFilter.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(1,1,1,1), AFX_IDW_MENUBAR+11) ||
+		!m_QFilter.LoadToolBar(IDR_QFILTER))
+	{
+		TRACE0("Failed to create toolbar\n");
+		return -1;      // fail to create
+	}
 
-	CString strToolBarName2;
-	bNameValid = strToolBarName2.LoadString(IDS_DRAW);  //IDS_DRAW
-	//ASSERT(bNameValid);
-    m_Draw.SetWindowText(strToolBarName2);
+	if (!m_DIMS.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC, CRect(1, 1, 1, 1), AFX_IDW_MENUBAR + 12) ||
+		!m_DIMS.LoadToolBar(IDR_DIMS))
+	{
+		TRACE0("Failed to create toolbar\n");
+		return -1;      // fail to create
+	}
+
+
   
 	CString strToolBarName;
 	bNameValid = strToolBarName.LoadString(IDS_TOOLBAR_STANDARD);
-	//ASSERT(bNameValid);
+	ASSERT(bNameValid);
 	m_wndToolBar.SetWindowText(strToolBarName);
+
+	CString strToolBarName2;
+	int iIDS;
+	iIDS = IDS_DRAW;
+	bNameValid = strToolBarName2.LoadString(IDS_DRAW);  //IDS_DRAW
+	//ASSERT(bNameValid);
+	m_Draw.SetWindowText("Draw");
 
 	CString strToolBarName3;
 	bNameValid = strToolBarName3.LoadString(IDS_CREATE2);
 	//ASSERT(bNameValid);
-  m_Create.SetWindowText(strToolBarName3);
-  strToolBarName3 = "";
-	bNameValid = strToolBarName3.LoadString(IDS_EDIT);
+    m_Create.SetWindowText("Create");
+
+    CString  strToolBarName4;
+	bNameValid = strToolBarName4.LoadString(IDS_EDIT);
 	//ASSERT(bNameValid);
-    m_Edit.SetWindowText(strToolBarName3);
+    m_Edit.SetWindowText("Edit");
 
-	bNameValid = strToolBarName3.LoadString(IDS_FE);
+	CString  strToolBarName5;
+	bNameValid = strToolBarName5.LoadString(IDS_FE);
 	//ASSERT(bNameValid);
-  m_FE.SetWindowText(strToolBarName3);
+    m_FE.SetWindowText("F.E.");
 
-	bNameValid = strToolBarName3.LoadString(IDS_GROUP);
+	CString  strToolBarName6;
+	bNameValid = strToolBarName6.LoadString(IDS_GROUP);
 	//ASSERT(bNameValid);
-  m_Group.SetWindowText(strToolBarName3);
+    m_Group.SetWindowText("Groups");
 
-  bNameValid = strToolBarName3.LoadString(IDS_LBC);
+	CString  strToolBarName7;
+    bNameValid = strToolBarName7.LoadString(IDS_BC);
 	//ASSERT(bNameValid);
-  m_BC.SetWindowText(strToolBarName3);
+    m_BC.SetWindowText("Boundary Conditions");
 
-  bNameValid = strToolBarName3.LoadString(IDS_ELTYPE);
+	CString  strToolBarName8;
+    bNameValid = strToolBarName8.LoadString(IDS_ELTYPE);
 	//ASSERT(bNameValid);
-  m_ELTYPE.SetWindowText(strToolBarName3);
+    m_ELTYPE.SetWindowText("Element Types");
 
-  bNameValid = strToolBarName3.LoadString(IDS_POST);
+	CString  strToolBarName9;
+    bNameValid = strToolBarName9.LoadString(IDS_POST);
 	//ASSERT(bNameValid);
-  m_POST.SetWindowText(strToolBarName3);
+    m_POST.SetWindowText("Post Processing");
 
-  bNameValid = strToolBarName3.LoadString(IDS_STRING115);
-  //ASSERT(bNameValid);
-  m_Projection.SetWindowText("Proj");
-
-  //bNameValid = strToolBarName3.LoadString(IDS_STRING115);
-  //ASSERT(bNameValid);
-  m_Utils.SetWindowText("Utils");
-
-  //bNameValid = strToolBarName3.LoadString(IDS_QWANTA);
-  //ASSERT(bNameValid);
-  //m_Qwanta.SetWindowText(strToolBarName3);
-  
+    m_Projection.SetWindowText("Project");
+    m_Utils.SetWindowText("Utils");
+    m_QFilter.SetWindowText("Quick Filter");
+	m_DIMS.SetWindowText("Dimension");
 
 	CString strCustomize;
 	bNameValid = strCustomize.LoadString(IDS_TOOLBAR_CUSTOMIZE);
@@ -230,7 +251,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
   m_POST.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
   m_Projection.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
   m_Utils.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
-	//m_Qwanta.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
+  m_QFilter.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
+  m_DIMS.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
+  //m_Qwanta.EnableCustomizeButton(TRUE, ID_VIEW_CUSTOMIZE, strCustomize);
 	// Allow user-defined toolbars operations:
 	InitUserToolbars(NULL, uiFirstUserToolBarId, uiLastUserToolBarId);
 
@@ -269,6 +292,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
  m_POST.EnableDocking(CBRS_ALIGN_ANY);
  m_Projection.EnableDocking(CBRS_ALIGN_ANY);
  m_Utils.EnableDocking(CBRS_ALIGN_ANY);
+ m_QFilter.EnableDocking(CBRS_ALIGN_ANY);
+ m_DIMS.EnableDocking(CBRS_ALIGN_ANY);
  //m_Qwanta.EnableDocking(CBRS_ALIGN_ANY);
  EnableDocking(CBRS_ALIGN_ANY);
   //AA.EnableDocking(CBRS_BOTTOM);
@@ -284,6 +309,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
  DockPane(&m_POST);
  DockPane(&m_Projection);
  DockPane(&m_Utils);
+ DockPane(&m_QFilter);
+ DockPane(&m_DIMS);
  //DockPane(&m_Qwanta);
 	// enable Visual Studio 2005 style docking window behavior
 //	CDockingManager::SetDockingMode(DT_SMART);
@@ -459,8 +486,8 @@ void outtextMSG(CString AAA)
   {
     a = b.Left(iRetPos);
     b = b.Right(b.GetLength()-iRetPos-2);
-	a.MakeUpper();
-	if (a.Find("/")==-1)
+	//a.MakeUpper();
+	if (a.Find("//")==-1)
 	{
 	 outtext2(a);
      SendMsg(a);

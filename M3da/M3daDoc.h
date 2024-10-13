@@ -6,7 +6,7 @@
 #pragma once
 #include "Mnu.h"
 
-class CM3daDoc : public CDocument
+class CM3daDoc : public CDocument, public CUndo
 {
 protected: // create from serialization only
 	CM3daDoc();
@@ -14,6 +14,10 @@ protected: // create from serialization only
 
 // Attributes
 public:
+//
+
+BOOL bUndo = TRUE;
+BOOL bFinalChkPt = FALSE;
 BOOL bOnFirst=TRUE;
 CView* pCView;
 CDC* D_ClientDC;
@@ -33,10 +37,11 @@ void SetView (CView* pCViewIn);
 void InitDoc();
 void SetScreenMat(CRect rRect);
 void Draw(C3dMatrix pM,CDC* pCView,int iMode);
+void DragUpdate(CPoint m_PointNew);
 BOOL isBlackDisp();
 void SetToScr2(C3dMatrix pM);
 void DrawDrag(CDC* pDC,CPoint P1,CPoint P2);
-BOOL isLineDragging();
+BOOL isDragging();
 void SetLineStart(CPoint pS);
 void SetLineEnd(CPoint pE);
 void LineDrag(CDC* pDC, CPoint P1, CPoint P2);
@@ -61,7 +66,7 @@ void Dsp_Group();
 public:
 	virtual BOOL OnNewDocument();
 	virtual void Serialize(CArchive& ar);
-
+	virtual void DeleteContents2();
 // Implementation
 public:
 	virtual ~CM3daDoc();
@@ -464,6 +469,98 @@ public:
   afx_msg void OnPartmodifyExtract();
   afx_msg void OnChecksTetcircumsphere();
   afx_msg void OnFemtoolsMeshsizeoncurves();
+//  afx_msg void OnEditRedo();
+//  afx_msg void OnUpdateEditRedo(CCmdUI *pCmdUI);
+//  afx_msg void OnFileOpen();
+  virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+  afx_msg void OnCurvetoolsText();
+  afx_msg void OnPropertyPcomp();
+  afx_msg void OnMaterialOrthotropic();
+  afx_msg void OnPropertyDisplaylaminatestack();
+  afx_msg void OnPropertyPbush();
+  afx_msg void OnManipulationDivideinto();
+  afx_msg void OnManipulationEnvelopemaximum();
+  afx_msg void OnManipulationEnvelopeminimum();
+  afx_msg void OnManipulationScale();
+  afx_msg void OnEditToggleon();
+  afx_msg void OnPropertyBeamT2();
+  afx_msg void OnPropertyBeamChan2();
+  afx_msg void OnPropertyBeamI2();
+  afx_msg void OnPropertyBeamL();
+  afx_msg void OnElementmodifiyBeamoffsetinbeamy();
+  afx_msg void OnElementmodifiyBeamoffsetinbeamz();
+  afx_msg void OnToolsPlanet();
+  afx_msg void OnFemtoolsSweepnodestoshells();
+  afx_msg void OnFemtoolsSweepnodestobeams();
+  afx_msg void OnPostListresponsedataallvars();
+  afx_msg void OnPostLabelresponseentities();
+  afx_msg void OnPostGraphresponsedata();
+
+  afx_msg void OnFemtoolsSweepnodestobeams33361();
+  afx_msg void OnFemtoolsSweepnodestoshells33362();
+  afx_msg void OnViewHighlightlimit();
+  afx_msg void OnSelectionRbecentrenodes();
+  afx_msg void OnChecksCountf();
+  afx_msg void OnCurvemodifySplitatpoint();
+  afx_msg void OnElementmodifiyIntersecttrielements();
+  afx_msg void OnNodemodifyEquivalencelab();
+  afx_msg void OnElementmodifiyColourbypid();
+  afx_msg void OnExportIncludefile();
+  afx_msg void OnGroupGroupfromincludefile();
+  afx_msg void OnMeshmanagementSetincludefileno();
+  afx_msg void OnElementmodifiyColourbyincludefile();
+  afx_msg void OnCurvetoolsOrthosnap();
+  afx_msg void OnCurvemodifyTrim();
+  afx_msg void OnListGapsbetweenlabels();
+  afx_msg void OnListGapsbetweenmatsandpropslabels();
+  afx_msg void OnElementmodifiyInsertspringonrigid();
+  afx_msg void OnFemtoolsSweepedgesoutward();
+  afx_msg void OnObjectsizePoint();
+  afx_msg void OnObjectsizeNode();
+  afx_msg void OnObjectsizeLumpmass();
+  afx_msg void OnObjectsizeElementedge();
+  afx_msg void OnObjectsizeElementfreeedge();
+  afx_msg void OnObjectsizeElementfreeface();
+  afx_msg void OnObjectsizeWorkplanelines();
+  afx_msg void OnObjectsizeBeams();
+  afx_msg void OnObjectsizeText();
+  afx_msg void OnExportExportviewmatrix();
+  afx_msg void OnImportImportviewmatrix();
+  afx_msg void OnCurvetoolsLinethrouptandtangenttocircle();
+  afx_msg void OnCurvetoolsLinetangentto2circles();
+  afx_msg void OnCurvetoolsPointsoncircle();
+  afx_msg void OnEditPolartranslatedfrom();
+  void DeleteObjs();
+  afx_msg void OnViewTogglecontrolpointvisability();
+  afx_msg void OnExportExportdxf();
+  afx_msg void OnCurvemodifyLayernumber();
+  afx_msg void OnSelectionSelectcurve();
+  afx_msg void OnViewToggleoncirclestartmarkers();
+  afx_msg void OnToolsInsertbitmapbackground();
+  afx_msg void OnViewToggleon();
+  afx_msg void OnQfilterNodes();
+  afx_msg void OnQfilterElements();
+  afx_msg void OnQfilterPoints();
+  afx_msg void OnQfilterCurves();
+  afx_msg void OnQfilterSurface();
+  afx_msg void OnQfilterAll();
+  afx_msg void OnDimensiontoolsDimsize();
+  afx_msg void OnDimensiontoolsAligneddim();
+  afx_msg void OnDimensiontoolsLineardim();
+  afx_msg void OnDimensiontoolsHorizontaldim();
+  afx_msg void OnDimensiontoolsVerticaldim();
+  afx_msg void OnDimensiontoolsLeadertext();
+  afx_msg void OnDimensiontoolsRadiusdim();
+  afx_msg void OnDimensiontoolsDiameterdim();
+  afx_msg void OnDimensiontoolsAngulardimby3points();
+  afx_msg void OnDimensiontoolsDragdim();
+  afx_msg void OnDimensiontoolsCirclecentremarker();
+  afx_msg void OnElementtypeBush();
+  afx_msg void OnEditGlobalpreferences();
+  afx_msg void OnLoadsbcCreatetempd();
+  afx_msg void OnLoadsbcCreategrav();
+  afx_msg void OnExportCurrentStl();
+  afx_msg void OnImportStltotrimesh();
 };
 
 

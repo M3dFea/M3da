@@ -1,9 +1,20 @@
 #include "Mnu.h"
 #include "M3Da.h"
 #include "math.h"
-// constructor sets where to out text
+#include "Parser.h"
+#include "GLOBAL_VARS.h"
+//constructor sets where to out text
 const double Pi = 3.1415926535;
-	
+#define D2R  0.01745329251994
+#define R2D  57.2957795130931
+
+double gDIM_FILSZ = 0.1;
+double gDIM_OFFSZ = 0.1;
+double gTXT_HEIGHT = 0.5;
+double gDIM_RADSZ = 0.5;
+double gDIM_CVORD = 2;
+//GLOBAL DEFUALT VALUES ENTERED
+
 void zMnu::Init(DBase* TheDBase,int iType)
 {
 cDBase = TheDBase;	
@@ -50,12 +61,14 @@ if (pNext != NULL)
 int zMnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 BOOL  bNextBlock;
+BOOL  bNextBlock2;
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
 {
 if (iStat == 0)						
 {
-  bNextBlock=FALSE;
+  bNextBlock = FALSE;
+  bNextBlock2 = FALSE;
   if (CInMsg == "NDCR")
   { 
 	iResumePos=0;
@@ -846,13 +859,13 @@ if (iStat == 0)
 	  pNext->Init(cDBase,-1)	;
 	  this->DoMenu(CInMsg,Pt);
   }
-  else if (CInMsg == "TEST")
+  else if (CInMsg == "DSPLAM")
   { 
 	  iResumePos=0;
     iCancelPos=100;
     cDBase->DB_ActiveBuffSet(2);
 	  cDBase->DB_ClearBuff();
-	  pNext = new zTEST_Mnu();
+	  pNext = new zDSPLAM_Mnu();
 	  pNext->Init(cDBase,-1)	;
 	  this->DoMenu(CInMsg,Pt);
   }
@@ -1096,6 +1109,16 @@ if (iStat == 0)
 	pNext->Init(cDBase,-1)	;
 	this->DoMenu(CInMsg,Pt);
   }
+  else if (CInMsg == "CIRCR2")
+  {
+  iResumePos = 0;
+  iCancelPos = 100;
+  cDBase->DB_ActiveBuffSet(2);
+  cDBase->DB_ClearBuff();
+  pNext = new zCIRCR2_Mnu();
+  pNext->Init(cDBase, -1);
+  this->DoMenu(CInMsg, Pt);
+  }
   else if (CInMsg == "LNX")
   { 
 	iResumePos=0;
@@ -1230,6 +1253,7 @@ if (iStat == 0)
   {
     bNextBlock=TRUE;
   }
+
   if (bNextBlock) //SECOND IF BLOCK CONTINUATION
   {
   if (CInMsg == "FILALL")
@@ -1241,6 +1265,16 @@ if (iStat == 0)
 	  pNext = new zFILALL_Mnu();
 	  pNext->Init(cDBase,-1)	;
 	  this->DoMenu(CInMsg,Pt);
+  }
+  if (CInMsg == "TEXTCR")
+  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zTEXTCR_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
   }
   else if (CInMsg == "GPREMGP")
   {
@@ -2372,43 +2406,692 @@ if (iStat == 0)
     pNext->Init(cDBase, -1);
     this->DoMenu(CInMsg, Pt);
   }
-  else if (CInMsg == "ELREV")
+  else if (CInMsg == "PRPCOMP")
   { 
 	iResumePos=0;
     iCancelPos=100;
     cDBase->DB_ActiveBuffSet(2);
 	cDBase->DB_ClearBuff();
-	pNext = new zELREV_Mnu();
+	pNext = new zPRPCOMP_Mnu();
 	pNext->Init(cDBase,-1)	;
 	this->DoMenu(CInMsg,Pt);
   }
-  else if (CInMsg == "ELMOLAB2")
-  { 
-	  iResumePos=0;
-      iCancelPos=100;
-      cDBase->DB_ActiveBuffSet(2);
-	  cDBase->DB_ClearBuff();
-	  pNext = new zELMOLAB2_Mnu();
-	  pNext->Init(cDBase,-1)	;
-	  this->DoMenu(CInMsg,Pt);
-  }
-  else if (CInMsg == "NULL")
-  {
-    outtext2("/COMMAND:");
-  }
-  else if (CInMsg == "MouseInp")
-  {
-    
-  }
   else
   {
-    outtext2("/COMMAND:");
+    bNextBlock2 = TRUE;
   }
+  }
+  //THIRD IF BLOCK CONTINUATION
+  //INSERT NEW FUNCTIONS BLOWS R
+  if (bNextBlock2)
+  { 
+	  if (CInMsg == "ELREV")
+	  { 
+		  iResumePos=0;
+		  iCancelPos=100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zELREV_Mnu();
+		  pNext->Init(cDBase,-1)	;
+		  this->DoMenu(CInMsg,Pt);
+	  }
+	  else if (CInMsg == "PRBUSH")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zPRBUSH_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "PRBT2")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zPRBT2_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "TEMPD")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zTEMPD_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "GRAV")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zGRAV_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "TEST")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zTEST_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "SELCURLAY")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zSELCURLAY_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMSCL")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMSCL_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMA")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMA_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMANG")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMANG_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMH")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMH_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMV")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMV_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIML")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIML_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMR")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMR_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMCL")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zDIMCL_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMDRAG")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zDIMDRAG_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DIMD")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDIMD_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "DEL")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zDEL_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "ELINSSPG")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zELINSSPG_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "MODINCNO")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zMODINCNO_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "MODLAYNO")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zMODLAYNO_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "PTSONCIR")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zPTSONCIR_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "LNTANCIR")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zLNTANCIR_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "LNTAN2CIR")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zLNTAN2CIR_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "LABGAP")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zLABGAP_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "LABGAPMP")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zLABGAPMP_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "RESGRAPHRESP")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zRESGRAPHRESP_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "CVSPLIT")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zCVSPLIT_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "TRIM")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zTRIM_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "NDEQLAB")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zNDEQLAB_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "CHKCOUNT")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zCHKCOUNT_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "RESLABRESP")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zRESLABRESP_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "BOFFY")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zBOFFY_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "BOFFZ")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zBOFFZ_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "COLINC")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zCOLINC_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "PRBCHAN2")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zPRBCHAN2_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "SELRBENODE")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zSELRBENODE_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "PRBL")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zPRBL_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "PRBI2")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zPRBI2_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "RESENVMAX")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zRESENVMAX_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "RESENVMIN")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zRESENVMIN_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "RESSCALE")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zRESSCALE_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "MESHINT")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zMESHINT_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "MESHINTWP")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zMESHINTWP_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "RESDIVINTO")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zRESDIVINTO_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "ELSWEEPNDS")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zELSWEEPNDS_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "ELSWEEPNDB")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zELSWEEPNDB_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "ORTHO")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zORTHO_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "ELMOLAB2")
+	  {
+		  iResumePos = 0;
+		  iCancelPos = 100;
+		  cDBase->DB_ActiveBuffSet(2);
+		  cDBase->DB_ClearBuff();
+		  pNext = new zELMOLAB2_Mnu();
+		  pNext->Init(cDBase, -1);
+		  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "QMORPH")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zQMORPH_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "COLPID")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zCOLPID_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "RESLSTRESPFULL")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zRESLSTRESPFULL_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "HLIMIT")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zHLIMIT_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "EXPINC")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zEXPINC_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "MODINCNO")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zMODINCNO_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "PTSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zPTSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "NDSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zNDSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "TXTSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zTXTSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "BMSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zBMSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "WPLSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zWPLSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "ELSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zELSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "EDSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zEDSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "FCSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zFCSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "LMSIZE")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zLMSIZE_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "GPBYINC")
+	  {
+	  iResumePos = 0;
+	  iCancelPos = 100;
+	  cDBase->DB_ActiveBuffSet(2);
+	  cDBase->DB_ClearBuff();
+	  pNext = new zGPBYINC_Mnu();
+	  pNext->Init(cDBase, -1);
+	  this->DoMenu(CInMsg, Pt);
+	  }
+	  else if (CInMsg == "NULL")
+	  {
+		outtext2("// COMMAND:");
+	  }
+	  else if (CInMsg == "MouseInp")
+	  {
+    
+	  }
+	  else
+	  {
+		outtext2("// COMMAND:");
+	  }
   }
 }
 else
 {
-  outtext2("/COMMAND:");
+  outtext2("// COMMAND:");
   iStat=0;
 }
 }
@@ -2439,7 +3122,7 @@ int iLen = mCInMsg.GetLength();
  
  for (iC=0; iC<= iLen-1; iC++)
    {
-   if (mCInMsg[iC] == ',' || mCInMsg[iC] == ' ')  
+   if (mCInMsg[iC] == ',' || mCInMsg[iC] == ' ' || mCInMsg[iC] == '\t')
      {
      iComPos[iCommaNo] = iC;
      iCommaNo++;
@@ -2465,9 +3148,12 @@ if (iCommaNo == 0)
   CZtxt = mCInMsg.Right(iLen-iComPos[1]-1);
   }
   //pTextDia->OutStr(CXtxt+' '+CYtxt+' '+CZtxt);
-  ReturnPt->x = atof(CXtxt);
-  ReturnPt->y = atof(CYtxt);
-  ReturnPt->z = atof(CZtxt);
+  //ReturnPt->x = atof(CXtxt);
+  //ReturnPt->y = atof(CYtxt);
+  //ReturnPt->z = atof(CZtxt);
+  ReturnPt->x = evaluate(CXtxt.GetString());
+  ReturnPt->y = evaluate(CYtxt.GetString());
+  ReturnPt->z = evaluate(CZtxt.GetString());
   mCInMsg = "11";
  //-------------------REMOVE------------
    
@@ -2533,6 +3219,22 @@ if (iStat == 1)
     pNext = new zTRAN_Mnu();
     pNext->Init(cDBase,-1);
     DoNext(&CInMsg,Pt);
+  }
+  else if (CInMsg == "PTRAN")
+  {
+	  iResumePos = 2;
+	  iCancelPos = 0;
+	  pNext = new zPTRAN_Mnu();
+	  pNext->Init(cDBase, -1);
+	  DoNext(&CInMsg, Pt);
+  }
+  else if (CInMsg == "ONSCR")
+  {
+	  iResumePos = 2;
+	  iCancelPos = 0;
+	  pNext = new zONSCR_Mnu();
+	  pNext->Init(cDBase, -1);
+	  DoNext(&CInMsg, Pt);
   }
   else if (CInMsg == "INT")
   {
@@ -2647,7 +3349,7 @@ if ((CInMsg2 == "C") || (CInMsg2 == "D"))//Common Options
 }
 if (iStat == 0)
 {
-outtext2("/ENTER LOCATION OR PICK FROM SCREEN");
+outtext2("// ENTER LOCATION OR PICK FROM SCREEN");
 iStat=1;
 }
 if (iStat == 1)
@@ -2690,7 +3392,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("/ENTER FIRST LOCATION");
+	outtext2("// ENTER FIRST LOCATION");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -2699,7 +3401,7 @@ if (iStat == 0)
 }
 else if (iStat == 1)
 {
-	outtext2("/ENTER SECOND LOCATION");
+	outtext2("// ENTER SECOND LOCATION");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -2714,6 +3416,14 @@ else if (iStat == 2)
   p1=cDBase->DB_PopBuff();
   p1=cDBase->GlobaltoWP(p1);
   p2=cDBase->GlobaltoWP(p2);
+  WP_Object* pWPlane = (WP_Object*)cDBase->DB_Obj[cDBase->iWP];
+  int bWPMode = pWPlane->iWPMode;
+
+  if (bWPMode == 1) //polar coords
+  {
+	  if (p2.y < p1.y)
+		  p2.y += 360.0;
+  }
   p1+=p2;
   p1/=2;
   p1=cDBase->WPtoGlobal(p1);
@@ -2732,82 +3442,82 @@ MenuEnd:
 return RetVal;
 }
 
-int zTVEC_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+int zTVEC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  goto MenuEnd;
-}
-if (CInMsg == "KEY") //Common Options
-{
-  iStat =4;
-}
-else if (CInMsg == "PICK")
-{
-  iStat =1;
-}
-else if (iStat==0)
-{
-  outtext2("/ENTER TRANSLATION METHOD (PICK or KEY)");
-}
-if (iStat == 1)
-{
-	outtext2("/PICK FIRST LOCATION");
-    iResumePos=2;
-    iCancelPos=100;
-    pNext = new zPT_Mnu();
-    pNext->Init(cDBase,-1);
-    DoNext(&CInMsg,Pt);
-}
-if (iStat == 2)
-{
-	outtext2("/PICK SECOND LOCATION");
-    iResumePos=3;
-    iCancelPos=100;
-    pNext = new zPT_Mnu();
-    pNext->Init(cDBase,-1);
-    DoNext(&CInMsg,Pt);
-}
-if (iStat == 3)
-{
-  iStat = 5;
-  C3dVector p1;
-  C3dVector p2;
-  p2=cDBase->DB_PopBuff();
-  p1=cDBase->DB_PopBuff();
-  p2=cDBase->GlobaltoWP(p2);
-  p1=cDBase->GlobaltoWP(p1);
-  p2-=p1;
-  cDBase->DB_AddPtBuff(p2);
-}
-if (iStat == 4)
-{
-  outtext2("/ENTER TRANSLATION");
-  iResumePos=5;
-  iCancelPos=100;
-  pNext = new zKEY_Mnu();
-  pNext->Init(cDBase,-1);
-  DoNext(&CInMsg,Pt);
-}
-if (iStat == 5)
-{
-  RetVal = 1;
-}
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  RetVal = 1;
-}
-}
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (CInMsg == "KEY") //Common Options
+		{
+			iStat = 4;
+		}
+		else if (CInMsg == "PICK")
+		{
+			iStat = 1;
+		}
+		else if (iStat == 0)
+		{
+			outtext2("// ENTER TRANSLATION METHOD (PICK or KEY)");
+		}
+		if (iStat == 1)
+		{
+			outtext2("// PICK FIRST LOCATION");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			outtext2("// PICK SECOND LOCATION");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			iStat = 5;
+			C3dVector p1;
+			C3dVector p2;
+			p2 = cDBase->DB_PopBuff();
+			p1 = cDBase->DB_PopBuff();
+			p2 = cDBase->GlobaltoWP(p2);
+			p1 = cDBase->GlobaltoWP(p1);
+			p2 -= p1;
+			cDBase->DB_AddPtBuff(p2);
+		}
+		if (iStat == 4)
+		{
+			outtext2("// ENTER TRANSLATION");
+			iResumePos = 5;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 5)
+		{
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
 MenuEnd:
-return RetVal;
-} 
+	return RetVal;
+}
 
 
 int zTRAN_Mnu::DoMenu(CString CInMsg,CPoint Pt)
@@ -2823,7 +3533,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-    outtext2("/ENTER OR PICK BASE LOCATION");
+    outtext2("// ENTER OR PICK BASE LOCATION");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -2832,7 +3542,7 @@ if (iStat == 0)
 }
 else if (iStat == 1)
 {
-   outtext2("/SPECIFY TRANSLATION");
+  outtext2("// SPECIFY TRANSLATION");
   iResumePos=2;
   iCancelPos=100;
   pNext = new zTVEC_Mnu();
@@ -2863,49 +3573,103 @@ MenuEnd:
 return RetVal;
 }    
 
-int zONSCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+int zPTRAN_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
 
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  cDBase->bPICK=TRUE;
-  goto MenuEnd;
-}
-
-if (iStat == 0)
-{
-	outtext2("/PICK SCREEN LOCATION");
-  cDBase->bPICK=FALSE;
-  iStat=1;
-}
-else if (iStat == 1)
-{
-  if (CInMsg == "MouseInp")
-  {
-    C3dVector p2;
-    p2= cDBase->PickPointToGlobal(Pt);
-    cDBase->DB_AddPtBuff(p2);
-    cDBase->bPICK=TRUE;
-    RetVal = 1;
-  }
-}
-
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  cDBase->bPICK=TRUE;
-  RetVal = 1;
-}
-}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER OR PICK BASE LOCATION");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat ==1)
+		{
+			outtext2("// ENTER POLAR TRANSLATION (r,theta,z)");
+			SetFocus();
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			C3dVector p1;
+			C3dVector p2;
+			p2 = cDBase->DB_PopBuff();
+			p1 = cDBase->DB_PopBuff();
+			p1 = cDBase->GlobaltoWP(p1);
+			p1.x += p2.x * cos(p2.y * D2R);
+			p1.y += p2.x * sin(p2.y * D2R);
+			p1.z += p2.z;
+			p1 = cDBase->WPtoGlobal(p1);
+			cDBase->DB_AddPtBuff(p1);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
 MenuEnd:
-return RetVal;
-}    
+	return RetVal;
+}
+
+int zONSCR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// ENTER OR PICK BASE LOCATION");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		else if (iStat == 1)
+		{
+			C3dVector p1;
+			p1 = cDBase->DB_PopBuff();
+			p1 = cDBase->GlobaltoWP(p1);
+			p1.z = 0;
+			p1 = cDBase->WPtoGlobal(p1);
+			cDBase->DB_AddPtBuff(p1);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zPTCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -2921,7 +3685,7 @@ if ((CInMsg2 == "C") || (CInMsg2 == "D"))//Common Options
 }
 if (iStat == 0)
 {
-outtext2("/ENTER LOCATION OR PICK FROM SCREEN");
+outtext2("// ENTER LOCATION OR PICK FROM SCREEN");
 iStat=1;
 }
 if (iStat == 1)
@@ -2970,7 +3734,7 @@ int zFINDNODE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/ENTER LOCATION X,Y,Z");
+			outtext2("// ENTER LOCATION X,Y,Z");
 			SetFocus();
 			iResumePos = 1;
 			iCancelPos = 100;
@@ -3008,7 +3772,13 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("/ENTER LOCATION");
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
+	outtext2("// PICK LOCATION OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3017,7 +3787,7 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-  outtext2("/ENTER ANGLE");
+  outtext2("// ENTER ANGLE");
   iResumePos=2;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -3043,10 +3813,12 @@ else if (iStat == 2)
   p2+=ExtGlob;
   cDBase->AddLN(p1,p2,-1,TRUE);
   RetVal = 1;
+  cDBase->FILTER.SetAll();
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3069,7 +3841,13 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	  outtext2("/ENTER LOCATION");
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
+	outtext2("// PICK POINT OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3096,6 +3874,7 @@ else if (iStat == 1)
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3106,61 +3885,764 @@ return RetVal;
 }
 
 
-int zLN_Mnu::DoMenu(CString CInMsg,CPoint Pt)
-{
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  goto MenuEnd;
-}
+int zLN_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL) 
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
+			iStat = 1;
+		}
+		if (iStat == 1) 
+		{
+			outtext2("// PICK FIRST POINT OR TYPE COORDINATE");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2) 
+		{
+			cDBase->FILTER.Save();
+			cDBase->bIsDrag = TRUE;
+			p1 = cDBase->DB_PopBuff();
+			cDBase->AddDragLN(p1);
+			cDBase->vLS = p1;
+			outtext2("// PICK SECOND POINT OR TYPE COORDINATE");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		else if (iStat == 3) 
+		{
+			C3dVector p2;
+			p2 = cDBase->DB_PopBuff();
+			cDBase->AddLNfromDrag(p2);
+			outtext1("1 Line Created.");
+			iStat = 1;
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			this->DoMenu(CInMsg, Pt);
+		}
 
-if (iStat == 0)
-{
-	outtext2("/ENTER PT1");
-    iResumePos=1;
-    iCancelPos=100;
-    pNext = new zPT_Mnu();
-    pNext->Init(cDBase,-1);
-    DoNext(&CInMsg,Pt);
-}
-if (iStat == 1)
-{
-	cDBase->bLineDrag = TRUE;
-	p1 = cDBase->DB_PopBuff();
-	cDBase->vLS = p1;
-	outtext2("/ENTER PT2");
-    iResumePos=2;
-    iCancelPos=100;
-    pNext = new zPT_Mnu();
-    pNext->Init(cDBase,-1);
-    DoNext(&CInMsg,Pt);
-}
-else if (iStat == 2)
-{
-  C3dVector p2;
-  p2=cDBase->DB_PopBuff();
+		//Escape clause
+		if (iStat == 100) 
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
 
-  cDBase->AddLN(p1,p2,-1,TRUE);
-  outtext1("1 Line Created.");
-  iStat=0;  
-  cDBase->bLineDrag = FALSE;
-  this->DoMenu(CInMsg,Pt);
-}
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->bLineDrag = FALSE;
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  RetVal = 1;
-}
-}
 MenuEnd:
-return RetVal;
+	return RetVal;
 }
+
+
+int zDIMA_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			outtext2("// PICK FIRST POINT OR TYPE COORDINATE");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			//cDBase->FILTER.Save();
+			p1 = cDBase->DB_PopBuff();
+			outtext2("// PICK SECOND POINT OR TYPE COORDINATE");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			cDBase->bIsDrag = TRUE;
+			p2 = cDBase->DB_PopBuff();
+			cDBase->AddDragDIMA(p1,p2);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector p2;
+			p3 = cDBase->DB_PopBuff();
+			cDBase->AddDIMfromDrag(p3);
+			outtext1("1 Dim Created.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+
+int zDIMANG_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			//cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			outtext2("// ANGULAR DIMENSION BY 3 POINTS");
+			outtext2("// PICK FIRST POINT OR TYPE COORDINATE");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			p1 = cDBase->DB_PopBuff();
+			outtext2("// PICK SECOND POINT OR TYPE COORDINATE");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			p2 = cDBase->DB_PopBuff();
+			outtext2("// PICK THIRD POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			cDBase->bIsDrag = TRUE;
+			p3 = cDBase->DB_PopBuff();
+			cDBase->AddDragDIMANG(p2,p1,p3);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 5;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 5)
+		{
+			pIns = cDBase->DB_PopBuff();
+			cDBase->AddDIMfromDrag(pIns);
+			outtext1("1 Dim Created.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+int zDIMH_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			//cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			outtext2("// PICK FIRST POINT OR TYPE COORDINATE");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			//cDBase->FILTER.Save();
+			p1 = cDBase->DB_PopBuff();
+			outtext2("// PICK SECOND POINT OR TYPE COORDINATE");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			cDBase->bIsDrag = TRUE;
+			p2 = cDBase->DB_PopBuff();
+			cDBase->AddDragDIMH(p1, p2);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector p2;
+			p3 = cDBase->DB_PopBuff();
+			cDBase->AddDIMfromDrag(p3);
+			outtext1("1 Dim Created.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+int zDIMV_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			//cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			outtext2("// PICK FIRST POINT OR TYPE COORDINATE");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			//cDBase->FILTER.Save();
+			p1 = cDBase->DB_PopBuff();
+			outtext2("// PICK SECOND POINT OR TYPE COORDINATE");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			cDBase->bIsDrag = TRUE;
+			p2 = cDBase->DB_PopBuff();
+			cDBase->AddDragDIMV(p1, p2);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector p2;
+			p3 = cDBase->DB_PopBuff();
+			cDBase->AddDIMfromDrag(p3);
+			outtext1("1 Dim Created.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+
+int zDIML_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			//cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			p1 = cDBase->DB_PopBuff();
+			outtext2("// ENTER LEADER TEXT");
+			SetFocus();
+			iStat = 2;
+		}
+		else if (iStat == 2)
+		{
+			sText = CInMsg;
+			iStat = 3;
+		}
+		if (iStat == 3)
+		{
+			outtext2("// PICK FIRST POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			cDBase->bIsDrag = TRUE;
+			p2 = cDBase->DB_PopBuff();
+			cDBase->AddDragDIML(sText,p2);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 5;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 5)
+		{
+			C3dVector p2;
+			p3 = cDBase->DB_PopBuff();
+			cDBase->AddDIMfromDrag(p3);
+			outtext1("1 Dim Created.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+int zDIMR_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			//cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			cDBase->FILTER.Save();
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("// PICK CIRCLE ");
+			iStat = 2;
+		}
+		else if (iStat == 2)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				if ((cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7) &&
+					(cDBase->S_Buff[cDBase->S_Count - 1]->iType == 3))
+				{
+					pC = (NCircle*)cDBase->S_Buff[cDBase->S_Count - 1];
+					p2 = pC->Get_Centroid();
+					cDBase->S_Count = S_initCnt;
+					iStat = 3;
+				}
+				else
+				{
+					outtext1("Error: Must pick circle or arc.");
+					cDBase->S_Count--;
+					iStat = 1;
+					this->DoMenu(CInMsg, Pt);
+				}
+	
+			}
+		}
+		if (iStat == 3)
+		{
+			cDBase->bIsDrag = TRUE;
+			cDBase->AddDragDIMR(pC, p2);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+
+			p2 = cDBase->DB_PopBuff();
+			cDBase->AddDIMfromDrag(p2);
+			outtext1("1 Dim Created.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->FILTER.Restore();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+int zDIMCL_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			//cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			cDBase->FILTER.Save();
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("// PICK CIRCLE ");
+			iStat = 2;
+		}
+		else if (iStat == 2)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				if ((cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7) &&
+					(cDBase->S_Buff[cDBase->S_Count - 1]->iType == 3))
+				{
+					pC = (NCircle*)cDBase->S_Buff[cDBase->S_Count - 1];
+					cDBase->S_Count = S_initCnt;
+					iStat = 3;
+				}
+				else
+				{
+					outtext1("Error: Must pick circle or arc.");
+					cDBase->S_Count--;
+					iStat = 1;
+					this->DoMenu(CInMsg, Pt);
+				}
+
+			}
+		}
+		if (iStat == 3)
+		{
+
+			cDBase->AddCirCL(pC);
+			outtext1("1 CL Created.");
+			cDBase->ReDraw();
+			cDBase->FILTER.Restore();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+int zDIMDRAG_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			//cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			cDBase->FILTER.Save();
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(10);
+			outtext2("// PICK DIMENSION TO DRAG ");
+			iStat = 2;
+		}
+		else if (iStat == 2)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 10) 
+				{
+					pD = (DIM*)cDBase->S_Buff[cDBase->S_Count - 1];
+					cDBase->S_Count = S_initCnt;
+					iStat = 3;
+				}
+				else
+				{
+					outtext1("Error: Must pick dimension to drag.");
+					cDBase->S_Count--;
+					iStat = 1;
+					this->DoMenu(CInMsg, Pt);
+				}
+
+			}
+		}
+		if (iStat == 3)
+		{
+			cDBase->bIsDrag = TRUE;
+			cDBase->AddDimForDrag(pD);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+
+			p1 = cDBase->DB_PopBuff();
+			C3dMatrix mTran;  //not used
+			pD->DragUpdate(p1, mTran);
+			outtext1("1 Dim Updated.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->Dsp_Add(pD);
+			cDBase->InvalidateOGL();
+			cDBase->ReDraw();
+			cDBase->FILTER.Restore();
+			cDBase->pDragObj = nullptr;
+			iStat = 1;
+			this->DoMenu(CInMsg, Pt);
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
+int zDIMD_Mnu::DoMenu(CString CInMsg, CPoint Pt) {
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") { //Common Options
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			//cDBase->FILTER.SetAll();
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			cDBase->FILTER.Save();
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("// PICK CIRCLE ");
+			iStat = 2;
+		}
+		else if (iStat == 2)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				if ((cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7) &&
+					(cDBase->S_Buff[cDBase->S_Count - 1]->iType == 3))
+				{
+					pC = (NCircle*)cDBase->S_Buff[cDBase->S_Count - 1];
+					p2 = pC->Get_Centroid();
+					cDBase->S_Count = S_initCnt;
+					iStat = 3;
+				}
+				else
+				{
+					outtext1("Error: Must pick circle or arc.");
+					cDBase->S_Count--;
+					iStat = 1;
+					this->DoMenu(CInMsg, Pt);
+				}
+
+			}
+		}
+		if (iStat == 3)
+		{
+			cDBase->bIsDrag = TRUE;
+			cDBase->AddDragDIMD(pC, p2);
+			outtext2("// PICK INSERTION POINT OR TYPE COORDINATE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+
+			p2 = cDBase->DB_PopBuff();
+			cDBase->AddDIMfromDrag(p2);
+			outtext1("1 Dim Created.");
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->FILTER.Restore();
+			RetVal = 1;
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+
+MenuEnd:
+	return RetVal;
+}
+
 
 int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
@@ -3175,8 +4657,14 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
 			bF = TRUE; //First time in we need 2 points
-			outtext2("/ENTER PT1");
+			outtext2("// PICK FIRST POINT OR TYPE COORDINATE");
 			iResumePos = 1;
 			iCancelPos = 100;
 			pNext = new zPT_Mnu();
@@ -3185,14 +4673,15 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 1)
 		{
-			cDBase->bLineDrag = TRUE;
+			cDBase->bIsDrag = TRUE;
 			if (bF)
 			{
 				pLast = cDBase->DB_PopBuff();
 				bF = FALSE;
 			}
+			cDBase->AddDragLN(pLast);
 			cDBase->vLS = pLast;
-			outtext2("/ENTER PT2");
+			outtext2("// PICK NEXT POINT OR TYPE COORDINATE");
 			iResumePos = 2;
 			iCancelPos = 100;
 			pNext = new zPT_Mnu();
@@ -3204,9 +4693,14 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			C3dVector p1;
 			C3dVector p2;
 			p2 = cDBase->DB_PopBuff();
-			p1 = pLast;
+			cDBase->AddLNfromDrag(p2);
 			pLast = p2;
-			cDBase->AddLN(p1, p2, -1,TRUE);
+			if (cDBase->pDragObj != nullptr)
+			{
+				NLine* pL = (NLine*) cDBase->pDragObj;
+				pLast = pL->cPts[1]->Pt_Point;
+			}
+			cDBase->ReDraw();
 			outtext1("1 Line Created.");
 			iStat = 1;
 			this->DoMenu(CInMsg, Pt);
@@ -3214,7 +4708,9 @@ int zLNC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		//Escape clause
 		if (iStat == 100)
 		{
-			cDBase->bLineDrag = FALSE;
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
 			cDBase->DB_BuffCount = initCnt;
 			cDBase->S_Count = S_initCnt;
 			RetVal = 1;
@@ -3230,15 +4726,23 @@ int zCIRCPT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 DoNext(&CInMsg,Pt);
 if (pNext==NULL)
 {
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  goto MenuEnd;
-}
-
+	C3dVector vN;
+	vN.Set(0, 0, 1);
+	vN = cDBase->GlobaltoWP3(vN);
+    if (CInMsg == "C") //Common Options
+    {
+       RetVal = 2;
+       goto MenuEnd;
+    }
 if (iStat == 0)
 {
-	outtext2("/CIRCLE CENTRE");
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
+	outtext2("// PICK CIRCLE CENTRE OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3247,10 +4751,11 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-	cDBase->bLineDrag = TRUE;
+	cDBase->bIsDrag = TRUE;
 	p1 = cDBase->DB_PopBuff();
+	cDBase->AddDragCIR(vN,p1);
 	cDBase->vLS = p1;
-	outtext2("/ENTER POINT ON RADIUS");
+	outtext2("// PICK OR ENTER POINT ON RADIUS");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3259,21 +4764,20 @@ if (iStat == 1)
 }
 else if (iStat == 2)
 {
-  cDBase->bLineDrag = FALSE;
+  cDBase->bIsDrag = FALSE;
   C3dVector p2;
-  C3dVector vN;
-  vN.Set(0,0,1);
-  vN=cDBase->GlobaltoWP3(vN);
   p2=cDBase->DB_PopBuff();
-
   cDBase->AddCirCentPt(vN,p1,p2);
   outtext1("1 Circle Created.");
   RetVal = 1;
+  cDBase->FILTER.SetAll();
 }
 //Escape clause
 if (iStat == 100)
 {
-  cDBase->bLineDrag = FALSE;
+  cDBase->FILTER.SetAll();
+  cDBase->bIsDrag = FALSE;
+  cDBase->ReDraw();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3283,6 +4787,319 @@ MenuEnd:
 return RetVal;
 }
 
+int zCIRCR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		C3dVector vN;
+		vN.Set(0, 0, 1);
+		vN = cDBase->GlobaltoWP3(vN);
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
+			outtext2("// PICK CIRCLE CENTRE OR TYPE COORDINATE");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			cDBase->bIsDrag = TRUE;
+			p1 = cDBase->DB_PopBuff();
+			cDBase->AddDragCIR(vN, p1);
+			cDBase->vLS = p1;
+			char OutT[80];
+			sprintf_s(OutT, "%s %g)", "ENTER RADIUS (", gDIM_RADSZ);
+			SetFocus();
+			outtext2(OutT);
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		else if (iStat == 2)
+		{
+			cDBase->bIsDrag = FALSE;
+			C3dVector p2;
+			p2 = cDBase->DB_PopBuff();
+			double dRad = p2.x;
+			if (dRad == 0)
+				dRad = gDIM_RADSZ;
+			else
+				gDIM_RADSZ = dRad;
+			cDBase->AddCirCR(vN, p1, dRad, -1);
+			outtext1("1 Circle Created.");
+			RetVal = 1;
+			cDBase->FILTER.SetAll();
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zLNTANCIR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		C3dVector vN;
+		vN.Set(0, 0, 1);
+		vN = cDBase->GlobaltoWP3(vN);
+		if (CInMsg == "C") //Common Options
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
+			outtext2("// PICK POINT OR TYPE COORDINATE");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			p1 = cDBase->DB_PopBuff();
+			cDBase->bIsDrag = TRUE;
+			cDBase->AddDragLN(p1);
+			cDBase->vLS = p1;
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("// PICK CIRCLE ");
+			iStat = 2;
+		}
+		if (iStat == 2)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				PNear1 = Pt;
+				iStat = 3;
+
+			}
+		}
+		if (iStat == 3)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->AddCirTanPt(vN, p1, Pt);
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+
+}
+
+int zLNTAN2CIR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->bIsDrag = FALSE;
+			cDBase->ReDraw();
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("// PICK 2 CIRCLES");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				PNear1 = Pt;
+			}
+			else if (cDBase->S_Count == S_initCnt + 2)
+			{
+				PNear2 = Pt;
+				iStat = 2;
+			}
+		}
+		if (iStat == 2)
+		{
+			cDBase->FILTER.SetAll();
+			cDBase->AddLinTan2Cir(PNear1, PNear2);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+
+}
+
+
+int zTEXTCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+{
+DoNext(&CInMsg,Pt);
+if (pNext==NULL)
+{
+if (CInMsg == "C") //Common Options
+{
+  RetVal = 2;
+  goto MenuEnd;
+}
+
+if (iStat == 0)
+{
+	outtext2("// PICK TEXT LOCATION");
+    iResumePos=1;
+    iCancelPos=100;
+    pNext = new zPT_Mnu();
+    pNext->Init(cDBase,-1);
+    DoNext(&CInMsg,Pt);
+}
+else if (iStat == 1)
+{
+	p1 = cDBase->DB_PopBuff();
+	outtext2("// ENTER TEXT");
+	SetFocus();
+	iStat=2;
+}
+else if (iStat == 2)
+{
+	sText = CInMsg;
+	char OutT[80];
+	sprintf_s(OutT, "%s %g)", "ENTER TEXT HEIGHT (", gTXT_HEIGHT);
+	outtext2(OutT);
+	SetFocus();
+	iStat = 3; 
+}
+else if (iStat == 3)
+{
+  double dH;
+  dH = atof(CInMsg);
+  if (dH <= 0)
+	  dH = gTXT_HEIGHT;
+  else
+	  gTXT_HEIGHT = dH;
+  C3dVector vN, vDir,vO;
+  vO.Set(0, 0, 0);
+  vN.Set(0, 0, 1);
+  vDir.Set(1, 0, 0);  //Text direction assume workplane X
+  vO = cDBase->WPtoGlobal2(vO);
+  vN = cDBase->WPtoGlobal2(vN);
+  vDir = cDBase->WPtoGlobal2(vDir);
+  vN -= vO;
+  vDir -= vO;
+  cDBase->AddText(vN,vDir,p1, sText,dH);
+  outtext1("Text Added.");
+  RetVal = 1;
+}
+//Escape clause
+if (iStat == 100)
+{
+  cDBase->bIsDrag = FALSE;
+  cDBase->DB_BuffCount=initCnt;
+  cDBase->S_Count=S_initCnt;
+  RetVal = 1;
+}
+}
+MenuEnd:
+return RetVal;
+}
+
+int zDIMSCL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			char OutT[80];
+			sprintf_s(OutT, "%s %g)", "ENTER DIMENSION SIXE (", gDIM_SIZE);
+			outtext2(OutT);
+			SetFocus();
+			iStat = 1;
+		}
+		else if (iStat == 1)
+		{
+			double dH;
+			dH = atof(CInMsg);
+			if (dH <= 0)
+				dH = gDIM_SIZE;
+			else
+				gDIM_SIZE = dH;
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->bIsDrag = FALSE;
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zCIR3PT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -3297,7 +5114,13 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	  outtext2("/ENTER PT1");
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
+	outtext2("// ENTER PT1");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3306,7 +5129,7 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-	  outtext2("/ENTER PT2");
+	outtext2("// ENTER PT2");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3315,7 +5138,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-	  outtext2("/ENTER PT3");
+	outtext2("// ENTER PT3");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3332,10 +5155,12 @@ else if (iStat == 3)
   p1=cDBase->DB_PopBuff();
   cDBase->Circ3Pts(p1,p2,p3);
   RetVal = 1;
+  cDBase->FILTER.SetAll();
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3358,7 +5183,13 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("/ENTER PT1");
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
+	outtext2("// ENTER PT1");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3367,7 +5198,7 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-	outtext2("/ENTER PT2");
+	outtext2("// ENTER PT2");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3376,7 +5207,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-	outtext2("/ENTER PT3");
+	outtext2("// ENTER PT3");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3392,11 +5223,13 @@ else if (iStat == 3)
   p2=cDBase->DB_PopBuff();
   p1=cDBase->DB_PopBuff();
   cDBase->Arc3Pts(p1,p2,p3);
+  cDBase->FILTER.SetAll();
   RetVal = 1;
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3420,7 +5253,13 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("/ENTER PT1");
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
+	outtext2("// PICK FIRST POINT OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3429,10 +5268,11 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-	cDBase->bLineDrag = TRUE;
+	cDBase->bIsDrag = TRUE;
 	p1 = cDBase->DB_PopBuff();
+	cDBase->AddDragLN(p1);
 	cDBase->vLS = p1;
-	outtext2("/ENTER PT2");
+	outtext2("// PICK SECOND POINT OR TYPE COORDINATE");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3441,10 +5281,9 @@ if (iStat == 1)
 }
 else if (iStat == 2)
 {
-  cDBase->bLineDrag = FALSE;
+  cDBase->bIsDrag = FALSE;
   C3dVector p2;
   p2=cDBase->DB_PopBuff();
-
   cDBase->AddRect(p1,p2,-1);
   outtext1("1 Rectange Created.");
   RetVal = 1;
@@ -3452,7 +5291,9 @@ else if (iStat == 2)
 //Escape clause
 if (iStat == 100)
 {
-  cDBase->bLineDrag = FALSE;
+  cDBase->FILTER.SetAll();
+  cDBase->bIsDrag = FALSE;
+  cDBase->ReDraw();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3476,7 +5317,13 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("/ENTER LOCATION");
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
+	outtext2("// PICK POINT OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3503,6 +5350,7 @@ if (iStat == 1)
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3525,8 +5373,13 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-
-	outtext2("/ENTER LOCATION");
+	cDBase->FILTER.Clear();
+	cDBase->FILTER.SetFilter(0);
+	cDBase->FILTER.SetFilter(5);
+	cDBase->FILTER.SetFilter(6);
+	cDBase->FILTER.SetFilter(7);
+	cDBase->FILTER.SetFilter(13);
+	outtext2("// PICK POINT OR TYPE COORDINATE");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3553,6 +5406,7 @@ if (iStat == 1)
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -3574,7 +5428,7 @@ if (CInMsg == "C")//Common Options
 }
 if ((iStat == 0) )
 {
-  outtext2("/KEY IN:");
+  outtext2("// KEY IN:");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -3614,7 +5468,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	  outtext2("/PICK CENTRE POINT");
+	  outtext2("// PICK CENTRE POINT");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3623,7 +5477,7 @@ if (iStat == 0)
 }
 else if (iStat == 1)
 {
-	  outtext2("/POINT ON X");
+	  outtext2("// POINT ON X");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3632,7 +5486,7 @@ else if (iStat == 1)
 }
 else if (iStat == 2)
 {
-	  outtext2("/POINT ON XY");
+	  outtext2("// POINT ON XY");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3684,7 +5538,7 @@ if (iStat == 0)
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(7);
 	cDBase->FILTER.SetFilter(13);
-	outtext2("/PICK CURVE");
+	outtext2("// PICK CURVE");
 	iStat=1;
 }
 else if (iStat == 1)
@@ -3702,7 +5556,7 @@ else if (iStat == 1)
 if (iStat == 2)
 {
     cDBase->FILTER.SetAll();
-	outtext2("/POINT ON X");
+	outtext2("// POINT ON X");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3766,7 +5620,7 @@ if (iStat == 0)
   pS=NULL;
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(15);
-	outtext2("/PICK SURFACE");
+	outtext2("// PICK SURFACE");
   iStat=1;
 }
 else if (iStat == 1)
@@ -3843,7 +5697,7 @@ if (CInMsg == "C") //Common Options
 if (iStat == 0)
 {
     cDBase->FILTER.SetAll();
-	  outtext2("/PICK CENTRE LOCATION");
+	  outtext2("// PICK CENTRE LOCATION");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3887,7 +5741,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-	outtext2("/PICK OBJECTS TO ALIGN");
+	outtext2("// PICK OBJECTS TO ALIGN");
   iStat=1;
 }
 if (iStat == 1)
@@ -3906,7 +5760,7 @@ if (iStat == 2)
 {
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
-	  outtext2("/PICK CENTRE POINT ON MOVEABLE OBJECT");
+	  outtext2("// PICK CENTRE POINT ON MOVEABLE OBJECT");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3915,7 +5769,7 @@ if (iStat == 2)
 }
 else if (iStat == 3)
 {
-	  outtext2("/POINT ON X ON MOVEABLE OBJECT");
+	  outtext2("// POINT ON X ON MOVEABLE OBJECT");
     iResumePos=4;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3924,7 +5778,7 @@ else if (iStat == 3)
 }
 else if (iStat == 4)
 {
-	  outtext2("/POINT ON XY ON MOVEABLE OBJECT");
+	  outtext2("// POINT ON XY ON MOVEABLE OBJECT");
     iResumePos=5;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3933,7 +5787,7 @@ else if (iStat == 4)
 }
 if (iStat == 5)
 {
-	  outtext2("/PICK CENTRE POINT TO ALIGN");
+	  outtext2("// PICK CENTRE POINT TO ALIGN");
     iResumePos=6;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3942,7 +5796,7 @@ if (iStat == 5)
 }
 else if (iStat == 6)
 {
-	  outtext2("/POINT ON X TO ALIGN");
+	  outtext2("// POINT ON X TO ALIGN");
     iResumePos=7;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -3951,7 +5805,7 @@ else if (iStat == 6)
 }
 else if (iStat == 7)
 {
-	  outtext2("/POINT ON XY TO ALIGN");
+	  outtext2("// POINT ON XY TO ALIGN");
     iResumePos=8;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4000,7 +5854,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-  outtext2("/PICK OBJECTS TO REFLECT");
+  outtext2("// PICK OBJECTS TO REFLECT");
   iStat=1;
 }
 if (iStat == 1)
@@ -4020,7 +5874,7 @@ if (iStat == 2)
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
     cDBase->FILTER.SetAll();
-	  outtext2("/PICK CENTRE POINT ON REFLECTION PLAIN");
+	  outtext2("// PICK CENTRE POINT ON REFLECTION PLANE");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4029,7 +5883,7 @@ if (iStat == 2)
 }
 else if (iStat == 3)
 {
-	  outtext2("/POINT ON X ON REFLECTION PLAIN");
+	  outtext2("// POINT ON X ON REFLECTION PLANE");
     iResumePos=4;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4038,7 +5892,7 @@ else if (iStat == 3)
 }
 else if (iStat == 4)
 {
-	  outtext2("/POINT ON XY ON REFLECTION PLAIN");
+	outtext2("// POINT ON XY ON REFLECTION PLANE");
     iResumePos=5;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4082,7 +5936,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-  outtext2("/PICK OBJECTS TO REFLECT");
+  outtext2("// PICK OBJECTS TO REFLECT");
   iStat=1;
 }
 if (iStat == 1)
@@ -4101,7 +5955,7 @@ if (iStat == 2)
 {
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
-	outtext2("/START POINT OF REFLECTION LINE in XY");
+	outtext2("// START POINT OF REFLECTION LINE in XY");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4110,7 +5964,7 @@ if (iStat == 2)
 }
 else if (iStat == 3)
 {
-	outtext2("/END POINT OF REFLECTION LINE in XY");
+	outtext2("// END POINT OF REFLECTION LINE in XY");
     iResumePos=4;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4158,7 +6012,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-	outtext2("/PICK OBJECTS TO ROTATE");
+	outtext2("// PICK OBJECTS TO ROTATE");
   iStat=1;
 }
 if (iStat == 1)
@@ -4177,7 +6031,7 @@ if (iStat == 2)
 {
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
-	  outtext2("/PICK CENTRE POINT FOR ROTATION");
+	  outtext2("// PICK CENTRE POINT FOR ROTATION");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4186,7 +6040,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/ENTER ROTATION (RX,RY,RZ)");
+  outtext2("// ENTER ROTATION (RX,RY,RZ)");
   SetFocus();
   iResumePos=4;
   iCancelPos=100;
@@ -4231,7 +6085,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-	outtext2("/PICK OBJECTS TO ROTATE");
+	outtext2("// PICK OBJECTS TO ROTATE");
   iStat=1;
 }
 if (iStat == 1)
@@ -4250,7 +6104,7 @@ if (iStat == 2)
 {
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
-	  outtext2("/PICK FIRST POINT ON VECTOR TO ROTATE ABOUT");
+	  outtext2("// PICK FIRST POINT ON VECTOR TO ROTATE ABOUT");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4259,7 +6113,7 @@ if (iStat == 2)
 }
 if (iStat ==3)
 {
-	  outtext2("/PICK SECOND POINT ON VECTOR TO ROTATE ABOUT");
+	  outtext2("// PICK SECOND POINT ON VECTOR TO ROTATE ABOUT");
     iResumePos=4;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4268,7 +6122,7 @@ if (iStat ==3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER ROTATION (ANG)");
+  outtext2("// ENTER ROTATION (ANG)");
   SetFocus();
   iResumePos=5;
   iCancelPos=100;
@@ -4312,7 +6166,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-	outtext2("/PICK OBJECTS TO ROTATE");
+	outtext2("// PICK OBJECTS TO ROTATE");
   iStat=1;
 }
 if (iStat == 1)
@@ -4331,7 +6185,7 @@ if (iStat == 2)
 {
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
-	  outtext2("/PICK FIRST POINT ON VECTOR TO ROTATE ABOUT");
+	  outtext2("// PICK FIRST POINT ON VECTOR TO ROTATE ABOUT");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4340,7 +6194,7 @@ if (iStat == 2)
 }
 if (iStat ==3)
 {
-	  outtext2("/PICK SECOND POINT ON VECTOR TO ROTATE ABOUT");
+	  outtext2("// PICK SECOND POINT ON VECTOR TO ROTATE ABOUT");
     iResumePos=4;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4349,7 +6203,7 @@ if (iStat ==3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER ROTATION (ANG)");
+  outtext2("// ENTER ROTATION (ANG)");
   SetFocus();
   iResumePos=5;
   iCancelPos=100;
@@ -4359,7 +6213,7 @@ if (iStat == 4)
 }
 if (iStat == 5)
 {
-  outtext2("/ENTER NO OFF COPYIES)");
+  outtext2("// ENTER NO OFF COPYIES)");
   SetFocus();
   iResumePos=6;
   iCancelPos=100;
@@ -4405,7 +6259,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-	outtext2("/PICK OBJECTS TO ROTATE");
+	outtext2("// PICK OBJECTS TO ROTATE");
   iStat=1;
 }
 if (iStat == 1)
@@ -4424,7 +6278,7 @@ if (iStat == 2)
 {
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
-	outtext2("/POINT in XY TO ROTATE ABOUT");
+	outtext2("// POINT in XY TO ROTATE ABOUT");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4433,7 +6287,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/ENTER ROTATION (ANG)");
+  outtext2("// ENTER ROTATION (ANG)");
   SetFocus();
   iResumePos=4;
   iCancelPos=100;
@@ -4443,7 +6297,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER NO OFF COPYIES)");
+  outtext2("// ENTER NO OFF COPYIES)");
   SetFocus();
   iResumePos=5;
   iCancelPos=100;
@@ -4491,7 +6345,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-    outtext2("/PICK LOCATION TO INSERT");
+    outtext2("// PICK LOCATION TO INSERT");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4529,7 +6383,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-	outtext2("/PICK OBJECTS TO SCALE");
+	outtext2("// PICK OBJECTS TO SCALE");
   iStat=1;
 }
 if (iStat == 1)
@@ -4548,7 +6402,7 @@ if (iStat == 2)
 {
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
-	  outtext2("/PICK POINT TO SCALE ABOUT");
+	outtext2("// PICK POINT TO SCALE ABOUT");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4557,7 +6411,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/ENTER SCALE FACTOR");
+  outtext2("// ENTER SCALE FACTOR");
   SetFocus();
   iResumePos=4;
   iCancelPos=100;
@@ -4601,7 +6455,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	  outtext2("/PICK CENTRE POINT");
+	  outtext2("// PICK CENTRE POINT");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4610,7 +6464,7 @@ if (iStat == 0)
 }
 else if (iStat == 1)
 {
-	  outtext2("/POINT ON X");
+	  outtext2("// POINT ON X");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4619,7 +6473,7 @@ else if (iStat == 1)
 }
 else if (iStat == 2)
 {
-	  outtext2("/POINT ON XY");
+	  outtext2("// POINT ON XY");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -4628,7 +6482,7 @@ else if (iStat == 2)
 }
 else if (iStat == 3)
 {
-	  outtext2("/ENTER TYPE (1-CART 2-CYL 3-SPH) (def 1)");
+	  outtext2("// ENTER TYPE (1-CART 2-CYL 3-SPH) (def 1)");
     iResumePos=4;
     iCancelPos=100;
     pNext = new zKEY_Mnu();
@@ -4637,7 +6491,7 @@ else if (iStat == 3)
 }
 else if (iStat == 4)
 {
-	  outtext2("/ENTER LABEL");
+	outtext2("// ENTER LABEL");
     iResumePos=5;
     iCancelPos=100;
     pNext = new zKEY_Mnu();
@@ -4646,17 +6500,28 @@ else if (iStat == 4)
 }
 else if (iStat == 5)
 {
+	outtext2("// ENTER DEF SYS (Def 0)");
+	iResumePos = 6;
+	iCancelPos = 100;
+	pNext = new zKEY_Mnu();
+	pNext->Init(cDBase, -1);
+	DoNext(&CInMsg, Pt);
+}
+else if (iStat == 6)
+{
   C3dVector p1;
   C3dVector p2;
   C3dVector p3;
   C3dVector Typ;
   C3dVector Lab;
+  C3dVector RID;
+  RID = cDBase->DB_PopBuff();
   Lab=cDBase->DB_PopBuff();
   Typ=cDBase->DB_PopBuff();
   p3=cDBase->DB_PopBuff();
   p2=cDBase->DB_PopBuff();
   p1=cDBase->DB_PopBuff();
-  cDBase->AddCoordSys(p1,p2,p3,(int) Lab.x,(int) Typ.x);
+  cDBase->AddCoordSys(p1,p2,p3,(int) Lab.x,(int) Typ.x, (int)RID.x);
   outtext1("1 Coordinate System Created.");
   RetVal = 1;
 }
@@ -4693,6 +6558,13 @@ int zSOLVE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
   return RetVal;
 }
 
+int zDEL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	cDBase->DeleteObj();
+	RetVal = 1;
+	return RetVal;
+}
+
 int zCIRCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
@@ -4705,7 +6577,9 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-  outtext2("/ENTER RADIUS");
+	char OutT[80];
+	sprintf_s(OutT, "%s %g)", "ENTER RADIUS (", gDIM_RADSZ);
+	outtext2(OutT);
   iResumePos=1;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -4715,11 +6589,23 @@ if (iStat == 0)
 if (iStat == 1)
 {
   vR=cDBase->DB_PopBuff();
+  dRad = vR.x;
+  if (dRad == 0)
+	  dRad = gDIM_RADSZ;
+  else
+	  gDIM_RADSZ = dRad;
   iStat=2;
+  cDBase->FILTER.Clear();
+  cDBase->FILTER.SetFilter(0);
+  cDBase->FILTER.SetFilter(1);
+  cDBase->FILTER.SetFilter(5);
+  cDBase->FILTER.SetFilter(6);
+  cDBase->FILTER.SetFilter(7);
+  cDBase->FILTER.SetFilter(13);
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER CIRCLE CENTRE");
+  outtext2("// ENTER CIRCLE CENTRE");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zPT_Mnu();
@@ -4733,7 +6619,7 @@ if (iStat == 3)
   p1=cDBase->DB_PopBuff();
   vN.Set(0,0,1);
   vN=cDBase->GlobaltoWP3(vN);
-  cDBase->AddCirCR(vN,p1,vR.x,-1);
+  cDBase->AddCirCR(vN,p1, dRad,-1);
   outtext1("1 Circle Created.");
   iStat = 2;
   this->DoMenu(CInMsg,Pt);
@@ -4741,6 +6627,7 @@ if (iStat == 3)
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -4767,7 +6654,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
   cDBase->FILTER.SetFilter(13);
-  outtext2("/PICK CURVES");
+  outtext2("// PICK CURVES");
   iStat=1;
 }
 if (iStat == 1)
@@ -4779,7 +6666,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER NO");
+  outtext2("// ENTER NO");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -4807,38 +6694,144 @@ MenuEnd:
 return RetVal;
 }   
 
+
+int zPTSONCIR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
+			outtext2("// PICK CIRCLES");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if (CInMsg == "D")
+			{
+				iStat = 2;
+			}
+		}
+		if (iStat == 2)
+		{
+			outtext2("// ENTER NO OF POINTS");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			C3dVector p1;
+			p1 = cDBase->DB_PopBuff();
+			cDBase->GenPointsOnCircle((int)p1.x);
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 int zTEST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  goto MenuEnd;
-}
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->displaySymTable();
+			iStat = 1;
+			RetVal = 1;
+		}
 
-if (iStat == 0)
-{
-	cDBase->CreatTestPCOMPS();
-  //cDBase->Test3();   //Test Face List Display
-						//TestMPM2(); for material point test
-						//Was Test3 for comp layup
-						//TestFL();
-  RetVal=1;
-}
 
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  RetVal = 1;
-}
-}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
 MenuEnd:
-return RetVal;
+	return RetVal;
 }   
+
+int zDSPLAM_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("// ENTER PID OR PICK ELEMENT");
+			CInMsg = "NULL";
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg != "MouseInp") && (CInMsg != "D") && (CInMsg != "NULL"))
+			{
+				C3dVector GetPt;
+				int iPt = ExtractPt(CInMsg, &GetPt);
+				cDBase->ViewLam((int)GetPt.x);
+				RetVal = 1;
+			}
+			else if (CInMsg == "MouseInp")
+			{
+				if (cDBase->S_Count == S_initCnt + 1)
+				{
+					if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 3)
+					{
+						E_Object* pE = (E_Object*)cDBase->S_Buff[cDBase->S_Count - 1];
+						cDBase->ViewLam(pE->PID);
+					}
+					RetVal = 1;
+				}
+			}
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zCVMOW_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -4858,7 +6851,7 @@ if (iStat == 0)
 	cDBase->FILTER.SetFilter(0);
 	cDBase->FILTER.SetFilter(7);
 	cDBase->FILTER.SetFilter(15);
-	outtext2("/PICK POINTS");
+	outtext2("// PICK POINTS");
     iStat=1;
 }
 if (iStat == 1)
@@ -4870,7 +6863,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER NEW WEIGHT");
+  outtext2("// ENTER NEW WEIGHT");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -4918,7 +6911,7 @@ if (iStat == 0)
 	cDBase->FILTER.SetFilter(7);
 	cDBase->FILTER.SetFilter(13);
 	cDBase->FILTER.SetFilter(15);
-	outtext2("/PICK NURBS");
+	outtext2("// PICK NURBS");
     iStat=1;
 }
 if (iStat == 1)
@@ -4961,7 +6954,7 @@ if (pNext==NULL)
 	}
 	if (iStat == 0)
 	{
-		outtext2("/ENTER ELEMENT TYPE");
+		outtext2("// ENTER ELEMENT TYPE");
 		SetFocus();
 		iStat=1;
 	}
@@ -5024,6 +7017,11 @@ if (pNext==NULL)
 		  cDBase->iCurElemType = 137;
 		  outtext1("ROTATIONAL SPRING TYPE 137 SET.");
 		}
+		else if (CInMsg == "BUSH")
+		{
+			cDBase->iCurElemType = 138;
+			outtext1("BUSH SPRING TYPE 138 SET.");
+		}
 		else if (CInMsg ==  "SCELL")
 		{
 		  cDBase->iCurElemType = 1000;
@@ -5068,7 +7066,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
-  outtext2("/PICK NODES");
+  outtext2("// PICK NODES");
   iStat=1;
 }
 if (iStat == 1)
@@ -5117,7 +7115,7 @@ if (iStat == 2)
 //Dof string for rigid elements
 if (iStat == 3)
 {
-  outtext2("/ENTER DOF STRING");
+  outtext2("// ENTER DOF STRING");
   SetFocus();
   iStat=4;
 }
@@ -5140,6 +7138,55 @@ MenuEnd:
 return RetVal;
 }
 
+int zELINSSPG_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	int noNodes;
+
+	noNodes = cDBase->pCurrentMesh->GetNoNode(cDBase->iCurElemType);
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if ((CInMsg == "C"))//Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(1);
+			outtext2("// PICK NODE TO INSERT SPRING ELEMENT");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				iStat = 2;
+			}
+		}
+		if (iStat == 2)
+		{
+			pE = cDBase->InsSpringEl(S_initCnt, TRUE);
+			cDBase->S_Count = S_initCnt;
+			cDBase->ReDraw();
+			iStat = 0;
+			this->DoMenu("", Pt);
+		}
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 int zLMEAS_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
@@ -5153,7 +7200,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	  outtext2("/ENTER PT1");
+	outtext2("// PICK PT1");
     iResumePos=1;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -5162,7 +7209,7 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-	  outtext2("/ENTER PT2");
+	  outtext2("// PICK PT2");
     iResumePos=2;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -5203,7 +7250,7 @@ int zAMEAS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
     if (iStat == 0)
     {
-      outtext2("/ENTER PT1");
+      outtext2("// ENTER PT1");
       iResumePos = 1;
       iCancelPos = 100;
       pNext = new zPT_Mnu();
@@ -5212,7 +7259,7 @@ int zAMEAS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 1)
     {
-      outtext2("/ENTER PT2");
+      outtext2("// ENTER PT2");
       iResumePos = 2;
       iCancelPos = 100;
       pNext = new zPT_Mnu();
@@ -5221,7 +7268,7 @@ int zAMEAS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 2)
     {
-      outtext2("/ENTER PT3");
+      outtext2("// ENTER PT3");
       iResumePos = 3;
       iCancelPos = 100;
       pNext = new zPT_Mnu();
@@ -5269,7 +7316,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(9);
-	outtext2("/PICK LINES");
+	outtext2("// PICK LINES");
   iStat=1;
 }
 if (iStat == 1)
@@ -5286,7 +7333,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER RADIUS");
+  outtext2("// ENTER RADIUS");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -5312,25 +7359,27 @@ MenuEnd:
 return RetVal;
 }
 
-int zCVCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+int zCVCR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	CString CInMsg2;
 	CInMsg2 = CInMsg;
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
 	{
-		if (CInMsg2 == "C") //Common Options
+		if (CInMsg == "C") //Common Options
 		{
 			RetVal = 2;
 			goto MenuEnd;
 		}
-		else if (CInMsg == "D")
-		{
-			RetVal = 1;
-		}
 		if (iStat == 0)
 		{
-			outtext2("/ENTER LOCATION OR PICK FROM SCREEN");
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
+			outtext2("// ENTER LOCATION OR PICK FROM SCREEN");
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -5343,7 +7392,26 @@ int zCVCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 2)
 		{
-			cDBase->AddContPolyW(1);
+			char OutT[80];
+			sprintf_s(OutT, "%s %g)", "//ENTER ORDER (", gDIM_CVORD);
+			outtext2(OutT);
+			SetFocus();
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			C3dVector P;
+			P = cDBase->DB_PopBuff();
+			if (P.x < 1)
+				P.x = gDIM_CVORD;
+			if (P.x != gDIM_CVORD)
+				gDIM_CVORD = P.x;
+
+			cDBase->AddContPolyW(1, P.x);
 			outtext1("1 Curve Created.");
 			cDBase->FILTER.SetAll();
 			iStat = 100;
@@ -5356,11 +7424,11 @@ int zCVCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 			cDBase->FILTER.SetAll();
 			RetVal = 1;
 		}
-
 	}
 MenuEnd:
 	return RetVal;
 }
+
 
 int zCVFIT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -5376,7 +7444,13 @@ int zCVFIT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			outtext2("/ENTER LOCATION OR PICK FROM SCREEN");
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(5);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(13);
+			outtext2("// ENTER LOCATION OR PICK FROM SCREEN");
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -5389,7 +7463,9 @@ int zCVFIT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 2)
 		{
-			outtext2("/ENTER ORDER");
+			char OutT[80];
+			sprintf_s(OutT, "%s %g)", "//ENTER ORDER (", gDIM_CVORD);
+			outtext2(OutT);
 			SetFocus();
 			iResumePos = 3;
 			iCancelPos = 100;
@@ -5401,6 +7477,11 @@ int zCVFIT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		{
 			C3dVector P;
 			P = cDBase->DB_PopBuff();
+			if (P.x < 1)
+				P.x = gDIM_CVORD;
+			if (P.x != gDIM_CVORD)
+				gDIM_CVORD = P.x;
+
 			cDBase->AddCurveFit((int)P.x);
 			outtext1("1 Curve Created.");
 			cDBase->FILTER.SetAll();
@@ -5436,7 +7517,7 @@ if (iStat == 0)
 {
     cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(7);
-	outtext2("/PICK PROFILE CURVES");
+	outtext2("// PICK PROFILE CURVES");
     iStat=1;
 }
 if (iStat == 1)
@@ -5458,7 +7539,7 @@ else if ((CInMsg == "D") || (CInMsg == ""))
 if (iStat == 2)
 {
   cDBase->FILTER.SetAll();
-  outtext2("/ENTER TRANSLATION:");
+  outtext2("// ENTER TRANSLATION:");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zTVEC_Mnu();
@@ -5504,7 +7585,7 @@ int zSURRV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		{
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(7);
-			outtext2("/PICK PROFILE CURVES");
+			outtext2("// PICK PROFILE CURVES");
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -5526,7 +7607,7 @@ int zSURRV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		if (iStat == 2)
 		{
 			cDBase->FILTER.SetAll();
-			outtext2("/ENTER AXIS PT1");
+			outtext2("// ENTER AXIS PT1");
 			iResumePos = 3;
 			iCancelPos = 100;
 			pNext = new zPT_Mnu();
@@ -5535,10 +7616,11 @@ int zSURRV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 3)
 		{
-			cDBase->bLineDrag = TRUE;
+			cDBase->bIsDrag = TRUE;
 			p1 = cDBase->DB_PopBuff();
+			cDBase->AddDragLN(p1);
 			cDBase->vLS = p1;
-			outtext2("/ENTER AXIS PT2");
+			outtext2("// ENTER AXIS PT2");
 			iResumePos = 4;
 			iCancelPos = 100;
 			pNext = new zPT_Mnu();
@@ -5547,8 +7629,8 @@ int zSURRV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 		}
 		if (iStat == 4)
 		{
-			cDBase->bLineDrag = FALSE;
-			outtext2("/ENTER ROTATION ANG (Def: 360)");
+			cDBase->bIsDrag = FALSE;
+			outtext2("// ENTER ROTATION ANG (Def: 360)");
 			iStat = 5;
 			SetFocus();
 			goto MenuEnd;
@@ -5582,7 +7664,8 @@ int zSURRV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 	//Escape clause
 	if (iStat == 100)
 	{
-		cDBase->bLineDrag = FALSE;
+		cDBase->bIsDrag = FALSE;
+		cDBase->ReDraw();
 		cDBase->DB_BuffCount=initCnt;
 		cDBase->S_Count=S_initCnt;
 		cDBase->FILTER.SetAll();
@@ -5612,7 +7695,7 @@ if (iStat == 0)
 	cDBase->FILTER.SetFilter(15);
 	cDBase->S_Count=0;
 	iCnt=cDBase->OTemp->iNo;
-	outtext2("/PICK SURFACE");
+	outtext2("// PICK SURFACE");
 	iStat=1;
 }
 if (iStat == 1)
@@ -5627,7 +7710,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-	outtext2("/PICK CURVES");
+	outtext2("// PICK CURVES");
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(7);
 	iStat = 3;
@@ -5682,7 +7765,7 @@ if (iStat == 0)
   cDBase->FILTER.SetFilter(15);
   cDBase->S_Count=0;
   iCnt=cDBase->OTemp->iNo;
-  outtext2("/PICK SURFACE");
+  outtext2("// PICK SURFACE");
   iStat=1;
 }
 if (iStat == 1)
@@ -5697,7 +7780,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/PICK SURFACE CURVES");
+  outtext2("// PICK SURFACE CURVES");
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(13);
   iStat = 3;
@@ -5745,7 +7828,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/PICK SURFACES");
+  outtext2("// PICK SURFACES");
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(15);
   iStat=1;
@@ -5764,7 +7847,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER NO IN U and V directions (eg 3,4)");
+  outtext2("// ENTER NO IN U and V directions (eg 3,4)");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -5806,7 +7889,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/PICK SURFACES TO UNTRIM");
+  outtext2("// PICK SURFACES TO UNTRIM");
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(15);
   iStat=1;
@@ -5855,7 +7938,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/PICK SURFACES");
+  outtext2("// PICK SURFACES");
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(15);
   iStat=1;
@@ -5874,7 +7957,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER NO IN U and V directions (eg 3,4)");
+  outtext2("// ENTER NO IN U and V directions (eg 3,4)");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -5918,7 +8001,7 @@ int zMMESHAF_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/PICK SURFACES");
+			outtext2("// PICK SURFACES");
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(15);
 			iStat = 1;
@@ -5939,7 +8022,7 @@ int zMMESHAF_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		if (iStat == 2)
 		{
 			cDBase->S_Save(cDBase->OTemp);
-			outtext2("/ENTER ELEMENT SIZE");
+			outtext2("// ENTER ELEMENT SIZE");
 			SetFocus();
 			iResumePos = 3;
 			iCancelPos = 100;
@@ -5984,7 +8067,7 @@ int zEXTRACT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/PICK PART - CURVES / SURFACES");
+			outtext2("// PICK PART - CURVES / SURFACES");
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(15);
 			iStat = 1;
@@ -6038,7 +8121,7 @@ int zMMESHSZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/PICK SURFACES TO DEFINE MESH SIZE");
+			outtext2("// PICK SURFACES TO DEFINE MESH SIZE");
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(15);
 			iStat = 1;
@@ -6059,7 +8142,7 @@ int zMMESHSZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		if (iStat == 2)
 		{
 			cDBase->S_Save(cDBase->OTemp);
-			outtext2("/ENTER ELEMENT SIZE");
+			outtext2("// ENTER ELEMENT SIZE");
 			SetFocus();
 			iResumePos = 3;
 			iCancelPos = 100;
@@ -6103,7 +8186,7 @@ int zMMESHBZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/PICK CURVES TO BEAM MESH");
+			outtext2("// PICK CURVES TO BEAM MESH");
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(7);
 			iStat = 1;
@@ -6124,7 +8207,7 @@ int zMMESHBZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		if (iStat == 2)
 		{
 			cDBase->S_Save(cDBase->OTemp);
-			outtext2("/ENTER ELEMENT SIZE");
+			outtext2("// ENTER ELEMENT SIZE");
 			SetFocus();
 			iResumePos = 3;
 			iCancelPos = 100;
@@ -6167,7 +8250,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/PICK SURFACES");
+  outtext2("// PICK SURFACES");
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(15);
   iStat=1;
@@ -6186,7 +8269,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER SPACING)");
+  outtext2("// ENTER SPACING)");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -6216,6 +8299,7 @@ return RetVal;
 }
 
 
+
 int zSURTRIMLOOP_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
@@ -6235,7 +8319,7 @@ if (iStat == 0)
 	cDBase->FILTER.SetFilter(15);
 	cDBase->S_Count=0;
 	iCnt=cDBase->OTemp->iNo;
-	outtext2("/PICK SURFACE");
+	outtext2("// PICK SURFACE");
 	iStat=1;
 }
 if (iStat == 1)
@@ -6250,7 +8334,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/PICK CURVES");
+  outtext2("// PICK CURVES");
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
   iStat = 3;
@@ -6301,7 +8385,7 @@ if (iStat == 0)
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(7);
 	cDBase->FILTER.SetFilter(13);
-	outtext2("/PICK CROSS SECTION CURVES");
+	outtext2("// PICK CROSS SECTION CURVES");
 	iStat=1;
 }
 if (iStat == 1)
@@ -6355,7 +8439,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
-  outtext2("/PICK CURVES TO SWEEP");
+  outtext2("// PICK CURVES TO SWEEP");
   iStat=1;
 }
 if (iStat == 1)
@@ -6370,7 +8454,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/PICK CURVES TO SWEEP ALONG");
+  outtext2("// PICK CURVES TO SWEEP ALONG");
   iStat = 3;
 }
 if (iStat == 3)
@@ -6419,7 +8503,7 @@ int zSDSEC_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 	{
 		cDBase->FILTER.Clear();
 		cDBase->FILTER.SetFilter(7);
-		outtext2("/PICK BOUNDARY CURVES");
+		outtext2("// PICK BOUNDARY CURVES");
 		iStat=1;
 	}
 	if (iStat == 1)
@@ -6462,7 +8546,7 @@ int zSURBOUND_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		{
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(7);
-			outtext2("/PICK BOUNDARY CURVES");
+			outtext2("// PICK BOUNDARY CURVES");
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -6514,7 +8598,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
   cDBase->FILTER.SetFilter(13);
-  outtext2("/PICK CURVES");
+  outtext2("// PICK CURVES");
   iStat=1;
 }
 if (iStat == 1)
@@ -6558,7 +8642,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
   cDBase->FILTER.SetFilter(13);
-  outtext2("/PICK CURVES");
+  outtext2("// PICK CURVES");
   iStat=1;
 }
 if (iStat == 1)
@@ -6602,7 +8686,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
   cDBase->FILTER.SetFilter(13);
-  outtext2("/PICK CURVES");
+  outtext2("// PICK CURVES");
   iStat=1;
 }
 if (iStat == 1)
@@ -6650,7 +8734,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
-  outtext2("/PICK CURVES");
+  outtext2("// PICK CURVES");
   iStat=1;
 }
 if (iStat == 1)
@@ -6694,7 +8778,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
-  outtext2("/PICK CURVES");
+  outtext2("// PICK CURVES");
   iStat=1;
 }
 if (iStat == 1)
@@ -6737,7 +8821,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
-  outtext2("/PICK CURVES");
+  outtext2("// PICK CURVES");
   iStat=1;
 }
 if (iStat == 1)
@@ -6780,7 +8864,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
-  outtext2("/PICK CURVES");
+  outtext2("// PICK CURVES");
   iStat=1;
 }
 if (iStat == 1)
@@ -6812,78 +8896,92 @@ return RetVal;
 
 
 
-int zFIL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
+int zFIL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
+	DoNext(&CInMsg, Pt);
 
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  cDBase->FILTER.SetAll();
-  goto MenuEnd;
-}
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
 
-if (iStat == 0)
-{
-  cDBase->FILTER.Clear();
-  cDBase->FILTER.SetFilter(7);
-  iStat=1;
-}
-if (iStat == 1)
-{
-  outtext2("/ENTER RADIUS");
-  SetFocus();
-  iResumePos=2;
-  iCancelPos=100;
-  pNext = new zKEY_Mnu();
-  pNext->Init(cDBase,-1);
-  DoNext(&CInMsg,Pt);
-}
-if (iStat == 2)
-{
-  vR=cDBase->DB_PopBuff();
-  iStat=3;
-}
-if (iStat == 3)
-{
-  outtext2("/PICK TWO LINES");
-  iStat=4;
-}
-if (iStat == 4)
-{
-  
-  if (cDBase->S_Count==S_initCnt+1)
-  {
-     PNear1=Pt;
-  }
-  if (cDBase->S_Count==S_initCnt+2)
-  {
-     PNear2=Pt;
-     iStat = 5;
-  }
-}
-if (iStat == 5)
-{
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			iStat = 1;
+		}
 
-  cDBase->Fillet2(vR.x,PNear1,PNear2);
-  iStat = 4;
-  cDBase->S_Count=S_initCnt;
-  outtext2("/PICK TWO LINES");
-}
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  cDBase->FILTER.SetAll();
-  RetVal = 1;
-}
-}
+		if (iStat == 1)
+		{
+			char OutT[80];
+			sprintf_s(OutT, "%s %g)","ENTER RADIUS (",gDIM_FILSZ);
+			outtext2(OutT);
+			SetFocus();
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+
+		if (iStat == 2)
+		{
+			vR = cDBase->DB_PopBuff();
+			iStat = 3;
+		}
+
+		if (iStat == 3)
+		{
+			outtext2("// PICK TWO CURVES");
+			iStat = 4;
+		}
+
+		if (iStat == 4)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				PNear1 = Pt;
+			}
+
+			if (cDBase->S_Count == S_initCnt + 2)
+			{
+				PNear2 = Pt;
+				iStat = 5;
+			}
+		}
+
+		if (iStat == 5)
+		{
+			double dRad;
+			dRad = vR.x;
+			if (dRad == 0)
+				dRad = gDIM_FILSZ;
+			else
+				gDIM_FILSZ = dRad;
+			cDBase->Fillet2(dRad, PNear1, PNear2);
+			iStat = 4;
+			cDBase->S_Count = S_initCnt;
+			outtext2("// PICK TWO CURVES");
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+
 MenuEnd:
 
-return RetVal;
+	return RetVal;
 }
 
 int zCORNER_Mnu::DoMenu(CString CInMsg,CPoint Pt)
@@ -6903,7 +9001,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(7);
-	outtext2("/PICK LINES");
+	outtext2("// PICK LINES");
 	iStat=1;
 }
 if (iStat == 1)
@@ -6924,7 +9022,8 @@ if (iStat == 2)
   P=cDBase->DB_PopBuff();
   cDBase->Corner2(PNear1,PNear2);
   cDBase->FILTER.SetAll();
-  RetVal = 1;
+  iStat = 0;
+  this->DoMenu(CInMsg, Pt);
 }
 //Escape clause
 if (iStat == 100)
@@ -6932,12 +9031,67 @@ if (iStat == 100)
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   cDBase->FILTER.SetAll();
-  RetVal = 1;
+  //RetVal = 1;
+  iStat = 0;
 }
 }
 MenuEnd:
 return RetVal;
 }
+
+int zTRIM_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("// PICK CURVE TO TRIM ");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				PNear1 = Pt;
+				outtext2("// PICK TRIM CURVE ");
+			}
+			if (cDBase->S_Count == S_initCnt + 2)
+			{
+				PNear2 = Pt;
+				iStat = 2;
+			}
+		}
+		if (iStat == 2)
+		{
+			C3dVector P;
+			P = cDBase->DB_PopBuff();
+			cDBase->Trim(PNear1, PNear2);
+			iStat = 0;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 
 int zPROJ_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -6952,7 +9106,11 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("/PICK OBJECT TO PROJECT TO");
+	cDBase->FILTER.Clear();
+  cDBase->FILTER.SetFilter(7);
+  cDBase->FILTER.SetFilter(13);
+  cDBase->FILTER.SetFilter(15);
+  outtext2("// PICK OBJECT TO PROJECT TO");
   iStat=1;
 }
 if (iStat == 1)
@@ -6964,12 +9122,15 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-	outtext2("/ENTER PT TO PROJECT");
+  outtext2("// ENTER PT TO PROJECT");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zPT_Mnu();
   pNext->Init(cDBase,-1);
   DoNext(&CInMsg,Pt);
+  cDBase->FILTER.Clear();
+  cDBase->FILTER.SetFilter(0);
+  cDBase->FILTER.SetFilter(1);
 }
 if (iStat == 3)
 {
@@ -6979,6 +9140,7 @@ if (iStat == 3)
     p1= cDBase->ClosestTo(p2);
     cDBase->DB_AddPtBuff(p1);
     RetVal = 1;
+	cDBase->FILTER.SetAll();
 }
 //Escape clause
 if (iStat == 100)
@@ -7009,7 +9171,7 @@ int zKNOTINS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(7);
-      outtext2("/PICK CURVE");
+      outtext2("// PICK CURVE");
       iStat = 1;
     }
     if (iStat == 1)
@@ -7026,7 +9188,7 @@ int zKNOTINS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     if (iStat == 2)
     {
       cDBase->FILTER.SetAll();
-      outtext2("/ENTER PT TO PROJECT");
+      outtext2("// ENTER PT TO PROJECT");
       iResumePos = 3;
       iCancelPos = 100;
       pNext = new zPT_Mnu();
@@ -7052,6 +9214,79 @@ MenuEnd:
   return RetVal;
 }
 
+int zCVSPLIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(7);
+			outtext2("// PICK CURVE TO SPLIT");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if (cDBase->S_Count == S_initCnt + 1)
+			{
+				iStat = 2;
+				pC = NULL;
+				if (cDBase->S_Buff[cDBase->S_Count - 1] != NULL)
+				{
+					if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7)
+					{
+						pC = (NCurve*)cDBase->S_Buff[cDBase->S_Count - 1];
+						cDBase->S_Count--;
+					}
+					else
+					{
+						cDBase->S_Count--;
+						iStat = 0;
+						outtext1("ERROR: Invalid Selection.");
+						DoMenu(CInMsg, Pt);
+					}
+				}
+			}
+		}
+		if (iStat == 2)
+		{
+			cDBase->FILTER.SetAll();
+			outtext2("// ENTER PT TO PROJECT");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zPT_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			C3dVector p2;
+			p2 = cDBase->DB_PopBuff();
+			cDBase->CurveSplit(pC, p2);
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 
 int zKNOTMOD_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
@@ -7070,7 +9305,7 @@ int zKNOTMOD_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(7);
-      outtext2("/PICK CURVE TO MODIFY KNOT VECTOR");
+      outtext2("// PICK CURVE TO MODIFY KNOT VECTOR");
       iStat = 1;
     }
     if (iStat == 1)
@@ -7083,7 +9318,7 @@ int zKNOTMOD_Mnu::DoMenu(CString CInMsg, CPoint Pt)
           if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7)
           {
             pC = (NCurve*)cDBase->S_Buff[cDBase->S_Count - 1];
-            outtext2("/CURR KNO SEQ:-");
+            outtext2("// CURR KNO SEQ:-");
             outtext2(_T(pC->GetKnotString()));
           }
       }
@@ -7091,7 +9326,7 @@ int zKNOTMOD_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     if (iStat == 2)
     {
       cDBase->FILTER.SetAll();
-      outtext2("/ENTER NEW KNOT STRING (0,0,0,0.5 etc");
+      outtext2("// ENTER NEW KNOT STRING (0,0,0,0.5 etc");
       iStat = 3;
     }
     if (iStat == 3)
@@ -7129,13 +9364,17 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("/PICK LINES TO INTERCECT");
+  cDBase->FILTER.Save();
+  cDBase->FILTER.Clear();
+  cDBase->FILTER.SetFilter(7);
+  outtext2("// PICK LINES TO INTERCECT");
   iStat=1;
 }
 if (iStat == 1)
 {
   if (cDBase->S_Count==S_initCnt+2)
   {
+	PNear1 = Pt;
     iStat=2;
   }
 }
@@ -7143,16 +9382,18 @@ if (iStat == 2)
 {
     C3dVector p2;
     BOOL bErr;
-    p2= cDBase->Intersect(bErr);
+    p2= cDBase->Intersect(bErr, PNear1);
     if (bErr==FALSE)
     {
       cDBase->DB_AddPtBuff(p2);
     }
+	cDBase->FILTER.Restore();
     RetVal = 1;
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.Restore();
   cDBase->DB_BuffCount=initCnt;
   cDBase->S_Count=S_initCnt;
   RetVal = 1;
@@ -7179,7 +9420,7 @@ int zNODEX_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(1);
-      outtext2("/PICK NODES TO MODIFY X ORDINATE");
+      outtext2("// PICK NODES TO MODIFY X ORDINATE");
       iStat = 1;
     }
     if (iStat == 1)
@@ -7198,7 +9439,7 @@ int zNODEX_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->S_Save(cDBase->OTemp); //Save selection
       cDBase->S_Des();       //clear selection buffer
-      outtext2("/ENTER NEW X VALUE");
+      outtext2("// ENTER NEW X VALUE");
       iResumePos = 3;
       iCancelPos = 100;
       pNext = new zKEY_Mnu();
@@ -7243,7 +9484,7 @@ int zNODEY_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(1);
-      outtext2("/PICK NODES TO MODIFY Y ORDINATE");
+      outtext2("// PICK NODES TO MODIFY Y ORDINATE");
       iStat = 1;
     }
     if (iStat == 1)
@@ -7262,7 +9503,7 @@ int zNODEY_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->S_Save(cDBase->OTemp); //Save selection
       cDBase->S_Des();       //clear selection buffer
-      outtext2("/ENTER NEW Y VALUE");
+      outtext2("// ENTER NEW Y VALUE");
       iResumePos = 3;
       iCancelPos = 100;
       pNext = new zKEY_Mnu();
@@ -7307,7 +9548,7 @@ int zNODEZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(1);
-      outtext2("/PICK NODES TO MODIFY Z ORDINATE");
+      outtext2("// PICK NODES TO MODIFY Z ORDINATE");
       iStat = 1;
     }
     if (iStat == 1)
@@ -7326,7 +9567,7 @@ int zNODEZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->S_Save(cDBase->OTemp); //Save selection
       cDBase->S_Des();       //clear selection buffer
-      outtext2("/ENTER NEW Z VALUE");
+      outtext2("// ENTER NEW Z VALUE");
       iResumePos = 3;
       iCancelPos = 100;
       pNext = new zKEY_Mnu();
@@ -7372,7 +9613,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK NODES");
+  outtext2("// PICK NODES");
   iStat=1;
 }
 if (iStat == 1)
@@ -7391,7 +9632,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER FORCE VECTOR");
+  outtext2("// ENTER FORCE VECTOR");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -7437,7 +9678,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK ELEMENTS");
+  outtext2("// PICK ELEMENTS");
   iStat=1;
 }
 if (iStat == 1)
@@ -7456,7 +9697,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER ACCELERATION VECTOR");
+  outtext2("// ENTER ACCELERATION VECTOR");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -7485,6 +9726,64 @@ MenuEnd:
 return RetVal;
 }
 
+int zGRAV_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->S_Save(cDBase->OTemp); //Save selection
+			cDBase->S_Des();       //clear selection buffer
+			outtext2("// ENTER ACCELERATION SCALE FACTOR");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			cDBase->S_Save(cDBase->OTemp); //Save selection
+			cDBase->S_Des();       //clear selection buffer
+			outtext2("// ENTER ACCELERATION VECTOR");
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			C3dVector Vec;
+			Vec = cDBase->DB_PopBuff();
+			C3dVector SclVec;
+			SclVec = cDBase->DB_PopBuff();
+			cDBase->AddGrav(SclVec.x, Vec);
+			cDBase->FILTER.SetAll();
+			cDBase->S_Res();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+
 int zRACR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
@@ -7501,7 +9800,7 @@ int zRACR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(3);
-      outtext2("/PICK ELEMENTS");
+      outtext2("// PICK ELEMENTS");
       iStat = 1;
     }
     if (iStat == 1)
@@ -7518,7 +9817,7 @@ int zRACR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 2)
     {
-      outtext2("/ENTER AXIS PT1");
+      outtext2("// ENTER AXIS PT1");
       iResumePos = 3;
       iCancelPos = 100;
       pNext = new zPT_Mnu();
@@ -7527,7 +9826,7 @@ int zRACR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 3)
     {
-      outtext2("/ENTER AXIS PT2");
+      outtext2("// ENTER AXIS PT2");
       iResumePos = 4;
       iCancelPos = 100;
       pNext = new zPT_Mnu();
@@ -7538,7 +9837,7 @@ int zRACR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->S_Save(cDBase->OTemp); //Save selection
       cDBase->S_Des();       //clear selection buffer
-      outtext2("/ENTER ROTATIONAL SPEED w (rad/s)");
+      outtext2("// ENTER ROTATIONAL SPEED w (rad/s)");
       iResumePos = 5;
       iCancelPos = 100;
       pNext = new zKEY_Mnu();
@@ -7591,7 +9890,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK NODES");
+  outtext2("// PICK NODES");
   iStat=1;
 }
 if (iStat == 1)
@@ -7610,7 +9909,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER TEMPERATURE");
+  outtext2("// ENTER TEMPERATURE");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -7656,7 +9955,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK NODES");
+  outtext2("// PICK NODES");
   iStat=1;
 }
 if (iStat == 1)
@@ -7675,7 +9974,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER NETT FLUX");
+  outtext2("// ENTER NETT FLUX");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -7720,9 +10019,9 @@ if (CInMsg == "C") //Common Options
 if (iStat == 0)
 {
   cDBase->FILTER.Clear();
-  cDBase->FILTER.SetFilter(3);
+  cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK ELEMENTS");
+  outtext2("// PICK NODES");
   iStat=1;
 }
 if (iStat == 1)
@@ -7741,7 +10040,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER TEMPERATURE");
+  outtext2("// ENTER TEMPERATURE");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -7770,6 +10069,47 @@ MenuEnd:
 return RetVal;
 }
 
+int zTEMPD_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER TEMPERATURE");
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->AddTEMPD(ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+
 int zMCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
@@ -7787,7 +10127,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK NODES");
+  outtext2("// PICK NODES");
   iStat=1;
 }
 if (iStat == 1)
@@ -7806,7 +10146,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER MOMENT VECTOR");
+  outtext2("// ENTER MOMENT VECTOR");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -7853,7 +10193,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
   cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK SHELL ELEMENTS");
+  outtext2("// PICK SHELL ELEMENTS");
   iStat=1;
 }
 if (iStat == 1)
@@ -7872,7 +10212,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER PRESSURE");
+  outtext2("// ENTER PRESSURE");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -7918,7 +10258,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
-  outtext2("/PICK ELEMENTS");
+  outtext2("// PICK ELEMENTS");
   iStat=1;
 }
 if (iStat == 1)
@@ -7974,7 +10314,7 @@ int zRESLISTND_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(1);
 			//cDBase->FILTER.SetFilter(4);
-			outtext2("/PICK NODES");
+			outtext2("// PICK NODES");
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -8030,7 +10370,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(1);
 	//cDBase->FILTER.SetFilter(4);
-	outtext2("/PICK NODES TO CHECK");
+	outtext2("// PICK NODES TO CHECK");
   iStat=1;
 }
 if (iStat == 1)
@@ -8044,7 +10384,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER TOLERANCE");
+  outtext2("// ENTER TOLERANCE");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -8098,7 +10438,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
-  outtext2("/PICK NODES");
+  outtext2("// PICK NODES");
   iStat=1;
 }
 if (iStat == 1)
@@ -8117,7 +10457,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp);
   cDBase->S_Des();
-  outtext2("/ENTER TRANS RESTRAINT VECTOR");
+  outtext2("// ENTER TRANS RESTRAINT VECTOR");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -8126,7 +10466,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/ENTER ROT RESTRAINT VECTOR");
+  outtext2("// ENTER ROT RESTRAINT VECTOR");
   iResumePos=4;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -8171,7 +10511,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("/PICK ITEMS");
+	outtext2("// PICK ITEMS");
     iStat=1;
 
 }
@@ -8189,7 +10529,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER COLOUR");
+  outtext2("// ENTER COLOUR");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -8216,6 +10556,52 @@ MenuEnd:
 return RetVal;
 }
 
+int zCHKCOUNT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// PICK ITEMS TO COUNT");
+			iStat = 1;
+
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->CountItems();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 int zLABENT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 DoNext(&CInMsg,Pt);
@@ -8229,7 +10615,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-	outtext2("/PICK ITEMS");
+	outtext2("// PICK ITEMS");
   iStat=1;
 }
 if (iStat == 1)
@@ -8273,7 +10659,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
-  outtext2("/PICK ELEMENTS");
+  outtext2("// PICK ELEMENTS");
   iStat=1;
 }
 if (iStat == 1)
@@ -8290,7 +10676,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER NEW PROPERTY ID ((PID)");
+  outtext2("// ENTER NEW PROPERTY ID ((PID)");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -8319,6 +10705,60 @@ MenuEnd:
 return RetVal;
 }
 
+int zSELRBENODE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// PICK ELEMENTS");
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			cDBase->S_Count = 0;
+			cDBase->FILTER.SetAll();
+			cDBase->SelRBENode(cDBase->OTemp);
+			cDBase->OTemp->Clear();
+			//cDBase->S_Res();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 int zELREV_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
@@ -8337,7 +10777,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
   cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK ELEMENTS TO REVERSE");
+  outtext2("// PICK ELEMENTS TO REVERSE");
   iStat=1;
 }
 if (iStat == 1)
@@ -8389,7 +10829,7 @@ int zCHKCIRCUMSPH_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		{
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(3);
-			outtext2("/PICK TET ELEMENTS TO REPORT");
+			outtext2("// PICK TET ELEMENTS TO REPORT");
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -8437,7 +10877,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER PROPERTY TITLE");
+  outtext2("// ENTER PROPERTY TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -8447,7 +10887,7 @@ if (iStat == 1)
   sTit=CInMsg;
   iStat=2;
 }
-////////////////Get defualy pid//////////////////////////////  
+////////////////Get defualy pid//////////////////////////////
     iNLab=1;
     if (cDBase->pCurrentMesh!=NULL)
     {
@@ -8455,7 +10895,7 @@ if (iStat == 1)
     }
     char s1[200];
     CString sT;
-    sprintf_s(s1,"%s%i%s","ENTER NEW PID (",iNLab,")");
+    sprintf_s(s1,"%s%i%s","//ENTER NEW PID (",iNLab,")");
 ////////////////////////////////////////////////////////////
 if (iStat == 2)
 {
@@ -8479,7 +10919,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER MID");
+  outtext2("// ENTER MID");
   iStat = 5;
   goto MenuEnd;
 }
@@ -8499,7 +10939,7 @@ if (iStat == 5)
 }
 if (iStat == 6)
 {
-  outtext2("/ENTER RADIUS");
+  outtext2("// ENTER RADIUS");
   iStat = 7;
   goto MenuEnd;
 }
@@ -8553,7 +10993,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER PROPERTY TITLE");
+  outtext2("// ENTER PROPERTY TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -8563,7 +11003,7 @@ if (iStat == 1)
   sTit=CInMsg;
   iStat=2;
 }
-////////////////Get defualy pid//////////////////////////////  
+////////////////Get defualy pid//////////////////////////////
     iNLab=1;
     if (cDBase->pCurrentMesh!=NULL)
     {
@@ -8595,7 +11035,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER MID");
+  outtext2("// ENTER MID");
   iStat = 5;
   goto MenuEnd;
 }
@@ -8615,7 +11055,7 @@ if (iStat == 5)
 }
 if (iStat == 6)
 {
-  outtext2("/ENTER AREA");
+  outtext2("// ENTER AREA");
   iStat = 7;
   goto MenuEnd;
 }
@@ -8635,7 +11075,7 @@ if (iStat == 7)
 }
 if (iStat == 8)
 {
-  outtext2("/ENTER TORSIONAL COEF (J)");
+  outtext2("// ENTER TORSIONAL COEF (J)");
   iStat = 9;
   goto MenuEnd;
 }
@@ -8689,7 +11129,7 @@ int zPRBAR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		C3dVector ptVec;
 		if (iStat == 0)
 		{
-			outtext2("/ENTER PROPERTY TITLE");
+			outtext2("// ENTER PROPERTY TITLE");
 			SetFocus();
 			iStat = 1;
 			goto MenuEnd;
@@ -8699,7 +11139,7 @@ int zPRBAR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			sTit = CInMsg;
 			iStat = 2;
 		}
-		////////////////Get defualy pid//////////////////////////////  
+		////////////////Get defualy pid//////////////////////////////
 		iNLab = 1;
 		if (cDBase->pCurrentMesh != NULL)
 		{
@@ -8731,7 +11171,7 @@ int zPRBAR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 4)
 		{
-			outtext2("/ENTER MID");
+			outtext2("// ENTER MID");
 			iStat = 5;
 			goto MenuEnd;
 		}
@@ -8751,7 +11191,7 @@ int zPRBAR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 6)
 		{
-			outtext2("/ENTER AREA");
+			outtext2("// ENTER AREA");
 			iStat = 7;
 			goto MenuEnd;
 		}
@@ -8771,7 +11211,7 @@ int zPRBAR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 8)
 		{
-			outtext2("/ENTER I1");
+			outtext2("// ENTER I1");
 			iStat = 9;
 			goto MenuEnd;
 		}
@@ -8791,7 +11231,7 @@ int zPRBAR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 10)
 		{
-			outtext2("/ENTER I2");
+			outtext2("// ENTER I2");
 			iStat = 11;
 			goto MenuEnd;
 		}
@@ -8811,7 +11251,7 @@ int zPRBAR2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 12)
 		{
-			outtext2("/ENTER TORSIONAL COEF (J)");
+			outtext2("// ENTER TORSIONAL COEF (J)");
 			iStat = 13;
 			goto MenuEnd;
 		}
@@ -8865,7 +11305,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER PROPERTY TITLE");
+  outtext2("// ENTER PROPERTY TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -8875,7 +11315,7 @@ if (iStat == 1)
   sTit=CInMsg;
   iStat=2;
 }
-////////////////Get defualy pid//////////////////////////////  
+////////////////Get defualy pid//////////////////////////////
     iNLab=1;
     if (cDBase->pCurrentMesh!=NULL)
     {
@@ -8907,7 +11347,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER MID");
+  outtext2("// ENTER MID");
   iStat = 5;
   goto MenuEnd;
 }
@@ -8927,7 +11367,7 @@ if (iStat == 5)
 }
 if (iStat == 6)
 {
-  outtext2("/ENTER WIDTH (beam Z)");
+  outtext2("// ENTER WIDTH (beam Z)");
   iStat = 7;
   goto MenuEnd;
 }
@@ -8947,7 +11387,7 @@ if (iStat == 7)
 }
 if (iStat == 8)
 {
-  outtext2("/ENTER HEIGHT (beam Y)");
+  outtext2("// ENTER HEIGHT (beam Y)");
   iStat = 9;
   goto MenuEnd;
 }
@@ -9003,8 +11443,8 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER TOLERENCE (Def:0.0001)");
-  outtext2("/RECOMMEND SAVING MODEL FIRST");
+  outtext2("// ENTER TOLERENCE (Def:0.0001)");
+  outtext2("// RECOMMEND SAVING MODEL FIRST");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -9051,7 +11491,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK NODES");
+  outtext2("// PICK NODES");
   iStat=1;
 }
 if (iStat == 1)
@@ -9070,7 +11510,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER TOLERENCE (Def:0.0001)");
+  outtext2("// ENTER TOLERENCE (Def:0.0001)");
   SetFocus();
   iStat = 3;
   goto MenuEnd;
@@ -9090,7 +11530,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/USE HIGHER LABEL (TYPE YES/NO) (Def:YES)");
+  outtext2("// USE HIGHER LABEL (TYPE YES/NO) (Def:YES)");
   iStat = 5;
   goto MenuEnd;
 }
@@ -9111,7 +11551,7 @@ if (iStat == 5)
 }
 if (iStat == 6)
 {
-  outtext2("/MERGE NODES (TYPE YES/NO) (Def:YES)");
+  outtext2("// MERGE NODES (TYPE YES/NO) (Def:YES)");
   iStat = 7;
   goto MenuEnd;
 }
@@ -9150,6 +11590,80 @@ MenuEnd:
 return RetVal;
 }
 
+int zNDEQLAB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(1);
+			//cDBase->FILTER.SetFilter(4);
+			outtext2("// PICK NODES");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, 1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp); //Save selection
+			cDBase->S_Des();       //clear selection buffer
+			outtext2("// ENTER TOLERENCE (Def:0.0001)");
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			dTol = atof(CInMsg);
+			if (dTol <= 0)
+			{
+				dTol = 0.0001;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			RetVal = 1;
+			cDBase->EqLab(cDBase->OTemp, dTol, bUp, bDel);
+			cDBase->FILTER.SetAll();
+			cDBase->S_Res();
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 int zCHKSHELLASP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   CString CInMsg2 = CInMsg;
@@ -9168,7 +11682,7 @@ int zCHKSHELLASP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(3);
       //cDBase->FILTER.SetFilter(4);
-      outtext2("/PICK ELEMENTS");
+      outtext2("// PICK ELEMENTS");
       iStat = 1;
     }
     if (iStat == 1)
@@ -9187,7 +11701,7 @@ int zCHKSHELLASP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->S_Save(cDBase->OTemp); //Save selection
       cDBase->S_Des();       //clear selection buffer
-      outtext2("/ENTER THRESHOLD (Def:2.0)");
+      outtext2("// ENTER THRESHOLD (Def:2.0)");
       SetFocus();
       iStat = 3;
       goto MenuEnd;
@@ -9207,7 +11721,7 @@ int zCHKSHELLASP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 4)
     {
-      outtext2("/LIST ASPECT VALUES (TYPE YES/NO) (Def:YES)");
+      outtext2("// LIST ASPECT VALUES (TYPE YES/NO) (Def:YES)");
       iStat = 5;
       goto MenuEnd;
     }
@@ -9267,7 +11781,7 @@ int zCHKTETCOL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(3);
-      outtext2("/PICK ELEMENTS");
+      outtext2("// PICK ELEMENTS");
       iStat = 1;
     }
     if (iStat == 1)
@@ -9286,7 +11800,7 @@ int zCHKTETCOL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->S_Save(cDBase->OTemp); //Save selection
       cDBase->S_Des();       //clear selection buffer
-      outtext2("/ENTER THRESHOLD (Def:0.2)");
+      outtext2("// ENTER THRESHOLD (Def:0.2)");
       SetFocus();
       iStat = 3;
       goto MenuEnd;
@@ -9306,7 +11820,7 @@ int zCHKTETCOL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 4)
     {
-      outtext2("/LIST COLLAPSE VALUES (TYPE YES/NO) (Def:YES)");
+      outtext2("// LIST COLLAPSE VALUES (TYPE YES/NO) (Def:YES)");
       iStat = 5;
       goto MenuEnd;
     }
@@ -9363,7 +11877,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER PID TO CHANGE MATERIAL");
+  outtext2("// ENTER PID TO CHANGE MATERIAL");
   iStat = 1;
   goto MenuEnd;
 }
@@ -9383,7 +11897,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/MATERIAL ID TO UPDATE");
+  outtext2("// MATERIAL ID TO UPDATE");
   iStat = 3;
   goto MenuEnd;
 }
@@ -9403,7 +11917,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER NEW MATERIAL ID");
+  outtext2("// ENTER NEW MATERIAL ID");
   iStat = 5;
   goto MenuEnd;
 }
@@ -9458,7 +11972,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER PROPERTY TITLE");
+  outtext2("// ENTER PROPERTY TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -9468,7 +11982,7 @@ if (iStat == 1)
   sTit=CInMsg;
   iStat=2;
 }
-////////////////Get defualy pid//////////////////////////////  
+////////////////Get defualy pid//////////////////////////////
     iNLab=1;
     if (cDBase->pCurrentMesh!=NULL)
     {
@@ -9500,7 +12014,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER MID");
+  outtext2("// ENTER MID");
   iStat = 5;
   goto MenuEnd;
 }
@@ -9556,7 +12070,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER PROPERTY TITLE");
+  outtext2("// ENTER PROPERTY TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -9566,7 +12080,7 @@ if (iStat == 1)
   sTit=CInMsg;
   iStat=2;
 }
-////////////////Get defualt pid//////////////////////////////  
+////////////////Get defualt pid//////////////////////////////
     iNLab=1;
     if (cDBase->pCurrentMesh!=NULL)
     {
@@ -9598,7 +12112,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER MID");
+  outtext2("// ENTER MID");
   iStat = 5;
   goto MenuEnd;
 }
@@ -9618,7 +12132,7 @@ if (iStat == 5)
 }
 if (iStat == 6)
 {
-  outtext2("/ENTER THICKNESS");
+  outtext2("// ENTER THICKNESS");
   iStat = 7;
   goto MenuEnd;
 }
@@ -9638,7 +12152,7 @@ if (iStat == 7)
 }
 if (iStat == 8)
 {
-  outtext2("/ENTER NSM");
+  outtext2("// ENTER NSM");
   iStat = 9;
   goto MenuEnd;
 }
@@ -9679,6 +12193,124 @@ MenuEnd:
 return RetVal;
 }
 
+
+int zPRPCOMP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		C3dVector ptVec;
+		if (iStat == 0)
+		{
+			outtext2("// ENTER PROPERTY TITLE");
+			SetFocus();
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sTit = CInMsg;
+			iStat = 2;
+		}
+		////////////////Get defualt pid//////////////////////////////
+		iNLab = 1;
+		if (cDBase->pCurrentMesh != NULL)
+		{
+			iNLab = cDBase->PropsT->NextID();
+		}
+		char s1[200];
+		CString sT;
+		sprintf_s(s1, "%s%i%s", "ENTER NEW PID (", iNLab, ")");
+		////////////////////////////////////////////////////////////
+		if (iStat == 2)
+		{
+			outtext2(s1);
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			iPID = atoi(CInMsg);
+			if (iPID < 1)
+			{
+				iPID = iNLab;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			outtext2("// ENTER NSM");
+			iStat = 5;
+			goto MenuEnd;
+		}
+		if (iStat == 5)
+		{
+			dNSM = atof(CInMsg);
+			if (dNSM < 0)
+			{
+				iStat = 4;
+				outtext1("ERROR: Invalid NSM.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 6;
+			}
+		}
+		//
+		if (iStat == 6)
+		{
+			outtext2("// ENTER LAYER (MID,THK,THETA)");
+			iStat = 7;	
+			goto MenuEnd;
+		}
+		if (iStat == 7)
+		{
+			if (CInMsg == "D")
+			{
+				iStat = 8;
+			}
+			else
+			{
+				sLay[iNoLay]= CInMsg;
+				iNoLay++;
+				iStat = 6;
+				DoMenu(CInMsg, Pt);
+			}
+		}
+		if (iStat == 8)
+		{
+			RetVal = 1;
+			if (cDBase->pCurrentMesh != NULL)
+			{
+				cDBase->CreatePrPCOMP(sTit, iPID, dNSM, iNoLay, sLay);
+			}
+			outtext1("End of Property Definition.");
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 int zPRSPGT_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 CString CInMsg2=CInMsg;
@@ -9693,7 +12325,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER PROPERTY TITLE");
+  outtext2("// ENTER PROPERTY TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -9703,7 +12335,7 @@ if (iStat == 1)
   sTit=CInMsg;
   iStat=2;
 }
-////////////////Get defualt pid//////////////////////////////  
+////////////////Get defualt pid//////////////////////////////
     iNLab=1;
     if (cDBase->pCurrentMesh!=NULL)
     {
@@ -9734,7 +12366,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER KX");
+  outtext2("// ENTER KX");
   iStat = 5;
   goto MenuEnd;
 }
@@ -9754,7 +12386,7 @@ if (iStat == 5)
 }
 if (iStat == 6)
 {
-  outtext2("/ENTER KY");
+  outtext2("// ENTER KY");
   iStat = 7;
   goto MenuEnd;
 }
@@ -9774,7 +12406,7 @@ if (iStat == 7)
 }
 if (iStat == 8)
 {
-  outtext2("/ENTER KZ");
+  outtext2("// ENTER KZ");
   iStat = 9;
   goto MenuEnd;
 }
@@ -9795,7 +12427,7 @@ if (iStat == 9)
 
 if (iStat == 10)
 {
-  outtext2("/ENTER CONDUCTIVITY kCoeff");
+  outtext2("// ENTER CONDUCTIVITY kCoeff");
   iStat = 11;
   goto MenuEnd;
 }
@@ -9836,6 +12468,206 @@ MenuEnd:
 return RetVal;
 }
 
+//NASTRAN BUSH ELEMENT (BASIC FORM FOR K ONLY)
+int zPRBUSH_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		C3dVector ptVec;
+		if (iStat == 0)
+		{
+			outtext2("// ENTER PROPERTY TITLE");
+			SetFocus();
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sTit = CInMsg;
+			iStat = 2;
+		}
+		////////////////Get defualt pid//////////////////////////////
+		iNLab = 1;
+		if (cDBase->pCurrentMesh != NULL)
+		{
+			iNLab = cDBase->PropsT->NextID();
+		}
+		char s1[200];
+		sprintf_s(s1, "%s%i%s", "ENTER NEW PID (", iNLab, ")");
+		////////////////////////////////////////////////////////////
+		if (iStat == 2)
+		{
+			outtext2(s1);
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			iPID = atoi(CInMsg);
+			if (iPID < 1)
+			{
+				iPID = iNLab;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			outtext2("// ENTER K1");
+			iStat = 5;
+			goto MenuEnd;
+		}
+		if (iStat == 5)
+		{
+			dk1 = atof(CInMsg);
+			if (dk1 < 0)
+			{
+				iStat = 4;
+				outtext1("ERROR: Invalid K1.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 6;
+			}
+		}
+		if (iStat == 6)
+		{
+			outtext2("// ENTER K2");
+			iStat = 7;
+			goto MenuEnd;
+		}
+		if (iStat == 7)
+		{
+			dk2 = atof(CInMsg);
+			if (dk2 < 0)
+			{
+				iStat = 6;
+				outtext1("ERROR: Invalid K2.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 8;
+			}
+		}
+		if (iStat == 8)
+		{
+			outtext2("// ENTER K3");
+			iStat = 9;
+			goto MenuEnd;
+		}
+		if (iStat == 9)
+		{
+			dk3 = atof(CInMsg);
+			if (dk3 < 0)
+			{
+				iStat = 8;
+				outtext1("ERROR: Invalid K3.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 10;
+			}
+		}
+		if (iStat == 10)
+		{
+			outtext2("// ENTER K4");
+			iStat = 11;
+			goto MenuEnd;
+		}
+		if (iStat == 11)
+		{
+			dk4 = atof(CInMsg);
+			if (dk4 < 0)
+			{
+				iStat = 10;
+				outtext1("ERROR: Invalid K4.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 12;
+			}
+		}
+
+		if (iStat == 12)
+		{
+			outtext2("// ENTER K5");
+			iStat = 13;
+			goto MenuEnd;
+		}
+		if (iStat == 13)
+		{
+			dk5 = atof(CInMsg);
+			if (dk5 < 0)
+			{
+				iStat = 12;
+				outtext1("ERROR: Invalid K5.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 14;
+			}
+		}
+
+		if (iStat == 14)
+		{
+			outtext2("// ENTER K6");
+			iStat = 15;
+			goto MenuEnd;
+		}
+		if (iStat == 15)
+		{
+			dk5 = atof(CInMsg);
+			if (dk5 < 0)
+			{
+				iStat = 14;
+				outtext1("ERROR: Invalid K6.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 16;
+			}
+		}
+
+
+
+		if (iStat == 16)
+		{
+			RetVal = 1;
+			if (cDBase->pCurrentMesh != NULL)
+			{
+				cDBase->CreatePrBUSH(sTit, iPID, dk1, dk2, dk3, dk4, dk5, dk6);
+			}
+			outtext1("End of Property Definition.");
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 int zPRMASS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   CString CInMsg2 = CInMsg;
@@ -9850,7 +12682,7 @@ int zPRMASS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     C3dVector ptVec;
     if (iStat == 0)
     {
-      outtext2("/ENTER PROPERTY TITLE");
+      outtext2("// ENTER PROPERTY TITLE");
       SetFocus();
       iStat = 1;
       goto MenuEnd;
@@ -9860,7 +12692,7 @@ int zPRMASS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
       sTit = CInMsg;
       iStat = 2;
     }
-    ////////////////Get defualt pid//////////////////////////////  
+    ////////////////Get defualt pid//////////////////////////////
     iNLab = 1;
     if (cDBase->pCurrentMesh != NULL)
     {
@@ -9891,7 +12723,7 @@ int zPRMASS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 4)
     {
-      outtext2("/ENTER MASS");
+      outtext2("// ENTER MASS");
       iStat = 5;
       goto MenuEnd;
     }
@@ -9945,7 +12777,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER PROPERTY TITLE");
+  outtext2("// ENTER PROPERTY TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -9955,7 +12787,7 @@ if (iStat == 1)
   sTit=CInMsg;
   iStat=2;
 }
-////////////////Get defualt pid//////////////////////////////  
+////////////////Get defualt pid//////////////////////////////
     iNLab=1;
     if (cDBase->pCurrentMesh!=NULL)
     {
@@ -9986,7 +12818,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER RX");
+  outtext2("// ENTER RX");
   iStat = 5;
   goto MenuEnd;
 }
@@ -10006,7 +12838,7 @@ if (iStat == 5)
 }
 if (iStat == 6)
 {
-  outtext2("/ENTER RY");
+  outtext2("// ENTER RY");
   iStat = 7;
   goto MenuEnd;
 }
@@ -10026,7 +12858,7 @@ if (iStat == 7)
 }
 if (iStat == 8)
 {
-  outtext2("/ENTER RZ");
+  outtext2("// ENTER RZ");
   iStat = 9;
   goto MenuEnd;
 }
@@ -10047,7 +12879,7 @@ if (iStat == 9)
 
 if (iStat == 10)
 {
-  outtext2("/ENTER CONDUCTIVITY kCoeff");
+  outtext2("// ENTER CONDUCTIVITY kCoeff");
   iStat = 11;
   goto MenuEnd;
 }
@@ -10103,7 +12935,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER PROPERTY TITLE");
+  outtext2("// ENTER PROPERTY TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -10113,7 +12945,7 @@ if (iStat == 1)
   sTit=CInMsg;
   iStat=2;
 }
-////////////////Get defualy pid//////////////////////////////  
+////////////////Get defualy pid//////////////////////////////
     iNLab=1;
     if (cDBase->pCurrentMesh!=NULL)
     {
@@ -10146,7 +12978,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER MID");
+  outtext2("// ENTER MID");
   iStat = 5;
   goto MenuEnd;
 }
@@ -10166,7 +12998,7 @@ if (iStat == 5)
 }
 if (iStat == 6)
 {
-  outtext2("/ENTER WIDTH (beam Z)");
+  outtext2("// ENTER WIDTH (beam Z)");
   iStat = 7;
   goto MenuEnd;
 }
@@ -10186,7 +13018,7 @@ if (iStat == 7)
 }
 if (iStat == 8)
 {
-  outtext2("/ENTER HEIGHT (beam Y)");
+  outtext2("// ENTER HEIGHT (beam Y)");
   iStat = 9;
   goto MenuEnd;
 }
@@ -10206,7 +13038,7 @@ if (iStat == 9)
 }
 if (iStat == 10)
 {
-  outtext2("/ENTER WIDTH THK (beam Z)");
+  outtext2("// ENTER WIDTH THK (beam Z)");
   iStat = 11;
   goto MenuEnd;
 }
@@ -10226,7 +13058,7 @@ if (iStat == 11)
 }
 if (iStat == 12)
 {
-  outtext2("/ENTER HEIGHT THK (beam Y)");
+  outtext2("// ENTER HEIGHT THK (beam Y)");
   iStat = 13;
   goto MenuEnd;
 }
@@ -10269,7 +13101,764 @@ MenuEnd:
 return RetVal;
 }
 
+int zPRBL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		C3dVector ptVec;
+		if (iStat == 0)
+		{
+			outtext2("// ENTER PROPERTY TITLE");
+			SetFocus();
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sTit = CInMsg;
+			iStat = 2;
+		}
+		////////////////Get defualy pid//////////////////////////////
+		iNLab = 1;
+		if (cDBase->pCurrentMesh != NULL)
+		{
+			iNLab = cDBase->PropsT->NextID();
+		}
+		char s1[200];
+		CString sT;
+		sprintf_s(s1, "%s%i%s", "ENTER NEW PID (", iNLab, ")");
+		////////////////////////////////////////////////////////////
 
+		if (iStat == 2)
+		{
+			outtext2(s1);
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			iPID = atoi(CInMsg);
+			if (iPID < 1)
+			{
+				iPID = iNLab;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			outtext2("// ENTER MID");
+			iStat = 5;
+			goto MenuEnd;
+		}
+		if (iStat == 5)
+		{
+			iMID = atoi(CInMsg);
+			if (iMID < 1)
+			{
+				iStat = 4;
+				outtext1("ERROR: Invalid Material ID.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 6;
+			}
+		}
+		if (iStat == 6)
+		{
+			outtext2("// ENTER WIDTH (beam Z)");
+			iStat = 7;
+			goto MenuEnd;
+		}
+		if (iStat == 7)
+		{
+			dW = atof(CInMsg);
+			if (dW < 0)
+			{
+				iStat = 6;
+				outtext1("ERROR: Invalid Width.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 8;
+			}
+		}
+		if (iStat == 8)
+		{
+			outtext2("// ENTER HEIGHT (beam Y)");
+			iStat = 9;
+			goto MenuEnd;
+		}
+		if (iStat == 9)
+		{
+			dH = atof(CInMsg);
+			if (dH < 0)
+			{
+				iStat = 8;
+				outtext1("ERROR: Invalid Height.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 10;
+			}
+		}
+		if (iStat == 10)
+		{
+			outtext2("// ENTER WIDTH THK (beam Z)");
+			iStat = 11;
+			goto MenuEnd;
+		}
+		if (iStat == 11)
+		{
+			dWT = atof(CInMsg);
+			if (dWT < 0)
+			{
+				iStat = 10;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 12;
+			}
+		}
+		if (iStat == 12)
+		{
+			outtext2("// ENTER HEIGHT THK (beam Y)");
+			iStat = 13;
+			goto MenuEnd;
+		}
+		if (iStat == 13)
+		{
+			dHT = atof(CInMsg);
+			if (dHT < 0)
+			{
+				iStat = 12;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 14;
+			}
+		}
+
+
+
+		if (iStat == 14)
+		{
+			RetVal = 1;
+			if (cDBase->pCurrentMesh != NULL)
+			{
+				cDBase->CreatePrL(sTit, iPID, iMID, dW, dH, dWT, dHT);
+			}
+			outtext1("End of Property Definition.");
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zPRBT2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		C3dVector ptVec;
+		if (iStat == 0)
+		{
+			outtext2("// ENTER PROPERTY TITLE");
+			SetFocus();
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sTit = CInMsg;
+			iStat = 2;
+		}
+		////////////////Get defualy pid//////////////////////////////
+		iNLab = 1;
+		if (cDBase->pCurrentMesh != NULL)
+		{
+			iNLab = cDBase->PropsT->NextID();
+		}
+		char s1[200];
+		CString sT;
+		sprintf_s(s1, "%s%i%s", "ENTER NEW PID (", iNLab, ")");
+		////////////////////////////////////////////////////////////
+
+		if (iStat == 2)
+		{
+			outtext2(s1);
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			iPID = atoi(CInMsg);
+			if (iPID < 1)
+			{
+				iPID = iNLab;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			outtext2("// ENTER MID");
+			iStat = 5;
+			goto MenuEnd;
+		}
+		if (iStat == 5)
+		{
+			iMID = atoi(CInMsg);
+			if (iMID < 1)
+			{
+				iStat = 4;
+				outtext1("ERROR: Invalid Material ID.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 6;
+			}
+		}
+		if (iStat == 6)
+		{
+			outtext2("// ENTER FLANGE WIDTH (beam Z)");
+			iStat = 7;
+			goto MenuEnd;
+		}
+		if (iStat == 7)
+		{
+			dW = atof(CInMsg);
+			if (dW < 0)
+			{
+				iStat = 6;
+				outtext1("ERROR: Invalid Width.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 8;
+			}
+		}
+		if (iStat == 8)
+		{
+			outtext2("// ENTER WEB HEIGHT (beam Y)");
+			iStat = 9;
+			goto MenuEnd;
+		}
+		if (iStat == 9)
+		{
+			dH = atof(CInMsg);
+			if (dH < 0)
+			{
+				iStat = 8;
+				outtext1("ERROR: Invalid Height.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 10;
+			}
+		}
+		if (iStat == 10)
+		{
+			outtext2("// ENTER FLANGE THK");
+			iStat = 11;
+			goto MenuEnd;
+		}
+		if (iStat == 11)
+		{
+			dWT = atof(CInMsg);
+			if (dWT < 0)
+			{
+				iStat = 10;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 12;
+			}
+		}
+		if (iStat == 12)
+		{
+			outtext2("// ENTER WEB THK");
+			iStat = 13;
+			goto MenuEnd;
+		}
+		if (iStat == 13)
+		{
+			dHT = atof(CInMsg);
+			if (dHT < 0)
+			{
+				iStat = 12;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 14;
+			}
+		}
+
+
+
+		if (iStat == 14)
+		{
+			RetVal = 1;
+			if (cDBase->pCurrentMesh != NULL)
+			{
+				cDBase->CreatePrT2(sTit, iPID, iMID, dW, dH, dWT, dHT);
+			}
+			outtext1("End of Property Definition.");
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zPRBCHAN2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		C3dVector ptVec;
+		if (iStat == 0)
+		{
+			outtext2("// ENTER PROPERTY TITLE");
+			SetFocus();
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sTit = CInMsg;
+			iStat = 2;
+		}
+		////////////////Get defualy pid//////////////////////////////
+		iNLab = 1;
+		if (cDBase->pCurrentMesh != NULL)
+		{
+			iNLab = cDBase->PropsT->NextID();
+		}
+		char s1[200];
+		CString sT;
+		sprintf_s(s1, "%s%i%s", "ENTER NEW PID (", iNLab, ")");
+		////////////////////////////////////////////////////////////
+
+		if (iStat == 2)
+		{
+			outtext2(s1);
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			iPID = atoi(CInMsg);
+			if (iPID < 1)
+			{
+				iPID = iNLab;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			outtext2("// ENTER MID");
+			iStat = 5;
+			goto MenuEnd;
+		}
+		if (iStat == 5)
+		{
+			iMID = atoi(CInMsg);
+			if (iMID < 1)
+			{
+				iStat = 4;
+				outtext1("ERROR: Invalid Material ID.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 6;
+			}
+		}
+		if (iStat == 6)
+		{
+			outtext2("// ENTER WEB WIDTH (beam Z)");
+			iStat = 7;
+			goto MenuEnd;
+		}
+		if (iStat == 7)
+		{
+			dW = atof(CInMsg);
+			if (dW < 0)
+			{
+				iStat = 6;
+				outtext1("ERROR: Invalid Width.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 8;
+			}
+		}
+		if (iStat == 8)
+		{
+			outtext2("// ENTER FLANGE HEIGHT (beam Y)");
+			iStat = 9;
+			goto MenuEnd;
+		}
+		if (iStat == 9)
+		{
+			dH = atof(CInMsg);
+			if (dH < 0)
+			{
+				iStat = 8;
+				outtext1("ERROR: Invalid Height.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 10;
+			}
+		}
+		if (iStat == 10)
+		{
+			outtext2("// ENTER WEB THK");
+			iStat = 11;
+			goto MenuEnd;
+		}
+		if (iStat == 11)
+		{
+			dWT = atof(CInMsg);
+			if (dWT < 0)
+			{
+				iStat = 10;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 12;
+			}
+		}
+		if (iStat == 12)
+		{
+			outtext2("// ENTER FLANGE THK");
+			iStat = 13;
+			goto MenuEnd;
+		}
+		if (iStat == 13)
+		{
+			dHT = atof(CInMsg);
+			if (dHT < 0)
+			{
+				iStat = 12;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 14;
+			}
+		}
+
+
+
+		if (iStat == 14)
+		{
+			RetVal = 1;
+			if (cDBase->pCurrentMesh != NULL)
+			{
+				cDBase->CreatePrCHAN2(sTit, iPID, iMID, dW, dH, dWT, dHT);
+			}
+			outtext1("End of Property Definition.");
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zPRBI2_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		C3dVector ptVec;
+		if (iStat == 0)
+		{
+			outtext2("// ENTER PROPERTY TITLE");
+			SetFocus();
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sTit = CInMsg;
+			iStat = 2;
+		}
+		////////////////Get defualy pid//////////////////////////////
+		iNLab = 1;
+		if (cDBase->pCurrentMesh != NULL)
+		{
+			iNLab = cDBase->PropsT->NextID();
+		}
+		char s1[200];
+		CString sT;
+		sprintf_s(s1, "%s%i%s", "ENTER NEW PID (", iNLab, ")");
+		////////////////////////////////////////////////////////////
+
+		if (iStat == 2)
+		{
+			outtext2(s1);
+			SetFocus();
+			iStat = 3;
+			goto MenuEnd;
+		}
+		if (iStat == 3)
+		{
+			iPID = atoi(CInMsg);
+			if (iPID < 1)
+			{
+				iPID = iNLab;
+				iStat = 4;
+			}
+			else
+			{
+				iStat = 4;
+			}
+		}
+		if (iStat == 4)
+		{
+			outtext2("// ENTER MID");
+			iStat = 5;
+			goto MenuEnd;
+		}
+		if (iStat == 5)
+		{
+			iMID = atoi(CInMsg);
+			if (iMID < 1)
+			{
+				iStat = 4;
+				outtext1("ERROR: Invalid Material ID.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 6;
+			}
+		}
+		if (iStat == 6)
+		{
+			outtext2("// ENTER WEB HEIGHT (beam Y)");
+			iStat = 7;
+			goto MenuEnd;
+		}
+		if (iStat == 7)
+		{
+			d1 = atof(CInMsg);
+			if (d1 < 0)
+			{
+				iStat = 6;
+				outtext1("ERROR: Invalid height.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 8;
+			}
+		}
+		if (iStat == 8)
+		{
+			outtext2("// ENTER BOTTOM FLANGE WIDTH (beam Z)");
+			iStat = 9;
+			goto MenuEnd;
+		}
+		if (iStat == 9)
+		{
+			d2 = atof(CInMsg);
+			if (d2 < 0)
+			{
+				iStat = 8;
+				outtext1("ERROR: Invalid width.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 10;
+			}
+		}
+		if (iStat == 10)
+		{
+			outtext2("// ENTER TOP FLANGE WIDTH (beam Z)");
+			iStat = 11;
+			goto MenuEnd;
+		}
+		if (iStat == 11)
+		{
+			d3 = atof(CInMsg);
+			if (d3 < 0)
+			{
+				iStat = 10;
+				outtext1("ERROR: Invalid Width.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 12;
+			}
+		}
+		if (iStat == 12)
+		{
+			outtext2("// ENTER WEB THK");
+			iStat = 13;
+			goto MenuEnd;
+		}
+		if (iStat == 13)
+		{
+			d4 = atof(CInMsg);
+			if (d4 < 0)
+			{
+				iStat = 12;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 14;
+			}
+		}
+		if (iStat == 14)
+		{
+			outtext2("// ENTER BOTTOM FLG THK");
+			iStat = 15;
+			goto MenuEnd;
+		}
+		if (iStat == 15)
+		{
+			d5 = atof(CInMsg);
+			if (d5 < 0)
+			{
+				iStat = 14;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 16;
+			}
+		}
+		if (iStat == 16)
+		{
+			outtext2("// ENTER TOP FLG THK");
+			iStat = 17;
+			goto MenuEnd;
+		}
+		if (iStat == 17)
+		{
+			d6 = atof(CInMsg);
+			if (d6 < 0)
+			{
+				iStat = 16;
+				outtext1("ERROR: Invalid Thickness.");
+				DoMenu(CInMsg, Pt);
+			}
+			else
+			{
+				iStat = 18;
+			}
+		}
+
+
+		if (iStat == 18)
+		{
+			RetVal = 1;
+			if (cDBase->pCurrentMesh != NULL)
+			{
+				cDBase->CreatePrI2(sTit, iPID, iMID, d1, d2, d3, d4,d5,d6);
+			}
+			outtext1("End of Property Definition.");
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zMMAT8_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -10285,7 +13874,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER MATERIAL TITLE");
+  outtext2("// ENTER MATERIAL TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -10295,7 +13884,7 @@ if (iStat == 1)
   sTit=CInMsg;
   iStat=2;
 }
-////////////////Get defualy pid//////////////////////////////  
+////////////////Get defualy pid//////////////////////////////
     iNLab=1;
     if (cDBase->pCurrentMesh!=NULL)
     {
@@ -10303,7 +13892,7 @@ if (iStat == 1)
     }
     char s1[200];
     CString sT;
-    sprintf_s(s1,"%s%i%s","/ENTER NEW MID (",iNLab,")");
+    sprintf_s(s1,"%s%i%s","//ENTER NEW MID (",iNLab,")");
 ////////////////////////////////////////////////////////////
 
 if (iStat == 2)
@@ -10328,7 +13917,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER E1");
+  outtext2("// ENTER E1");
   iStat = 5;
   goto MenuEnd;
 }
@@ -10349,7 +13938,7 @@ if (iStat == 5)
 
 if (iStat == 6)
 {
-  outtext2("/ENTER E2");
+  outtext2("// ENTER E2");
   iStat = 7;
   goto MenuEnd;
 }
@@ -10370,7 +13959,7 @@ if (iStat == 7)
 
 if (iStat == 8)
 {
-  outtext2("/ENTER NU12");
+  outtext2("// ENTER NU12");
   iStat = 9;
   goto MenuEnd;
 }
@@ -10392,7 +13981,7 @@ if (iStat == 9)
 
 if (iStat == 10)
 {
-  outtext2("/ENTER G12");
+  outtext2("// ENTER G12");
   iStat = 11;
   goto MenuEnd;
 }
@@ -10404,7 +13993,7 @@ if (iStat == 11)
 
 if (iStat == 12)
 {
-  outtext2("/ENTER G1Z");
+  outtext2("// ENTER G1Z");
   iStat = 13;
   goto MenuEnd;
 }
@@ -10416,7 +14005,7 @@ if (iStat == 13)
 
 if (iStat == 14)
 {
-  outtext2("/ENTER G2Z");
+  outtext2("// ENTER G2Z");
   iStat = 15;
   goto MenuEnd;
 }
@@ -10428,7 +14017,7 @@ if (iStat == 15)
 
 if (iStat == 16)
 {
-  outtext2("/ENTER DENSITY RHO");
+  outtext2("// ENTER DENSITY RHO");
   iStat = 17;
   goto MenuEnd;
 }
@@ -10449,7 +14038,7 @@ if (iStat == 17)
 
 if (iStat == 18)
 {
-  outtext2("/ENTER CTE A1");
+  outtext2("// ENTER CTE A1");
   iStat = 19;
   goto MenuEnd;
 }
@@ -10460,7 +14049,7 @@ if (iStat == 19)
 }
 if (iStat == 20)
 {
-  outtext2("/ENTER CTE A2");
+  outtext2("// ENTER CTE A2");
   iStat = 21;
   goto MenuEnd;
 }
@@ -10472,7 +14061,7 @@ if (iStat == 21)
 
 if (iStat == 22)
 {
-  outtext2("/ENTER THERMAL CONDUCTIVITY k");
+  outtext2("// ENTER THERMAL CONDUCTIVITY k");
   iStat = 23;
   goto MenuEnd;
 }
@@ -10528,7 +14117,7 @@ int zMMAT1_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     C3dVector ptVec;
     if (iStat == 0)
     {
-      outtext2("/ENTER MATERIAL TITLE");
+      outtext2("// ENTER MATERIAL TITLE");
       SetFocus();
       iStat = 1;
       goto MenuEnd;
@@ -10538,7 +14127,7 @@ int zMMAT1_Mnu::DoMenu(CString CInMsg, CPoint Pt)
       sTit = CInMsg;
       iStat = 2;
     }
-    ////////////////Get defualy pid//////////////////////////////  
+    ////////////////Get defualy pid//////////////////////////////
     iNLab = 1;
     if (cDBase->pCurrentMesh != NULL)
     {
@@ -10546,7 +14135,7 @@ int zMMAT1_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     char s1[200];
     CString sT;
-    sprintf_s(s1, "%s%i%s", "/ENTER NEW MID (", iNLab, ")");
+    sprintf_s(s1, "%s%i%s", "//ENTER NEW MID (", iNLab, ")");
     ////////////////////////////////////////////////////////////
 
     if (iStat == 2)
@@ -10571,7 +14160,7 @@ int zMMAT1_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 4)
     {
-      outtext2("/ENTER E");
+      outtext2("// ENTER E");
       iStat = 5;
       goto MenuEnd;
     }
@@ -10591,7 +14180,7 @@ int zMMAT1_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 6)
     {
-      outtext2("/ENTER V");
+      outtext2("// ENTER V");
       iStat = 7;
       goto MenuEnd;
     }
@@ -10611,7 +14200,7 @@ int zMMAT1_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 8)
     {
-      outtext2("/ENTER DENSITY");
+      outtext2("// ENTER DENSITY");
       iStat = 9;
       goto MenuEnd;
     }
@@ -10631,7 +14220,7 @@ int zMMAT1_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 10)
     {
-      outtext2("/ENTER CTE");
+      outtext2("// ENTER CTE");
       iStat = 11;
       goto MenuEnd;
     }
@@ -10651,7 +14240,7 @@ int zMMAT1_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 12)
     {
-      outtext2("/ENTER THERMAL CONDUCTIVITY k");
+      outtext2("// ENTER THERMAL CONDUCTIVITY k");
       iStat = 13;
       goto MenuEnd;
     }
@@ -10705,7 +14294,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER PROPERTY TITLE");
+  outtext2("// ENTER PROPERTY TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -10715,7 +14304,7 @@ if (iStat == 1)
   sTit=CInMsg;
   iStat=2;
 }
-////////////////Get defualy pid//////////////////////////////  
+////////////////Get defualy pid//////////////////////////////
     iNLab=1;
     if (cDBase->pCurrentMesh!=NULL)
     {
@@ -10747,7 +14336,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER MID");
+  outtext2("// ENTER MID");
   iStat = 5;
   goto MenuEnd;
 }
@@ -10767,7 +14356,7 @@ if (iStat == 5)
 }
 if (iStat == 6)
 {
-  outtext2("/ENTER OUTER RADIUS");
+  outtext2("// ENTER OUTER RADIUS");
   iStat = 7;
   goto MenuEnd;
 }
@@ -10787,7 +14376,7 @@ if (iStat == 7)
 }
 if (iStat == 8)
 {
-  outtext2("/ENTER INNER RADIUS");
+  outtext2("// ENTER INNER RADIUS");
   iStat = 9;
   goto MenuEnd;
 }
@@ -10845,7 +14434,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK NODES TO MODIFY LABEL");
+  outtext2("// PICK NODES TO MODIFY LABEL");
   iStat=1;
 }
 if (iStat == 1)
@@ -10862,7 +14451,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER START ID");
+  outtext2("// ENTER START ID");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -10893,64 +14482,64 @@ return RetVal;
 
 int zELMOLAB2_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
-CString CInMsg2=CInMsg;
-DoNext(&CInMsg,Pt);
-if (pNext==NULL)
-{
-if (CInMsg == "C") //Common Options
-{
-  RetVal = 2;
-  cDBase->FILTER.SetAll();
-  goto MenuEnd;
-}
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
 
-if (iStat == 0)
-{
-  cDBase->FILTER.Clear();
-  cDBase->FILTER.SetFilter(3);
-  //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK ELEMENTS TO MODIFY LABEL");
-  iStat=1;
-}
-if (iStat == 1)
-{
-  if ((CInMsg2=="D") || (CInMsg2==""))
-  {
-	  iStat = 2;
-  }
-    iResumePos=2;
-    iCancelPos=100;
-    pNext = new zSEL_Mnu();
-    pNext->Init(cDBase,1);
-    DoNext(&CInMsg,Pt);
-}
-if (iStat == 2)
-{
-  outtext2("/ENTER START ID");
-  SetFocus();
-  iResumePos=3;
-  iCancelPos=100;
-  pNext = new zKEY_Mnu();
-  pNext->Init(cDBase,-1);
-  DoNext(&CInMsg,Pt);
-}
-if (iStat == 3)
-{
-  C3dVector ptVec;
-  ptVec=cDBase->DB_PopBuff();
-  cDBase->ElementMoLab2((int) ptVec.x);
-  cDBase->FILTER.SetAll();
-  RetVal = 1;
-}
-//Escape clause
-if (iStat == 100)
-{
-  cDBase->DB_BuffCount=initCnt;
-  cDBase->S_Count=S_initCnt;
-  cDBase->FILTER.SetAll();
-  RetVal = 1;
-}
-}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			//cDBase->FILTER.SetFilter(4);
+			outtext2("// PICK ELEMENTS TO MODIFY LABEL");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg2 == "D") || (CInMsg2 == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, 1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			outtext2("// ENTER START ID");
+			SetFocus();
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->ElementMoLab2((int)ptVec.x);
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
 MenuEnd:
 return RetVal;
 }
@@ -10974,7 +14563,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK NODES TO MODIFY LABEL");
+  outtext2("// PICK NODES TO MODIFY LABEL");
   iStat=1;
 }
 if (iStat == 1)
@@ -10991,7 +14580,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER ID INCREMENT");
+  outtext2("// ENTER ID INCREMENT");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -11038,7 +14627,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK ELEMENTS TO MODIFY LABEL");
+  outtext2("// PICK ELEMENTS TO MODIFY LABEL");
   iStat=1;
 }
 if (iStat == 1)
@@ -11055,7 +14644,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER ID INCREMENT");
+  outtext2("// ENTER ID INCREMENT");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -11103,7 +14692,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK NODES TO MODIFY OUT CYS");
+  outtext2("// PICK NODES TO MODIFY OUT CYS");
   iStat=1;
 }
 if (iStat == 1)
@@ -11120,7 +14709,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER NEW OUPUT COORD SYS ID");
+  outtext2("// ENTER NEW OUPUT COORD SYS ID");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -11166,7 +14755,7 @@ int zELMOSHELLMCYS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(3);
-      outtext2("/PICK SHELLS TO MODIFY MAT CSYS ID");
+      outtext2("// PICK SHELLS TO MODIFY MAT CSYS ID");
       iStat = 1;
     }
     if (iStat == 1)
@@ -11183,7 +14772,7 @@ int zELMOSHELLMCYS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     }
     if (iStat == 2)
     {
-      outtext2("/ENTER NEW COORD SYS ID OR PICK ONE");
+      outtext2("// ENTER NEW COORD SYS ID OR PICK ONE");
       iStat = 3;
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(12);
@@ -11244,7 +14833,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
-  outtext2("/PICK SPRINGS TO MODIFY COORD-SYS");
+  outtext2("// PICK SPRINGS TO MODIFY COORD-SYS");
   iStat=1;
 }
 if (iStat == 1)
@@ -11261,7 +14850,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER NEW COORD SYS ID OR PICK ONE");
+  outtext2("// ENTER NEW COORD SYS ID OR PICK ONE");
   iStat = 3;
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(12);
@@ -11322,7 +14911,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK NODES TO MODIFY REF CYS");
+  outtext2("// PICK NODES TO MODIFY REF CYS");
   iStat=1;
 }
 if (iStat == 1)
@@ -11339,7 +14928,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER NEW REF COORD SYS ID");
+  outtext2("// ENTER NEW REF COORD SYS ID");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -11381,7 +14970,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER WP SIZE");
+  outtext2("// ENTER WP SIZE");
   iResumePos=1;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -11420,7 +15009,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER MIN,MAX");
+  outtext2("// ENTER MIN,MAX");
   iResumePos=1;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -11464,7 +15053,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(3);
-	outtext2("/PICK BEAM ELEMENT TO SET UPVEC");
+	outtext2("// PICK BEAM ELEMENTS TO SET UPVEC");
 	iStat=1;
 }
 if (iStat == 1)
@@ -11488,7 +15077,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/ENTER TRANSLATION VECTOR");
+  outtext2("// ENTER TRANSLATION VECTOR");
   iResumePos=4;
   iCancelPos=100;
   pNext = new zTVEC_Mnu();
@@ -11534,7 +15123,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(3);
-	outtext2("/PICK BEAM ELEMENT TO SET END RELEASE");
+	outtext2("// PICK BEAM ELEMENTS TO OFFSET");
 	iStat=1;
 }
 if (iStat == 1)
@@ -11558,7 +15147,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/ENTER TRANSLATION VECTOR");
+  outtext2("// ENTER TRANSLATION VECTOR");
   iResumePos=4;
   iCancelPos=100;
   pNext = new zTVEC_Mnu();
@@ -11604,7 +15193,7 @@ int zBDOFA_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		{
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(3);
-			outtext2("/PICK BEAM ELEMENT TO SET END RELEASE");
+			outtext2("// PICK BEAM ELEMENT TO SET END RELEASE");
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -11628,7 +15217,7 @@ int zBDOFA_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 3)
 		{
-			outtext2("/ENTER DOF STRING (TO RELEASE)");
+			outtext2("// ENTER DOF STRING (TO RELEASE)");
 			SetFocus();
 			iStat = 4;
 		}
@@ -11669,7 +15258,7 @@ int zBDOFB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		{
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(3);
-			outtext2("/PICK BEAM ELEMENT TO SET OFFSETS");
+			outtext2("// PICK BEAM ELEMENT TO SET OFFSETS");
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -11693,7 +15282,7 @@ int zBDOFB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 3)
 		{
-			outtext2("/ENTER DOF STRING (TO RELEASE)");
+			outtext2("// ENTER DOF STRING (TO RELEASE)");
 			SetFocus();
 			iStat = 4;
 		}
@@ -11735,7 +15324,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(3);
-	outtext2("/PICK SHELL ELEMENT TO SET OFFSETS");
+	outtext2("// PICK SHELL ELEMENT TO SET OFFSETS");
 	iStat=1;
 }
 if (iStat == 1)
@@ -11759,7 +15348,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/ENTER DISTANCE");
+  outtext2("// ENTER DISTANCE");
   iResumePos=4;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -11788,6 +15377,145 @@ MenuEnd:
 return RetVal;
 }
 
+int zBOFFY_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("// PICK BEAM ELEMENTS TO OFFSETS IN BEAM Y");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg2 == "D") || (CInMsg2 == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, 1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			cDBase->S_Des();
+			cDBase->ReDraw();
+			iStat = 3;
+		}
+		if (iStat == 3)
+		{
+			outtext2("// ENTER DISTANCE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->BeamOffsetY(cDBase->OTemp, ptVec.x);
+			cDBase->S_Res();
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zBOFFZ_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	CString CInMsg2 = CInMsg;
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("// PICK BEAM ELEMENTS TO OFFSETS IN BEAM Z");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg2 == "D") || (CInMsg2 == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, 1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			cDBase->S_Des();
+			cDBase->ReDraw();
+			iStat = 3;
+		}
+		if (iStat == 3)
+		{
+			outtext2("// ENTER DISTANCE");
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->BeamOffsetZ(cDBase->OTemp, ptVec.x);
+			cDBase->S_Res();
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zNDCO_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -11806,7 +15534,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(1);
-	outtext2("/PICK NODES TO COPY");
+	outtext2("// PICK NODES TO COPY");
     iStat=1;
 }
 if (iStat == 1)
@@ -11830,7 +15558,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/TRANSLATION:");
+  outtext2("// TRANSLATION:");
   iResumePos=4;
   iCancelPos=100;
   pNext = new zTVEC_Mnu();
@@ -11839,7 +15567,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER NO");
+  outtext2("// ENTER NO");
   iResumePos=5;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -11886,9 +15614,11 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/PICK ELEMENTS TO SWEEP");
+  outtext2("// PICK ELEMENTS,FACES,EDGES TO SWEEP");
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
+  cDBase->FILTER.SetFilter(8);
+  cDBase->FILTER.SetFilter(9);
   iStat=1;
 }
 if (iStat == 1)
@@ -11909,7 +15639,7 @@ if (iStat == 2)
   cDBase->S_Save(cDBase->OTemp);
   cDBase->S_Count=0;
   cDBase->FILTER.SetAll();
-  outtext2("/ENTER TRANSLATION:");
+  outtext2("// ENTER TRANSLATION:");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zTVEC_Mnu();
@@ -11918,7 +15648,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/ENTER NO");
+  outtext2("// ENTER NO");
   SetFocus();
   iResumePos=4;
   iCancelPos=100;
@@ -11933,12 +15663,14 @@ if (iStat == 4)
   ptNo=cDBase->DB_PopBuff();
   ptVec=cDBase->DB_PopBuff();
   cDBase->ElSweep(cDBase->OTemp,ptVec,(int) ptNo.x);
+  cDBase->FILTER.SetAll();
   cDBase->S_Res();
   RetVal = 1;
 }
 //Escape clause
 if (iStat == 100)
 {
+  cDBase->FILTER.SetAll();
   cDBase->DB_BuffCount=0;
   cDBase->S_Count=0;
   RetVal = 1;
@@ -11948,7 +15680,7 @@ MenuEnd:
 return RetVal;
 }
 
-int zELSWEEPB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+int zELSWEEPNDS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
 	if (pNext == NULL)
@@ -11962,9 +15694,9 @@ int zELSWEEPB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/PICK BEAM ELEMENTS TO SWEEP");
+			outtext2("// PICK NODES TO SWEEP INTO SHELLS");
 			cDBase->FILTER.Clear();
-			cDBase->FILTER.SetFilter(3);
+			cDBase->FILTER.SetFilter(1);
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -11985,7 +15717,160 @@ int zELSWEEPB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 			cDBase->S_Save(cDBase->OTemp);
 			cDBase->S_Count = 0;
 			cDBase->FILTER.SetAll();
-			outtext2("/ENTER DIR 0 (-ve) 1 (+ve)");
+			outtext2("// ENTER TRANSLATION:");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zTVEC_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			outtext2("// ENTER NO");
+			SetFocus();
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector ptNo;
+			C3dVector ptVec;
+			ptNo = cDBase->DB_PopBuff();
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->NDSweepToShell(cDBase->OTemp, ptVec, (int)ptNo.x);
+			cDBase->S_Res();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zELSWEEPNDB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// PICK NODES TO SWEEP INTO BEAMS");
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(1);
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			cDBase->S_Count = 0;
+			cDBase->FILTER.SetAll();
+			outtext2("// ENTER TRANSLATION:");
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zTVEC_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			outtext2("// ENTER NO");
+			SetFocus();
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
+			C3dVector ptNo;
+			C3dVector ptVec;
+			ptNo = cDBase->DB_PopBuff();
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->NDSweepToBeam(cDBase->OTemp, ptVec, (int)ptNo.x);
+			cDBase->S_Res();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zELSWEEPB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// PICK SHELL EDGES TO SWEEP OUT");
+			outtext2("// Note: You must do a free edge check first to make edges visable.");
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(8);
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp);
+			cDBase->S_Count = 0;
+			cDBase->FILTER.SetAll();
+			outtext2("// ENTER DIR DISTANCE");
 			SetFocus();
 			iResumePos = 3;
 			iCancelPos = 100;
@@ -11995,11 +15880,21 @@ int zELSWEEPB_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 3)
 		{
+			outtext2("// ENTER NO OF ELEMENT ROWS");
+			SetFocus();
+			iResumePos = 4;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 4)
+		{
 			C3dVector ptNo;
 			C3dVector ptVec;
 			ptNo = cDBase->DB_PopBuff();
 			ptVec = cDBase->DB_PopBuff();
-			cDBase->ElSweepB(cDBase->OTemp, (int) ptNo.x);
+			cDBase->ElSweepB(cDBase->OTemp, ptVec.x, (int) ptNo.x );
 			cDBase->S_Res();
 			RetVal = 1;
 		}
@@ -12029,7 +15924,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/PICK OBJECTS");
+  outtext2("// PICK OBJECTS");
   iStat=1;
 }if (iStat == 1)
 {
@@ -12047,7 +15942,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp);
   cDBase->S_Count=0;
-  outtext2("/TRANSLATION:");
+  outtext2("// TRANSLATION:");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zTVEC_Mnu();
@@ -12056,7 +15951,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/ENTER NO");
+  outtext2("// ENTER NO");
   SetFocus();
   iResumePos=4;
   iCancelPos=100;
@@ -12100,7 +15995,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/PICK OBJECTS TO COPY");
+  outtext2("// PICK OBJECTS TO COPY");
   iStat=1;
 }if (iStat == 1)
 {
@@ -12118,7 +16013,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp);
   cDBase->S_Count=0;
-  outtext2("/PICK POINT TO COPY FROM:");
+  outtext2("// PICK POINT TO COPY FROM:");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zPT_Mnu();
@@ -12133,7 +16028,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/PICK POINT TO COPY TO:");
+  outtext2("// PICK POINT TO COPY TO:");
   iResumePos=5;
   iCancelPos=100;
   pNext = new zPT_Mnu();
@@ -12176,7 +16071,10 @@ if ((CInMsg == "C") || (CInMsg == "D") || (CInMsg == "")) //Common Options
 }
 if (iStat == 0)
 {
-  outtext2("/ENTER OFFSET DISTANCE");
+
+  char OutT[80];
+  sprintf_s(OutT, "%s%g)", "ENTER OFFSET DISTANCE (", gDIM_OFFSZ);
+  outtext2(OutT);
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -12192,7 +16090,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/PICK OBJECT TO OFFSET");
+  outtext2("// PICK OBJECT TO OFFSET");
   iStat=3;
 }
 if (iStat == 3)
@@ -12206,7 +16104,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/PICK SIDE TO OFFSET");
+  outtext2("// PICK SIDE TO OFFSET");
   iResumePos=5;
   iCancelPos=100;
   pNext = new zPT_Mnu();
@@ -12218,7 +16116,14 @@ if (iStat == 5)
 {
   C3dVector ptVec;
   ptVec=cDBase->DB_PopBuff();
-  cDBase->OffSet(pO,ptVec,dDist.x);
+  double dOffDist;
+  dOffDist = dDist.x;
+  if (dOffDist == 0)
+	  dOffDist = gDIM_OFFSZ;
+  else
+	  gDIM_OFFSZ = dOffDist;
+
+  cDBase->OffSet(pO,ptVec, dOffDist);
   iStat = 2;
   this->DoMenu(CInMsg,Pt);
 }
@@ -12247,7 +16152,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/PICK OBJECTS");
+  outtext2("// PICK OBJECTS");
   iStat=1;
 }
 if (iStat == 1)
@@ -12266,7 +16171,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp);
   cDBase->S_Count=0;
-  outtext2("/TRANSLATION:");
+  outtext2("// TRANSLATION:");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zTVEC_Mnu();
@@ -12306,7 +16211,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/PICK OBJECTS TO MOVE");
+  outtext2("// PICK OBJECTS TO MOVE");
   iStat=1;
 }
 if (iStat == 1)
@@ -12325,7 +16230,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp);
   cDBase->S_Count=0;
-  outtext2("/PICK POINT TO MOVE FROM:");
+  outtext2("// PICK POINT TO MOVE FROM:");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zPT_Mnu();
@@ -12340,7 +16245,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/PICK POINT TO MOVE TO:");
+  outtext2("// PICK POINT TO MOVE TO:");
   iResumePos=5;
   iCancelPos=100;
   pNext = new zPT_Mnu();
@@ -12390,7 +16295,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(1);
-	outtext2("/PICK NODES");
+	outtext2("// PICK NODES");
 	iStat=1;
 }
 if (iStat == 1)
@@ -12409,7 +16314,7 @@ if (iStat == 2)
 {
   	cDBase->S_Save(cDBase->OTemp);
     cDBase->S_Count=0;
-	outtext2("/PICK FIRST LOCATION");
+	outtext2("// PICK FIRST LOCATION");
     iResumePos=3;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -12418,7 +16323,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-	outtext2("/PICK SECOND LOCATION");
+	outtext2("// PICK SECOND LOCATION");
     iResumePos=4;
     iCancelPos=100;
     pNext = new zPT_Mnu();
@@ -12479,6 +16384,34 @@ MenuEnd:
 return RetVal;
 }   
 
+int zORTHO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->Ortho();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 
 int zNDBET_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -12498,7 +16431,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(1);
-	outtext2("/PICK FIRST NODE SET");
+	outtext2("// PICK FIRST NODE SET");
 	iStat=1;
 }
 if (iStat == 1)
@@ -12513,21 +16446,21 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/PICK SECOND NODE SET");
+  outtext2("// PICK SECOND NODE SET");
   iStat = 3;
 }
 if (iStat == 3)
 {
   if ((CInMsg=="D") || (CInMsg==""))
   {
-	  cDBase->S_Save(cDBase->OTemp2);
+	cDBase->S_Save(cDBase->OTemp2);
     cDBase->S_Count=0;
     iStat=4;
   }
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER NO");
+  outtext2("// ENTER NO");
   iResumePos=5;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -12574,7 +16507,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
-  outtext2("/PICK FIRST NODE SET");
+  outtext2("// PICK FIRST NODE SET");
   iStat=1;
 }
 if (iStat == 1)
@@ -12589,7 +16522,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/PICK SECOND NODE SET");
+  outtext2("// PICK SECOND NODE SET");
   iStat = 3;
 }
 if (iStat == 3)
@@ -12603,7 +16536,7 @@ if (iStat == 3)
 }
 if (iStat == 4)
 {
-  outtext2("/ENTER NO");
+  outtext2("// ENTER NO");
   iResumePos=5;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -12632,6 +16565,101 @@ MenuEnd:
 return RetVal;
 }
 
+int zMESHINT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("// PICK TRI ELEMENTS TO INTERSECT");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				cDBase->S_Save(cDBase->OTemp);
+				cDBase->S_Count = 0;
+				iStat = 2;
+				CInMsg = "NULL";
+			}
+		}
+		if (iStat == 2)
+		{
+			cDBase->IntersectEls(cDBase->OTemp);
+			cDBase->S_Res();
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zMESHINTWP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("// PICK TRI ELEMENTS TO INTERSECT WITH WP");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				cDBase->S_Save(cDBase->OTemp);
+				cDBase->S_Count = 0;
+				iStat = 2;
+				CInMsg = "NULL";
+			}
+		}
+		if (iStat == 2)
+		{
+			cDBase->IntersectElsWP(cDBase->OTemp);
+			cDBase->S_Res();
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = 0;
+			cDBase->S_Count = 0;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 
 int zGPCR_Mnu::DoMenu(CString CInMsg,CPoint Pt)
@@ -12646,7 +16674,7 @@ if (pNext==NULL)
   }
   if (iStat == 0)
   {
-    outtext2("/ENTER GROUP NAME");
+    outtext2("// ENTER GROUP NAME");
     SetFocus();
 	  iStat=1;
   }
@@ -12682,7 +16710,7 @@ if (CInMsg!="MouseInp")
 		{ 
 		  if (iT == -1)
 		  {
-			outtext2("/ENTER RESULTING TYPE (Key In)");
+			outtext2("// ENTER RESULTING TYPE (Key In)");
 			iResumePos=1;
 			iCancelPos=100;
 			pNext = new zKEY_Mnu();
@@ -12704,7 +16732,7 @@ if (CInMsg!="MouseInp")
 
 		if (iStat == 2)
 		{
-		   outtext2("/ENTER IDS (START - FININSH) (Key In)");
+		   outtext2("// ENTER IDS (START - FININSH) (Key In)");
 		   iStat=3;
 		}
 		if (iStat == 3)
@@ -12748,6 +16776,23 @@ cDBase->AddToGroupbyPID(-1);
 RetVal = 1;
 return RetVal;
 }
+
+int zCOLPID_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	outtext1("Colouring Elements by Property.");
+	cDBase->ColourByPID(-1);
+	RetVal = 1;
+	return RetVal;
+}
+
+int zCOLINC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	outtext1("Colouring Elements by Include File.");
+	cDBase->ColourByINC(-1);
+	RetVal = 1;
+	return RetVal;
+}
+
 
 int zCHKJAC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
@@ -12794,7 +16839,7 @@ int zHIDE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			outtext2("/PICK ITEMS TO HIDE");
+			outtext2("// PICK ITEMS TO HIDE");
 			iStat = 1;
 
 		}
@@ -12867,7 +16912,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
-  outtext2("/ENTER PID OR PICK ELEMENT");
+  outtext2("// ENTER PID OR PICK ELEMENT");
   CInMsg="NULL";
   iStat=1;
 }
@@ -12920,9 +16965,10 @@ int zMATEDIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
 		cDBase->FILTER.Clear();
 		cDBase->FILTER.SetFilter(3);
-      outtext2("/ENTER MID OR PICK ELEMENT");
-      CInMsg = "NULL";
-      iStat = 1;
+		outtext2("// ENTER MID OR PICK ELEMENT");
+		CInMsg = "NULL";
+		iStat = 1;
+		SetFocus();
     }
     if (iStat == 1)
     {
@@ -12974,9 +17020,10 @@ int zPREDIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
 		cDBase->FILTER.Clear();
 		cDBase->FILTER.SetFilter(3);
-      outtext2("/ENTER PID OR PICK ELEMENT");
-      CInMsg = "NULL";
-      iStat = 1;
+		outtext2("// ENTER PID OR PICK ELEMENT");
+		CInMsg = "NULL";
+		iStat = 1;
+		SetFocus();
     }
     if (iStat == 1)
     {
@@ -13024,7 +17071,7 @@ int zOEDIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			outtext2("/PICK OBJECT");
+			outtext2("// PICK OBJECT");
 			CInMsg = "NULL";
 			iStat = 1;
 		}
@@ -13064,7 +17111,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-  outtext2("/ENTER MID OR PICK ELEMENT");
+  outtext2("// ENTER MID OR PICK ELEMENT");
 	CInMsg="NULL";
 	iStat=1;
 }
@@ -13117,7 +17164,7 @@ if (CInMsg == "C") //Common Options
 }
 if (iStat == 0)
 {
-  outtext2("/ENTER PID OR PICK ELEMENT");
+  outtext2("// ENTER PID OR PICK ELEMENT");
 	CInMsg="NULL";
 	iStat=1;
 }
@@ -13171,7 +17218,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK TRI SHELL ELEMENTS FORMING BOUNDARY");
+  outtext2("// PICK TRI SHELL ELEMENTS FORMING BOUNDARY");
   iStat=1;
 }
 if (iStat == 1)
@@ -13190,7 +17237,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER GROWTH RATE 0.5 to 1.0 (Def:0.5)");
+  outtext2("// ENTER GROWTH RATE 0.5 to 1.0 (Def:0.55)");
   SetFocus();
   iStat = 3;
   goto MenuEnd;
@@ -13200,7 +17247,7 @@ if (iStat == 3)
   dT = atof(CInMsg);
   if (dT <= 0)
   {
-    dT = 0.5;
+    dT = 0.55;
     iStat = 4;
   }
   else
@@ -13245,7 +17292,7 @@ if (iStat == 0)
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
   //cDBase->FILTER.SetFilter(4);
-  outtext2("/PICK SOLID ELEMENTS TO SHELL COAT");
+  outtext2("// PICK SOLID ELEMENTS TO SHELL COAT");
   iStat=1;
 }
 if (iStat == 1)
@@ -13264,7 +17311,7 @@ if (iStat == 2)
 {
   cDBase->S_Save(cDBase->OTemp); //Save selection
   cDBase->S_Des();       //clear selection buffer
-  outtext2("/ENTER COLOUR FOR NEW ELEMENTS");
+  outtext2("// ENTER COLOUR FOR NEW ELEMENTS");
   iResumePos=3;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -13310,7 +17357,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
-  outtext2("/PICK SOLID ELEMENTS FOR FREE FACE DISPLAY");
+  outtext2("// PICK SOLID ELEMENTS FOR FREE FACE DISPLAY");
   iStat=1;
 }
 if (iStat == 1)
@@ -13364,7 +17411,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
-  outtext2("/PICK QUAD ELEMENTS TO SPLIT");
+  outtext2("// PICK QUAD ELEMENTS TO SPLIT");
   iStat=1;
 }
 if (iStat == 1)
@@ -13417,7 +17464,7 @@ int zCHK2D_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		{
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(3);
-			outtext2("/PICK SHELL ELEMENTS FOR SECTION PROPERTIES");
+			outtext2("// PICK SHELL ELEMENTS FOR SECTION PROPERTIES");
 			iStat = 1;
 		}
 		if (iStat == 1)
@@ -13471,7 +17518,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
-  outtext2("/PICK ELEMENTS FOR FREE EDGE DISPLAY");
+  outtext2("// PICK ELEMENTS FOR FREE EDGE DISPLAY");
   iStat=1;
 }
 if (iStat == 1)
@@ -13508,6 +17555,59 @@ MenuEnd:
 return RetVal;
 }
 
+int zQMORPH_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(3);
+			outtext2("// PICK ELEMENTS FOR FREE EDGE DISPLAY");
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, 3);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			cDBase->S_Save(cDBase->OTemp); //Save selection
+			cDBase->S_Des();       //clear selection buffer
+			cDBase->QMorph(cDBase->OTemp);
+			cDBase->FILTER.SetAll();
+			cDBase->S_Res();
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			cDBase->FILTER.SetAll();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 int zELMASS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
   DoNext(&CInMsg, Pt);
@@ -13524,7 +17624,7 @@ int zELMASS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(3);
-      outtext2("/PICK ELEMENTS FOR MASS CHECK");
+      outtext2("// PICK ELEMENTS FOR MASS CHECK");
       iStat = 1;
     }
     if (iStat == 1)
@@ -13577,7 +17677,7 @@ int zCELM_Mnu::DoMenu(CString CInMsg, CPoint Pt)
     {
       cDBase->FILTER.Clear();
       cDBase->FILTER.SetFilter(3);
-      outtext2("/PICK ELEMENTS FOR COINCIDENT CHECK");
+      outtext2("// PICK ELEMENTS FOR COINCIDENT CHECK");
       iStat = 1;
     }
     if (iStat == 1)
@@ -13632,7 +17732,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
-  outtext2("/PICK ELEMENTS FOR NORMAL CONSISTANCY");
+  outtext2("// PICK ELEMENTS FOR NORMAL CONSISTANCY");
   iStat=1;
 }
 if (iStat == 1)
@@ -13700,7 +17800,7 @@ if (CInMsg == "C") //Common Options
 C3dVector ptVec;
 if (iStat == 0)
 {
-  outtext2("/ENTER SOLUTION TITLE");
+  outtext2("// ENTER SOLUTION TITLE");
   SetFocus();
   iStat = 1;
   goto MenuEnd;
@@ -13708,10 +17808,10 @@ if (iStat == 0)
 if (iStat == 1)
 {
   sT=CInMsg;
-  outtext2("/ENTER SOLUTION TYPE");
-  outtext2("/0 LINEAR STATIC;");
-  outtext2("/1 STEADY STATE THERMAL (N/A);");
-  outtext2("/2 LANCOZ (N/A);");
+  outtext2("// ENTER SOLUTION TYPE");
+  outtext2("// 0 LINEAR STATIC;");
+  outtext2("// 1 STEADY STATE THERMAL (N/A);");
+  outtext2("// 2 Sparse;");
   SetFocus();
   iStat = 2;
   goto MenuEnd;
@@ -13719,7 +17819,7 @@ if (iStat == 1)
 if (iStat == 2)
 {
   iSol=atoi(CInMsg);
-  if ((iSol==0) || (iSol==1))
+  if ((iSol==0) || (iSol==1) || (iSol == 2))
   {
     iStat=3;
   }
@@ -13732,7 +17832,7 @@ if (iStat == 2)
 }
 if (iStat == 3)
 {
-  outtext2("/ENTER CONVERGENCE TOLERANCE");
+  outtext2("// ENTER CONVERGENCE TOLERANCE");
   SetFocus();
   iStat = 4;
   goto MenuEnd;
@@ -13798,7 +17898,7 @@ if (iStat == 0)
 }
 if (iStat == 1)
 {
-  outtext2("/ENTER STEP TITLE");
+  outtext2("// ENTER STEP TITLE");
   SetFocus();
   iStat = 2;
   goto MenuEnd;
@@ -13806,7 +17906,7 @@ if (iStat == 1)
 if (iStat == 2)
 {
   sT=CInMsg;
-  outtext2("/ENTER LOAD SET ID");
+  outtext2("// ENTER LOAD SET ID");
   SetFocus();
   iStat = 3;
   goto MenuEnd;
@@ -13829,7 +17929,7 @@ if (iStat == 3)
 
 if (iStat == 4)
 {
-  outtext2("/ENTER BOUNDARY SET ID");
+  outtext2("// ENTER BOUNDARY SET ID");
   SetFocus();
   iStat = 5;
   goto MenuEnd;
@@ -13852,7 +17952,7 @@ if (iStat == 5)
 
 if (iStat == 6)
 {
-  outtext2("/ENTER TEMP SET ID or ENTRE FOR N/A");
+  outtext2("// ENTER TEMP SET ID or ENTRE FOR N/A");
   SetFocus();
   iStat = 7;
   goto MenuEnd;
@@ -13879,7 +17979,7 @@ if (iStat == 7)
 
 if (iStat == 8)
 {
-  outtext2("/ENTER RESTART 1 for YES else NO.");
+  outtext2("// ENTER RESTART 1 for YES else NO.");
   SetFocus();
   iStat = 9;
   goto MenuEnd;
@@ -13939,7 +18039,7 @@ if (iStat == 0)
 {
   if (iT==-1)
   {
-    outtext2("/ENTER RESULTANT TYPE");
+    outtext2("// ENTER RESULTANT TYPE");
     SetFocus();
     iResumePos=2;
     iCancelPos=100;
@@ -13965,7 +18065,7 @@ if (iStat == 2)
 if (iStat == 3)
 {
    char S1[80];
-   sprintf_s(S1,"%s %i","/PICK ITEMS RELATED TO TYPE ",iT);
+   sprintf_s(S1,"%s %i","//PICK ITEMS RELATED TO TYPE ",iT);
    outtext2(S1);
    iStat=4;
 }
@@ -14016,7 +18116,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(1);
-  outtext2("/PICK NODE");
+  outtext2("// PICK NODE");
   iStat=1;
 }
 if (iStat == 1)
@@ -14028,7 +18128,7 @@ if (iStat == 1)
 }
 if (iStat == 2)
 {
-  outtext2("/ENTER MAX ELEMENTS AT");
+  outtext2("// ENTER MAX ELEMENTS AT");
   SetFocus();
   iResumePos=3;
   iCancelPos=100;
@@ -14069,7 +18169,7 @@ if (iStat == 0)
 {    
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(1);
-	outtext2("/PICK NODES");
+	outtext2("// PICK NODES");
 	iStat=1;
 }
 if (iStat == 1)
@@ -14115,7 +18215,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(1);
-	outtext2("/ENTER COLOUR OR PICK NODE");
+	outtext2("// ENTER COLOUR OR PICK NODE");
 	CInMsg="NULL";
 	iStat=1;
 }
@@ -14134,7 +18234,7 @@ if (iStat == 1)
     {
       if (cDBase->S_Buff[cDBase->S_Count-1]->iObjType==1)
       {
-         Pt_Object* pE=(Pt_Object*) cDBase->S_Buff[cDBase->S_Count-1];
+         Node* pE=(Node*) cDBase->S_Buff[cDBase->S_Count-1];
          cDBase->SelNodesbyCOL(pE->iColour);
          cDBase->FILTER.SetAll();
       }
@@ -14169,7 +18269,7 @@ int zRESDISPOFF_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		{
 			cDBase->FILTER.Clear();
 			cDBase->FILTER.SetFilter(1);
-			outtext2("/PICK NODE FOR RELATIVE OFFSET");
+			outtext2("// PICK NODE FOR RELATIVE OFFSET");
 			CInMsg = "NULL";
 			iStat = 1;
 		}
@@ -14187,7 +18287,7 @@ int zRESDISPOFF_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 				{
 					if (cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 1)
 					{
-						pN = (Pt_Object*) cDBase->S_Buff[cDBase->S_Count - 1];
+						pN = (Node*) cDBase->S_Buff[cDBase->S_Count - 1];
 						cDBase->SetResDispOff(pN);
 						cDBase->FILTER.SetAll();
 					}
@@ -14222,7 +18322,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(15);
-  outtext2("/ENTER COLOUR OR PICK SURFACE");
+  outtext2("// ENTER COLOUR OR PICK SURFACE");
 	CInMsg="NULL";
 	iStat=1;
 }
@@ -14276,7 +18376,7 @@ if (iStat == 0)
 {
 	cDBase->FILTER.Clear();
 	cDBase->FILTER.SetFilter(0);
-	outtext2("/ENTER COLOUR OR PICK POINT");
+	outtext2("// ENTER COLOUR OR PICK POINT");
 	CInMsg="NULL";
 	iStat=1;
 }
@@ -14295,7 +18395,7 @@ if (iStat == 1)
     {
       if (cDBase->S_Buff[cDBase->S_Count-1]->iObjType==0)
       {
-         Pt_Object* pE=(Pt_Object*) cDBase->S_Buff[cDBase->S_Count-1];
+         Node* pE=(Node*) cDBase->S_Buff[cDBase->S_Count-1];
          cDBase->SelPtsbyCOL(pE->iColour);
          cDBase->FILTER.SetAll();
       }
@@ -14331,7 +18431,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(7);
-  outtext2("/ENTER COLOUR OR PICK CURVE");
+  outtext2("// ENTER COLOUR OR PICK CURVE");
   CInMsg="NULL";
   iStat=1;
 }
@@ -14350,7 +18450,7 @@ if (iStat == 1)
     {
       if (cDBase->S_Buff[cDBase->S_Count-1]->iObjType==7)
       {
-         Pt_Object* pE=(Pt_Object*) cDBase->S_Buff[cDBase->S_Count-1];
+         Node* pE=(Node*) cDBase->S_Buff[cDBase->S_Count-1];
          cDBase->SelCursbyCOL(pE->iColour);
          cDBase->FILTER.SetAll();
       }
@@ -14369,6 +18469,69 @@ MenuEnd:
 return RetVal;
 }
 
+int zSELCURLAY_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			cDBase->FILTER.SetAll();
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->FILTER.Save();
+			cDBase->FILTER.Clear();
+			cDBase->FILTER.SetFilter(0);
+			cDBase->FILTER.SetFilter(6);
+			cDBase->FILTER.SetFilter(7);
+			cDBase->FILTER.SetFilter(10);
+			outtext2("// ENTER LAYER OR PICK CURVE/POINT");
+			CInMsg = "NULL";
+			iStat = 1;
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg != "MouseInp") && (CInMsg != "D") && (CInMsg != "NULL"))
+			{
+				C3dVector GetPt;
+				int iPt = ExtractPt(CInMsg, &GetPt);
+				cDBase->SelCursbyLAY((int)GetPt.x);
+				RetVal = 1;
+			}
+			else if (CInMsg == "MouseInp")
+			{
+				if (cDBase->S_Count == S_initCnt + 1)
+				{
+					if ((cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 0) ||
+						(cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 6) ||
+						(cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 7) ||
+						(cDBase->S_Buff[cDBase->S_Count - 1]->iObjType == 10))
+					{
+						Node* pE = (Node*)cDBase->S_Buff[cDBase->S_Count - 1];
+						cDBase->SelCursbyLAY(pE->iFile);
+						cDBase->FILTER.Restore();
+					}
+					RetVal = 1;
+				}
+			}
+		}
+
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->FILTER.Restore();
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+
 int zSELBYCOL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
 
@@ -14385,7 +18548,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
-  outtext2("/ENTER COLOUR OR PICK ELEMENT");
+  outtext2("// ENTER COLOUR OR PICK ELEMENT");
 	CInMsg="NULL";
 	iStat=1;
 }
@@ -14439,7 +18602,7 @@ if (iStat == 0)
 {
   cDBase->FILTER.Clear();
   cDBase->FILTER.SetFilter(3);
-  outtext2("/ENTER TYPE OR PICK ELEMENT");
+  outtext2("// ENTER TYPE OR PICK ELEMENT");
 	CInMsg="NULL";
 	iStat=1;
 }
@@ -14493,7 +18656,7 @@ if (iStat == 0)
 {
   if (iT==-1)
   {
-    outtext2("/ENTER SELECTION TYPE");
+    outtext2("// ENTER SELECTION TYPE");
     SetFocus();
     iResumePos=2;
     iCancelPos=100;
@@ -14612,7 +18775,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER MID");
+  outtext2("// ENTER MID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -14651,7 +18814,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER GROUP");
+  outtext2("// ENTER GROUP");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -14691,7 +18854,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER GROUP");
+  outtext2("// ENTER GROUP");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -14730,7 +18893,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER LOAD SET ID");
+  outtext2("// ENTER LOAD SET ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -14770,7 +18933,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER BOUNDARY SET ID");
+  outtext2("// ENTER BOUNDARY SET ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -14809,7 +18972,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER TEMPERATURE SET ID");
+  outtext2("// ENTER TEMPERATURE SET ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -14848,7 +19011,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER DELAY IN SEC");
+  outtext2("// ENTER DELAY IN SEC");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -14873,6 +19036,44 @@ MenuEnd:
 return RetVal;
 }
 
+int zHLIMIT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// ENTER HIGHLIGHT LIMIT (-1 for ALL)");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->HLimit((int)ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zECHO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
@@ -14886,7 +19087,7 @@ int zECHO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			outtext2("/ENTER STRING TO ECHO");
+			outtext2("// ENTER STRING TO ECHO");
 			SetFocus();
 			iStat = 1;
 			iCancelPos = 100;
@@ -14922,7 +19123,7 @@ if (pNext == NULL)
 	}
 	if (iStat == 0)
 	{
-		outtext2("/ENTER DELAY IN MILSEC");
+		outtext2("// ENTER DELAY IN MILSEC");
 		SetFocus();
 		iResumePos = 1;
 		iCancelPos = 100;
@@ -14959,7 +19160,7 @@ int zRESLSTRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			outtext2("/ENTER LC, NODE ID FOR RESPONSE DATA");
+			outtext2("// NODE/ELEM ID FOR RESPONSE DATA");
 			SetFocus();
 			iResumePos = 1;
 			iCancelPos = 100;
@@ -14971,7 +19172,76 @@ int zRESLSTRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		{
 			C3dVector ptVec;
 			ptVec = cDBase->DB_PopBuff();
-			cDBase->ResListRespData((int)ptVec.x, (int)ptVec.y);
+			cDBase->ResListRespData((int)ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zRESGRAPHRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			cDBase->ResGraphRespData(0);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zRESLABRESP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	cDBase->LabelRespItems();
+	RetVal = 2;
+	return RetVal;
+}
+
+int zRESLSTRESPFULL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// NODE/ELEM ID FOR RESPONSE DATA");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->ResListRespDataFull((int)ptVec.x);
 			RetVal = 1;
 		}
 		//Escape clause
@@ -14996,7 +19266,7 @@ int zRESFRAMES_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			outtext2("/ENTER NO OF FRAMES (1-20)");
+			outtext2("// ENTER NO OF FRAMES (1-20)");
 			SetFocus();
 			iResumePos = 1;
 			iCancelPos = 100;
@@ -15036,7 +19306,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER RESULTS SET ID, VEC ID, DOF");
+  outtext2("// ENTER RESULTS SET ID, VEC ID, DOF");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15101,7 +19371,7 @@ int zRESSEL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/ENTER RESULTS SET ID, VAR ID, OPT ID");
+			outtext2("// ENTER RESULTS SET ID, VAR ID, OPT ID");
 			SetFocus();
 			iResumePos = 1;
 			iCancelPos = 100;
@@ -15126,6 +19396,187 @@ MenuEnd:
 	return RetVal;
 }
 
+int zRESENVMAX_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// ENTER RESSETS TO ENV MAX (SETID,VAR,OPT)");
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			if (CInMsg == "D")
+			{
+				iStat = 2;
+			}
+			else
+			{
+				sSeq[iNo] = CInMsg;
+				iNo++;
+				iStat = 0;
+				DoMenu(CInMsg, Pt);
+			}
+		}
+		if (iStat == 2)
+		{
+			cDBase->ResSetEnvMax(sSeq, iNo);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zRESSCALE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// ENTER RESSETS TO SCALE (SETID,VAR,OPT)");
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sSeq = CInMsg;
+			outtext2("// ENTER RESULTS SET SCALE FACTOR");
+			SetFocus();
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->ResSetScale(sSeq, ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zRESDIVINTO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// ENTER RESSETS TO DIVIDE BY (SETID,VAR,OPT)");
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			sSeq = CInMsg;
+			outtext2("// ENTER VALUE TO DIVIDE INTO");
+			SetFocus();
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->ResSetDivInTo(sSeq, ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zRESENVMIN_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// ENTER RESSETS TO ENV MIN (SETID,VAR,OPT)");
+			iStat = 1;
+			goto MenuEnd;
+		}
+		if (iStat == 1)
+		{
+			if (CInMsg == "D")
+			{
+				iStat = 2;
+			}
+			else
+			{
+				sSeq[iNo] = CInMsg;
+				iNo++;
+				iStat = 0;
+				DoMenu(CInMsg, Pt);
+			}
+		}
+		if (iStat == 2)
+		{
+			cDBase->ResSetEnvMin(sSeq, iNo);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
 
 int zRESSETDEFSCL_Mnu::DoMenu(CString CInMsg,CPoint Pt)
 {
@@ -15140,7 +19591,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER DEFORMATION SCALE FACTOR");
+  outtext2("// ENTER DEFORMATION SCALE FACTOR");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15165,6 +19616,9 @@ MenuEnd:
 return RetVal;
 }
 
+
+
+
 int zRESSETVECSCL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 	DoNext(&CInMsg, Pt);
@@ -15178,7 +19632,7 @@ int zRESSETVECSCL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/ENTER VECTOR SCALE FACTOR");
+			outtext2("// ENTER VECTOR SCALE FACTOR");
 			SetFocus();
 			iResumePos = 1;
 			iCancelPos = 100;
@@ -15217,7 +19671,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER RESULTS SET ID, VAR ID");
+  outtext2("// ENTER RESULTS SET ID, VAR ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15280,7 +19734,7 @@ int zMSHCR_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 		}
 		if (iStat == 0)
 		{
-			outtext2("/ENTER FEM MESH NAME");
+			outtext2("// ENTER FEM MESH NAME");
 			SetFocus();
 			iStat = 1;
 		}
@@ -15310,7 +19764,7 @@ int zMSHACT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/ENTER MESH ID TO ACTIVATE");
+			outtext2("// ENTER MESH ID TO ACTIVATE");
 			SetFocus();
 			iResumePos = 1;
 			iCancelPos = 100;
@@ -15336,6 +19790,84 @@ int zMSHACT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 	return RetVal;
 }
 
+int zLABGAP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// ENTER LABEL GAP SIZE TO FIND");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->LabGaps((int)ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zLABGAPMP_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// ENTER LABEL GAP SIZE TO FIND");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->LabGapsMP((int)ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
 int zMSHVIS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 {
 
@@ -15350,7 +19882,7 @@ int zMSHVIS_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/ENTER MESH ID TO TOGGLE VISABILITY");
+			outtext2("// ENTER MESH ID TO TOGGLE VISABILITY");
 			SetFocus();
 			iResumePos = 1;
 			iCancelPos = 100;
@@ -15390,7 +19922,7 @@ int zMSHDEL_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
 		if (iStat == 0)
 		{
-			outtext2("/ENTER MESH ID DELETE");
+			outtext2("// ENTER MESH ID DELETE");
 			SetFocus();
 			iResumePos = 1;
 			iCancelPos = 100;
@@ -15456,7 +19988,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER SET ID");
+  outtext2("// ENTER SET ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15496,7 +20028,7 @@ int zSTEPACT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
     if (iStat == 0)
     {
-      outtext2("/ENTER STEP ID");
+      outtext2("// ENTER STEP ID");
       SetFocus();
       iResumePos = 1;
       iCancelPos = 100;
@@ -15536,7 +20068,7 @@ int zSOLACT_Mnu::DoMenu(CString CInMsg, CPoint Pt)
 
     if (iStat == 0)
     {
-      outtext2("/ENTER SOLUTION ID");
+      outtext2("// ENTER SOLUTION ID");
       SetFocus();
       iResumePos = 1;
       iCancelPos = 100;
@@ -15576,7 +20108,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER SET ID");
+  outtext2("// ENTER SET ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15668,7 +20200,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER SET ID");
+  outtext2("// ENTER SET ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15707,7 +20239,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER SET ID");
+  outtext2("// ENTER SET ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15717,7 +20249,7 @@ if (iStat == 0)
 }
 else if (iStat == 1)
 {
-  outtext2("/ENTER LOAD SET NAME:-");
+  outtext2("// ENTER LOAD SET NAME:-");
   SetFocus();
   iStat=2;
 }
@@ -15751,7 +20283,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER SET ID");
+  outtext2("// ENTER SET ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15761,7 +20293,7 @@ if (iStat == 0)
 }
 else if (iStat == 1)
 {
-  outtext2("/ENTER BOUNDARY SET NAME:-");
+  outtext2("// ENTER BOUNDARY SET NAME:-");
   SetFocus();
 	iStat=2;
 }
@@ -15795,7 +20327,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER SET ID");
+  outtext2("// ENTER SET ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15805,7 +20337,7 @@ if (iStat == 0)
 }
 else if (iStat == 1)
 {
-  outtext2("/ENTER TEMPERATUE SET NAME:-");
+  outtext2("// ENTER TEMPERATUE SET NAME:-");
   SetFocus();
 	iStat=2;
 }
@@ -15842,7 +20374,7 @@ if (CInMsg == "C") //Common Options
 
 if (iStat == 0)
 {
-  outtext2("/ENTER TYPE");
+  outtext2("// ENTER TYPE");
   iResumePos=1;
   iCancelPos=100;
   pNext = new zKEY_Mnu();
@@ -15879,7 +20411,7 @@ if (pNext==NULL)
   }
   if (iStat == 0)
   {
-  outtext2("/ENTER GROUP ID");
+  outtext2("// ENTER GROUP ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15916,7 +20448,7 @@ if (pNext==NULL)
   }
   if (iStat == 0)
   {
-  outtext2("/ENTER GROUP ID");
+  outtext2("// ENTER GROUP ID");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -15953,7 +20485,7 @@ if (pNext==NULL)
   }
   if (iStat == 0)
   {
-    outtext2("/ENTER ANGULAR INCREMENT (DEGS)");
+    outtext2("// ENTER ANGULAR INCREMENT (DEGS)");
     SetFocus();
     iResumePos=1;
     iCancelPos=100;
@@ -15989,7 +20521,7 @@ if (pNext==NULL)
   }
   if (iStat == 0)
   {
-  outtext2("/ENTER INCREMENT (MM)");
+  outtext2("// ENTER INCREMENT (MM)");
   SetFocus();
   iResumePos=1;
   iCancelPos=100;
@@ -16011,6 +20543,370 @@ if (pNext==NULL)
 }
 MenuEnd:
 return RetVal;
+}
+
+int zPTSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER POINT SIZE (Def 12))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 12;
+			gPT_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zEDSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER ELEMENT FREE EDGE SIZE (Def 5))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 5;
+			gED_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zFCSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER ELEMENT FREE FACE SIZE (Def 2))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 2;
+			gFC_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+
+int zNDSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER NODE SIZE (Def 10))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 10;
+			gND_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zTXTSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER TEXT SIZE (Def 2))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 2;
+			gTXT_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+
+
+int zBMSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER BEAM SECTION SIZE (Def 2))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 2;
+			gBM_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+
+int zWPLSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER WORKPLANE LINE SIZE (Def 12))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 12;
+			gWP_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zELSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER ELEMENT EDGE SIZE (Def 2))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 2;
+			gEL_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zLMSIZE_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+		if (iStat == 0)
+		{
+			outtext2("// ENTER LUMP MASS SIZE (Def 20))");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 1)
+		{
+			iStat = 2;
+			C3dVector ptNo = cDBase->DB_PopBuff();
+			if (ptNo.x < 1)
+				ptNo.x = 20;
+			gLM_SIZE = ptNo.x;
+			cDBase->InvalidateOGL();
+			cDBase->ReGen();
+			RetVal = 1;
+		}
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
 }
 
 int zGPLIST_Mnu::DoMenu(CString CInMsg,CPoint Pt)
@@ -16111,4 +21007,196 @@ outtext1("Selected Items Removed from Group.");
 cDBase->RemFromGroup();
 RetVal = 1;
 return RetVal;
+}
+
+int zEXPINC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// ENTER FILE NO or -1 for all");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		else if (iStat == 1)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->ExporttoNAS((int) ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zGPBYINC_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// ENTER FILE NO or -1 for all");
+			SetFocus();
+			iResumePos = 1;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		else if (iStat == 1)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->GPByInclude((int)ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zMODINCNO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// PICK ITEMS");
+			iStat = 1;
+
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			outtext2("// ENTER FILE NO");
+			SetFocus();
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->ModIncludeNo((int)ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
+}
+
+int zMODLAYNO_Mnu::DoMenu(CString CInMsg, CPoint Pt)
+{
+	DoNext(&CInMsg, Pt);
+	if (pNext == NULL)
+	{
+		if (CInMsg == "C") //Common Options
+		{
+			RetVal = 2;
+			goto MenuEnd;
+		}
+
+		if (iStat == 0)
+		{
+			outtext2("// PICK CURVES / POINTS / DIMS TO SET LAYER");
+			iStat = 1;
+
+		}
+		if (iStat == 1)
+		{
+			if ((CInMsg == "D") || (CInMsg == ""))
+			{
+				iStat = 2;
+			}
+			iResumePos = 2;
+			iCancelPos = 100;
+			pNext = new zSEL_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 2)
+		{
+			outtext2("// ENTER LAYER NO");
+			SetFocus();
+			iResumePos = 3;
+			iCancelPos = 100;
+			pNext = new zKEY_Mnu();
+			pNext->Init(cDBase, -1);
+			DoNext(&CInMsg, Pt);
+		}
+		if (iStat == 3)
+		{
+			C3dVector ptVec;
+			ptVec = cDBase->DB_PopBuff();
+			cDBase->ModLayerNo((int)ptVec.x);
+			RetVal = 1;
+		}
+		//Escape clause
+		if (iStat == 100)
+		{
+			cDBase->DB_BuffCount = initCnt;
+			cDBase->S_Count = S_initCnt;
+			RetVal = 1;
+		}
+	}
+MenuEnd:
+	return RetVal;
 }

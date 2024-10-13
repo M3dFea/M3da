@@ -1,5 +1,38 @@
 #include "G_Object.h"
 #include "M3Da.h"
+#include "GLOBAL_VARS.h"
+#include <iostream>
+#include <sstream>
+#include <fstream>
+using namespace std;
+//START OF GLOBAL VARIABLES - TRYING THIS OUT 22/09/2023
+//**************Symbols table are GLOBAL scope**************
+Symbol* pSymTable[MAX_SYMBOLS];
+int iNoSymbols = 0;
+double dAveW = 1;
+double dAveH = 1;
+//*********************************************************
+double gPT_SIZE = 10;
+double gND_SIZE = 10;
+double gLM_SIZE = 20;
+double gEL_SIZE = 2;
+double gED_SIZE = 5;
+double gFC_SIZE = 3;
+double gWP_SIZE = 12;
+double gBM_SIZE = 2;
+double gTXT_SIZE = 2;
+int gDIM_PREC = 2;
+double gDIM_SIZE = 0.5;
+double gDRILL_KS = 1.0;    
+double gRIGID_MULTIPLIER = 10000.0; 
+double gVSTIFF_KS = 1.0e10;        //Big K value for restraints
+double gDEF_E = 70.0e9;            //defualt material youngs mod
+double gDEF_V = 0.33;              //Poisson ratio
+double gSTIFF_BDIA = 0.1;          //stiff beam dia used for out psuedo RBE2
+double gDEF_CTE = 23.0e-6;
+double gDEF_THERM_LNK = 1.0e9;
+double gDEF_SOL_TOL = 1e-9;
+//END OF GLOBAL VARS
 #define D2R  0.01745329251994
 #define R2D  57.2957795130931
 const double Pi = 3.1415926535;
@@ -7,7 +40,9 @@ const double dTol = 0.00000001;  //unsed for Surface tolerance
 //Constant Related to Auto-Meshing
 CONST double PARA_NEAR_ZERO = 0.000001;
 CONST double PARA_MAX_ERROR = 0.0001;
-const int ISO_TEST_INC = 10;								 
+const int ISO_TEST_INC = 10;	
+
+
 //#include "math.h"
 #include <cmath>
 
@@ -31,6 +66,40 @@ float cBarMax= (float) -1e+20;
 float cBarMin= (float) 1e+20;
 float cBarVecMax;
 float cBarVecMin;
+
+CString ExtractSubString2(int iP, CString sIn)
+{
+	sIn.Replace(",", " ");
+	int i;
+	int iS = 0;
+	int iLen = sIn.GetLength();
+	CString sOut;
+	int iOCnt = 0;
+	int iCBlock = 0;
+	BOOL bF = FALSE;
+	for (i = 0; i < iLen; i++)
+	{
+		if (sIn[i] != ' ')
+		{
+			if (bF == FALSE)
+			{
+				bF = TRUE;
+				iCBlock++;
+			}
+
+			if (iCBlock == iP)
+			{
+				sOut += sIn[i];
+				iOCnt++;
+			}
+		}
+		else
+		{
+			bF = FALSE;
+		}
+	}
+	return(sOut);
+}
 
 void SetColBar(float fMin,float fMax)
 {
@@ -183,11 +252,11 @@ else
   dExp=atoi(sExp);
   if ((dExp>4) || (dExp < -4))
   {
-    if (dExp>99)
+    if ((dExp>99) || (dExp < -99))
      {sNum=s8.Left(4);
       sNum=RemTrailingZeros(sNum);
       sExp=s8.Right(3);}
-    else if (dExp>9)
+    else if ((dExp > 9) || (dExp < -9))
      {sNum=s8.Left(5);
       sNum=RemTrailingZeros(sNum);
       sExp=s8.Right(2);}
@@ -405,13 +474,13 @@ void cLinkedList::RemNoDelete(G_Object* inItem)
 		}
 		else if (inItem->before == NULL)
 		{
-			Head = (cLink*)inItem->next;
+			Head = (eEdge*)inItem->next;
 			Head->before = NULL;
 			iCnt--;
 		}
 		else if (inItem->next == NULL)
 		{
-			pCur = (cLink*)inItem->before;
+			pCur = (eEdge*)inItem->before;
 			pCur->next = NULL;
 			iCnt--;
 		}
@@ -439,14 +508,14 @@ if ((inItem!=NULL) && (inItem->pParent==this))
   }
   else if (inItem->before==NULL)
   {
-	Head=(cLink*) inItem->next;
+	Head=(eEdge*) inItem->next;
     Head->before=NULL;
 	delete(inItem);
     iCnt--;
   }
   else if (inItem->next==NULL)
   {
-	pCur=(cLink*) inItem->before;
+	pCur=(eEdge*) inItem->before;
     pCur->next=NULL;
 	delete(inItem);
     iCnt--;
@@ -477,14 +546,14 @@ void cLinkedList::Remove2(G_Object* inItem)
 		}
 		else if (inItem->before == NULL)
 		{
-			Head = (cLink*)inItem->next;
+			Head = (eEdge*)inItem->next;
 			Head->before = NULL;
 			delete(inItem);
 			iCnt--;
 		}
 		else if (inItem->next == NULL)
 		{
-			pCur = (cLink*)inItem->before;
+			pCur = (eEdge*)inItem->before;
 			pCur->next = NULL;
 			delete(inItem);
 			iCnt--;
@@ -803,6 +872,12 @@ void cLinkedList::Serialize(CArchive& ar,int iV,ME_Object* MESH)
     case 329:
       pO = new RotationLoad;
       break;
+	case 331:
+		pO = new TEMPD;
+		break;
+	case 332:
+		pO = new GRAV;
+		break;
     }
       pO->Serialize(ar,iV,MESH);
       pO->pParent=this;
@@ -910,11 +985,11 @@ CString ResSet::ToStringDL(Res* pR)
 	if (pR != NULL)
 	{
 		outT = "";
-		sprintf_s(S1, "%i,", pR->ID);
+		sprintf_s(S1, "%i	", pR->ID);
 		outT += S1;
 		for (j = 0; j < iNoV; j++)
 		{
-			sprintf_s(S1, "%e,", *pR->GetAddress(j));
+			sprintf_s(S1, "%e	", *pR->GetAddress(j));
 			outT += S1;
 		}
 	}
@@ -927,11 +1002,11 @@ CString ResSet::ToStringHead()
 	CString outT;
 	int i;
 	outT = "";
-	sprintf_s(S1, "%s,", "ID");
+	sprintf_s(S1, "%s	", "ID");
 	outT += S1;
 	for (i = 0; i < iNoV; i++)
 	{
-		sprintf_s(S1, "%s,", lab[i]);
+		sprintf_s(S1, "%s	", lab[i]);
 		outT += S1;
 	}
 	return (outT);
@@ -1024,56 +1099,67 @@ iType[2] =(2);		//LINE
 iType[3] =(3);		//ELEMENT
 iType[4] =(4);		//MESH
 iType[5] =(5);		//SYMBOL
-iType[6] =(7);		//NURBS CURVE
-iType[7] =(12);		//COORDSYS
-iType[8] =(13);	//CURVE ON SURFACE
-iType[9] =(14);	//SOLID SECTION
-iType[10] =(15);	//NURBS SURFACE
-iType[11] =(18);	//FACE
-iType[12] =(19);	//SHELL
-iType[13] =(20);	//PART
-iType[14] =(200);	//LSET
-iType[15] =(201);	//BSET
-iType[16] =(202);	//TSET
-iType[17] =(321);	//FORCE
-iType[18] =(323);	//MOMENT
-iType[19] =(324);	//PRESSURE
-iType[20] =(322);	//RESTRAINT
-iType[21] =(325);	//TEMPERATURE
-iType[22] =(326);	//FLUX LOAD
-iType[23] =(327);	//T BC
-iType[24] =(328);	//ACCEL LOAD
-iType[25] =(329);	//ROTATION ACCEL LOAD
-iType[26] =(330);	//RESULTS VECTOR
-
+iType[6] =(6);		//TEXT
+iType[7] =(7);		//NURBS CURVE
+iType[8] = (8);		//EEDGE
+iType[9] = (9);	    //EFACE
+iType[10] = (10);	//DIM
+iType[11] =(12);		//COORDSYS
+iType[12] =(13);		//CURVE ON SURFACE
+iType[13] =(14);		//SOLID SECTION
+iType[14] =(15);	//NURBS SURFACE
+iType[15] =(18);	//FACE
+iType[16] =(19);	//SHELL
+iType[17] =(20);	//PART
+iType[18] =(200);	//LSET
+iType[19] =(201);	//BSET
+iType[20] =(202);	//TSET
+iType[21] =(321);	//FORCE
+iType[22] =(323);	//MOMENT
+iType[23] =(324);	//PRESSURE
+iType[24] =(322);	//RESTRAINT
+iType[25] =(325);	//TEMPERATURE
+iType[26] =(326);	//FLUX LOAD
+iType[27] =(327);	//T BC
+iType[28] =(328);	//ACCEL LOAD
+iType[29] =(329);	//ROTATION ACCEL LOAD
+iType[30] =(330);	//RESULTS VECTOR
+iType[31] = (331);	//TEMPD
+iType[32] = (332);	//GRAV
 sType[0] = "POINT";
 sType[1] = "NODE";
 sType[2] = "LINE NOT USED";
 sType[3] = "ELEMENT";
 sType[4] = "MESH";
 sType[5] = "SYMBOL";
-sType[6] = "CURVE";
-sType[7] = "COORDSYS";
-sType[8] = "CURVE ON SURFACE";
-sType[9] = "SECTION";
-sType[10] = "SURFACE";
-sType[11] = "FACE";
-sType[12] = "SHELL";
-sType[13] = "PART";
-sType[14] = "LOAD SET";        // LOAD SET
-sType[15] = "BC SET";          //SET
-sType[16] = "TEMPERATURE SET"; //SET
-sType[17] = "FORCE";
-sType[18] = "MOMENT";
-sType[19] = "PRESSURE";
-sType[20] = "RESTRAINT";
-sType[21] ="TEMP STRUCTURAL";
-sType[22] ="NET FLUX Q";
-sType[23] ="TEMP BC T";
-sType[24] ="ACCEL BODY LOAD";
-sType[25] = "ROTATIONAL BODY LOAD";
-sType[26] = "RESULTS VECTOR";
-iNoOfType=27;
+sType[6] = "TEXT";
+sType[7] = "CURVE";
+sType[8] = "EEDGE";
+sType[9] = "EFACE";
+sType[10] = "DIMENSION";
+sType[11] = "COORDSYS";
+sType[12] = "CURVE ON SURFACE";
+sType[13] = "SECTION";
+sType[14] = "SURFACE";
+sType[15] = "FACE";
+sType[16] = "SHELL";
+sType[17] = "PART";
+sType[18] = "LOAD SET";        // LOAD SET
+sType[19] = "BC SET";          //SET
+sType[20] = "TEMPERATURE SET"; //SET
+sType[21] = "FORCE";
+sType[22] = "MOMENT";
+sType[23] = "PRESSURE";
+sType[24] = "RESTRAINT";
+sType[25] ="TEMP STRUCTURAL";
+sType[26] ="NET FLUX Q";
+sType[27] ="TEMP BC T";
+sType[28] ="ACCEL BODY LOAD";
+sType[29] = "ROTATIONAL BODY LOAD";
+sType[30] = "RESULTS VECTOR";
+sType[31] = "TEMPD CARD";
+sType[32] = "GRAV CARD";
+iNoOfType=33;
 
 //USED IN ASTRIUMS QUANTA PROGRAM
 //iType[17] =(500); //WG DEF
@@ -1098,6 +1184,22 @@ for (i=0;i<iNoOfType;i++)
 void Filter::Clear()
 {
 iNo=0;
+}
+
+void Filter::Save()
+{
+	int i;
+	iSaveNo = iNo;
+	for (i=0;i<iNo;i++)
+		iSave[i]= Filt[i];
+}
+
+void Filter::Restore()
+{
+	int i;
+	iNo = iSaveNo;
+	for (i = 0; i < iNo; i++)
+		Filt[i] = iSave[i];
 }
 
 int Filter::isIn(int iThisType)
@@ -1247,6 +1349,21 @@ for (i=0;i<iNo;i++)
 return (iRet);
 }
 
+BOOL NEList::IsIn(int iD)
+{
+	BOOL bRC = FALSE;
+	int i;
+	for (i = 0; i < iNo; i++)
+	{
+		if (ids[i] == iD)
+		{
+			bRC = TRUE;
+			break;
+		}
+	}
+	return (bRC);
+}
+
 void NEList::Add(int iP,int iT)
 {
 if (iNo<MAX_LITEMS)
@@ -1274,6 +1391,18 @@ ObjList::~ObjList()
 {
 	//DeleteAll();
 }
+
+void ObjList::InsertAt(int iPos, G_Object* inItem)
+{
+	int i;
+	for (i = iPos;i<iNo;i++)
+	{
+		Objs[iNo - i] = Objs[iNo - i - 1];
+	}
+	iNo++;
+	Objs[iPos] = inItem;
+}
+
 
 void ObjList::Add(G_Object* inItem)
 {
@@ -1668,13 +1797,14 @@ return (Selectable);
 
 G_Object::G_Object()
 {
+iFile = -1;
 iType = -1;
 Drawn = 0;
 Selectable  = 1; 
 Visable  = 1;
 bDrawLab = FALSE;
-pParent=NULL;
-next=NULL;
+pParent=nullptr;
+next= nullptr;
 
 }
 
@@ -1687,6 +1817,11 @@ vur.Set(0,0,0);
 double G_Object::GetCharSize()
 {
 return (1.0);
+}
+
+void G_Object::ExportDXF(FILE* pFile)
+{
+
 }
 
 CString G_Object::GetName()
@@ -1733,6 +1868,11 @@ pParent=NULL;
 bDrawLab = FALSE;
 }
 
+//For Dynamic dragging update
+void G_Object::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+
+}
 
 C3dVector G_Object::MinPt(C3dVector inPt)
 {
@@ -1760,6 +1900,7 @@ void G_Object::Serialize(CArchive& ar,int iV)
 	{
 		// TODO: add storing code here
     ar << iObjType;
+	ar << iFile;
 	ar << iType;
     ar << iLabel;
     ar << iColour;
@@ -1770,10 +1911,17 @@ void G_Object::Serialize(CArchive& ar,int iV)
 	else
 	{
     ar >> iObjType;
+	//New file number to group include files
+	if (iV < -62)
+		ar >> iFile;
+	else
+		iFile = -1;
+
 	if (iV < -52)
 		ar >> iType;
 	else
 		iType = -1;
+
     ar >> iLabel;
     ar >> iColour;
     ar >> Drawn;
@@ -1787,13 +1935,23 @@ CString G_Object::ToString()
 return("");
 }
 
+void G_Object::Build()
+{
+
+}
+
 void G_Object::Info()
 {
   char S1[80];
   CString OutT;
-  sprintf_s(S1,"%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour);
+  sprintf_s(S1,"%s %i %s %i %s %i %s %i","Type",iObjType,"FileNo",iFile,"Label",iLabel,"Col",iColour);
   OutT+=S1;
   outtext1(OutT); 
+}
+
+void G_Object::ModLayNo(int iLay)
+{
+	iFile = iLay;
 }
 
 C3dVector G_Object::Get_Centroid()
@@ -1878,6 +2036,7 @@ return (vR);
 
 double G_Object::getLen()
 {
+
 return (0);
 }
 
@@ -1913,7 +2072,7 @@ if ((SelPt.x > P1.x) &&
     (SelPt.y > P1.y) &&
     (SelPt.y < P2.y))
 {
-	pSel->Add(this);
+	pSel->AddEx(this);
 }
 }
 
@@ -1945,96 +2104,102 @@ Planet::Planet()
   Drawn = 0;
   Selectable = 1;
   Visable = 1;
-  iObjType = 1;
+  iObjType = 998;
   pParent = NULL;
-  pTexture=NULL;
+  pTexture=nullptr;
 }
 
 Planet::~Planet()
 {
-  pTexture = NULL;
+  pTexture = nullptr;
 }
 
+//Planet Draw
 void Planet::OglDrawW(int iDspFlgs, double dS1, double dS2)
 {
-  GLuint textureID;
-  glColor3fv(cols[124]);
-  glGenTextures(1, &textureID);
-  // "Bind" the newly created texture : all future texture functions will modify this texture
-  glBindTexture(GL_TEXTURE_2D, textureID);
-  // Give the image to OpenGL
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pTexture->width, pTexture->height, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pTexture->data);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glEnable(GL_TEXTURE_2D);
-  glEnable(GL_NORMALIZE);
-  double dDec;
-  double dDec1;
-  double dRA;
-  double dRA1;
-  C3dVector n0;
-  C3dVector n1;
-  C3dVector n2;
-  C3dVector n3;
-  float R=1;
-  float x0,y0,z0;
-  float x1, y1, z1;
-  float x2, y2, z2;
-  float x3, y3, z3;
-  float tRA,tRA1,tDEC,tDEC1;
-  int i,j;
-  i=0,j=0;
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glShadeModel(GL_SMOOTH);
-  for (i=0;i<48;i++)
-  {
-    for (j=0;j<36;j++)
-    {
-      dRA=i*7.5;
-      dRA1 = (i+1) * 7.5;
-      dDec=j*5-90;
-      dDec1=(j+1)*5-90;
-      tRA=dRA/360;
-      tRA1=dRA1/360;
-      tDEC=(dDec+90)/180;
-      tDEC1 = (dDec1 + 90) / 180;
-      x0 = R*cos(D2R*dDec)*cos(D2R*dRA);
-      y0 = R*cos(D2R*dDec)*sin(D2R*dRA);
-      z0 = R*sin(D2R*dDec);
-      x1 = R*cos(D2R*dDec)*cos(D2R*dRA1);
-      y1 = R*cos(D2R*dDec)*sin(D2R*dRA1);
-      z1 = R*sin(D2R*dDec);
-      x2 = R*cos(D2R*dDec1)*cos(D2R*dRA1);
-      y2 = R*cos(D2R*dDec1)*sin(D2R*dRA1);
-      z2 = R*sin(D2R*dDec1);
-      x3 = R*cos(D2R*dDec1)*cos(D2R*dRA);
-      y3 = R*cos(D2R*dDec1)*sin(D2R*dRA);
-      z3 = R*sin(D2R*dDec1);
-      n0.Set(x0,y0,z0);
-      n1.Set(x1, y1, z1);
-      n2.Set(x2, y2, z2);
-      n3.Set(x3, y3, z3);
-      n0.Normalize();
-      n1.Normalize();
-      n2.Normalize();
-      n3.Normalize();
-      glBegin(GL_POLYGON);
-        glTexCoord2f(tRA, tDEC);
-        glVertex3f(x0, y0, z0);
-        glNormal3f((float)n0.x, (float)n0.y, (float)n0.z);
-        glTexCoord2f(tRA1, tDEC);
-        glVertex3f(x1, y1, z1);
-        glNormal3f((float)n1.x, (float)n1.y, (float)n1.z);
-        glTexCoord2f(tRA1, tDEC1);
-        glVertex3f(x2, y2, z2);
-        glNormal3f((float)n2.x, (float)n2.y, (float)n2.z);
-        glTexCoord2f(tRA, tDEC1);
-        glVertex3f(x3, y3, z3);
-        glNormal3f((float)n3.x, (float)n3.y, (float)n3.z);
-      glEnd();
-    }
+	if ((pTexture != nullptr) && (gDSP_BACK == TRUE))
+	{
+      int width = pTexture->width;
+      int height = pTexture->height;
+	  GLuint textureID;
+	  glColor3fv(cols[124]);
+	  glGenTextures(1, &textureID);
+	  // "Bind" the newly created texture : all future texture functions will modify this texture
+	  glBindTexture(GL_TEXTURE_2D, textureID);
+	  // Give the image to OpenGL
+	  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pTexture->width, pTexture->height, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pTexture->data);
+	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	  glEnable(GL_TEXTURE_2D);
+	  glEnable(GL_NORMALIZE);
+	  double dDec;
+	  double dDec1;
+	  double dRA;
+	  double dRA1;
+	  C3dVector n0;
+	  C3dVector n1;
+	  C3dVector n2;
+	  C3dVector n3;
+	  float R = 1;
+	  float x0, y0, z0;
+	  float x1, y1, z1;
+	  float x2, y2, z2;
+	  float x3, y3, z3;
+	  float tRA, tRA1, tDEC, tDEC1;
+	  int i, j;
+	  i = 0, j = 0;
+	  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	  glShadeModel(GL_SMOOTH);
+	  for (i = 0; i < 48; i++)
+	  {
+		  for (j = 0; j < 36; j++)
+		  {
+			  dRA = i * 7.5;
+			  dRA1 = (i + 1) * 7.5;
+			  dDec = j * 5 - 90;
+			  dDec1 = (j + 1) * 5 - 90;
+			  tRA = dRA / 360;
+			  tRA1 = dRA1 / 360;
+			  tDEC = (dDec + 90) / 180;
+			  tDEC1 = (dDec1 + 90) / 180;
+			  x0 = R * cos(D2R * dDec) * cos(D2R * dRA);
+			  y0 = R * cos(D2R * dDec) * sin(D2R * dRA);
+			  z0 = R * sin(D2R * dDec);
+			  x1 = R * cos(D2R * dDec) * cos(D2R * dRA1);
+			  y1 = R * cos(D2R * dDec) * sin(D2R * dRA1);
+			  z1 = R * sin(D2R * dDec);
+			  x2 = R * cos(D2R * dDec1) * cos(D2R * dRA1);
+			  y2 = R * cos(D2R * dDec1) * sin(D2R * dRA1);
+			  z2 = R * sin(D2R * dDec1);
+			  x3 = R * cos(D2R * dDec1) * cos(D2R * dRA);
+			  y3 = R * cos(D2R * dDec1) * sin(D2R * dRA);
+			  z3 = R * sin(D2R * dDec1);
+			  n0.Set(x0, y0, z0);
+			  n1.Set(x1, y1, z1);
+			  n2.Set(x2, y2, z2);
+			  n3.Set(x3, y3, z3);
+			  n0.Normalize();
+			  n1.Normalize();
+			  n2.Normalize();
+			  n3.Normalize();
+			  glBegin(GL_POLYGON);
+			  glTexCoord2f(tRA, tDEC);
+			  glVertex3f(x0, y0, z0);
+			  glNormal3f((float)n0.x, (float)n0.y, (float)n0.z);
+			  glTexCoord2f(tRA1, tDEC);
+			  glVertex3f(x1, y1, z1);
+			  glNormal3f((float)n1.x, (float)n1.y, (float)n1.z);
+			  glTexCoord2f(tRA1, tDEC1);
+			  glVertex3f(x2, y2, z2);
+			  glNormal3f((float)n2.x, (float)n2.y, (float)n2.z);
+			  glTexCoord2f(tRA, tDEC1);
+			  glVertex3f(x3, y3, z3);
+			  glNormal3f((float)n3.x, (float)n3.y, (float)n3.z);
+			  glEnd();
+		  }
+	  }
+	  glDeleteTextures(1, &textureID);
   }
-
 }
 
 void Planet::OglDraw(int iDspFlgs, double dS1, double dS2)
@@ -2053,11 +2218,96 @@ void Planet::AttachTexture(BMP* pT)
 }
 
 
+//**********************************************************************
+//Test class for the Bitmat BackGround
+//**********************************************************************
+IMPLEMENT_DYNAMIC(BackGround, CObject)
+
+
+BackGround::BackGround(double dWPSize)
+{
+	Drawn = 0;
+	Selectable = 1;
+	Visable = 1;
+	iObjType = 999;
+	pParent = NULL;
+	pTexture = nullptr;
+	dS = dWPSize;
+}
+
+BackGround::~BackGround()
+{
+	pTexture = nullptr;
+}
+
+void BackGround::OglDrawW(int iDspFlgs, double dS1, double dS2) {
+	if ((pTexture != nullptr) && (gDSP_BACK==TRUE))
+	{
+	  int width = pTexture->width;
+	  int height = pTexture->height;
+	  double dW = dS;
+	  double dH = dS;
+	  double dRatio;
+	  dRatio = static_cast<double>(height) / width; // Using static_cast to ensure correct division
+	  dH *= dRatio;
+
+		GLuint textureID;
+		glColor3fv(cols[124]);
+		glGenTextures(1, &textureID);
+		// "Bind" the newly created texture: all future texture functions will modify this texture
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		// Give the image to OpenGL GL_RGB
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pTexture->width, pTexture->height, 0, GL_BGR_EXT, GL_UNSIGNED_BYTE, pTexture->data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glEnable(GL_TEXTURE_2D);
+		glEnable(GL_NORMALIZE);
+		C3dVector n0;
+		C3dVector n1;
+		C3dVector n2;
+		C3dVector n3;
+
+		// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glShadeModel(GL_SMOOTH);
+
+		glBegin(GL_POLYGON);
+		glTexCoord2f(0, 0);
+		glVertex3f(-dW / 2, -dH / 2, -0.1);
+		glNormal3f((float)0.0, (float)0.0, (float)1.0);
+		glTexCoord2f(1, 0);
+		glVertex3f(dW / 2, -dH / 2, -0.1);
+		glNormal3f((float)0.0, (float)0.0, (float)1.0);
+		glTexCoord2f(1, 1);
+		glVertex3f(dW / 2, dH / 2, -0.1);
+		glNormal3f((float)0.0, (float)0.0, (float)1.0);
+		glTexCoord2f(0, 1);
+		glVertex3f(-dW / 2, dH / 2, -0.1);
+		glNormal3f((float)0.0, (float)0.0, (float)1.0);
+		glEnd();
+		glDeleteTextures(1, &textureID);
+	}
+}
+
+void BackGround::OglDraw(int iDspFlgs, double dS1, double dS2)
+{
+	OglDrawW(iDspFlgs, dS1, dS2);
+}
+
+void BackGround::Draw(CDC* pDC, int iDrawmode)
+{
+
+}
+
+void BackGround::AttachTexture(BMP* pT)
+{
+	pTexture = pT;
+}
+
 //**********************************************
-IMPLEMENT_DYNAMIC( Pt_Object, CObject )
+IMPLEMENT_DYNAMIC(Node, CObject )
 // Create Object
 
-Pt_Object::Pt_Object()
+Node::Node()
 {
 Drawn = 0;
 Selectable  = 1; 
@@ -2077,7 +2327,7 @@ dof[5]=0;
 pN=NULL;
 }
 
-Pt_Object::~Pt_Object()
+Node::~Node()
 {
  delete(Pt_Point);
  delete(DSP_Point);
@@ -2085,7 +2335,7 @@ Pt_Object::~Pt_Object()
  DSP_Point=NULL;
 }
 		
-void Pt_Object::Create(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut,G_Object* Parrent)
+void Node::Create(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut,G_Object* Parrent)
 {
 Drawn = 0;
 Selectable  = 1; 
@@ -2109,7 +2359,7 @@ pResD=NULL;
 pN=NULL;
 }
 
-void Pt_Object::Info()
+void Node::Info()
 {
   char S1[80];
   G_Object::Info();
@@ -2117,16 +2367,61 @@ void Pt_Object::Info()
   outtext1(S1); 
 }
 
-CString Pt_Object::ToString()
+CString Node::ToString()
 {
 CString sRT;
 char S1[80];
-sprintf_s(S1,"%8s%8i%8i%8s%8s%8s%8i\n","GRID    ",iLabel,DefSys,e8(Pt_Point->x),e8(Pt_Point->y),e8(Pt_Point->z),OutSys);
+//New to handle the DEF system eventually
+  //ME_Object* ME = (ME_Object*) pParent;
+C3dVector pt(Pt_Point->x, Pt_Point->y, Pt_Point->z);
+int iN = 0;
+int iRID;
+CoordSys* pD;
+ME_Object* ME;
+
+iRID = this->DefSys;
+if (iRID > 0)
+{
+	ME = (ME_Object*) this->pParent;
+	pD = ME->GetSys(iRID);
+	if (pD != NULL)
+	{
+		C3dMatrix A = pD->mOrientMat;
+		A.Transpose();
+		if (pD->CysType == 1)
+		{
+			pt -= pD->Origin;
+			pt = A * pt;
+		}
+		else if (pD->CysType == 2)
+		{
+			pt -= pD->Origin;
+			pt = A * pt;
+			C3dVector pCyl;
+			pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y);
+			pCyl.y = atan2(pt.y, pt.x) * R2D;
+			pCyl.z = pt.z;
+			pt = pCyl;
+		}
+		else if (pD->CysType == 3)
+		{
+			pt -= pD->Origin;
+			pt = A * pt;
+			C3dVector pCyl;
+			pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+			pCyl.y = acos(pt.z / pCyl.x) * R2D;
+			pCyl.z = atan2(pt.y, pt.x) * R2D;
+			pt = pCyl;
+		}
+	}
+	//}
+}
+sprintf_s(S1,"%8s%8i%8i%8s%8s%8s%8i\n","GRID    ",iLabel,DefSys,e8(pt.x).GetString(),e8(pt.y).GetString(),e8(pt.z).GetString(),OutSys);
 sRT=S1;
 return(sRT);
 }
 
-C3dVector Pt_Object::MinPt(C3dVector inPt)
+C3dVector Node::MinPt(C3dVector inPt)
 {
 C3dVector vRet;
 vRet.Set(Pt_Point->x,Pt_Point->y,Pt_Point->z);
@@ -2134,57 +2429,61 @@ return (vRet);
 }
 
 
-void Pt_Object::ExportUNV(FILE* pFile)
+void Node::ExportUNV(FILE* pFile)
 {
 fprintf(pFile,"%10i%10i%10i%10i\n",iLabel,1,1,iColour-150);
 fprintf(pFile,"%25.16E%25.16E%25.16E\n",Pt_Point->x,Pt_Point->y,Pt_Point->z);
 }
 
-void Pt_Object::ExportNAS(FILE* pFile, CoordSys* pD)
+void Node::ExportNAS(FILE* pFile, CoordSys* pD)
 {
    //New to handle the DEF system eventually
-  if (iLabel==3000039)
-  {
-    int kk;
-    kk=0;
-  }
-  C3dVector pt(Pt_Point->x,Pt_Point->y,Pt_Point->z);
-  if (pD!=NULL)
-  {
-    C3dMatrix A=pD->mOrientMat;
-    A.Transpose();
-    if (pD->CysType==1)
-    {
-      pt-=pD->Origin;
-	    pt = A*pt;
-    }
-    else if (pD->CysType==2)
-    {
-      pt-=pD->Origin;
-	    pt = A*pt;
-      C3dVector pCyl;
-      pCyl.x=sqrt(pt.x*pt.x+pt.y*pt.y);
-      pCyl.y=atan2(pt.y,pt.x)*R2D;
-      pCyl.z=pt.z;
-      pt=pCyl;
-    }
-    else if (pD->CysType==3)
-    {
-      pt-=pD->Origin;
-	    pt = A*pt;
-      C3dVector pCyl;
-      pCyl.x=sqrt(pt.x*pt.x+pt.y*pt.y+pt.z*pt.z);
-      pCyl.y=acos(pt.z/pCyl.x)*R2D;
-      pCyl.z=atan2(pt.y,pt.x)*R2D;
-      pt=pCyl;
-    }
-  }
+	//ME_Object* ME = (ME_Object*) pParent;
+	C3dVector pt(Pt_Point->x, Pt_Point->y, Pt_Point->z);
+	int iN = 0;
+	int iRID;
+	iRID = this->DefSys;
+	if (iRID > 0)
+	{
+
+			if (pD!= NULL)
+			{
+				C3dMatrix A = pD->mOrientMat;
+				A.Transpose();
+				if (pD->CysType == 1)
+				{
+					pt -= pD->Origin;
+					pt = A * pt;
+				}
+				else if (pD->CysType == 2)
+				{
+					pt -= pD->Origin;
+					pt = A * pt;
+					C3dVector pCyl;
+					pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y);
+					pCyl.y = atan2(pt.y, pt.x) * R2D;
+					pCyl.z = pt.z;
+					pt = pCyl;
+				}
+				else if (pD->CysType == 3)
+				{
+					pt -= pD->Origin;
+					pt = A * pt;
+					C3dVector pCyl;
+					pCyl.x = sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
+					pCyl.y = acos(pt.z / pCyl.x) * R2D;
+					pCyl.z = atan2(pt.y, pt.x) * R2D;
+					pt = pCyl;
+				}
+			}
+		//}
+	}
    fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8i\n","GRID    ",iLabel,DefSys,e8(pt.x),e8(pt.y),e8(pt.z),OutSys);
 }
 
-G_Object* Pt_Object::Copy(G_Object* Parrent)
+G_Object* Node::Copy(G_Object* Parrent)
 {
-Pt_Object* PtRet = new Pt_Object;
+Node* PtRet = new Node;
 PtRet->pParent=Parrent;
 PtRet->Drawn = Drawn;
 PtRet->Selectable  = Selectable; 
@@ -2202,17 +2501,17 @@ pResD=NULL;
 return (PtRet);
 }
 
-void Pt_Object::Serialize(CArchive& ar,int iV)
+void Node::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
 		// TODO: add storing code here
-    G_Object::Serialize(ar,iV);
-	ar<<DefSys;
-    ar<<OutSys;
-    ar<<Pt_Point->x;
-    ar<<Pt_Point->y;
-    ar<<Pt_Point->z;  
+      G_Object::Serialize(ar,iV);
+	  ar<<DefSys;
+      ar<<OutSys;
+      ar<<Pt_Point->x;
+      ar<<Pt_Point->y;
+      ar<<Pt_Point->z;  
 	}
 	else
 	{
@@ -2233,19 +2532,19 @@ void Pt_Object::Serialize(CArchive& ar,int iV)
 
 
 
-void Pt_Object::Clear()
+void Node::Clear()
 {
 
 }
 
-C3dVector Pt_Object::GetCoords() 
+C3dVector Node::GetCoords() 
 {
 C3dVector vRet;
 vRet.Set(Pt_Point->x,Pt_Point->y,Pt_Point->z);
 return (vRet);
 }
 
-C3dVector Pt_Object::Get_Centroid()
+C3dVector Node::Get_Centroid()
 {
 return (GetCoords());
 }
@@ -2253,7 +2552,7 @@ return (GetCoords());
 
 
 // Draw Object line
-void Pt_Object::Draw(CDC* pDC,int iDrawmode)
+void Node::Draw(CDC* pDC,int iDrawmode)
 {
 
 pDC->MoveTo((int) DSP_Point->x-4,(int) DSP_Point->y+4);
@@ -2274,7 +2573,7 @@ pDC->LineTo((int) DSP_Point->x,(int) DSP_Point->y+4);
 
 GLubyte BmpND[22] = {0x04,0x00,0x44,0x40,0x24,0x80,0x15,0x00,0x0e,0x00,0xff,0xe0,0x0e,0x00,0x15,0x00,0x24,0x80,0x44,0x40,0x04,0x00};
 
-void Pt_Object::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void Node::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
 char sLab[20];
 double x;
@@ -2307,7 +2606,7 @@ if ((iDspFlgs & DSP_NODES)>0)
 
 	Selectable=1;
 	glColor3fv(cols[GetCol()]);
-    glPointSize(10.0f); 
+    glPointSize(gND_SIZE);
 	if ((iDspFlgs & DSP_NODES_ASK)>0)
 	{
 	glBegin(GL_POINTS);
@@ -2338,19 +2637,19 @@ else
 }
 }
 
-void Pt_Object::OglDraw(int iDspFlgs,double dS1,double dS2)
+void Node::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
    OglDrawW(iDspFlgs,dS1,dS2);
 }
 
-void Pt_Object::Move(C3dVector vM)
+void Node::Move(C3dVector vM)
 {
 Pt_Point->x +=vM.x;
 Pt_Point->y +=vM.y;
 Pt_Point->z +=vM.z;
 }
 
-void Pt_Object::Transform(C3dMatrix TMAt)
+void Node::Transform(C3dMatrix TMAt)
 {
 C3dVector R;
 R.x =  TMAt.m_00 * Pt_Point->x +  TMAt.m_01 * Pt_Point->y +  TMAt.m_02 * Pt_Point->z +  TMAt.m_30;
@@ -2362,7 +2661,7 @@ Pt_Point->z =R.z;
 
 }
 
-void Pt_Object::Translate(C3dVector vIn)
+void Node::Translate(C3dVector vIn)
 {
 Pt_Point->x +=vIn.x;
 Pt_Point->y +=vIn.y;
@@ -2371,7 +2670,7 @@ Pt_Point->z +=vIn.z;
 
 
 
-void Pt_Object::SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran)
+void Node::SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran)
 {
 
 C3dVector V;
@@ -2395,25 +2694,26 @@ DSP_Point->y = R.y;
 DSP_Point->z = R.z;
 }
 
-void Pt_Object::SetTo(C3dVector cInVect)
+void Node::SetTo(C3dVector cInVect)
 {
 Pt_Point->x = cInVect.x;
 Pt_Point->y = cInVect.y;
 Pt_Point->z = cInVect.z;
 }
 
-CString Pt_Object::GetName()
+CString Node::GetName()
 {
 	return ("Node (GRID)");
 }
 
-int Pt_Object::GetVarHeaders(CString sVar[])
+int Node::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
-
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "Def CYS";
 	iNo++;
-	sVar[iNo] = "Out Angle";
+	sVar[iNo] = "Out CYS";
 	iNo++;
 	sVar[iNo] = "X";
 	iNo++;
@@ -2425,10 +2725,13 @@ int Pt_Object::GetVarHeaders(CString sVar[])
 }
 
 
-int Pt_Object::GetVarValues(CString sVar[])
+int Node::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", DefSys);
 	sVar[iNo] = S1;
 	iNo++;
@@ -2447,20 +2750,21 @@ int Pt_Object::GetVarValues(CString sVar[])
 	return (iNo);
 }
 
-void Pt_Object::PutVarValues(PropTable* PT,int iNo, CString sVar[])
+void Node::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 {
 
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	DefSys = atoi(sVar[0]);
-	OutSys = atof(sVar[1]);;
-	Pt_Point->x = atof(sVar[2]);;;
-	Pt_Point->y = atof(sVar[3]);;;
-	Pt_Point->z = atof(sVar[4]);;;
+	iFile= atoi(sVar[0]);
+	DefSys = atoi(sVar[1]);
+	OutSys = atof(sVar[2]);;
+	Pt_Point->x = atof(sVar[3]);;;
+	Pt_Point->y = atof(sVar[4]);;;
+	Pt_Point->z = atof(sVar[5]);;;
 }
 
-cFace::cFace()
+eFace::eFace()
 {
+iObjType = 9;
 iColour=1;
 NoVert=0;
 pVertex[0]=NULL;
@@ -2471,7 +2775,7 @@ pParent=NULL;
 next=NULL;
 }
 
-cFace::~cFace()
+eFace::~eFace()
 {
 
 NoVert=0;
@@ -2483,7 +2787,7 @@ pParent=NULL;
 next=NULL;
 }
 
-BOOL cFace::isSame(cFace* inFace)
+BOOL eFace::isSame(eFace* inFace)
 {
 BOOL brc=FALSE;
 int i,j,iC;
@@ -2508,12 +2812,12 @@ if (NoVert==inFace->NoVert)
 return (brc);
 }
 
-void cFace::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void eFace::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
 C3dVector v1;
 C3dVector v2;
 C3dVector Vn;
-glLineWidth(5.0);
+glLineWidth(gFC_SIZE);
 glColor3fv(cols[124]);
 if (NoVert==3)
 {
@@ -2542,7 +2846,36 @@ else if (NoVert==4)
 glLineWidth(2.0);
 }
 
-void cFace::OglDraw(int iDspFlgs,double dS1,double dS2)
+C3dVector eFace::Get_Centroid()
+{
+	C3dVector vT;
+	vT.Set(0, 0, 0);
+	int j = 0;
+	for (j = 0; j < NoVert; j++)
+	{
+		vT += pVertex[j]->Get_Centroid();
+	}
+	vT.x /= NoVert;
+	vT.y /= NoVert;
+	vT.z /= NoVert;
+	return (vT);
+}
+
+void eFace::RelTo(G_Object* pThis, ObjList* pList, int iType)
+{
+	int j;
+	if (iType == 1)
+	{
+		for (j=0;j<NoVert;j++)
+	      pList->AddEx(pVertex[j]);
+	}
+}
+
+void eFace::Serialize(CArchive& ar, int iV)
+{
+}
+
+void eFace::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
 C3dVector v1;
 C3dVector v2;
@@ -2594,7 +2927,18 @@ else if (NoVert==4)
 }
 
 
-cLink::cLink()
+eEdge::eEdge()
+{
+iObjType = 8;
+iColour=-1;
+pVertex[0]=NULL;
+pVertex[1]=NULL;
+next=NULL;
+before=NULL;
+pParent=NULL;
+}
+
+eEdge::~eEdge()
 {
 iColour=-1;
 pVertex[0]=NULL;
@@ -2604,17 +2948,7 @@ before=NULL;
 pParent=NULL;
 }
 
-cLink::~cLink()
-{
-iColour=-1;
-pVertex[0]=NULL;
-pVertex[1]=NULL;
-next=NULL;
-before=NULL;
-pParent=NULL;
-}
-
-BOOL cLink::isSame(cLink* inLink)
+BOOL eEdge::isSame(eEdge* inLink)
 {
 BOOL brc=FALSE;
 if (inLink != NULL)
@@ -2633,12 +2967,30 @@ if (inLink != NULL)
 return (brc);
 }
 
+void eEdge::Info()
+{
+	char S1[80];
+	G_Object::Info();
+	sprintf_s(S1, "LAB: %i X: %f Y: %f Z: %f", pVertex[0]->iLabel, pVertex[0]->Pt_Point->x, pVertex[0]->Pt_Point->y, pVertex[0]->Pt_Point->z);
+	outtext1(_T(S1));
+	sprintf_s(S1, "LAB: %i X: %f Y: %f Z: %f", pVertex[1]->iLabel, pVertex[1]->Pt_Point->x, pVertex[1]->Pt_Point->y, pVertex[1]->Pt_Point->z);
+	outtext1(_T(S1));
+}
+
+void eEdge::Reverse()
+{
+	Node* pN;
+	pN = pVertex[0];
+	pVertex[0] = pVertex[1];
+	pVertex[1] = pN;
+}
+
 
 //0 not the same
 //1 the same
 //2 the same bit wrond direction
 
-int cLink::isSameWithDir(cLink* inLink)
+int eEdge::isSameWithDir(eEdge* inLink)
 {
   int irc = 0;
   if ((pVertex[0] == inLink->pVertex[0]) &&
@@ -2654,18 +3006,114 @@ int cLink::isSameWithDir(cLink* inLink)
   return (irc);
 }
 
-void cLink::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void eEdge::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
-glLineWidth(5.0);
-glColor3fv(cols[124]);
+glLineWidth(gED_SIZE);
+glColor3fv(cols[iColour]);
 glBegin(GL_LINES);
 glVertex3f((float) pVertex[0]->Pt_Point->x,(float) pVertex[0]->Pt_Point->y,(float) pVertex[0]->Pt_Point->z);
 glVertex3f((float) pVertex[1]->Pt_Point->x,(float) pVertex[1]->Pt_Point->y,(float) pVertex[1]->Pt_Point->z);
 glEnd();
-glLineWidth(2.0);
+//
+
+//int i;
+//double X, Y, Z;
+//C3dVector Point[2];
+//C3dVector vDir;
+//C3dVector Pts[7];  //Arrow Head
+//C3dMatrix mT;
+//C3dVector vOff;
+//
+//	Selectable = 1;
+//	Point[0] = pVertex[0]->Pt_Point;
+//	Point[1] = pVertex[1]->Pt_Point;
+//	vOff.Set(AHead[0][0], AHead[0][1], AHead[0][2]);
+//	vDir = Point[1]- Point[0];
+//
+//	vDir.Normalize();
+//	mT = vDir.GetTMat();
+//
+//	for (i = 0; i < 7; i++)
+//	{
+//		Pts[i].Set(AHead[i][0], AHead[i][1], AHead[i][2]);
+//		Pts[i] -= vOff;
+//		Pts[i] = mT.Mult(Pts[i]);
+//		Pts[i] *= 0.2 * dS1;
+//	}
+//	X = Point[1].x; Y = Point[1].y; Z = Point[1].z;
+//
+//	glColor3fv(cols[iColour]);
+//	glBegin(GL_LINES);
+//	glVertex3f((float)Point[0].x, (float)Point[0].y, (float)Point[0].z);
+//	glVertex3f((float)Point[1].x, (float)Point[1].y, (float)Point[1].z);
+//	glEnd();
+//	glPointSize(10.0f);
+//	glBegin(GL_POINTS);
+//	glVertex3f((float)0.5 * (Point[0].x + Point[1].x), (float)0.5 * (Point[0].y + Point[1].y), (float)0.5 * (Point[0].z + Point[1].z));
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[2].x + X, (float)Pts[2].y + Y, (float)Pts[2].z + Z);
+//	glVertex3f((float)Pts[1].x + X, (float)Pts[1].y + Y, (float)Pts[1].z + Z);
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[3].x + X, (float)Pts[3].y + Y, (float)Pts[3].z + Z);
+//	glVertex3f((float)Pts[2].x + X, (float)Pts[2].y + Y, (float)Pts[2].z + Z);
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[4].x + X, (float)Pts[4].y + Y, (float)Pts[4].z + Z);
+//	glVertex3f((float)Pts[3].x + X, (float)Pts[3].y + Y, (float)Pts[3].z + Z);
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[5].x + X, (float)Pts[5].y + Y, (float)Pts[5].z + Z);
+//	glVertex3f((float)Pts[4].x + X, (float)Pts[4].y + Y, (float)Pts[4].z + Z);
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[6].x + X, (float)Pts[6].y + Y, (float)Pts[6].z + Z);
+//	glVertex3f((float)Pts[5].x + X, (float)Pts[5].y + Y, (float)Pts[5].z + Z);
+//	glEnd();
+//	glBegin(GL_POLYGON);
+//	glVertex3f((float)Pts[0].x + X, (float)Pts[0].y + Y, (float)Pts[0].z + Z);
+//	glVertex3f((float)Pts[1].x + X, (float)Pts[1].y + Y, (float)Pts[1].z + Z);
+//	glVertex3f((float)Pts[6].x + X, (float)Pts[6].y + Y, (float)Pts[6].z + Z);
+//	glEnd();
+	glLineWidth(2.0);
 }
 
-void cLink::OglDraw(int iDspFlgs,double dS1,double dS2)
+void eEdge::Serialize(CArchive& ar, int iV)
+{
+}
+
+void eEdge::RelTo(G_Object* pThis, ObjList* pList, int iType)
+{
+	if (iType==1)
+	{
+	  pList->AddEx(pVertex[0]);
+	  pList->AddEx(pVertex[1]);
+	}
+}
+
+C3dVector eEdge::Get_Centroid()
+{
+	C3dVector vT;
+	vT.Set(0, 0, 0);
+	int j = 0;
+	for (j = 0; j < 2; j++)
+	{
+		vT += pVertex[j]->Get_Centroid();
+	}
+	vT.x /= 2;
+	vT.y /= 2;
+	vT.z /= 2;
+	return (vT);
+}
+
+
+void eEdge::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
   OglDrawW(iDspFlgs,dS1,dS2);
 }
@@ -2859,41 +3307,41 @@ c2dFront::~c2dFront()
 	}
 }
 
-Pt_Object* c2dFront::isSegBet(int pL, int pH)
+Node* c2dFront::isSegBet(int pL, int pH)
 {
-	Pt_Object* oRet = NULL;
-	Pt_Object* pN;
-	pN = (Pt_Object*)fNodes->Head;
+	Node* oRet = NULL;
+	Node* pN;
+	pN = (Node*)fNodes->Head;
 	while (pN != NULL)
 	{
 		if (pL == pN->iColour)
 		{
 			if (pN->next->iColour != pH)
 			{
-				oRet = (Pt_Object*)pN->next;
+				oRet = (Node*)pN->next;
 				break;
 			}
 		}
-		pN = (Pt_Object*)pN->next;
+		pN = (Node*)pN->next;
 	}
 	return(oRet);
 }
 
 
-Pt_Object* c2dFront::GetNodeByGID(int iGID)
+Node* c2dFront::GetNodeByGID(int iGID)
 {
 	//node colour has been used to identify the GPLY ID
-	Pt_Object* oRet=NULL;
-	Pt_Object* pN;
-	pN = (Pt_Object*) fNodes->Head;
+	Node* oRet=NULL;
+	Node* pN;
+	pN = (Node*) fNodes->Head;
 	while (pN != NULL)
 	{
 		if (iGID == pN->iColour)
 		{
-			oRet = (Pt_Object*) pN;
+			oRet = (Node*) pN;
 			break;
 		}
-		pN = (Pt_Object*)pN->next;
+		pN = (Node*)pN->next;
 	}
 	return(oRet);
 }
@@ -2919,21 +3367,21 @@ void c2dFront::OglDraw(int iDspFlgs, double dS1, double dS2)
 
 
 
-cFaceList::cFaceList()
+eFaceList::eFaceList()
 {
 Head=NULL;
 pCur=NULL;
 iNo=0;
 }
 
-cFaceList::~cFaceList()
+eFaceList::~eFaceList()
 {
-cFace* pNext;
-cFace* p;
+eFace* pNext;
+eFace* p;
 p=Head;
 while (p!=NULL)
 { 
-  pNext=(cFace*) p->next;
+  pNext=(eFace*) p->next;
   delete (p);
   p=pNext;
 }
@@ -2941,10 +3389,10 @@ Head=NULL;
 pCur=NULL;
 }
 
-cFace* cFaceList::IsIn(cFace* inFace)
+eFace* eFaceList::IsIn(eFace* inFace)
 {
-cFace* pRet=NULL;
-cFace* pNext;
+eFace* pRet=NULL;
+eFace* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
@@ -2953,15 +3401,15 @@ while (pNext!=NULL)
     pRet=pNext;
 	break;
   }
-  pNext=(cFace*) pNext->next;
+  pNext=(eFace*) pNext->next;
 }
 return (pRet);
 }
 
-void cFaceList::Add(cFace* inFace)
+void eFaceList::Add(eFace* inFace)
 {
 
-cFace* ind;
+eFace* ind;
 ind=IsIn(inFace);
 if (ind==NULL)
 {
@@ -2977,7 +3425,7 @@ if (ind==NULL)
   {
     inFace->before=pCur;
     pCur->next=inFace;
-    pCur=(cFace*) inFace;
+    pCur=(eFace*) inFace;
     pCur->next=NULL;
     iNo++;
   }
@@ -2988,7 +3436,7 @@ else
 }
 }
 
-void cFaceList::Remove(cFace* inFace)
+void eFaceList::Remove(eFace* inFace)
 {
 
 if (inFace!=NULL)
@@ -3003,14 +3451,14 @@ if (inFace!=NULL)
   }
   else if (inFace->before==NULL)
   {
-	Head=(cFace*) inFace->next;
+	Head=(eFace*) inFace->next;
     Head->before=NULL;
 	delete(inFace);
     iNo--;
   }
   else if (inFace->next==NULL)
   {
-	pCur=(cFace*) inFace->before;
+	pCur=(eFace*) inFace->before;
     pCur->next=NULL;
 	delete(inFace);
     iNo--;
@@ -3018,43 +3466,43 @@ if (inFace!=NULL)
 }
 }
 
-void cFaceList::OglDraw(int iDspFlgs,double dS1,double dS2)
+void eFaceList::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
-cFace* pNext;
+eFace* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
   pNext->OglDraw(iDspFlgs,dS1,dS2);
-  pNext=(cFace*) pNext->next;
+  pNext=(eFace*) pNext->next;
 }
 }
 
-void cFaceList::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void eFaceList::OglDrawW(int iDspFlgs,double dS1,double dS2)
 {
-cFace* pNext;
+eFace* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
   pNext->OglDrawW(iDspFlgs,dS1,dS2);
-  pNext=(cFace*) pNext->next;
+  pNext=(eFace*) pNext->next;
 }
 }
 
-cLinkList::cLinkList()
+eEdgeList::eEdgeList()
 {
 Head=NULL;
 pCur=NULL;
 iNo=0;
 }
 
-cLinkList::~cLinkList()
+eEdgeList::~eEdgeList()
 {
-cLink* pNext;
-cLink* p;
+eEdge* pNext;
+eEdge* p;
 p=Head;
 while (p!=NULL)
 { 
-  pNext=(cLink*) p->next;
+  pNext=(eEdge*) p->next;
   delete (p);
   p=pNext;
 }
@@ -3062,10 +3510,10 @@ Head=NULL;
 pCur=NULL;
 }
 
-cLink* cLinkList::IsIn(cLink* inLink)
+eEdge* eEdgeList::IsIn(eEdge* inLink)
 {
-cLink* pRet=NULL;
-cLink* pNext;
+eEdge* pRet=NULL;
+eEdge* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
@@ -3074,12 +3522,12 @@ while (pNext!=NULL)
     pRet=pNext;
 	break;
   }
-  pNext=(cLink*) pNext->next;
+  pNext=(eEdge*) pNext->next;
 }
 return (pRet);
 }
 
-void cLinkList::AddGp(int iN, cLink* inLink[])
+void eEdgeList::AddGp(int iN, eEdge* inLink[])
 {
   int i;
   for (i=0;i<iN;i++)
@@ -3088,26 +3536,26 @@ void cLinkList::AddGp(int iN, cLink* inLink[])
   }
 }
 
-void cLinkList::Add(cLink* inLink)
+void eEdgeList::Add(eEdge* inLink)
 {
 
-cLink* ind;
+eEdge* ind;
 ind=IsIn(inLink);
 if (ind==NULL)
 {
   if (Head==NULL)
   {
     inLink->before=NULL;
-	  inLink->next=NULL;
+	inLink->next=NULL;
     Head=inLink;
     pCur=inLink;
-	  iNo++;
+	iNo++;
   }
   else
   {
     inLink->before=pCur;
     pCur->next=inLink;
-    pCur=(cLink*) inLink;
+    pCur=(eEdge*) inLink;
     pCur->next=NULL;
     iNo++;
   }
@@ -3118,9 +3566,37 @@ else
 }
 }
 
+void eEdgeList::AddIncOnly(eEdge* inLink)
+{
 
+	eEdge* ind;
+	ind = IsIn(inLink);
+	if (ind == NULL)
+	{
+		if (Head == NULL)
+		{
+			inLink->before = NULL;
+			inLink->next = NULL;
+			Head = inLink;
+			pCur = inLink;
+			iNo++;
+		}
+		else
+		{
+			inLink->before = pCur;
+			pCur->next = inLink;
+			pCur = (eEdge*)inLink;
+			pCur->next = NULL;
+			iNo++;
+		}
+	}
+	else
+	{
+		ind->iColour++;;
+	}
+}
 
-void cLinkList::Remove(cLink* inLink)
+void eEdgeList::Remove(eEdge* inLink)
 {
 if (inLink!=NULL)
 {
@@ -3141,14 +3617,14 @@ if (inLink!=NULL)
   }
   else if (inLink->before==NULL)
   {
-	  Head=(cLink*) inLink->next;
+	  Head=(eEdge*) inLink->next;
     Head->before=NULL;
 	  delete(inLink);
     iNo--;
   }
   else if (inLink->next==NULL)
   {
-	  pCur=(cLink*) inLink->before;
+	  pCur=(eEdge*) inLink->before;
     pCur->next=NULL;
 	  delete(inLink);
     iNo--;
@@ -3156,21 +3632,43 @@ if (inLink!=NULL)
 }
 }
 
-
-
-
-void cLinkList::OglDrawW(int iDspFlgs,double dS1,double dS2)
+void eEdgeList::Purge()
 {
-cLink* pNext;
+	eEdge* pNext;
+	eEdge* pDel;
+	pNext = Head;
+	while (pNext != NULL)
+	{
+		if (pNext->iColour == 1)
+		{
+			pDel = pNext;
+			pNext = (eEdge*)pNext->next;
+			Remove(pDel);
+		}
+		else
+		{
+			if (pNext->iColour > 1)
+				pNext->iColour = 50;
+			else
+				pNext->iColour = 120;
+			pNext = (eEdge*)pNext->next;
+		}
+	}
+}
+
+
+void eEdgeList::OglDrawW(int iDspFlgs,double dS1,double dS2)
+{
+eEdge* pNext;
 pNext=Head;
 while (pNext!=NULL)
 {
   pNext->OglDrawW(iDspFlgs,dS1,dS2);
-  pNext=(cLink*) pNext->next;
+  pNext=(eEdge*) pNext->next;
 }
 }
 
-void cLinkList::OglDraw(int iDspFlgs,double dS1,double dS2)
+void eEdgeList::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
 OglDrawW(iDspFlgs,dS1,dS2);
 }
@@ -3184,6 +3682,8 @@ OglDrawW(iDspFlgs,dS1,dS2);
 Link::Link()
 {
 pNext=NULL;
+p1 = NULL;
+p2 = NULL;
 }
 
 Link::Link(double x1, double y1, double z1,
@@ -3206,7 +3706,22 @@ if (p2!=NULL)
 pNext=NULL;
 }
 
-
+void Link::ExportDXF(FILE* pFile, int iLay)
+{
+	//fprintf(pFile, "%8i", pVertex[0]->iLabel);
+	fprintf(pFile, "LINE\n");						// write the LINE entity
+	fprintf(pFile, "8\n");							// write a line with value 8
+	fprintf(pFile, "%i\n", iLay);						// write the layer number
+	fprintf(pFile, "10\n");							// write a line with value 10
+	fprintf(pFile, "%g\n", p1->Pt_Point->x);		// write the x-coordinate of the first point
+	fprintf(pFile, "20\n");							// write a line with value 20
+	fprintf(pFile, "%g\n", p1->Pt_Point->y);		// write the y-coordinate of the first point
+	fprintf(pFile, "11\n");							// write a line with value 11
+	fprintf(pFile, "%g\n", p2->Pt_Point->x);		// write the x-coordinate of the second point
+	fprintf(pFile, "21\n");							// write a line with value 21
+	fprintf(pFile, "%g\n", p2->Pt_Point->y);		// write the y-coordinate of the second point
+	fprintf(pFile, "0\n");							// write a line with value 0
+}
 
 IMPLEMENT_DYNAMIC( Line_Object, CObject )
 
@@ -3224,7 +3739,7 @@ void Line_Object::Create(C3dVector* pInVertex1,C3dVector* pInVertex2, int iLab,G
 Drawn = 0;
 Selectable  = 1; 
 Visable  = 1;
-iColour = 3;
+iColour = 152;
 int i=0;
 iObjType = 2;
 iLabel = iLab;
@@ -3530,6 +4045,39 @@ void Curve::HighLight(CDC* pDC)
   ContrPolyW::Draw(pDC,4,0,1);
 }
 
+CString Curve::GetName()
+{
+	return ("Curve");
+}
+
+int Curve::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+
+	sVar[iNo] = "KNOT Vector";
+	iNo++;
+	return(iNo);
+}
+
+
+int Curve::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", 1);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void Curve::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+
+	//DefSys = atoi(sVar[0]);
+
+}
+
+
 IMPLEMENT_DYNAMIC( ContrPolyW, CObject )
 
 
@@ -3538,7 +4086,7 @@ ContrPolyW::ContrPolyW()
 Drawn = 0;
 Selectable  = 1; 
 Visable  = 1;
-iColour = 3;
+iColour = 152;
 iNoVerts = 0;
 iLabel = -1;
 iObjType = 6;
@@ -3552,7 +4100,7 @@ void ContrPolyW::Create(int iLab,G_Object* Parrent)
 Drawn = 0;
 Selectable  = 1; 
 Visable  = 1;
-iColour = 3;
+iColour = 152;
 iNoVerts = 0;
 iLabel = iLab;
 iObjType = 6;
@@ -3766,7 +4314,7 @@ double w;
 
 C3dVector pt;
 pt=GetPt(sw);
-Pt_Object* ThePoint = new Pt_Object;
+Node* ThePoint = new Node;
 ThePoint->Create(pt,1,0,0,11,0,0,NULL);
 ThePoint->Pt_Point->x = pt.x; 
 ThePoint->Pt_Point->y = pt.y;
@@ -3863,7 +4411,7 @@ double dDist = 0;
 double fred;
 C3dVector vDrawPt;
 C4dVector vWpt;
-Pt_Object ThePoint;
+Node ThePoint;
 ThePoint.Create(vDrawPt,0,0,0,11,0,0,NULL);
 for (iCnt1 = 1; iCnt1 < 21; iCnt1++)
 {
@@ -3946,7 +4494,7 @@ dE=1;
 Drawn = 0;
 Selectable  = 1; 
 Visable  = 1;
-iColour = 3;
+iColour = 152;
 iLabel = iLab;
 iObjType = 5;
 dRadius = dRad;
@@ -4530,7 +5078,7 @@ int iCnt1;
 double fred;
 C3dVector vDrawPt;
 C4dVector vWpt;
-Pt_Object ThePoint;
+Node ThePoint;
 ThePoint.Create(vDrawPt,0,0,0,11,0,0,NULL);
 vDrawPt = deCastelJau2(0,0.5).GetPoint();
 ThePoint.Pt_Point->x  = vDrawPt.x;
@@ -4662,7 +5210,7 @@ G_ObjectD Surf_Ex1::SelDist(CPoint InPT,Filter FIL)
 {
 double dSelD;
 G_ObjectD Ret;
-Pt_Object ThePoint;
+Node ThePoint;
 C3dVector vDrawPt;
 ThePoint.Create(vDrawPt,0,0,0,11,0,0,NULL);
 vDrawPt = deCastelJau2(0.5,0.5).GetPoint();
@@ -4890,7 +5438,7 @@ G_ObjectD Surf_R::SelDist(CPoint InPT,Filter FIL)
 {
 double dSelD;
 G_ObjectD Ret;
-Pt_Object ThePoint;
+Node ThePoint;
 C3dVector vDrawPt;
 ThePoint.Create(vDrawPt,0,0,0,11,0,0,NULL);
 vDrawPt = deCastelJau2(0.5,0.5).GetPoint();
@@ -4927,6 +5475,10 @@ return (vRetPt);
 
 IMPLEMENT_DYNAMIC( E_Object38, CObject )
 
+E_Object38::E_Object38()
+{
+	G_Object();
+}
 
 E_Object38::~E_Object38()
 {
@@ -4950,7 +5502,7 @@ void E_Object38::Info()
   outtext1(S1); 
 }
 
-void E_Object38::Create(Pt_Object* pInVertex[100], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr)
+void E_Object38::Create(Node* pInVertex[100], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -4964,7 +5516,7 @@ for (i=0;i<8;i++)
 
 void E_Object38::Reverse()
 {
-Pt_Object* pT[8];
+Node* pT[8];
 pT[0]=pVertex[0];
 pT[1]=pVertex[1];
 pT[2]=pVertex[2];
@@ -4988,66 +5540,66 @@ G_Object* E_Object38::GetNode(int i)
 return (pVertex[i]);
 }
 
-int E_Object38::GetLinkList(cLink* Links[12])
+int E_Object38::GetLinkList(eEdge* Links[12])
 {
-Links[0]=new cLink;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cLink;
+Links[1]=new eEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cLink;
+Links[2]=new eEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[3];
 Links[2]->iColour=iColour;
-Links[3]=new cLink;
+Links[3]=new eEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[3];
 Links[3]->pVertex[1]=pVertex[0];
 Links[3]->iColour=iColour;
 
-Links[4]=new cLink;
+Links[4]=new eEdge;
 Links[4]->pParent=this;
 Links[4]->pVertex[0]=pVertex[4];
 Links[4]->pVertex[1]=pVertex[5];
 Links[4]->iColour=iColour;
-Links[5]=new cLink;
+Links[5]=new eEdge;
 Links[5]->pParent=this;
 Links[5]->pVertex[0]=pVertex[5];
 Links[5]->pVertex[1]=pVertex[6];
 Links[5]->iColour=iColour;
-Links[6]=new cLink;
+Links[6]=new eEdge;
 Links[6]->pParent=this;
 Links[6]->pVertex[0]=pVertex[6];
 Links[6]->pVertex[1]=pVertex[7];
 Links[6]->iColour=iColour;
-Links[7]=new cLink;
+Links[7]=new eEdge;
 Links[7]->pParent=this;
 Links[7]->pVertex[0]=pVertex[7];
 Links[7]->pVertex[1]=pVertex[4];
 Links[7]->iColour=iColour;
 
-Links[8]=new cLink;
+Links[8]=new eEdge;
 Links[8]->pParent=this;
 Links[8]->pVertex[0]=pVertex[0];
 Links[8]->pVertex[1]=pVertex[4];
 Links[8]->iColour=iColour;
-Links[9]=new cLink;
+Links[9]=new eEdge;
 Links[9]->pParent=this;
 Links[9]->pVertex[0]=pVertex[1];
 Links[9]->pVertex[1]=pVertex[5];
 Links[9]->iColour=iColour;
-Links[10]=new cLink;
+Links[10]=new eEdge;
 Links[10]->pParent=this;
 Links[10]->pVertex[0]=pVertex[2];
 Links[10]->pVertex[1]=pVertex[6];
 Links[10]->iColour=iColour;
-Links[11]=new cLink;
+Links[11]=new eEdge;
 Links[11]->pParent=this;
 Links[11]->pVertex[0]=pVertex[3];
 Links[11]->pVertex[1]=pVertex[7];
@@ -5056,11 +5608,11 @@ Links[11]->iColour=iColour;
 return (12);
 }
 
-int E_Object38::GetfaceList(cFace* Faces[6])
+int E_Object38::GetfaceList(eFace* Faces[6])
 {
 int ic;
 ic=GetCol();
-Faces[0]=new cFace();
+Faces[0]=new eFace();
 Faces[0]->pParent=this;
 Faces[0]->pVertex[0]=pVertex[0];
 Faces[0]->pVertex[1]=pVertex[3];
@@ -5069,7 +5621,7 @@ Faces[0]->pVertex[3]=pVertex[1];
 Faces[0]->NoVert=4;
 Faces[0]->iColour=ic;
 
-Faces[1]=new cFace();
+Faces[1]=new eFace();
 Faces[1]->pParent=this;
 Faces[1]->pVertex[0]=pVertex[4];
 Faces[1]->pVertex[1]=pVertex[5];
@@ -5078,7 +5630,7 @@ Faces[1]->pVertex[3]=pVertex[7];
 Faces[1]->NoVert=4;
 Faces[1]->iColour=ic;
 
-Faces[2]=new cFace();
+Faces[2]=new eFace();
 Faces[2]->pParent=this;
 Faces[2]->pVertex[0]=pVertex[0];
 Faces[2]->pVertex[1]=pVertex[1];
@@ -5087,7 +5639,7 @@ Faces[2]->pVertex[3]=pVertex[4];
 Faces[2]->NoVert=4;
 Faces[2]->iColour=ic;
 
-Faces[3]=new cFace();
+Faces[3]=new eFace();
 Faces[3]->pParent=this;
 Faces[3]->pVertex[0]=pVertex[1];
 Faces[3]->pVertex[1]=pVertex[2];
@@ -5096,7 +5648,7 @@ Faces[3]->pVertex[3]=pVertex[5];
 Faces[3]->NoVert=4;
 Faces[3]->iColour=ic;
 
-Faces[4]=new cFace();
+Faces[4]=new eFace();
 Faces[4]->pParent=this;
 Faces[4]->pVertex[0]=pVertex[2];
 Faces[4]->pVertex[1]=pVertex[3];
@@ -5105,7 +5657,7 @@ Faces[4]->pVertex[3]=pVertex[6];
 Faces[4]->NoVert=4;
 Faces[4]->iColour=ic;
 
-Faces[5]=new cFace();
+Faces[5]=new eFace();
 Faces[5]->pParent=this;
 Faces[5]->pVertex[0]=pVertex[0];
 Faces[5]->pVertex[1]=pVertex[4];
@@ -5117,22 +5669,30 @@ Faces[5]->iColour=ic;
 return (6);
 }
 
-void E_Object38::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_Object38::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 
-BOOL E_Object38::NodeInEl(Pt_Object* pN)
+BOOL E_Object38::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 int i=0;
@@ -5146,6 +5706,7 @@ for (i=0;i<iNoNodes;i++)
 }
 return (brc);
 }
+
 
 void E_Object38::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 
@@ -5251,7 +5812,7 @@ gret->pResV = NULL;
 return (gret);
 }
 
-G_Object* E_Object38::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object38::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object38* gret = new E_Object38;
@@ -5321,7 +5882,7 @@ S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(1.0);
+glLineWidth(gEL_SIZE);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
@@ -5851,6 +6412,18 @@ double E_Object38::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   return(dTemp);
 }
 
+
+double E_Object38::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
 C3dVector E_Object38::Get_Centroid()
 {
 Mat fun;
@@ -6059,6 +6632,8 @@ CString E_Object38::GetName()
 int E_Object38::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat ID";
@@ -6087,6 +6662,9 @@ int E_Object38::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -6124,10 +6702,10 @@ int E_Object38::GetVarValues(CString sVar[])
 void E_Object38::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
 
-	Pt_Object* pN;
+	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -6140,14 +6718,15 @@ void E_Object38::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 			else
 				outtext1("Invalid Property");
 		}
-		int N1 = atoi(sVar[2]);
-		int N2 = atoi(sVar[3]);
-		int N3 = atoi(sVar[4]);
-		int N4 = atoi(sVar[5]);
-		int N5 = atoi(sVar[6]);
-		int N6 = atoi(sVar[7]);
-		int N7 = atoi(sVar[8]);
-		int N8 = atoi(sVar[9]);
+		iMatID = atoi(sVar[2]);
+		int N1 = atoi(sVar[3]);
+		int N2 = atoi(sVar[4]);
+		int N3 = atoi(sVar[5]);
+		int N4 = atoi(sVar[6]);
+		int N5 = atoi(sVar[7]);
+		int N6 = atoi(sVar[8]);
+		int N7 = atoi(sVar[9]);
+		int N8 = atoi(sVar[10]);
 		if (pVertex[0]->iLabel != N1)
 		{
 			pN = pMe->GetNode(N1);
@@ -6210,6 +6789,11 @@ void E_Object38::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 IMPLEMENT_DYNAMIC( E_Object36, CObject )
 
+E_Object36::E_Object36()
+{
+	G_Object();
+}
+
 E_Object36::~E_Object36()
 {
 pVertex[0]=NULL;
@@ -6220,7 +6804,7 @@ pVertex[4]=NULL;
 pVertex[5]=NULL;
 }
 
-void E_Object36::Create(Pt_Object* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_Object36::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -6233,7 +6817,7 @@ for (i=0;i<6;i++)
 
 void E_Object36::Reverse()
 {
-Pt_Object* pT[8];
+Node* pT[8];
 pT[0]=pVertex[0];
 pT[1]=pVertex[1];
 pT[2]=pVertex[2];
@@ -6248,21 +6832,29 @@ pVertex[4] = pT[5];
 pVertex[5] = pT[4];
 }
 
-void E_Object36::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_Object36::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
-BOOL E_Object36::NodeInEl(Pt_Object* pN)
+BOOL E_Object36::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 int i=0;
@@ -6371,7 +6963,7 @@ gret->pResV = NULL;
 return (gret);
 }
 
-G_Object* E_Object36::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object36::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object36* gret = new E_Object36;
@@ -6738,7 +7330,7 @@ S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(1.0);
+glLineWidth(gEL_SIZE);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
@@ -6881,6 +7473,19 @@ double E_Object36::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   return(dTemp);
 }
 
+double E_Object36::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
+
 C3dVector E_Object36::Get_Centroid()
 {
 Mat fun;
@@ -6930,62 +7535,62 @@ return (pVertex[i]);
 }
 
 
-int E_Object36::GetLinkList(cLink* Links[200])
+int E_Object36::GetLinkList(eEdge* Links[200])
 {
-Links[0]=new cLink;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cLink;
+Links[1]=new eEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cLink;
+Links[2]=new eEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[0];
 Links[2]->iColour=iColour;
-Links[3]=new cLink;
+Links[3]=new eEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[3];
 Links[3]->pVertex[1]=pVertex[4];
 Links[3]->iColour=iColour;
 
-Links[4]=new cLink;
+Links[4]=new eEdge;
 Links[4]->pParent=this;
 Links[4]->pVertex[0]=pVertex[4];
 Links[4]->pVertex[1]=pVertex[5];
 Links[4]->iColour=iColour;
-Links[5]=new cLink;
+Links[5]=new eEdge;
 Links[5]->pParent=this;
 Links[5]->pVertex[0]=pVertex[5];
 Links[5]->pVertex[1]=pVertex[3];
 Links[5]->iColour=iColour;
-Links[6]=new cLink;
+Links[6]=new eEdge;
 Links[6]->pParent=this;
 Links[6]->pVertex[0]=pVertex[0];
 Links[6]->pVertex[1]=pVertex[3];
 Links[6]->iColour=iColour;
-Links[7]=new cLink;
+Links[7]=new eEdge;
 Links[7]->pParent=this;
 Links[7]->pVertex[0]=pVertex[1];
 Links[7]->pVertex[1]=pVertex[4];
 Links[7]->iColour=iColour;
 
-Links[8]=new cLink;
+Links[8]=new eEdge;
 Links[8]->pParent=this;
 Links[8]->pVertex[0]=pVertex[2];
 Links[8]->pVertex[1]=pVertex[5];
 Links[8]->iColour=iColour;
 return (9);
 }
-int E_Object36::GetfaceList(cFace* Faces[6])
+int E_Object36::GetfaceList(eFace* Faces[6])
 {
 int ic;
 ic=GetCol();
-Faces[0]=new cFace();
+Faces[0]=new eFace();
 Faces[0]->pParent=this;
 Faces[0]->pVertex[0]=pVertex[0];
 Faces[0]->pVertex[1]=pVertex[1];
@@ -6993,7 +7598,7 @@ Faces[0]->pVertex[2]=pVertex[2];
 Faces[0]->NoVert=3;
 Faces[0]->iColour=ic;
 
-Faces[1]=new cFace();
+Faces[1]=new eFace();
 Faces[1]->pParent=this;
 Faces[1]->pVertex[0]=pVertex[3];
 Faces[1]->pVertex[1]=pVertex[4];
@@ -7001,7 +7606,7 @@ Faces[1]->pVertex[2]=pVertex[5];
 Faces[1]->NoVert=3;
 Faces[1]->iColour=ic;
 
-Faces[2]=new cFace();
+Faces[2]=new eFace();
 Faces[2]->pParent=this;
 Faces[2]->pVertex[0]=pVertex[1];
 Faces[2]->pVertex[1]=pVertex[2];
@@ -7010,7 +7615,7 @@ Faces[2]->pVertex[3]=pVertex[4];
 Faces[2]->NoVert=4;
 Faces[2]->iColour=ic;
 
-Faces[3]=new cFace();
+Faces[3]=new eFace();
 Faces[3]->pParent=this;
 Faces[3]->pVertex[0]=pVertex[0];
 Faces[3]->pVertex[1]=pVertex[3];
@@ -7019,7 +7624,7 @@ Faces[3]->pVertex[3]=pVertex[2];
 Faces[3]->NoVert=4;
 Faces[3]->iColour=ic;
 
-Faces[4]=new cFace();
+Faces[4]=new eFace();
 Faces[4]->pParent=this;
 Faces[4]->pVertex[0]=pVertex[0];
 Faces[4]->pVertex[1]=pVertex[1];
@@ -7204,6 +7809,8 @@ CString E_Object36::GetName()
 int E_Object36::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat ID";
@@ -7228,6 +7835,9 @@ int E_Object36::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -7258,10 +7868,10 @@ int E_Object36::GetVarValues(CString sVar[])
 
 void E_Object36::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
-	Pt_Object* pN;
+	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -7276,13 +7886,13 @@ void E_Object36::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 		}
 
 	}
-
-	int N1 = atoi(sVar[2]);
-	int N2 = atoi(sVar[3]);
-	int N3 = atoi(sVar[4]);
-	int N4 = atoi(sVar[5]);
-	int N5 = atoi(sVar[6]);
-	int N6 = atoi(sVar[7]);
+	iMatID = atoi(sVar[2]);
+	int N1 = atoi(sVar[3]);
+	int N2 = atoi(sVar[4]);
+	int N3 = atoi(sVar[5]);
+	int N4 = atoi(sVar[6]);
+	int N5 = atoi(sVar[7]);
+	int N6 = atoi(sVar[8]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -7330,6 +7940,11 @@ void E_Object36::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 IMPLEMENT_DYNAMIC( E_Object34, CObject )
 
+E_Object34::E_Object34()
+{
+	G_Object();
+}
+
 E_Object34::~E_Object34()
 {
 pVertex[0]=NULL;
@@ -7346,7 +7961,7 @@ void E_Object34::Info()
   outtext1(S1); 
 }
 
-void E_Object34::Create(Pt_Object* pInVertex[100], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr)
+void E_Object34::Create(Node* pInVertex[100], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -7464,6 +8079,19 @@ double E_Object34::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   return(dTemp);
 }
 
+
+double E_Object34::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
 double E_Object34::TetCollapse()
 {
   double c0;
@@ -7573,7 +8201,7 @@ return (dMax);
 
 void E_Object34::Reverse()
 {
-Pt_Object* pT[8];
+Node* pT[8];
 pT[0]=pVertex[0];
 pT[1]=pVertex[1];
 pT[2]=pVertex[2];
@@ -7585,7 +8213,7 @@ pVertex[3] = pT[3];
 }
 
 
-BOOL E_Object34::NodeInEl(Pt_Object* pN)
+BOOL E_Object34::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 int i=0;
@@ -7600,18 +8228,25 @@ for (i=0;i<iNoNodes;i++)
 return (brc);
 }
 
-void E_Object34::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_Object34::RepNodeInEl(Node* pThis,Node* pWith)
 {
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 G_Object* E_Object34::Copy(G_Object* Parrent)
@@ -7668,7 +8303,7 @@ return (gret);
 }
 
 
-G_Object* E_Object34::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object34::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object34* gret = new E_Object34;
@@ -7720,34 +8355,34 @@ void E_Object34::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 	}
 }
 
-int E_Object34::GetLinkList(cLink* Links[200])
+int E_Object34::GetLinkList(eEdge* Links[200])
 {
-Links[0]=new cLink;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cLink;
+Links[1]=new eEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cLink;
+Links[2]=new eEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[0];
 Links[2]->iColour=iColour;
-Links[3]=new cLink;
+Links[3]=new eEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[0];
 Links[3]->pVertex[1]=pVertex[3];
 Links[3]->iColour=iColour;
-Links[4]=new cLink;
+Links[4]=new eEdge;
 Links[4]->pParent=this;
 Links[4]->pVertex[0]=pVertex[1];
 Links[4]->pVertex[1]=pVertex[3];
 Links[4]->iColour=iColour;
-Links[5]=new cLink;
+Links[5]=new eEdge;
 Links[5]->pParent=this;
 Links[5]->pVertex[0]=pVertex[2];
 Links[5]->pVertex[1]=pVertex[3];
@@ -7793,7 +8428,7 @@ S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(1.0);
+glLineWidth(gEL_SIZE);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
@@ -8131,11 +8766,11 @@ C3dVector E_Object34::GetNodalCoords(int i)
 	return (v);
 }
 
-int E_Object34::GetfaceList(cFace* Faces[6])
+int E_Object34::GetfaceList(eFace* Faces[6])
 {
 int ic;
 ic=GetCol();
-Faces[0]=new cFace();
+Faces[0]=new eFace();
 Faces[0]->pParent=this;
 Faces[0]->pVertex[0]=pVertex[0];
 Faces[0]->pVertex[1]=pVertex[2];
@@ -8143,7 +8778,7 @@ Faces[0]->pVertex[2]=pVertex[1];
 Faces[0]->NoVert=3;
 Faces[0]->iColour=iColour;
 
-Faces[1]=new cFace();
+Faces[1]=new eFace();
 Faces[1]->pParent=this;
 Faces[1]->pVertex[0]=pVertex[0];
 Faces[1]->pVertex[1]=pVertex[1];
@@ -8151,7 +8786,7 @@ Faces[1]->pVertex[2]=pVertex[3];
 Faces[1]->NoVert=3;
 Faces[1]->iColour=iColour;
 
-Faces[2]=new cFace;
+Faces[2]=new eFace;
 Faces[2]->pParent=this;
 Faces[2]->pVertex[0]=pVertex[1];
 Faces[2]->pVertex[1]=pVertex[2];
@@ -8159,7 +8794,7 @@ Faces[2]->pVertex[2]=pVertex[3];
 Faces[2]->NoVert=3;
 Faces[2]->iColour=iColour;
 
-Faces[3]=new cFace;
+Faces[3]=new eFace;
 Faces[3]->pParent=this;
 Faces[3]->pVertex[0]=pVertex[0];
 Faces[3]->pVertex[1]=pVertex[3];
@@ -8409,6 +9044,8 @@ CString E_Object34::GetName()
 int E_Object34::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat ID";
@@ -8429,6 +9066,9 @@ int E_Object34::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -8454,10 +9094,10 @@ int E_Object34::GetVarValues(CString sVar[])
 void E_Object34::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
 
-	Pt_Object* pN;
+	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -8472,11 +9112,11 @@ void E_Object34::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 		}
 
 	}
-
-	int N1 = atoi(sVar[2]);
-	int N2 = atoi(sVar[3]);
-	int N3 = atoi(sVar[4]);
-	int N4 = atoi(sVar[5]);
+	iMatID = atoi(sVar[2]);
+	int N1 = atoi(sVar[3]);
+	int N2 = atoi(sVar[4]);
+	int N3 = atoi(sVar[5]);
+	int N4 = atoi(sVar[6]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -8506,6 +9146,1359 @@ void E_Object34::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 
 	}
 }
+
+
+//----------------------------------------------------------------------------
+//    E L E M E N T   O B J E C T
+//----------------------------------------------------------------------------
+
+IMPLEMENT_DYNAMIC(E_Object310, CObject)
+E_Object310::E_Object310()
+{
+	G_Object();
+}
+
+E_Object310::~E_Object310()
+{
+	pVertex[0] = NULL;
+	pVertex[1] = NULL;
+	pVertex[2] = NULL;
+	pVertex[3] = NULL;
+	pVertex[4] = NULL;
+	pVertex[5] = NULL;
+	pVertex[6] = NULL;
+	pVertex[7] = NULL;
+	pVertex[8] = NULL;
+	pVertex[9] = NULL;
+}
+
+void E_Object310::Info()
+{
+	char S1[80];
+	E_Object::Info();
+	sprintf_s(S1, "PRINARY NODES %i %i %i %i", pVertex[0]->iLabel, pVertex[1]->iLabel, pVertex[2]->iLabel, pVertex[3]->iLabel);
+	outtext1(S1);
+}
+
+void E_Object310::Create(Node* pInVertex[100], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr)
+{
+	E_Object::Create(iLab, iCol, iType, iPID, iMat, iNo, Parrent, inPr);
+	int i = 0;
+	for (i = 0; i < 10; i++)
+	{
+		pVertex[i] = pInVertex[i];
+	}
+
+}
+
+//Tetrahedron collapse calculation quality check
+//min all combiations of (h*1.24/A) altairs definition
+//http://www.altairuniversity.com/wp-content/uploads/2014/02/elemquality.pdf
+double E_Object310::height(int n1, int n2, int n3, int p)
+{
+	C3dVector v1;
+	C3dVector v2;
+	C3dVector v3;
+	C3dVector v;
+	C3dVector w;
+	C3dVector n;
+	C3dVector vPt;
+	double a;
+	//Nornal to plain
+	v1 = this->pVertex[n1]->Get_Centroid();
+	v2 = this->pVertex[n2]->Get_Centroid();
+	v3 = this->pVertex[n3]->Get_Centroid();
+	vPt = this->pVertex[p]->Get_Centroid();
+	v = v2 - v1;
+	w = v3 - v1;
+	n = v.Cross(w);
+	n.Normalize();
+	vPt -= v1;
+	a = abs(n.Dot(vPt));
+	return (a);
+}
+
+double E_Object310::longEdge()
+{
+	C3dVector v0;
+	C3dVector v1;
+	C3dVector v2;
+	C3dVector v3;
+	C3dVector w;
+	double a;
+	double dLen;
+	v0 = this->pVertex[0]->Get_Centroid();
+	v1 = this->pVertex[1]->Get_Centroid();
+	v2 = this->pVertex[2]->Get_Centroid();
+	v3 = this->pVertex[3]->Get_Centroid();
+	a = (v0 - v1).Mag();
+	dLen = a;
+	a = (v1 - v2).Mag();
+	if (a > dLen)
+		dLen = a;
+	a = (v2 - v0).Mag();
+	if (a > dLen)
+		dLen = a;
+
+	a = (v1 - v3).Mag();
+	if (a > dLen)
+		dLen = a;
+	a = (v2 - v3).Mag();
+	if (a > dLen)
+		dLen = a;
+	a = (v0 - v3).Mag();
+	if (a > dLen)
+		dLen = a;
+
+	return (a);
+}
+
+double E_Object310::area(int n1, int n2, int n3)
+{
+	C3dVector v1;
+	C3dVector v2;
+	C3dVector v3;
+	C3dVector v;
+	C3dVector w;
+	double a;
+	v1 = this->pVertex[n1]->Get_Centroid();
+	v2 = this->pVertex[n2]->Get_Centroid();
+	v3 = this->pVertex[n3]->Get_Centroid();
+	v = v2 - v1;
+	w = v3 - v1;
+	a = (v.Cross(w).Mag()) * 0.5;
+	return (a);
+}
+
+double E_Object310::GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp)
+{
+	double dTemp = 0;
+	double T = 0;
+	int iDOFID;
+	int j;
+	Mat fun;
+	Mat FunPnt(1, 4);
+	*FunPnt.mn(1, 1) = 0.25;
+	*FunPnt.mn(1, 2) = 0.25;
+	*FunPnt.mn(1, 3) = 0.25;
+	*FunPnt.mn(1, 4) = 0.25;   //redundanta 
+	fun = this->ShapeFun(FunPnt, 1);
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		T = 0;;
+		iDOFID = this->pVertex[j]->dof[iDof];
+		if (iDOFID > 0)
+		{
+			T = *Disp.nn(iDOFID);
+		}
+		dTemp += T * *fun.mn(1, j + 1);
+	}
+	fun.clear();
+	FunPnt.clear();
+	return(dTemp);
+}
+
+double E_Object310::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
+
+double E_Object310::TetCollapse()
+{
+	double c0;
+	double c1;
+	double c2;
+	double c3;
+	double dm;
+
+	c0 = height(0, 1, 2, 3);
+	c1 = height(1, 2, 3, 0);
+	c2 = height(0, 2, 3, 1);
+	c3 = height(0, 1, 3, 2);
+	dm = c0;
+	if (c0 < dm)
+		dm = c0;
+	if (c1 < dm)
+		dm = c1;
+	if (c2 < dm)
+		dm = c2;
+	if (c3 < dm)
+		dm = c3;
+
+	dm = (dm * 1.2247) / longEdge();
+
+	return (dm);
+}
+
+
+
+void E_Object310::GetBoundingBox(C3dVector& vll, C3dVector& vur)
+{
+	int i = 0;
+	vll.x = pVertex[i]->Pt_Point->x; vll.y = pVertex[i]->Pt_Point->y; vll.z = pVertex[i]->Pt_Point->z;
+	for (i = 0; i < 4; i++)
+	{
+		if (pVertex[i]->Pt_Point->x < vll.x)
+			vll.x = pVertex[i]->Pt_Point->x;
+		if (pVertex[i]->Pt_Point->x > vur.x)
+			vur.x = pVertex[i]->Pt_Point->x;
+
+		if (pVertex[i]->Pt_Point->y < vll.y)
+			vll.y = pVertex[i]->Pt_Point->y;
+		if (pVertex[i]->Pt_Point->y > vur.y)
+			vur.y = pVertex[i]->Pt_Point->y;
+
+		if (pVertex[i]->Pt_Point->z < vll.z)
+			vll.z = pVertex[i]->Pt_Point->z;
+		if (pVertex[i]->Pt_Point->z > vur.z)
+			vur.z = pVertex[i]->Pt_Point->z;
+	}
+}
+
+double E_Object310::GetTETHeight(C3dVector vFCent)
+{
+	double dS;
+	C3dVector v1;
+	C3dVector v2;
+	C3dVector A;
+	C3dVector B;
+	C3dVector H;
+	A = this->pVertex[1]->Get_Centroid();
+	v2 = this->pVertex[0]->Get_Centroid();
+	A -= v2;
+	A.Normalize();
+	B = this->pVertex[1]->Get_Centroid();
+	v2 = this->pVertex[2]->Get_Centroid();
+	B -= v2;
+	B.Normalize();
+	H = B.Cross(A);
+	H.Normalize();
+
+	B = this->pVertex[3]->Get_Centroid();
+	B -= vFCent;
+	dS = B.Dot(H);
+	return (dS);
+}
+
+double E_Object310::GetCharSize()
+{
+	double dS;
+	double dMax;
+
+	C3dVector vT;
+	C3dVector vT2;
+	vT = pVertex[3]->Pt_Point;
+	vT2 = pVertex[0]->Pt_Point;
+	vT -= vT2;
+	dS = vT.Mag();
+	dMax = dS;
+	vT = pVertex[3]->Pt_Point;
+	vT2 = pVertex[1]->Pt_Point;
+	vT -= vT2;
+	dS = vT.Mag();
+	if (dS > dMax)
+		dMax = dS;
+	vT = pVertex[3]->Pt_Point;
+	vT2 = pVertex[2]->Pt_Point;
+	vT -= vT2;
+	dS = vT.Mag();
+	if (dS > dMax)
+		dMax = dS;
+
+
+	//dS=(pVertex[0]->Pt_Point-pVertex[1]->Pt_Point)->Mag();
+	return (dMax);
+}
+
+//GHANGE THIS
+void E_Object310::Reverse()
+{
+	Node* pT[8];
+	pT[0] = pVertex[0];
+	pT[1] = pVertex[1];
+	pT[2] = pVertex[2];
+	pT[3] = pVertex[3];
+	pVertex[0] = pT[0];
+	pVertex[1] = pT[2];
+	pVertex[2] = pT[1];
+	pVertex[3] = pT[3];
+}
+
+
+BOOL E_Object310::NodeInEl(Node* pN)
+{
+	BOOL brc = FALSE;
+	int i = 0;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pN)
+		{
+			brc = TRUE;
+			break;
+		}
+	}
+	return (brc);
+}
+
+void E_Object310::RepNodeInEl(Node* pThis, Node* pWith)
+{
+
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
+}
+
+G_Object* E_Object310::Copy(G_Object* Parrent)
+{
+	ME_Object* MESH = (ME_Object*)Parrent;
+	E_Object310* gret = new E_Object310;
+	gret->iObjType = iObjType;
+	gret->iLabel = iLabel;
+	gret->iColour = iColour;
+	gret->Drawn = Drawn;
+	gret->Selectable = Selectable;
+	gret->Visable = Visable;
+	gret->PID = PID;
+	gret->PIDunv = PIDunv;
+	gret->iType = iType;
+	gret->iMatID = iMatID;
+	gret->iNoNodes = iNoNodes;
+	gret->pVertex[0] = MESH->GetNode(pVertex[0]->iLabel);
+	gret->pVertex[1] = MESH->GetNode(pVertex[1]->iLabel);
+	gret->pVertex[2] = MESH->GetNode(pVertex[2]->iLabel);
+	gret->pVertex[3] = MESH->GetNode(pVertex[3]->iLabel);
+	gret->pVertex[4] = MESH->GetNode(pVertex[4]->iLabel);
+	gret->pVertex[5] = MESH->GetNode(pVertex[5]->iLabel);
+	gret->pVertex[6] = MESH->GetNode(pVertex[6]->iLabel);
+	gret->pVertex[7] = MESH->GetNode(pVertex[7]->iLabel);
+	gret->pVertex[8] = MESH->GetNode(pVertex[8]->iLabel);
+	gret->pVertex[9] = MESH->GetNode(pVertex[9]->iLabel);
+	gret->pPr = pPr;
+	gret->pParent = MESH;
+	gret->pResV = NULL;
+	return (gret);
+}
+
+G_Object* E_Object310::CopyAppend(int iSInd, ME_Object* Target, ME_Object* Source)
+{
+	int EInd;
+	E_Object310* gret = new E_Object310;
+	gret->iObjType = iObjType;
+	gret->iLabel = iLabel;
+	gret->iColour = iColour;
+	gret->Drawn = Drawn;
+	gret->Selectable = Selectable;
+	gret->Visable = Visable;
+	gret->PID = PID;
+	gret->PIDunv = PIDunv;
+	gret->iType = iType;
+	gret->iMatID = iMatID;
+	gret->iNoNodes = iNoNodes;
+	EInd = Source->GetNodeInd(pVertex[0]);
+	gret->pVertex[0] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[1]);
+	gret->pVertex[1] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[2]);
+	gret->pVertex[2] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[3]);
+	gret->pVertex[3] = Target->pNodes[EInd + iSInd];
+
+	EInd = Source->GetNodeInd(pVertex[4]);
+	gret->pVertex[4] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[5]);
+	gret->pVertex[5] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[6]);
+	gret->pVertex[6] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[7]);
+	gret->pVertex[7] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[8]);
+	gret->pVertex[8] = Target->pNodes[EInd + iSInd];
+	EInd = Source->GetNodeInd(pVertex[9]);
+	gret->pVertex[9] = Target->pNodes[EInd + iSInd];
+	gret->pParent = Target;
+	gret->pResV = NULL;
+	return (gret);
+}
+
+
+G_Object* E_Object310::Copy2(G_Object* Parrent, Node* pInVertex[MaxSelNodes], int inPID, int inMID, int inPIDunv)
+{
+	ME_Object* MESH = (ME_Object*)Parrent;
+	E_Object310* gret = new E_Object310;
+	gret->iObjType = iObjType;
+	gret->iLabel = iLabel;
+	gret->iColour = iColour;
+	gret->Drawn = Drawn;
+	gret->Selectable = Selectable;
+	gret->Visable = Visable;
+	gret->PID = inPID;
+	gret->PIDunv = inPIDunv;
+	gret->iType = iType;
+	gret->iMatID = inMID;
+	gret->iNoNodes = iNoNodes;
+	gret->pVertex[0] = pInVertex[0];
+	gret->pVertex[1] = pInVertex[1];
+	gret->pVertex[2] = pInVertex[2];
+	gret->pVertex[3] = pInVertex[3];
+	gret->pVertex[4] = pInVertex[4];
+	gret->pVertex[5] = pInVertex[5];
+	gret->pVertex[6] = pInVertex[6];
+	gret->pVertex[7] = pInVertex[7];
+	gret->pVertex[8] = pInVertex[8];
+	gret->pVertex[9] = pInVertex[9];
+	gret->pPr = pPr;
+	gret->pParent = Parrent;
+	gret->pResV = NULL;
+	return (gret);
+}
+
+void E_Object310::Serialize(CArchive& ar, int iV, ME_Object* MESH)
+
+{
+	int iNd;
+	if (ar.IsStoring())
+	{
+		// TODO: add storing code here
+		E_Object::Serialize(ar, iV, MESH);
+		ar << pVertex[0]->iLabel;
+		ar << pVertex[1]->iLabel;
+		ar << pVertex[2]->iLabel;
+		ar << pVertex[3]->iLabel;
+		ar << pVertex[4]->iLabel;
+		ar << pVertex[5]->iLabel;
+		ar << pVertex[6]->iLabel;
+		ar << pVertex[7]->iLabel;
+		ar << pVertex[8]->iLabel;
+		ar << pVertex[9]->iLabel;
+	}
+	else
+	{
+		E_Object::Serialize(ar, iV, MESH);
+		ar >> iNd;
+		pVertex[0] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[1] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[2] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[3] = MESH->GetNode(iNd);
+
+		ar >> iNd;
+		pVertex[4] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[5] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[6] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[7] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[8] = MESH->GetNode(iNd);
+		ar >> iNd;
+		pVertex[9] = MESH->GetNode(iNd);
+	}
+}
+
+int E_Object310::GetLinkList(eEdge* Links[200])
+{
+	Links[0] = new eEdge;
+	Links[0]->pParent = this;
+	Links[0]->pVertex[0] = pVertex[0];
+	Links[0]->pVertex[1] = pVertex[1];
+	Links[0]->iColour = iColour;
+	Links[1] = new eEdge;
+	Links[1]->pParent = this;
+	Links[1]->pVertex[0] = pVertex[1];
+	Links[1]->pVertex[1] = pVertex[2];
+	Links[1]->iColour = iColour;
+	Links[2] = new eEdge;
+	Links[2]->pParent = this;
+	Links[2]->pVertex[0] = pVertex[2];
+	Links[2]->pVertex[1] = pVertex[0];
+	Links[2]->iColour = iColour;
+	Links[3] = new eEdge;
+	Links[3]->pParent = this;
+	Links[3]->pVertex[0] = pVertex[0];
+	Links[3]->pVertex[1] = pVertex[3];
+	Links[3]->iColour = iColour;
+	Links[4] = new eEdge;
+	Links[4]->pParent = this;
+	Links[4]->pVertex[0] = pVertex[1];
+	Links[4]->pVertex[1] = pVertex[3];
+	Links[4]->iColour = iColour;
+	Links[5] = new eEdge;
+	Links[5]->pParent = this;
+	Links[5]->pVertex[0] = pVertex[2];
+	Links[5]->pVertex[1] = pVertex[3];
+	Links[5]->iColour = iColour;
+	return (6);
+}
+
+
+
+// Draw Object line
+void E_Object310::Draw(CDC* pDC, int iDrawmode)
+{
+
+	pDC->MoveTo((int)pVertex[0]->DSP_Point->x, (int)pVertex[0]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[1]->DSP_Point->x, (int)pVertex[1]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[2]->DSP_Point->x, (int)pVertex[2]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[0]->DSP_Point->x, (int)pVertex[0]->DSP_Point->y);
+
+
+	pDC->LineTo((int)pVertex[3]->DSP_Point->x, (int)pVertex[3]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[2]->DSP_Point->x, (int)pVertex[2]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[0]->DSP_Point->x, (int)pVertex[0]->DSP_Point->y);
+
+	pDC->MoveTo((int)pVertex[1]->DSP_Point->x, (int)pVertex[1]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[3]->DSP_Point->x, (int)pVertex[3]->DSP_Point->y);
+	pDC->MoveTo((int)pVertex[2]->DSP_Point->x, (int)pVertex[2]->DSP_Point->y);
+	pDC->LineTo((int)pVertex[1]->DSP_Point->x, (int)pVertex[1]->DSP_Point->y);
+
+}
+
+void E_Object310::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	char sLab[20];
+	C3dVector d[10];
+	int i;
+	int ind;
+
+	for (i = 0; i < 10; i++)
+	{
+		d[i].x = 0; d[i].y = 0; d[i].z = 0;
+	}
+	ME_Object* ME = (ME_Object*)this->pParent;
+	double S;
+	S = ME->dScale;
+	double dFS;
+	dFS = ME->dResFactor;
+	ind = ME->iCVar;
+	glLineWidth(gEL_SIZE);
+	if ((iDspFlgs & DSP_ELEMENTS) > 0)
+	{
+		if ((iDspFlgs & DSP_RESDEF) == 0)
+		{
+			for (i = 0; i < 10; i++)
+			{
+				if (pVertex[i]->pResD != NULL)
+				{
+					d[i] = pVertex[i]->pResD->GetVec();
+					d[i] -= ME->vRelDispOff;
+					d[i] *= S * dFS;
+				}
+			}
+		}
+		Selectable = 1;
+		if ((iDspFlgs & DSP_LINE) > 0)
+		{
+			glColor3fv(cols[iColour]);
+		}
+		else
+		{
+			glColor3fv(cols[0]);
+		}
+		glBegin(GL_LINES);
+		glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+		glVertex3f((float)(pVertex[4]->Pt_Point->x + d[4].x), (float)(pVertex[4]->Pt_Point->y + d[4].y), (float)(pVertex[4]->Pt_Point->z + d[4].z));
+
+		glVertex3f((float)(pVertex[4]->Pt_Point->x + d[4].x), (float)(pVertex[4]->Pt_Point->y + d[4].y), (float)(pVertex[4]->Pt_Point->z + d[4].z));
+		glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+
+		glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+		glVertex3f((float)(pVertex[5]->Pt_Point->x + d[5].x), (float)(pVertex[5]->Pt_Point->y + d[5].y), (float)(pVertex[5]->Pt_Point->z + d[5].z));
+
+		glVertex3f((float)(pVertex[5]->Pt_Point->x + d[5].x), (float)(pVertex[5]->Pt_Point->y + d[5].y), (float)(pVertex[5]->Pt_Point->z + d[5].z));
+		glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+
+		glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+		glVertex3f((float)(pVertex[6]->Pt_Point->x + d[6].x), (float)(pVertex[6]->Pt_Point->y + d[6].y), (float)(pVertex[6]->Pt_Point->z + d[6].z));
+
+		glVertex3f((float)(pVertex[6]->Pt_Point->x + d[6].x), (float)(pVertex[6]->Pt_Point->y + d[6].y), (float)(pVertex[6]->Pt_Point->z + d[6].z));
+		glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+
+		glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+		glVertex3f((float)(pVertex[7]->Pt_Point->x + d[7].x), (float)(pVertex[7]->Pt_Point->y + d[7].y), (float)(pVertex[7]->Pt_Point->z + d[7].z));
+
+		glVertex3f((float)(pVertex[7]->Pt_Point->x + d[7].x), (float)(pVertex[7]->Pt_Point->y + d[7].y), (float)(pVertex[7]->Pt_Point->z + d[7].z));
+		glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+
+		glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+		glVertex3f((float)(pVertex[8]->Pt_Point->x + d[8].x), (float)(pVertex[8]->Pt_Point->y + d[8].y), (float)(pVertex[8]->Pt_Point->z + d[8].z));
+
+		glVertex3f((float)(pVertex[8]->Pt_Point->x + d[8].x), (float)(pVertex[8]->Pt_Point->y + d[8].y), (float)(pVertex[8]->Pt_Point->z + d[8].z));
+		glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+
+		glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+		glVertex3f((float)(pVertex[9]->Pt_Point->x + d[9].x), (float)(pVertex[9]->Pt_Point->y + d[9].y), (float)(pVertex[9]->Pt_Point->z + d[9].z));
+
+		glVertex3f((float)(pVertex[9]->Pt_Point->x + d[9].x), (float)(pVertex[9]->Pt_Point->y + d[9].y), (float)(pVertex[9]->Pt_Point->z + d[9].z));
+		glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+
+
+		glEnd();
+		C3dVector vCent;
+		vCent = Get_Centroid();
+		if (bDrawLab == TRUE)
+		{
+			sprintf_s(sLab, "E%i", iLabel);
+			OglString(iDspFlgs, vCent.x, vCent.y, vCent.z, &sLab[0]);
+		}
+		if (((iDspFlgs & DSP_RESLAB) == 0) && (pResV != NULL))
+		{
+			sprintf_s(sLab, "%f", *pResV->GetAddress(ind));
+			OglString(iDspFlgs, vCent.x, vCent.y, vCent.z, &sLab[0]);
+		}
+		if ((iDspFlgs & DSP_ELSYS) == 0)
+		{
+			C3dMatrix mS = GetElSys();
+			C3dVector vC = Get_Centroid();
+			mS.Transpose();
+			C3dVector vX = mS.GetColVec(1);
+			C3dVector vY = mS.GetColVec(2);;
+			C3dVector vZ = mS.GetColVec(3);;
+
+			vX *= 0.5 * dS1; vY *= 0.5 * dS1; vZ *= 0.5 * dS1;
+			vX += vC; vY += vC; vZ += vC;
+
+			glBegin(GL_LINES);
+			glVertex3f((float)vC.x, (float)vC.y, (float)vC.z);
+			glVertex3f((float)vX.x, (float)vX.y, (float)vX.z);
+			glVertex3f((float)vC.x, (float)vC.y, (float)vC.z);
+			glVertex3f((float)vY.x, (float)vY.y, (float)vY.z);
+			glVertex3f((float)vC.x, (float)vC.y, (float)vC.z);
+			glVertex3f((float)vZ.x, (float)vZ.y, (float)vZ.z);
+			glEnd();
+			glRasterPos3f((float)vX.x, (float)vX.y, (float)vX.z);
+			glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPX);
+			glRasterPos3f((float)vY.x, (float)vY.y, (float)vY.z);
+			glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPY);
+			glRasterPos3f((float)vZ.x, (float)vZ.y, (float)vZ.z);
+			glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPZ);
+		}
+	}
+	else
+	{
+		Selectable = 0;
+	}
+}
+
+
+void E_Object310::OglDraw(int iDspFlgs, double dS1, double dS2)
+{
+	C3dVector d[10];
+	int i;
+	for (i = 0; i < 10; i++)
+	{
+		d[i].x = 0; d[i].y = 0; d[i].z = 0;
+	}
+	ME_Object* ME = (ME_Object*)this->pParent;
+	double S;
+	S = ME->dScale;
+	double dFS;
+	dFS = ME->dResFactor;
+	glLineWidth(2);
+	float fCols[10] = { 0,0,0,0,0,0,0,0,0,0};
+	BOOL bD = FALSE;
+	int iVar;
+	iVar = ME->iCVar;
+	//Nodal data
+	if ((pVertex[0]->pResV != NULL) &&
+		(pVertex[1]->pResV != NULL) &&
+		(pVertex[2]->pResV != NULL) &&
+		(pVertex[3]->pResV != NULL) &&
+		(pVertex[4]->pResV != NULL) &&
+		(pVertex[5]->pResV != NULL) &&
+		(pVertex[6]->pResV != NULL) &&
+		(pVertex[7]->pResV != NULL) &&
+		(pVertex[8]->pResV != NULL) &&
+		(pVertex[9]->pResV != NULL))
+	{
+		bD = TRUE;
+		fCols[0] = GetContourCol(*pVertex[0]->pResV->GetAddress(iVar) * dFS);
+		fCols[1] = GetContourCol(*pVertex[1]->pResV->GetAddress(iVar) * dFS);
+		fCols[2] = GetContourCol(*pVertex[2]->pResV->GetAddress(iVar) * dFS);
+		fCols[3] = GetContourCol(*pVertex[3]->pResV->GetAddress(iVar) * dFS);
+		fCols[4] = GetContourCol(*pVertex[4]->pResV->GetAddress(iVar) * dFS);
+		fCols[5] = GetContourCol(*pVertex[5]->pResV->GetAddress(iVar) * dFS);
+		fCols[6] = GetContourCol(*pVertex[6]->pResV->GetAddress(iVar) * dFS);
+		fCols[7] = GetContourCol(*pVertex[7]->pResV->GetAddress(iVar) * dFS);
+		fCols[8] = GetContourCol(*pVertex[8]->pResV->GetAddress(iVar) * dFS);
+		fCols[9] = GetContourCol(*pVertex[9]->pResV->GetAddress(iVar) * dFS);
+	}
+	if (pResV != NULL)
+	{
+		bD = TRUE;
+		fCols[0] = GetContourCol(*pResV->GetAddress(iVar) * dFS);
+		fCols[1] = fCols[0];
+		fCols[2] = fCols[0];
+		fCols[3] = fCols[0];
+		fCols[4] = fCols[0];
+		fCols[5] = fCols[0];
+		fCols[6] = fCols[0];
+		fCols[7] = fCols[0];
+		fCols[8] = fCols[0];
+		fCols[9] = fCols[0];
+	}
+
+	C3dVector v1;
+	C3dVector v2;
+	C3dVector Vn;
+	if ((iDspFlgs & DSP_ELEMENTS) > 0)
+	{
+		if ((iDspFlgs & DSP_RESDEF) == 0)
+		{
+			for (i = 0; i < 10; i++)
+			{
+				if (pVertex[i]->pResD != NULL)
+				{
+					d[i] = pVertex[i]->pResD->GetVec();
+					d[i] -= ME->vRelDispOff;
+					d[i] *= S * dFS;
+				}
+			}
+		}
+		Selectable = 1;
+		glColor3fv(cols[iColour]);
+		if (((iDspFlgs & DSP_CONT) > 0) || (bD == FALSE))
+		{
+			v1.x = pVertex[1]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+			v1.y = pVertex[1]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+			v1.z = pVertex[1]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+			v2.x = pVertex[2]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+			v2.y = pVertex[2]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+			v2.z = pVertex[2]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+			Vn = v1.Cross(v2);
+
+			Vn.Normalize();
+			glBegin(GL_POLYGON);
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[4]->Pt_Point->x + d[4].x), (float)(pVertex[4]->Pt_Point->y + d[4].y), (float)(pVertex[4]->Pt_Point->z + d[4].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[5]->Pt_Point->x + d[5].x), (float)(pVertex[5]->Pt_Point->y + d[5].y), (float)(pVertex[5]->Pt_Point->z + d[5].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[6]->Pt_Point->x + d[6].x), (float)(pVertex[6]->Pt_Point->y + d[6].y), (float)(pVertex[6]->Pt_Point->z + d[6].z));
+			glEnd();
+
+			v1.x = pVertex[1]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+			v1.y = pVertex[1]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+			v1.z = pVertex[1]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+			v2.x = pVertex[3]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+			v2.y = pVertex[3]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+			v2.z = pVertex[3]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+			Vn = v1.Cross(v2);
+
+			Vn.Normalize();
+			glBegin(GL_POLYGON);
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[4]->Pt_Point->x + d[4].x), (float)(pVertex[4]->Pt_Point->y + d[4].y), (float)(pVertex[4]->Pt_Point->z + d[4].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[8]->Pt_Point->x + d[8].x), (float)(pVertex[8]->Pt_Point->y + d[8].y), (float)(pVertex[8]->Pt_Point->z + d[8].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[7]->Pt_Point->x + d[7].x), (float)(pVertex[7]->Pt_Point->y + d[7].y), (float)(pVertex[7]->Pt_Point->z + d[7].z));
+			glEnd();
+
+
+			v1.x = pVertex[2]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+			v1.y = pVertex[2]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+			v1.z = pVertex[2]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+
+			v2.x = pVertex[3]->Pt_Point->x - pVertex[2]->Pt_Point->x;
+			v2.y = pVertex[3]->Pt_Point->y - pVertex[2]->Pt_Point->y;
+			v2.z = pVertex[3]->Pt_Point->z - pVertex[2]->Pt_Point->z;
+			Vn = v1.Cross(v2);
+
+			Vn.Normalize();
+			glBegin(GL_POLYGON);
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[5]->Pt_Point->x + d[5].x), (float)(pVertex[5]->Pt_Point->y + d[5].y), (float)(pVertex[5]->Pt_Point->z + d[5].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[9]->Pt_Point->x + d[9].x), (float)(pVertex[9]->Pt_Point->y + d[9].y), (float)(pVertex[9]->Pt_Point->z + d[9].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[8]->Pt_Point->x + d[8].x), (float)(pVertex[8]->Pt_Point->y + d[8].y), (float)(pVertex[8]->Pt_Point->z + d[8].z));
+			glEnd();
+
+			v1.x = pVertex[2]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+			v1.y = pVertex[2]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+			v1.z = pVertex[2]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+			v2.x = pVertex[3]->Pt_Point->x - pVertex[2]->Pt_Point->x;
+			v2.y = pVertex[3]->Pt_Point->y - pVertex[2]->Pt_Point->y;
+			v2.z = pVertex[3]->Pt_Point->z - pVertex[2]->Pt_Point->z;
+			Vn = v1.Cross(v2);
+
+			Vn.Normalize();
+			glBegin(GL_POLYGON);
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[6]->Pt_Point->x + d[6].x), (float)(pVertex[6]->Pt_Point->y + d[6].y), (float)(pVertex[6]->Pt_Point->z + d[6].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[9]->Pt_Point->x + d[9].x), (float)(pVertex[9]->Pt_Point->y + d[9].y), (float)(pVertex[9]->Pt_Point->z + d[9].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+			glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+			glVertex3f((float)(pVertex[7]->Pt_Point->x + d[7].x), (float)(pVertex[7]->Pt_Point->y + d[7].y), (float)(pVertex[7]->Pt_Point->z + d[7].z));
+			glEnd();
+		}
+		else
+		{
+
+			if (bD)
+			{
+				glColor3fv(cols[124]);
+				glEnable(GL_TEXTURE_1D);
+				v1.x = pVertex[1]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+				v1.y = pVertex[1]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+				v1.z = pVertex[1]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+				v2.x = pVertex[2]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+				v2.y = pVertex[2]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+				v2.z = pVertex[2]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+				Vn = v1.Cross(v2);
+
+				Vn.Normalize();
+				glBegin(GL_POLYGON);
+
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[0]);
+				glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[1]);
+				glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[2]);
+				glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+				glEnd();
+
+				v1.x = pVertex[1]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+				v1.y = pVertex[1]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+				v1.z = pVertex[1]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+				v2.x = pVertex[3]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+				v2.y = pVertex[3]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+				v2.z = pVertex[3]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+				Vn = v1.Cross(v2);
+
+				Vn.Normalize();
+				glBegin(GL_POLYGON);
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[0]);
+				glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[1]);
+				glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[3]);
+				glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+				glEnd();
+
+				v1.x = pVertex[2]->Pt_Point->x - pVertex[1]->Pt_Point->x;
+				v1.y = pVertex[2]->Pt_Point->y - pVertex[1]->Pt_Point->y;
+				v1.z = pVertex[2]->Pt_Point->z - pVertex[1]->Pt_Point->z;
+
+				v2.x = pVertex[3]->Pt_Point->x - pVertex[2]->Pt_Point->x;
+				v2.y = pVertex[3]->Pt_Point->y - pVertex[2]->Pt_Point->y;
+				v2.z = pVertex[3]->Pt_Point->z - pVertex[2]->Pt_Point->z;
+				Vn = v1.Cross(v2);
+
+				Vn.Normalize();
+				glBegin(GL_POLYGON);
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[1]);
+				glVertex3f((float)(pVertex[1]->Pt_Point->x + d[1].x), (float)(pVertex[1]->Pt_Point->y + d[1].y), (float)(pVertex[1]->Pt_Point->z + d[1].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[2]);
+				glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[3]);
+				glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+				glEnd();
+
+				v1.x = pVertex[2]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+				v1.y = pVertex[2]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+				v1.z = pVertex[2]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+
+				v2.x = pVertex[3]->Pt_Point->x - pVertex[2]->Pt_Point->x;
+				v2.y = pVertex[3]->Pt_Point->y - pVertex[2]->Pt_Point->y;
+				v2.z = pVertex[3]->Pt_Point->z - pVertex[2]->Pt_Point->z;
+				Vn = v1.Cross(v2);
+
+				Vn.Normalize();
+				glBegin(GL_POLYGON);
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[0]);
+				glVertex3f((float)(pVertex[0]->Pt_Point->x + d[0].x), (float)(pVertex[0]->Pt_Point->y + d[0].y), (float)(pVertex[0]->Pt_Point->z + d[0].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[2]);
+				glVertex3f((float)(pVertex[2]->Pt_Point->x + d[2].x), (float)(pVertex[2]->Pt_Point->y + d[2].y), (float)(pVertex[2]->Pt_Point->z + d[2].z));
+				glNormal3f((float)Vn.x, (float)Vn.y, (float)Vn.z);
+				glTexCoord1f(fCols[3]);
+				glVertex3f((float)(pVertex[3]->Pt_Point->x + d[3].x), (float)(pVertex[3]->Pt_Point->y + d[3].y), (float)(pVertex[3]->Pt_Point->z + d[3].z));
+				glEnd();
+				glDisable(GL_TEXTURE_1D);
+			}
+		}
+	}
+	else
+	{
+		Selectable = 0;
+	}
+}
+
+G_Object* E_Object310::GetNode(int i)
+{
+	return (pVertex[i]);
+}
+
+C3dVector E_Object310::GetNodalCoords(int i)
+{
+	C3dVector v;
+	v.x = pVertex[i]->Pt_Point->x;
+	v.y = pVertex[i]->Pt_Point->y;
+	v.z = pVertex[i]->Pt_Point->z;
+	return (v);
+}
+
+int E_Object310::GetfaceList(eFace* Faces[6])
+{
+	int ic;
+	ic = GetCol();
+	Faces[0] = new eFace();
+	Faces[0]->pParent = this;
+	Faces[0]->pVertex[0] = pVertex[0];
+	Faces[0]->pVertex[1] = pVertex[2];
+	Faces[0]->pVertex[2] = pVertex[1];
+	Faces[0]->NoVert = 3;
+	Faces[0]->iColour = iColour;
+
+	Faces[1] = new eFace();
+	Faces[1]->pParent = this;
+	Faces[1]->pVertex[0] = pVertex[0];
+	Faces[1]->pVertex[1] = pVertex[1];
+	Faces[1]->pVertex[2] = pVertex[3];
+	Faces[1]->NoVert = 3;
+	Faces[1]->iColour = iColour;
+
+	Faces[2] = new eFace;
+	Faces[2]->pParent = this;
+	Faces[2]->pVertex[0] = pVertex[1];
+	Faces[2]->pVertex[1] = pVertex[2];
+	Faces[2]->pVertex[2] = pVertex[3];
+	Faces[2]->NoVert = 3;
+	Faces[2]->iColour = iColour;
+
+	Faces[3] = new eFace;
+	Faces[3]->pParent = this;
+	Faces[3]->pVertex[0] = pVertex[0];
+	Faces[3]->pVertex[1] = pVertex[3];
+	Faces[3]->pVertex[2] = pVertex[2];
+	Faces[3]->NoVert = 3;
+	Faces[3]->iColour = iColour;
+	return (4);
+}
+
+
+
+void E_Object310::ExportNAS(FILE* pFile)
+{
+
+	fprintf(pFile, "%8s%8i%8i", "CTETRA  ", iLabel, PID);
+	fprintf(pFile, "%8i", pVertex[0]->iLabel);
+	fprintf(pFile, "%8i", pVertex[1]->iLabel);
+	fprintf(pFile, "%8i", pVertex[2]->iLabel);
+	fprintf(pFile, "%8i", pVertex[3]->iLabel);
+	fprintf(pFile, "%8i", pVertex[4]->iLabel);
+	fprintf(pFile, "%8i\n", pVertex[5]->iLabel);
+	fprintf(pFile, "        %8i", pVertex[6]->iLabel);
+	fprintf(pFile, "%8i", pVertex[7]->iLabel);
+	fprintf(pFile, "%8i", pVertex[8]->iLabel);
+	fprintf(pFile, "%8i\n", pVertex[9]->iLabel);
+
+
+}
+
+void E_Object310::ExportUNV(FILE* pFile)
+{
+	int i;
+	fprintf(pFile, "%10i%10i%10i%10i%10i%10i\n", iLabel, iType, PIDunv, iMatID, iColour - 150, iNoNodes);
+	for (i = 0; i < iNoNodes; i++)
+	{
+		fprintf(pFile, "%10i", pVertex[i]->iLabel);
+	}
+	fprintf(pFile, "\n", "");
+}
+
+
+
+
+C3dVector E_Object310::Get_Centroid()
+{
+	Mat fun;
+	Mat FunPnt(1, 4);
+	*FunPnt.mn(1, 1) = 0.25;
+	*FunPnt.mn(1, 2) = 0.25;
+	*FunPnt.mn(1, 3) = 0.25;
+	fun = ShapeFun(FunPnt, 1);
+	C3dVector vT;
+	vT.Set(0, 0, 0);
+	int j = 0;
+	//USING TET4 FOR NOW
+	for (j = 0; j < 4; j++)   //for (j = 0; j < iNoNodes; j++)
+	{
+		vT += pVertex[j]->Get_Centroid() * *fun.mn(1, j + 1);
+	}
+	fun.clear();
+	FunPnt.clear();
+	return (vT);
+}
+
+
+C3dMatrix E_Object310::GetElSys()
+{
+	C3dVector vX;
+	C3dVector vZ;
+	C3dVector vY;
+	vX = pVertex[1]->GetCoords();
+	vX -= pVertex[0]->GetCoords();
+	vX.Normalize();
+	vZ = pVertex[3]->GetCoords();
+	vZ -= pVertex[0]->GetCoords();  //Approx z direction
+	vZ.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	vZ = vX.Cross(vY);
+	C3dMatrix vR;
+	vR.SetColVec(1, vX);
+	vR.SetColVec(2, vY);
+	vR.SetColVec(3, vZ);
+	vR.Transpose();
+	return (vR);
+}
+
+Mat E_Object310::getCoords3d()
+{
+	int i;
+	Mat coord(iNoNodes, 3);
+	for (i = 0; i < iNoNodes; i++)
+	{
+		*coord.mn(i + 1, 1) = pVertex[i]->Pt_Point->x;
+		*coord.mn(i + 1, 2) = pVertex[i]->Pt_Point->y;
+		*coord.mn(i + 1, 3) = pVertex[i]->Pt_Point->z;
+	}
+	return (coord);
+}
+
+Mat E_Object310::Sample(int iNo)
+{
+	Mat Pts(iNo, 4);
+	if (iNo == 1)
+	{
+		*Pts.mn(1, 1) = 0.25;
+		*Pts.mn(1, 2) = 0.25;
+		*Pts.mn(1, 3) = 0.25;
+		*Pts.mn(1, 4) = 1.0 / 6.0;
+	}
+	else if (iNo == 4)
+	{
+		double coord1 = 0.585410196624968;
+		double coord2 = 0.138196601125010;
+		//the weight is divided by 6 because the determinant gives the volume of a
+		//qube and a tetraedron has a 6 times smaller volume (0.25/6.0 = 0.04166666) 
+		double weight = 0.0416666666666666;
+		*Pts.mn(1, 1) = coord1; *Pts.mn(1, 2) = coord2; *Pts.mn(1, 3) = coord2; *Pts.mn(1, 4) = weight;
+		*Pts.mn(2, 1) = coord2; *Pts.mn(2, 2) = coord1; *Pts.mn(2, 3) = coord2; *Pts.mn(2, 4) = weight;
+		*Pts.mn(3, 1) = coord2; *Pts.mn(3, 2) = coord2; *Pts.mn(3, 3) = coord1; *Pts.mn(3, 4) = weight;
+		*Pts.mn(4, 1) = coord2; *Pts.mn(4, 2) = coord2; *Pts.mn(4, 3) = coord2; *Pts.mn(4, 4) = weight;
+	}
+	return (Pts);
+}
+
+
+
+Mat E_Object310::ShapeFun(Mat Points, int i)
+{
+	Mat fun(1, 4);
+	double v1, v2, v3, v4;
+
+	v2 = *Points.mn(i, 1);
+	v3 = *Points.mn(i, 2);
+	v4 = *Points.mn(i, 3);
+	v1 = (1 - v2 - v3 - v4);
+
+	//v1=*Points.mn(i,1);  This how it was in reverse to nastran
+	//v2=*Points.mn(i,2);
+	//v3=*Points.mn(i,3);
+	//v4=(1-v1-v2-v3);
+	*fun.mn(1, 1) = v1;
+	*fun.mn(1, 2) = v2;
+	*fun.mn(1, 3) = v3;
+	*fun.mn(1, 4) = v4;
+	return(fun);
+}
+
+int E_Object310::noDof()
+{
+	return(3);
+}
+
+Mat E_Object310::ShapeDer(Mat Points, int i)
+{
+	Mat der(3, 4);
+	*der.mn(1, 1) = -1;
+	*der.mn(1, 2) = 1;
+	*der.mn(1, 3) = 0;
+	*der.mn(1, 4) = 0;
+
+	*der.mn(2, 1) = -1;
+	*der.mn(2, 2) = 0;
+	*der.mn(2, 3) = 1;
+	*der.mn(2, 4) = 0;
+
+	*der.mn(3, 1) = -1;
+	*der.mn(3, 2) = 0;
+	*der.mn(3, 3) = 0;
+	*der.mn(3, 4) = 1;
+
+
+	//*der.mn(1,1) = 1;  //WAS this way
+	//*der.mn(1,2) = 0;
+	//*der.mn(1,3) = 0;
+	//*der.mn(1,4) = -1;
+	//
+	//*der.mn(2,1) = 0;
+	//*der.mn(2,2) = 1;
+	//*der.mn(2,3) = 0;
+	//*der.mn(2,4) = -1;
+	//
+	//*der.mn(3,1) = 0;
+	//*der.mn(3,2) = 0;
+	//*der.mn(3,3) = 1;
+	//*der.mn(3,4) = -1;
+	return(der);
+}
+
+int E_Object310::MaxBW()
+{
+	int i;
+	int j;
+	int MaxDof;
+	int MinDof;
+	MaxDof = 0;
+	MinDof = 99999999;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		for (j = 0; j < 6; j++)
+		{
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] > MaxDof))
+			{
+				MaxDof = pVertex[i]->dof[j];
+			}
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] < MinDof))
+			{
+				MinDof = pVertex[i]->dof[j];
+			}
+		}
+	}
+	int iRC;
+	if (MaxDof - MinDof < 0)
+	{
+		iRC = 0;
+	}
+	else
+	{
+		iRC = MaxDof - MinDof;
+	}
+	return (iRC);
+}
+
+Vec<int> E_Object310::GetSteerVec3d()
+{
+	Vec<int> V(4 * 3);
+	*V.nn(1) = pVertex[0]->dof[0];
+	*V.nn(2) = pVertex[0]->dof[1];
+	*V.nn(3) = pVertex[0]->dof[2];
+	*V.nn(4) = pVertex[1]->dof[0];
+	*V.nn(5) = pVertex[1]->dof[1];
+	*V.nn(6) = pVertex[1]->dof[2];
+	*V.nn(7) = pVertex[2]->dof[0];
+	*V.nn(8) = pVertex[2]->dof[1];
+	*V.nn(9) = pVertex[2]->dof[2];
+	*V.nn(10) = pVertex[3]->dof[0];
+	*V.nn(11) = pVertex[3]->dof[1];
+	*V.nn(12) = pVertex[3]->dof[2];
+	return(V);
+}
+
+Vec<int> E_Object310::GetSteerVec1d()
+{
+	Vec<int> V(4 * 1);
+	*V.nn(1) = pVertex[0]->dof[0];
+	*V.nn(2) = pVertex[1]->dof[0];
+	*V.nn(3) = pVertex[2]->dof[0];
+	*V.nn(4) = pVertex[3]->dof[0];
+	return(V);
+}
+
+CString E_Object310::GetName()
+{
+	return ("10 Node TET (CTETRA)");
+}
+
+int E_Object310::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
+	sVar[iNo] = "PID";
+	iNo++;
+	sVar[iNo] = "Mat ID";
+	iNo++;
+	sVar[iNo] = "N1";
+	iNo++;
+	sVar[iNo] = "N2";
+	iNo++;
+	sVar[iNo] = "N3";
+	iNo++;
+	sVar[iNo] = "N4";
+	iNo++;
+	return(iNo);
+}
+
+
+int E_Object310::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", PID);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", iMatID);
+	sVar[iNo] = S1;
+	iNo++;
+
+	sprintf_s(S1, "%i", pVertex[0]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", pVertex[1]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", pVertex[2]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", pVertex[3]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void E_Object310::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+
+	Node* pN;
+	ME_Object* pMe = (ME_Object*)this->pParent;
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
+	if (newPID != PID)
+	{
+
+		Property* pr = PT->GetItem(newPID);
+		if (pr != NULL)
+		{
+			BOOL bC = SetProperty(pr);
+			if (bC)
+				outtext1("Property has Been Changed");
+			else
+				outtext1("Invalid Property");
+		}
+
+	}
+	iMatID = atoi(sVar[2]);
+	int N1 = atoi(sVar[3]);
+	int N2 = atoi(sVar[4]);
+	int N3 = atoi(sVar[5]);
+	int N4 = atoi(sVar[6]);
+	if (pVertex[0]->iLabel != N1)
+	{
+		pN = pMe->GetNode(N1);
+		if (pN != NULL)
+			pVertex[0] = pN;
+
+	}
+	if (pVertex[1]->iLabel != N2)
+	{
+		pN = pMe->GetNode(N2);
+		if (pN != NULL)
+			pVertex[1] = pN;
+
+	}
+	if (pVertex[2]->iLabel != N3)
+	{
+		pN = pMe->GetNode(N3);
+		if (pN != NULL)
+			pVertex[2] = pN;
+
+	}
+	if (pVertex[3]->iLabel != N4)
+	{
+		pN = pMe->GetNode(N4);
+		if (pN != NULL)
+			pVertex[3] = pN;
+
+	}
+}
+
+
 
 IMPLEMENT_DYNAMIC(BCLD, CObject )
 void BCLD::Serialize(CArchive& ar,int iV,ME_Object* MESH)
@@ -8544,7 +10537,7 @@ void BCLD::RelTo(G_Object* pThis,ObjList* pList,int iType)
   }
 }
 
-BOOL BCLD::NodeIn(Pt_Object* pN)
+BOOL BCLD::NodeIn(Node* pN)
 {
 BOOL brc=FALSE;
 if (pObj==pN)
@@ -8589,12 +10582,12 @@ Mat M(0,0);
 return(M);
 }
 
-BOOL E_Object::NodeInEl(Pt_Object* pN)
+BOOL E_Object::NodeInEl(Node* pN)
 {
 return (FALSE);
 }
 
-void E_Object::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_Object::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
 }
@@ -8603,6 +10596,187 @@ int E_Object::noDof()
 {
 return(3);
 }
+
+//Transform nodal stiffness values from element local to global
+Mat E_Object::KEToKGTransform()
+{
+	Mat t(iNoNodes * 6, iNoNodes * 6);
+	int i, j, n;
+	C3dMatrix r;
+	r = GetElSys();
+	Mat mr(3, 3);
+	*mr.mn(1, 1) = r.m_00; *mr.mn(1, 2) = r.m_01; *mr.mn(1, 3) = r.m_02;
+	*mr.mn(2, 1) = r.m_10; *mr.mn(2, 2) = r.m_11; *mr.mn(2, 3) = r.m_12;
+	*mr.mn(3, 1) = r.m_20; *mr.mn(3, 2) = r.m_21; *mr.mn(3, 3) = r.m_22;
+
+	for (n = 0; n < iNoNodes*2; n++)
+	{
+		for (i = 1; i < 4; i++)
+		{
+			for (j = 1; j < 4; j++)
+			{
+				*t.mn(i+n*3, j+n*3) = *mr.mn(i, j);
+			}
+		}
+	}
+	mr.clear();
+	return (t);
+}
+
+//Transform nodal stiffness values from element local to global
+//given a specifed definition system
+Mat E_Object::KEToKGTransform2(C3dMatrix mEL)
+{
+	Mat t(iNoNodes * 6, iNoNodes * 6);
+	int i, j, n;
+	C3dMatrix r;
+	r = mEL;
+	Mat mr(3, 3);
+	*mr.mn(1, 1) = r.m_00; *mr.mn(1, 2) = r.m_01; *mr.mn(1, 3) = r.m_02;
+	*mr.mn(2, 1) = r.m_10; *mr.mn(2, 2) = r.m_11; *mr.mn(2, 3) = r.m_12;
+	*mr.mn(3, 1) = r.m_20; *mr.mn(3, 2) = r.m_21; *mr.mn(3, 3) = r.m_22;
+
+	for (n = 0; n < iNoNodes * 2; n++)
+	{
+		for (i = 1; i < 4; i++)
+		{
+			for (j = 1; j < 4; j++)
+			{
+				*t.mn(i + n * 3, j + n * 3) = *mr.mn(i, j);
+			}
+		}
+	}
+	mr.clear();
+	return (t);
+}
+//Check to see if element has offsets and are non zero in mag
+BOOL E_Object::HasOffsets()
+{
+	return (FALSE);
+}
+
+
+//Offsets to global KE SYS
+//only for 6 dof elements shells and beams
+void E_Object::OffsetsToKG(PropTable* PropsT, Mat& off)
+{
+	//CALL OFFSETS vectors OffA OffB are in global
+	//A minor loop within the major loop takes care ofMEand KE which gets post - multiplied by the offset matrix and pre - multiplied by
+	//it's transpose. The offset matrices for each G.P. are a 6 x 6 matrix which is an identity matrix plus a small 3 x 3 submatrix
+	//containing only 3 independent terms, and the processing takes advantage of thisand simplifies the matrix multiplications.
+	//The offset matrix is called E for each G.P.but is never written out as a 6 x 6 matrix.
+
+	//The general form of E for one grid point is :
+
+	//| 1  0  0 | 0    DZ - DY |
+	//| 0  1  0 | -DZ   0    DX |
+	//| 0  0  1 | DY - DX   0 |
+	//| -------- - | -------------- - |
+	//| 0  0  0 | 1    0    0 |
+	//| 0  0  0 | 0    1    0 |
+	//| 0  0  0 | 0    0    1 |
+
+	//where DX, DY and DZ are the 3 components of the offset of the element at a grid and are in global coords
+	//With this E matrix, the transformed element matrices are(prime indicates matrix transposition) :
+	//MEg = E'* MEe * E
+	//KEg = E'* KEe * E
+	//PTEg = E'* PTEe
+	int i;
+	int iD;
+	BOOL bOff;
+	C3dVector Off;
+	off.clear();
+	off.Create(iNoNodes * 6, iNoNodes * 6);
+	off.MakeUnit();
+	iD = 0;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		bOff=GetOffset(PropsT, i, Off);
+		*off.mn(1+iD, 4 + iD) = 0;
+		*off.mn(1 + iD, 5 + iD) = Off.z;
+		*off.mn(1 + iD, 6 + iD) = -Off.y;
+		*off.mn(2 + iD, 4 + iD) = -Off.z;
+		*off.mn(2 + iD, 5 + iD) = 0;
+		*off.mn(2 + iD, 6 + iD) = Off.x;
+		*off.mn(3 + iD, 4 + iD) = Off.y;
+		*off.mn(3 + iD, 5 + iD) = -Off.x;
+		*off.mn(3 + iD, 6 + iD) = 0;
+		iD += 6;
+	}
+}
+
+//Process the global soloution dispacements fot the offset
+void E_Object::DispOffsets(PropTable* PropsT, Mat& disp)
+{
+	int i;
+	int iInc=0;
+	BOOL bOff;
+	C3dVector vOff;
+
+
+		for (i = 0; i < iNoNodes; i++)
+		{
+			bOff = GetOffset(PropsT, i, vOff);
+			*disp.mn(iInc + 1, 1) += +vOff.z * *disp.mn(iInc + 5, 1) - vOff.y * *disp.mn(iInc + 6, 1);
+			*disp.mn(iInc + 2, 1) += -vOff.z * *disp.mn(iInc + 4, 1) + vOff.x * *disp.mn(iInc + 6, 1);
+			*disp.mn(iInc + 3, 1) += +vOff.y * *disp.mn(iInc + 4, 1) - vOff.x * *disp.mn(iInc + 5, 1);
+			iInc += 6;
+		}
+		
+		   //*disp.mn(7, 1) += +vOff2.z * *disp.mn(11, 1) - vOff2.y * *disp.mn(12, 1);
+		   //*disp.mn(8, 1) += -vOff2.z * *disp.mn(10, 1) + vOff2.x * *disp.mn(12, 1);
+		   //*disp.mn(9, 1) += +vOff2.y * *disp.mn(10, 1) - vOff2.x * *disp.mn(11, 1);
+
+}
+
+//returns the nodal offset if ther is one for node = iNode
+//if no offset for this element type returns FALSE
+BOOL E_Object::GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff)
+{
+	return (FALSE);
+}
+
+
+
+//Offsets to global KE SYS for 1 grid with offset vOff
+//off matrix must be 6x6
+void E_Object::OffsetsTransform(Mat& off, C3dVector vOff)
+{
+	//CALL OFFSETS vectors OffA OffB are in global
+	//A minor loop within the major loop takes care ofMEand KE which gets post - multiplied by the offset matrix and pre - multiplied by
+	//it's transpose. The offset matrices for each G.P. are a 6 x 6 matrix which is an identity matrix plus a small 3 x 3 submatrix
+	//containing only 3 independent terms, and the processing takes advantage of thisand simplifies the matrix multiplications.
+	//The offset matrix is called E for each G.P.but is never written out as a 6 x 6 matrix.
+
+	//The general form of E for one grid point is :
+
+	//| 1  0  0 | 0    DZ - DY |
+	//| 0  1  0 | -DZ   0    DX |
+	//| 0  0  1 | DY - DX   0 |
+	//| -------- - | -------------- - |
+	//| 0  0  0 | 1    0    0 |
+	//| 0  0  0 | 0    1    0 |
+	//| 0  0  0 | 0    0    1 |
+
+	//where DX, DY and DZ are the 3 components of the offset of the element at a grid and are in global coords
+	//With this E matrix, the transformed element matrices are(prime indicates matrix transposition) :
+	//MEg = E'* MEe * E
+	//KEg = E'* KEe * E
+	//PTEg = E'* PTEe
+
+	off.MakeUnit();
+	*off.mn(1, 4) = 0;
+	*off.mn(1, 5) = vOff.z;
+	*off.mn(1, 6) = -vOff.y;
+	*off.mn(2, 4) = -vOff.z;
+	*off.mn(2, 5) = 0;
+	*off.mn(2, 6) = vOff.x;
+	*off.mn(3, 4) = vOff.y;
+	*off.mn(3, 5) = -vOff.x;
+	*off.mn(3, 6) = 0;
+
+}
+
 
 Mat E_Object::ShapeDer(Mat Points, int i)
 {
@@ -8636,12 +10810,12 @@ Mat M(0,0);
 return(M);
 }
 
-int E_Object::GetfaceList(cFace* Faces[6])
+int E_Object::GetfaceList(eFace* Faces[6])
 {
 return (0);
 }
 
-int E_Object::GetLinkList(cLink* Links[200])
+int E_Object::GetLinkList(eEdge* Links[200])
 {
 return (0);
 }
@@ -8730,6 +10904,93 @@ double E_Object::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   return(0);
 }
 
+double E_Object::GetElCentriodVal()
+{
+	return(0);
+}
+
+double E_Object::GetPHI_SQ()
+{
+	return(1.0);
+}
+
+void E_Object::GetPinFlags(Vec<int>& PDOFS, int& iNoPINs)
+{
+
+}
+
+
+ void E_Object::PinFlgsToKE(Mat& KEL)
+{
+	 Vec<int> DOFPIN;
+	 int NUM_PFLAG_DOFS;
+	 int PDOF;
+	 //get the DOF to release
+	 GetPinFlags(DOFPIN, NUM_PFLAG_DOFS);
+	 int I, J, K;
+	 int iNDof = iNoNodes * 6;
+
+	 //!Check to make sure that the diagonal stiffness for the pin flagged DOF's are not zero
+
+	 //	IERROR = 0
+	 //	DO I = 1, NUM_PFLAG_DOFS
+	 //	ZERO_STIFF(I) = 'N'
+	 //	PDOF = DOFPIN(I)
+	 //	IF(DABS(KE(PDOF, PDOF)) <= EPS1) THEN
+	 //	IERROR = IERROR + 1
+	 //	WARN_ERR = WARN_ERR + 1
+	 //	WRITE(ERR, 1921) PDOF, TYPE, EID
+	 //	IF(SUPWARN == 'N') THEN
+	 //	WRITE(F06, 1921) PDOF, TYPE, EID
+	 //	ENDIF
+	 //	ZERO_STIFF(I) = 'Y'
+	 //	ENDIF
+	 //	ENDDO
+	 //	IF(IERROR > 0) THEN
+	 //	RETURN
+	 //	ENDIF
+
+	 //	!Process pin flags in KE
+	 //DOFPIN.diag();
+	 for (I = 1; I < NUM_PFLAG_DOFS; I++)
+	 {
+		 //	i_do : DO I = 1, NUM_PFLAG_DOFS
+		 //	IF(ZERO_STIFF(I) == 'N') THEN
+		 PDOF = *DOFPIN.nn(I);
+
+		 for (J = 1; J <= iNDof; J++)
+		 {
+			 if (J != PDOF)
+			 {
+				 for (K = 1; K <= iNDof; K++)
+				 {
+					 if (K != PDOF)
+					 {
+						 //	IF(DABS(KE(PDOF, PDOF)) > EPS1) THEN
+						 *KEL.mn(J, K) = *KEL.mn(J, K) - *KEL.mn(PDOF, K) * *KEL.mn(J, PDOF) / *KEL.mn(PDOF, PDOF);
+						 //	ELSE
+						 //	WRITE(ERR, 1937) TYPE, EID, PDOF
+						 //	WRITE(F06, 1937) TYPE, EID, PDOF
+						 //	NUM_EMG_FATAL_ERRS = NUM_EMG_FATAL_ERRS + 1
+						 //	FATAL_ERR = FATAL_ERR + 1
+						 //	CYCLE i_do
+						 //	ENDIF
+					 }
+				 }
+			 }
+		 }
+
+		 //	!Set row and column PDOF(pin flagged) to zero
+
+		 for (J = 1; J <= iNDof; J++)
+		 {
+			 *KEL.mn(PDOF, J) = 0;
+			 *KEL.mn(J, PDOF) = 0;
+		 }
+
+		 //	ENDIF
+	 }
+}
 
 C3dMatrix E_Object::GetElSys()
 {
@@ -8771,6 +11032,7 @@ int E_Object::GetDOFInt(CString sDOF)
   return(iDOF);
 }
 
+
 BOOL E_Object::SetProperty(Property* Pr)
 {
 
@@ -8797,7 +11059,7 @@ if (Pr!=NULL)
   }
   else if (iType == 94)
   {
-      if ((Pr->iType==1) || (Pr->iType==2))
+      if ((Pr->iType==1) || (Pr->iType==2) || (Pr->iType == 222))
       {
        PID=Pr->iID;
        bC=TRUE;
@@ -8806,7 +11068,7 @@ if (Pr!=NULL)
   }
   else if (iType == 91)
   {
-      if ((Pr->iType==1) || (Pr->iType==2))
+      if ((Pr->iType==1) || (Pr->iType==2) || (Pr->iType == 222))
       {
        PID=Pr->iID;
        bC=TRUE;
@@ -8857,7 +11119,7 @@ if (Pr!=NULL)
   }
   else if (iType == 136)
   {
-      if (Pr->iType==136) 
+      if (Pr->iType==136)
       {
        PID=Pr->iID;
        bC=TRUE;
@@ -8866,12 +11128,21 @@ if (Pr!=NULL)
   }
   else if (iType == 137)
   {
-      if (Pr->iType==137) 
-      {
-       PID=Pr->iID;
-       bC=TRUE;
-       pPr=Pr;
-      }
+	  if (Pr->iType == 137)
+	  {
+		  PID = Pr->iID;
+		  bC = TRUE;
+		  pPr = Pr;
+	  }
+  }
+  else if (iType == 138)
+  {
+	  if (Pr->iType == 138)
+	  {
+		  PID = Pr->iID;
+		  bC = TRUE;
+		  pPr = Pr;
+	  }
   }
   else if (iType == 121) 
   {
@@ -8890,6 +11161,15 @@ if (Pr!=NULL)
        pPr=Pr;
       }
   }
+  else if (iType == 310)
+  {
+  if (Pr->iType == 3)
+  {
+	  PID = Pr->iID;
+	  bC = TRUE;
+	  pPr = Pr;
+  }
+  }
   else if (iType == 122)
   {
 
@@ -8900,9 +11180,9 @@ return (bC);
 
 void E_Object::Info()
 {
-  char S1[80];
-  sprintf_s(S1,"%s%i%s%i%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour," PID; ",PID," ELTYPE; ",iType);
-  outtext1(S1); 
+  //sprintf_s(S1,"%s%i%s%i%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour," PID; ",PID," ELTYPE; ",iType);
+  //outtext1(S1); 
+  G_Object::Info();
 }
 
 
@@ -9045,7 +11325,7 @@ if (PropsT!=NULL)
   }
   else if (iType==94)
   {
-    iDof=2; nip=4; iS=3;   //4 4 4 4 4 4  4 4 4 4  4 4  4 4
+    iDof=2; nip=4; iS=3;   
   }
   else if (iType==115)
   {
@@ -9066,6 +11346,10 @@ if (PropsT!=NULL)
   else if (iType == 137)       //Rotational Spring zero vec
   {
     iDof = 3; nip = 0; iS = 0;
+  }
+  else if (iType == 138)       //BUSH Spring zero vec
+  {
+	  iDof = 6; nip = 0; iS = 0;
   }
 //*********************JUST FOR TEST*******************************
 Mat FS(iDof*iNoNodes,1);
@@ -9141,7 +11425,7 @@ int i;
 double det;
 Mat bT;
 Mat MM;
-int iDof;
+int iDof=-1;
 int iS;
 int MID=-1;
 double dthk=1.0;
@@ -9165,7 +11449,8 @@ Material* pM=NULL;
     dRho=pM->GetDensity();
 
 if (((iType==91) || (iType==94)) && (pS!=NULL))
-{
+{ 
+  //These are to be over written in E_Oject4 & 3 so we can deal with PCOMPS and NSM
   if (pS!=NULL)
   {
     PSHELL* pSh = (PSHELL*) pS;
@@ -9237,7 +11522,7 @@ if ((iType==91) || (iType==94))
 return (FS);
 }
 
-Mat E_Object::GetStiffMat(PropTable* PropsT,MatTable* MatT)
+Mat E_Object::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
 Mat bee;   //strain displacement matrix
 Mat dee;   //stress strain
@@ -9579,7 +11864,7 @@ return (gret);
 }
 
 
-G_Object* E_Object::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 
 E_Object* gret = new E_Object;
@@ -9619,29 +11904,12 @@ if (iD==3)  //Plain Stress
   C = E / (1-v*v);
   *dee.mn(1, 1) = C;
   *dee.mn(2, 2) = C;
-  *dee.mn(3, 3) = 0.5*(1-v)*C;
+  *dee.mn(3, 3) = 0.5*(1-v)*C; //this should be G not sure is correct??
   *dee.mn(1, 2) = v*C;
   *dee.mn(2, 1) = v*C;
 }
 else if(iD==6)
 {
-  //v2=v/(1-v);
-  //vv=0.5*(1-2*v)/(1-v);
-  //for (i=1;i<4;i++)
-  //{
-  //  *dee.mn(i, i)=1;
-  //}
-  //for (i=4;i<7;i++)
-  //{
-  //  *dee.mn(i, i)=vv;
-  //}
-  //*dee.mn(1, 2)=vv;
-  //*dee.mn(2, 1)=vv;
-  //*dee.mn(1, 3)=vv;
-  //*dee.mn(3, 1)=vv;
-  //*dee.mn(2, 3)=vv;
-  //*dee.mn(3, 2)=vv;
-  //dee*=E/(2*(1+v)*vv);
 
   v2=v/(1-v);
   vv=0.5*(1-2*v)/(1-v);
@@ -9662,6 +11930,58 @@ else if(iD==6)
   dee*= E*(1-v)/((1+v)*(1-2*v));
 }
 return (dee);
+}
+
+//SHELL_D matrix for bending coeffients for Dee Matrix
+Mat E_Object::DeeBM(double E, double v, int iD)
+{
+	Mat EBM(3, 3);
+	double G = 0;
+	double DEN1 = 0;
+	double E0 = 0;
+	G = E / (2 * (1 + v));
+	DEN1 = 1 - v*v;
+	if (abs(DEN1)<0.01)
+		outtext1("ERROR: Material Property Error 1-v*v very small.");
+	EBM.MakeZero();
+	E0 = E / DEN1;
+	*EBM.mn(1, 1) = E0;
+	*EBM.mn(2, 2) = *EBM.mn(1, 1);
+	*EBM.mn(3, 3) = G;
+	*EBM.mn(1, 2) = E0 * v;
+	*EBM.mn(2, 1) = *EBM.mn(1, 2);
+
+	return (EBM);
+}
+
+Mat E_Object::DeeSH(double E, double v, int iD)
+{
+	Mat ESH(2, 2);
+	double G = 0;
+	G = E / (2 * (1 + v));
+
+	ESH.MakeZero();
+	*ESH.mn(1, 1) = G;
+	*ESH.mn(2, 2) = G;
+	return (ESH);
+}
+
+Mat E_Object::BEE_BM_Recovery()
+{
+	Mat dum;
+	return (dum);
+}
+
+Mat E_Object::BEE_BB_Recovery()
+{
+	Mat dum;
+	return (dum);
+}
+
+Mat E_Object::BEE_TS_Recovery()
+{
+	Mat dum;
+	return (dum);
 }
 
 //********************************************************************************
@@ -9693,7 +12013,7 @@ IMPLEMENT_DYNAMIC( E_Object2, CObject )
 
 E_Object2::E_Object2()
 {
-//(iType == 136) || (iType == 137)
+G_Object();
 iCSYS=-1;
 }
 
@@ -9703,7 +12023,7 @@ pVertex[0]=NULL;
 pVertex[1]=NULL;
 }
 
-void E_Object2::Create(Pt_Object* pInVertex[200], int iLab,int iCol,int iType, int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_Object2::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType, int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -9714,19 +12034,65 @@ for (i=0;i<2;i++)
 A=0;
 B=0;
 C=0;
-iCSYS=-1;
+iCSYS= iMat;
 }
 
 int E_Object2::noDof()
 {
-return(3);
+  return(3);
 }
+
+//this can probably move to E_Object 
+int E_Object2::MaxBW()
+{
+	int i;
+	int j;
+
+	int MaxDof;
+	int MinDof;
+	MaxDof = 0;
+	MinDof = 99999999;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		for (j = 0; j < noDof(); j++)
+		{
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] > MaxDof))
+			{
+				MaxDof = pVertex[i]->dof[j];
+			}
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] < MinDof))
+			{
+				MinDof = pVertex[i]->dof[j];
+			}
+		}
+	}
+	int iRC;
+	if (MaxDof - MinDof < 0)
+	{
+		iRC = 0;
+	}
+	else
+	{
+		iRC = MaxDof - MinDof;
+	}
+	return (iRC);
+}
+
+double E_Object2::getLen()
+{
+	double dRet = 0;
+	C3dVector vL;
+	vL = pVertex[1]->Get_Centroid();
+	vL-= pVertex[0]->Get_Centroid();
+	dRet = vL.Mag();
+	return (dRet);
+}
+
 
 void E_Object2::Info()
 {
   char S1[80];
-  sprintf_s(S1,"%s%i%s%i%s%i%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour," PID; ",PID," ELTYPE; ",iType," CSYS; ",iCSYS);
-  outtext1(S1); 
+  G_Object::Info();
   sprintf_s(S1, "%s%i%s%i", "ND1 ", pVertex[0]->iLabel, "ND2 ", pVertex[1]->iLabel);
   outtext1(S1);
 }
@@ -9806,16 +12172,22 @@ Mat E_Object2::GetSpringTMat(CoordSys* pCSYS)
 Mat E_Object2::GetThermMat(PropTable* PropsT,MatTable* MatT)
 {
   char S1[80];
-  double K;
+  double K = 0;
   int iDof=1;
   Property* pS=PropsT->GetItem(this->PID);
-  if (pS!=NULL)
+  if (pS!=nullptr)
   {
-    if (pS->iType==136)
+    if (pS->iType==136) 
     {
       PSPRINGT* pSP=(PSPRINGT*) pS;
       K=pSP->dkcoeff;
     }
+	else if (pS->iType == 138)
+	{
+		PBUSH* pSP = (PBUSH*)pS;
+		K = pSP->dkcoeff;
+	}
+
   }
   else
   {
@@ -9840,7 +12212,7 @@ return (KM);
 }
 
 
-Mat E_Object2::GetStiffMat(PropTable* PropsT,MatTable* MatT)
+Mat E_Object2::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
   double kx=1e3;
   double ky=1e3;
@@ -9877,8 +12249,7 @@ Mat E_Object2::GetStiffMat(PropTable* PropsT,MatTable* MatT)
   *KM.mn(1,1)=kx;*KM.mn(4,4)=kx;*KM.mn(1,4)=-kx;*KM.mn(4,1)=-kx;
   *KM.mn(2,2)=ky;*KM.mn(5,5)=ky;*KM.mn(2,5)=-ky;*KM.mn(5,2)=-ky;
   *KM.mn(3,3)=kz;*KM.mn(6,6)=kz;*KM.mn(3,6)=-kz;*KM.mn(6,3)=-kz;
-
-  //TRANSFORM ELEMENT TO GLOBAL FROM LOCAL DEFINITION
+ 
   CoordSys* pCSYS=NULL;
   if (this->iCSYS!=-1)
   {
@@ -9911,13 +12282,6 @@ Mat E_Object2::GetStiffMat(PropTable* PropsT,MatTable* MatT)
       bFail=TRUE;
     }
   }
-  else
-  {
-    bFail=TRUE;
-  }
-
-
-  
 return (KM);
 }
 
@@ -9955,7 +12319,7 @@ Vec<int> E_Object2::GetSteerVec1d()
   return(V);
 }
 
-BOOL E_Object2::NodeInEl(Pt_Object* pN)
+BOOL E_Object2::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 int i=0;
@@ -9970,18 +12334,26 @@ for (i=0;i<iNoNodes;i++)
 return (brc);
 }
 
-void E_Object2::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_Object2::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 void E_Object2::Serialize(CArchive& ar,int iV,ME_Object* MESH)
@@ -10066,7 +12438,7 @@ EInd=Source->GetNodeInd(pVertex[1]);
 gret->pVertex[1] = Target->pNodes[EInd+iSInd];
 gret->iCSYS = iCSYS;
 gret->vUp=vUp;
-Pt_Object* nA=Source->GetNode(A);
+Node* nA=Source->GetNode(A);
 if (nA!=NULL)
 {
   EInd=Source->GetNodeInd(nA);
@@ -10084,7 +12456,7 @@ return (gret);
 }
 
 
-G_Object* E_Object2::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object2::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object2* gret = new E_Object2;
@@ -10118,9 +12490,9 @@ pDC->MoveTo((int) pVertex[0]->DSP_Point->x,(int) pVertex[0]->DSP_Point->y);
 pDC->LineTo((int) pVertex[1]->DSP_Point->x,(int) pVertex[1]->DSP_Point->y);
 }
 
-int E_Object2::GetLinkList(cLink* Links[200])
+int E_Object2::GetLinkList(eEdge* Links[200])
 {
-Links[0]=new cLink;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->iColour=iColour;
 Links[0]->pVertex[0]=pVertex[0];
@@ -10213,7 +12585,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
 	{
 	  glColor3fv(cols[124]);
       glEnable(GL_TEXTURE_1D);
-      glLineWidth(2.0);
+      glLineWidth(gEL_SIZE);
       glBegin(GL_LINES);
       glTexCoord1f(fCols[0]);
       glVertex3f((float) (pVertex[0]->Pt_Point->x+d[0].x),(float) (pVertex[0]->Pt_Point->y+d[0].y),(float) (pVertex[0]->Pt_Point->z+d[0].z));
@@ -10227,7 +12599,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
 	else
 	{
 	  glColor3fv(cols[iColour]);
-      glLineWidth(2.0);
+      glLineWidth(gEL_SIZE);
 	  glBegin(GL_LINES);
       glVertex3f((float) (pVertex[0]->Pt_Point->x+d[0].x),(float) (pVertex[0]->Pt_Point->y+d[0].y),(float) (pVertex[0]->Pt_Point->z+d[0].z));
       glVertex3f((float) (pVertex[1]->Pt_Point->x+d[1].x),(float) (pVertex[1]->Pt_Point->y+d[1].y),(float) (pVertex[1]->Pt_Point->z+d[1].z));
@@ -10268,7 +12640,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
         }
       }
 		C3dVector vC = Get_Centroid();
-		mS.Transpose();
+		//mS.Transpose();
 		C3dVector vX=mS.GetColVec(1);
 		C3dVector vY=mS.GetColVec(2);;
 		C3dVector vZ=mS.GetColVec(3);;
@@ -10318,6 +12690,20 @@ double E_Object2::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   return(dTemp);
 }
 
+
+double E_Object2::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
+
 C3dVector E_Object2::Get_Centroid()
 {
 C3dVector vT;
@@ -10362,6 +12748,24 @@ for (i=0;i<iNoNodes;i++)
 fprintf(pFile,"\n","");
 }
 
+CString E_Object2::ToString()
+{
+	char S[80] = "";
+	CString src = "";
+	C3dMatrix TMat;
+	int iCS;
+	if (iCSYS < 0)
+		iCS = 0;
+	else
+		iCS = iCSYS;
+
+	if (iType == 136)
+	{
+		sprintf_s(S , "%8s%8i%8i%8i%8i%8s%8s%8s%8i\n", "CBUSH   ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel, "", "", "", iCS);
+		src = S;
+	}
+	return (src);
+}
 
 void E_Object2::ExportNAS(FILE* pFile)
 {
@@ -10372,17 +12776,9 @@ void E_Object2::ExportNAS(FILE* pFile)
   else
 	  iCS = iCSYS;
 
-  if (iType == 136)
+  if (iType == 138)
   {
-    //fprintf(pFile, "%8s%8i%8i%8i%8i%8s%8s%8s%8i\n", "CBUSH   ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel,"","","", iCS);
-	ME_Object* pM = (ME_Object*)this->pParent;
-	fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1000.0", pVertex[0]->iLabel, "1", pVertex[1]->iLabel, "1");
-	pM->iElementLab++;
-	fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1.0E8", pVertex[0]->iLabel, "2", pVertex[1]->iLabel, "2");
-	pM->iElementLab++;
-	fprintf(pFile, "%8s%8i%8s%8i%8s%8i%8s\n", "CELAS2  ", pM->iElementLab, "1000.0", pVertex[0]->iLabel, "3", pVertex[1]->iLabel, "3");
-	pM->iElementLab++;
-
+    fprintf(pFile, "%8s%8i%8i%8i%8i%8s%8s%8s%8i\n", "CBUSH   ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel,"","","", iCS);
   }
 }
 
@@ -10456,6 +12852,8 @@ CString E_Object2::GetName()
 int E_Object2::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "CID";
@@ -10472,6 +12870,9 @@ int E_Object2::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -10491,12 +12892,13 @@ int E_Object2::GetVarValues(CString sVar[])
 void E_Object2::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
 
-	Pt_Object* pN;
+	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-	PID = atoi(sVar[0]);
-	iCSYS = atoi(sVar[1]);
-	int N1 = atof(sVar[2]);
-	int N2 = atof(sVar[3]);
+	iFile = atoi(sVar[0]);
+	PID = atoi(sVar[1]);
+	iCSYS = atoi(sVar[2]);
+	int N1 = atof(sVar[3]);
+	int N2 = atof(sVar[4]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -10510,6 +12912,136 @@ void E_Object2::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 			pVertex[1] = pN;
 	}
 }
+
+//----------------------------------------------------------------------------
+//    B U S H  E L E M E N T   O B J E C T
+//----------------------------------------------------------------------------
+
+IMPLEMENT_DYNAMIC(E_Object2BUSH, CObject)
+
+int E_Object2BUSH::noDof()
+{
+	return(6);
+}
+
+Mat E_Object2BUSH::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr)
+{
+	int i, j;
+	double kx = 1e9;
+	double ky = 1e9;
+	double kz = 1e9;
+	double rx = 1e6;
+	double ry = 1e6;
+	double rz = 1e6;
+	char S1[80];
+	C3dMatrix r;
+	Mat TMat;
+	Mat TTMat(6, 6);
+	Mat Kmt;
+	Mat tKmt;
+	Mat t;
+	Mat tt;
+	Mat KEdum;
+	Property* pS = PropsT->GetItem(this->PID);
+	if (pS != NULL)
+	{
+		if (pS->iType == 138)
+		{
+			PBUSH* pSP = (PBUSH*)pS;
+			kx = pSP->dK1; ky = pSP->dK2; kz = pSP->dK3;
+			rx = pSP->dK4; ry = pSP->dK5; rz = pSP->dK6;
+		}
+	}
+	else
+	{
+		sprintf_s(S1, "%s%i", "ERROR: No Property Found for Spring Element ", iLabel);
+		outtext1(S1);
+	}
+	Mat KE(12, 12);
+	KE *= 0;
+	//DEFUALT MATRIX GLOBAL
+
+	*KE.mn(1, 1) = kx;                             //NB * **new 09 / 10 / 21. Big change.KE(before offsets) : just EPROP vals
+	*KE.mn(2, 2) = ky;
+	*KE.mn(3, 3) = kz;
+	*KE.mn(4, 4) = rx;
+	*KE.mn(5, 5) = ry;
+	*KE.mn(6, 6) = rz;
+
+	*KE.mn(7, 7) = *KE.mn(1, 1);
+	*KE.mn(8, 8) = *KE.mn(2, 2);
+	*KE.mn(9, 9) = *KE.mn(3, 3);
+	*KE.mn(10, 10) = *KE.mn(4, 4);
+	*KE.mn(11, 11) = *KE.mn(5, 5);
+	*KE.mn(12, 12) = *KE.mn(6, 6);
+
+	*KE.mn(1, 7) = -*KE.mn(1, 1);
+	*KE.mn(2, 8) = -*KE.mn(2, 2);
+	*KE.mn(3, 9) = -*KE.mn(3, 3);
+	*KE.mn(4, 10) = -*KE.mn(4, 4);
+	*KE.mn(5, 11) = -*KE.mn(5, 5);
+	*KE.mn(6, 12) = -*KE.mn(6, 6);
+	for (i = 1; i <= 12; i++)
+	{
+		for (j = 1; j <= 12; j++)
+		{
+			*KE.mn(j, i) = *KE.mn(i, j);
+		}
+	}
+
+	//TRANSFORM KE TO GLOBAL
+	CoordSys* pCSYS = nullptr;
+	if (this->iCSYS != -1)
+	{
+		ME_Object* ME = (ME_Object*)this->pParent;
+		if (ME != NULL)
+		{
+			pCSYS = ME->GetSys(iCSYS);
+			if (pCSYS != NULL)
+			{
+				r = GetSpringSys(pCSYS);
+				t = KEToKGTransform2(r);
+				tt = t; tt.Transpose();
+				KEdum = KE * t;
+				KE = tt * KEdum;
+			}
+			else
+			{
+				sprintf_s(S1, "%s%i", "ERROR: Coordinate System Not Found for Spring Element ", iLabel);
+				outtext1(S1);
+				bErr = TRUE;
+			}
+		}
+		else
+		{
+			outtext1("ERROR: Orphaned Element.");
+			bErr = TRUE;
+		}
+	}
+
+	 return (KE);
+}
+
+Vec<int> E_Object2BUSH::GetSteerVec3d()
+{
+	Vec<int> V(2 * 6);
+	*V.nn(1) = pVertex[0]->dof[0];
+	*V.nn(2) = pVertex[0]->dof[1];
+	*V.nn(3) = pVertex[0]->dof[2];
+	*V.nn(4) = pVertex[0]->dof[3];
+	*V.nn(5) = pVertex[0]->dof[4];
+	*V.nn(6) = pVertex[0]->dof[5];
+
+	*V.nn(7) = pVertex[1]->dof[0];
+	*V.nn(8) = pVertex[1]->dof[1];
+	*V.nn(9) = pVertex[1]->dof[2];
+	*V.nn(10) = pVertex[1]->dof[3];
+	*V.nn(11) = pVertex[1]->dof[4];
+	*V.nn(12) = pVertex[1]->dof[5];
+
+
+	return(V);
+}
 //----------------------------------------------------------------------------
 //    ROD E L E M E N T   O B J E C T
 //----------------------------------------------------------------------------
@@ -10518,6 +13050,7 @@ IMPLEMENT_DYNAMIC( E_Object2R, CObject )
 
 E_Object2R::E_Object2R()
 {
+G_Object();
 iDOFA=0;
 iDOFB=0;
 iONID = -1;
@@ -10531,7 +13064,7 @@ pVertex[0]=NULL;
 pVertex[1]=NULL;
 }
 
-void E_Object2R::Create(Pt_Object* pInVertex[200], int iLab,int iCol,int iType, int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_Object2R::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType, int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -10547,6 +13080,75 @@ OffA*=0;
 OffB*=0;
 }
 
+
+void E_Object2R::GetPinFlags(Vec<int> &PDOFS, int& iNoPINs)
+{
+	iNoPINs = 1;  //1 indeded
+	PDOFS.Size(12);
+	if (iDOFA & DOF_1)
+	{
+		*PDOFS.nn(iNoPINs) = 1;
+		iNoPINs++;
+	}
+	if (iDOFA & DOF_2)
+	{
+		*PDOFS.nn(iNoPINs) = 2;
+		iNoPINs++;
+	}
+	if (iDOFA & DOF_3)
+	{
+		*PDOFS.nn(iNoPINs) = 3;
+		iNoPINs++;
+	}
+	if (iDOFA & DOF_4)
+	{
+		*PDOFS.nn(iNoPINs) = 4;
+		iNoPINs++;
+	}
+	if (iDOFA & DOF_5)
+	{
+		*PDOFS.nn(iNoPINs) = 5;
+		iNoPINs++;
+	}
+	if (iDOFA & DOF_6)
+	{
+		*PDOFS.nn(iNoPINs) = 6;
+		iNoPINs++;
+	}
+	//second node or end of bar
+	if (iDOFB & DOF_1)
+	{
+		*PDOFS.nn(iNoPINs) = 7;
+		iNoPINs++;
+	}
+	if (iDOFB & DOF_2)
+	{
+		*PDOFS.nn(iNoPINs) = 8;
+		iNoPINs++;
+	}
+	if (iDOFB & DOF_3)
+	{
+		*PDOFS.nn(iNoPINs) = 9;
+		iNoPINs++;
+	}
+	if (iDOFB & DOF_4)
+	{
+		*PDOFS.nn(iNoPINs) = 10;
+		iNoPINs++;
+	}
+	if (iDOFB & DOF_5)
+	{
+		*PDOFS.nn(iNoPINs) = 11;
+		iNoPINs++;
+	}
+	if (iDOFB & DOF_6)
+	{
+		*PDOFS.nn(iNoPINs) = 12;
+		iNoPINs++;
+	}
+}
+
+
 void E_Object2R::SetDOFStringA(CString sDOF)
 {
   iDOFA=GetDOFInt(sDOF);
@@ -10557,21 +13159,29 @@ void E_Object2R::SetDOFStringB(CString sDOF)
   iDOFB=GetDOFInt(sDOF);
 }
 
-void E_Object2R::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_Object2R::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
-BOOL E_Object2R::NodeInEl(Pt_Object* pN)
+BOOL E_Object2R::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 int i=0;
@@ -10678,7 +13288,7 @@ gret->pVertex[1] = Target->pNodes[EInd+iSInd];
 gret->vUp=vUp;
 gret->OffA=OffA;
 gret->OffB=OffB;
-Pt_Object* pT=Source->GetNode(iONID);
+Node* pT=Source->GetNode(iONID);
 if (pT!=NULL)
 {
   EInd=Source->GetNodeInd(pT);
@@ -10688,7 +13298,7 @@ else
 {
   gret->iONID=-1;
 }
-Pt_Object* nA=Source->GetNode(A);
+Node* nA=Source->GetNode(A);
 if (nA!=NULL)
 {
   EInd=Source->GetNodeInd(nA);
@@ -10709,7 +13319,7 @@ return (gret);
 }
 
 
-G_Object* E_Object2R::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object2R::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object2R* gret = new E_Object2R;
@@ -10750,6 +13360,7 @@ pDC->LineTo((int) pVertex[1]->DSP_Point->x,(int) pVertex[1]->DSP_Point->y);
 void E_Object2R::Info()
 {
 	char S1[80];
+	G_Object::Info();
 	sprintf_s(S1, "%s%i%s%i%s%i%s%i%s%i%s%i", "Type ", iObjType, "; Label ", iLabel, " Col; ", iColour, " PID; ", PID, " ELTYPE; ", iType, " CSYS; ", iCSYS);
 	outtext1(S1);
 	sprintf_s(S1, "%s%i%s%i", "ND1 ", pVertex[0]->iLabel, "ND2 ", pVertex[1]->iLabel);
@@ -10771,9 +13382,9 @@ void E_Object2R::Info()
 
 
 
-int E_Object2R::GetLinkList(cLink* Links[200])
+int E_Object2R::GetLinkList(eEdge* Links[200])
 {
-Links[0]=new cLink;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->iColour=iColour;
 Links[0]->pVertex[0]=pVertex[0];
@@ -10793,7 +13404,7 @@ glColor3fv(cols[iColour]);
 C3dVector d[3];
 int i;
 for (i=0;i<2;i++)
-{d[i].x=0;d[i].y=0;d[i].z=0;}
+  {d[i].x=0;d[i].y=0;d[i].z=0;}
 ME_Object* ME=(ME_Object*) this->pParent;
 double S;
 S = ME->dScale;
@@ -10834,23 +13445,28 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
     }
   }
   Selectable=1;
-  if (pPr!=NULL)
+  if ((iDspFlgs & DSP_THK) > 0)
   {
-    BSec* pS = pPr->GetSec();
-    if (pS!=NULL)
-    {
-      C3dMatrix TA=GetBeamTformA();
-      C3dMatrix TB=GetBeamTformB();
-      pS->OglDraw(iDspFlgs,TA,TB,d[0],d[1],fCols[0],fCols[1],bD);
-    }
+	  if (pPr != NULL)
+	  {
+		  BSec* pS = pPr->GetSec();
+		  if (pS != NULL)
+		  {
+			  C3dMatrix TA = GetBeamTformA();
+			  C3dMatrix TB = GetBeamTformB();
+			  glEnable(GL_BLEND);
+			  glBlendFunc(GL_SRC_ALPHA, GL_SRC_COLOR);
+			  pS->OglDraw(iDspFlgs, TA, TB, d[0], d[1], fCols[0], fCols[1], bD);
+			  glDisable(GL_BLEND);
+		  }
+	  }
   }
   else
   {
-    if (((iDspFlgs & DSP_CONT)==0) || (bD=TRUE))
+    if (((iDspFlgs & DSP_CONT)==0) || (bD==TRUE))
     {
       glColor3fv(cols[124]);
       glEnable(GL_TEXTURE_1D);
-
       glBegin(GL_LINES);
         glTexCoord1f(fCols[0]);
         glVertex3f((float)(pVertex[0]->Pt_Point->x+d[0].x),(float)(pVertex[0]->Pt_Point->y+d[0].y),(float)(pVertex[0]->Pt_Point->z+d[0].z));
@@ -10859,7 +13475,14 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
       glEnd();
       glDisable(GL_TEXTURE_1D);
     }
-    
+	else
+	{
+	   glColor3fv(cols[iColour]);
+       glBegin(GL_LINES);
+       glVertex3f((float)(pVertex[0]->Pt_Point->x + OffA.x + d[0].x), (float)(pVertex[0]->Pt_Point->y + OffA.y + d[0].y), (float)(pVertex[0]->Pt_Point->z + OffA.z + d[0].z));
+       glVertex3f((float)(pVertex[1]->Pt_Point->x + OffB.x + d[1].x), (float)(pVertex[1]->Pt_Point->y + OffB.y + d[1].y), (float)(pVertex[1]->Pt_Point->z + OffB.z + d[1].z));
+       glEnd();
+	}
   }
 }
 else
@@ -10907,6 +13530,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
   {
     glColor3fv(cols[0]);
   }
+  glLineWidth(gEL_SIZE);
   glBegin(GL_LINES);
     glVertex3f((float) (pVertex[0]->Pt_Point->x+OffA.x+d[0].x),(float) (pVertex[0]->Pt_Point->y+OffA.y+d[0].y),(float) (pVertex[0]->Pt_Point->z+OffA.z+d[0].z));
     glVertex3f((float) (pVertex[1]->Pt_Point->x+OffB.x+d[1].x),(float) (pVertex[1]->Pt_Point->y+OffB.y+d[1].y),(float) (pVertex[1]->Pt_Point->z+OffB.z+d[1].z));
@@ -10915,7 +13539,7 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
   vCent=Get_Centroid();
   if (bDrawLab==TRUE)
   {
-	  sprintf_s(sLab,"E%i",iLabel);
+	sprintf_s(sLab,"E%i",iLabel);
     OglString(iDspFlgs,vCent.x,vCent.y,vCent.z,&sLab[0]);
   }
   if (((iDspFlgs & DSP_RESLAB)==0) && (pResV!=NULL))
@@ -10923,14 +13547,17 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
      sprintf_s(sLab,"%f",*pResV->GetAddress(ind));
      OglString(iDspFlgs,vCent.x,vCent.y,vCent.z,&sLab[0]);
   }
-  if (pPr!=NULL)
+  if ((iDspFlgs & DSP_THK) > 0)
   {
-    BSec* pS = pPr->GetSec();
-    if (pS!=NULL)
-    {
-      C3dMatrix TMat=GetBeamTform();
-      pS->OglDrawW(iDspFlgs,TMat,d[0],d[1]);
-    }
+	  if (pPr != NULL)
+	  {
+		  BSec* pS = pPr->GetSec();
+		  if (pS != NULL)
+		  {
+			  C3dMatrix TMat = GetBeamTform();
+			  pS->OglDrawW(iDspFlgs, TMat, d[0], d[1]);
+		  }
+	  }
   }
   if ((iDspFlgs & DSP_ELSYS)==0)
   {
@@ -11016,7 +13643,7 @@ C3dVector vZ;
 vX=this->GetDir();;
 vY=vUp;
 vY.Normalize();
-vZ=vY.Cross(vX);
+vZ=vX.Cross(vY);
 vZ.Normalize();
 vY=vZ.Cross(vX);
 TRet.SetColVec(1,vZ);
@@ -11037,7 +13664,7 @@ C3dVector vZ;
 vX=this->GetDir();;
 vY=vUp;
 vY.Normalize();
-vZ=vY.Cross(vX);
+vZ=vX.Cross(vY);
 vZ.Normalize();
 vY=vZ.Cross(vX);
 TRet.SetColVec(1,vZ);
@@ -11060,7 +13687,7 @@ C3dVector vZ;
 vX=this->GetDir();;
 vY=vUp;
 vY.Normalize();
-vZ=vY.Cross(vX);
+vZ=vX.Cross(vY);
 vZ.Normalize();
 vY=vZ.Cross(vX);
 TRet.SetColVec(1,vZ);
@@ -11105,43 +13732,10 @@ OffB=TMat*OffB;
 
 int E_Object2R::noDof()
 {
-return (3);
+return (6);
 }
 
-int E_Object2R::MaxBW()
-{
-int i;
-int j;
 
-int MaxDof;
-int MinDof;
-MaxDof=0;
-MinDof=99999999;
-for (i=0;i<iNoNodes;i++)
-{
-  for(j=0;j<noDof();j++)
-  {
-    if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j]>MaxDof))
-	  {
-       MaxDof=pVertex[i]->dof[j];
-    }
-	  if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] < MinDof))
-	  {
-       MinDof=pVertex[i]->dof[j];
-	  }
-  }
-}
-int iRC;
-if (MaxDof-MinDof<0)
-{
-  iRC=0;
-}
-else
-{
-  iRC=MaxDof-MinDof;
-}
-return (iRC);
-}
 
 
 Mat E_Object2R::GetElNodalMass(PropTable* PropsT,MatTable* MatT)
@@ -11343,20 +13937,20 @@ l=p2.Mag();
 return (KM);
 }
 
-Mat E_Object2R::GetStiffMat(PropTable* PropsT,MatTable* MatT)
+Mat E_Object2R::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
 double ea=10000;
 double eal=10000;
-double x1,y1,z1,x2,y2,z2;
-double ell;
+double jg = 10000;
+double jgl = 10000;
 int MID=-1;
 char S1[80];
-Mat KM(6,6);
-Mat t(6,6);
-Mat tt(6,6);
-KM.MakeZero();
-t.MakeZero();
-tt.MakeZero();
+Mat KE(12,12);
+Mat KEdum;
+Mat t;
+Mat tt;
+C3dVector vN1, vN2;
+KE.MakeZero();
 
 Property* pS=PropsT->GetItem(PID);
 if (pS!=NULL)
@@ -11381,6 +13975,7 @@ if ((pS!=NULL) && (pM!=NULL))
     PROD* pB=(PROD*) pS;
     MAT1* pM1=(MAT1*) pM;
     ea=pB->A*pM1->dE;
+	jg= pB->J*pM1->dG;
   }
   else
   {
@@ -11396,66 +13991,52 @@ else
 
 
 
-x1=pVertex[0]->Pt_Point->x;
-y1=pVertex[0]->Pt_Point->y;
-z1=pVertex[0]->Pt_Point->z;
-x2=pVertex[1]->Pt_Point->x;
-y2=pVertex[1]->Pt_Point->y;
-z2=pVertex[1]->Pt_Point->z;
-x1-=x2;y1-=y2;z1-=z2;
-ell=pow(x1*x1+y1*y1+z1*z1,0.5);
-eal=ea/ell;
+vN1 = pVertex[0]->Get_Centroid();
+vN2 = pVertex[1]->Get_Centroid();
+vN2 -= vN1;
+double ell = vN2.Mag(); //Element length
 
-*KM.mn(1,1)=eal;
-*KM.mn(4,4)=eal;
-*KM.mn(1,4)=-eal;
-*KM.mn(4,1)=-eal;
-//KM.diag();
-C3dMatrix r;
-r=GetElSys();
-Mat mr(3,3);
-*mr.mn(1,1)=r.m_00; *mr.mn(1,2)=r.m_01; *mr.mn(1,3)=r.m_02;
-*mr.mn(2,1)=r.m_10; *mr.mn(2,2)=r.m_11; *mr.mn(2,3)=r.m_12;
-*mr.mn(3,1)=r.m_20; *mr.mn(3,2)=r.m_21; *mr.mn(3,3)=r.m_22;
-
-
-int i,j;
-for (i=1;i<4;i++)
+if (ell > 0)
 {
-  for (j=1;j<4;j++)
-  {
-     *t.mn(i,j) = *mr.mn(i,j);
-     *t.mn(i+3,j+3) = *mr.mn(i,j);
-     *tt.mn(i,j) = *mr.mn(i,j);
-     *tt.mn(i+3,j+3) = *mr.mn(i,j);
-  }
+	eal = ea / ell;
+	jgl = jg / ell;
 }
-tt.Transpose();
-Mat Kmt;
-Mat tKmt;
-Kmt=KM*t;
-tKmt=tt*Kmt;
+*KE.mn(1, 1) = eal;
+*KE.mn(1, 7) = -eal;
+*KE.mn(7, 1) = *KE.mn(1, 7);
+*KE.mn(4, 4) = jgl;
+*KE.mn(4, 10) = -jgl;
+*KE.mn(10, 4) = *KE.mn(4, 10);
+*KE.mn(7, 7) = eal;
+*KE.mn(10, 10) = jgl;
+//TRANSFORM KE TO GLOBAL
+CoordSys * pCSYS = nullptr;
 
-KM=tKmt;
-t.clear();
-tt.clear();
-Kmt.clear();
-tKmt.clear();
-mr.clear();
-return (KM);
+C3dMatrix r = this->GetElSys();
+t = KEToKGTransform2(r);
+tt = t; tt.Transpose();
+KEdum = KE * t;
+KE = tt * KEdum;
+
+return (KE);
 }
 
 Vec<int> E_Object2R::GetSteerVec3d()
 {
-Vec<int> V(2*3);
-*V.nn(1)=pVertex[0]->dof[0];
-*V.nn(2)=pVertex[0]->dof[1];
-*V.nn(3)=pVertex[0]->dof[2];
-*V.nn(4)=pVertex[1]->dof[0];
-*V.nn(5)=pVertex[1]->dof[1];
-*V.nn(6)=pVertex[1]->dof[2];
-
-return(V);
+	Vec<int> V(2 * 6);
+	*V.nn(1) = pVertex[0]->dof[0];
+	*V.nn(2) = pVertex[0]->dof[1];
+	*V.nn(3) = pVertex[0]->dof[2];
+	*V.nn(4) = pVertex[0]->dof[3];
+	*V.nn(5) = pVertex[0]->dof[4];
+	*V.nn(6) = pVertex[0]->dof[5];
+	*V.nn(7) = pVertex[1]->dof[0];
+	*V.nn(8) = pVertex[1]->dof[1];
+	*V.nn(9) = pVertex[1]->dof[2];
+	*V.nn(10) = pVertex[1]->dof[3];
+	*V.nn(11) = pVertex[1]->dof[4];
+	*V.nn(12) = pVertex[1]->dof[5];
+	return(V);
 }
 
 Vec<int> E_Object2R::GetSteerVec1d()
@@ -11487,8 +14068,8 @@ if (iType==11)
 
 CString E_Object2R::ToString()
 {
-CString sRT;
-char S1[80];
+CString sRT="";
+char S1[80]="";
 if (iType==11)
 {
   sprintf_s(S1,"%8s%8i%8i%8i%8i\n","CROD    ",iLabel,PID,pVertex[0]->iLabel,pVertex[1]->iLabel);
@@ -11588,6 +14169,7 @@ IMPLEMENT_DYNAMIC(E_Object2B, CObject )
 
 E_Object2B::E_Object2B()
 {
+G_Object();
 iDOFA=0;
 iDOFB=0;
 iONID = -1;
@@ -11649,7 +14231,7 @@ gret->pVertex[1] = Target->pNodes[EInd+iSInd];
 gret->vUp=vUp;
 gret->OffA=OffA;
 gret->OffB=OffB;
-Pt_Object* pT=Source->GetNode(iONID);
+Node* pT=Source->GetNode(iONID);
 if (pT!=NULL)
 {
   EInd=Source->GetNodeInd(pT);
@@ -11659,7 +14241,7 @@ else
 {
   gret->iONID=-1;
 }
-Pt_Object* nA=Source->GetNode(A);
+Node* nA=Source->GetNode(A);
 if (nA!=NULL)
 {
   EInd=Source->GetNodeInd(nA);
@@ -11680,7 +14262,7 @@ return (gret);
 }
 
 
-G_Object* E_Object2B::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object2B::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object2B* gret = new E_Object2B;
@@ -11709,6 +14291,80 @@ gret->pPr=pPr;
 gret->pParent=Parrent;
 gret->pResV = NULL;
 return (gret);
+}
+
+CString E_Object2B::ToString()
+{
+	char S[80] = "";
+	CString src = "";
+	C3dMatrix TMat;
+
+	if (iType == 21)
+	{
+		sprintf_s(S, "%8s%8i%8i%8i%8i", "CBAR    ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel);
+		src = S;
+	}
+	else if (iType == 22)
+	{
+		sprintf_s(S, "%8s%8i%8i%8i%8i", "CBEAM   ", iLabel, PID, pVertex[0]->iLabel, pVertex[1]->iLabel);
+		src = S;
+	}
+	if (iONID > 0)
+	{
+		sprintf_s(S, "%8i\n", iONID);
+		src += S;
+	}
+	else
+	{
+		TMat.MakeUnit();
+		if (pVertex[0]->OutSys > 0)
+		{
+			ME_Object* pM = (ME_Object*)this->pParent;
+			CoordSys* pSys = pM->GetSys(pVertex[0]->OutSys);
+			if (pSys != NULL)
+			{
+				TMat = pSys->GetTMat();
+				TMat.Transpose();
+			}
+		}
+		C3dVector vU;
+		vU = TMat * vUp;
+		sprintf_s(S, "%8s%8s%8s\n", e8(vU.x), e8(vU.y), e8(vU.z));
+		src += S;
+	}
+	sprintf_s(S, "%8s%8s%8s", "        ", GetDOFString(iDOFA), GetDOFString(iDOFB));
+	src += S;
+	TMat.MakeUnit();
+	if (pVertex[0]->OutSys > 0)
+	{
+		ME_Object* pM = (ME_Object*)this->pParent;
+		CoordSys* pSys = pM->GetSys(pVertex[0]->OutSys);
+		if (pSys != NULL)
+		{
+			TMat = pSys->GetTMat();
+			TMat.Transpose();
+		}
+	}
+	C3dVector vD1;
+	vD1 = TMat * OffA;
+	sprintf_s(S, "%8s%8s%8s", e8(vD1.x), e8(vD1.y), e8(vD1.z));
+	src += S;
+	TMat.MakeUnit();
+	if (pVertex[0]->OutSys > 0)
+	{
+		ME_Object* pM = (ME_Object*)this->pParent;
+		CoordSys* pSys = pM->GetSys(pVertex[1]->OutSys);
+		if (pSys != NULL)
+		{
+			TMat = pSys->GetTMat();
+			TMat.Transpose();
+		}
+	}
+	C3dVector vD2;
+	vD2 = TMat * OffB;
+	sprintf_s(S, "%8s%8s%8s\n", e8(vD2.x), e8(vD2.y), e8(vD2.z));
+	src += S;
+	return(src);
 }
 
 void E_Object2B::ExportNAS(FILE* pFile)
@@ -11783,6 +14439,28 @@ int E_Object2B::noDof()
 return (6);
 }
 
+BOOL E_Object2B::HasOffsets()
+{
+	BOOL brc = FALSE;
+	if ((OffA.Mag() > 0) || (OffB.Mag() > 0))
+		brc = true;
+	return (brc);
+}
+
+//to be superceeded
+BOOL E_Object2B::GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff)
+{
+	C3dVector vO;
+	BOOL brc = FALSE;
+	if (iNode == 0)  //OffA
+		vOff = OffA;
+	else if (iNode == 1)
+		vOff = OffB;
+	if (vOff.Mag() > 0)
+		brc = TRUE;
+	return (brc);
+}
+
 
 Mat E_Object2B::GetThermMat(PropTable* PropsT,MatTable* MatT)
 {
@@ -11848,13 +14526,16 @@ l=p2.Mag();
 return (KM);
 }
 
-Mat E_Object2B::GetStiffMat(PropTable* PropsT,MatTable* MatT)
+
+
+
+Mat E_Object2B::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
 BOOL AX = FALSE;
 BOOL BX = FALSE;
 Mat KM(12,12);
-Mat t(12,12);
-Mat tt(12,12);
+Mat t;
+Mat tt;
 KM.MakeZero();
 t.MakeZero();
 tt.MakeZero();
@@ -11862,7 +14543,7 @@ double ea=50000;
 double eiy=10000;
 double eiz=10000;
 double gj=10000;
-double x1,y1,z1,x2,y2,z2;
+C3dVector vN1, vN2;
 double a1,a2,a3,a4,a5,a6,a7,a8;
 double ell;
 int MID=-1;
@@ -11873,87 +14554,80 @@ if (pS!=NULL)
   MID=pS->GetDefMatID();
 }
 Material* pM=MatT->GetItem(MID);
-if (pS==NULL)
+if (bOpt == 2)
 {
-  sprintf_s(S1,"ERROR: PROPERTY NOT FOUND FOR EL %i",iLabel);
-  outtext1(S1);
-}
-if (pM==NULL)
-{  
-  sprintf_s(S1,"ERROR: MATERIAL NOT FOUND FOR EL %i",iLabel);
-  outtext1(S1); 
-}
-if ((pS!=NULL) && (pM!=NULL))
-{
-  if (pS->iType==5)
-  {
-	PBARL* pB=(PBARL*) pS;
-	MAT1* pM1=(MAT1*) pM;
-	ea=pB->A*pM1->dE;
-	eiy=pB->Iyy*pM1->dE;
-	eiz=pB->Izz*pM1->dE;
-	double g;
-	g=pM1->dE/(2*(1+pM1->dNU));
-	gj=g*pB->J;
-
-  }
-  else if (pS->iType == 4)
-  {
-	PBAR* pB = (PBAR*)pS;
-	MAT1* pM1 = (MAT1*)pM;
-	ea = pB->dA*pM1->dE;
-	eiy = pB->dI1*pM1->dE;
-	eiz = pB->dI2*pM1->dE;
-	double g;
-	g = pM1->dE / (2 * (1 + pM1->dNU));
-	gj = g * pB->dJ;
-  }
-  else
-  {
-    sprintf_s(S1,"ERROR: INVALID PROPERTY FOR EL %i",iLabel);
-    outtext1(S1);
-  }
+	//for psuedo rigid element
+	CalcDefStiffProps(ea, eiy, eiz, gj);
 }
 else
 {
-  sprintf_s(S1,"ERROR: UNABLE TO CALCULATE PROPERTIES FOR EL %i",iLabel);
-  outtext1(S1); 
+	if (pS == NULL)
+	{
+		sprintf_s(S1, "ERROR: PROPERTY NOT FOUND FOR EL %i", iLabel);
+		outtext1(S1);
+	}
+	if (pM == NULL)
+	{
+		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
+		outtext1(S1);
+	}
+	if ((pS != NULL) && (pM != NULL))
+	{
+		if (pS->iType == 5)
+		{
+			PBARL* pB = (PBARL*)pS;
+			MAT1* pM1 = (MAT1*)pM;
+			ea = pB->A * pM1->dE;
+			eiy = pB->Iyy * pM1->dE;
+			eiz = pB->Izz * pM1->dE;
+			double g;
+			g = pM1->dE / (2 * (1 + pM1->dNU));
+			gj = g * pB->J;
+		}
+		else if (pS->iType == 4)
+		{
+			PBAR* pB = (PBAR*)pS;
+			MAT1* pM1 = (MAT1*)pM;
+			ea = pB->dA * pM1->dE;
+			eiy = pB->dI1 * pM1->dE;
+			eiz = pB->dI2 * pM1->dE;
+			double g;
+			g = pM1->dE / (2 * (1 + pM1->dNU));
+			gj = g * pB->dJ;
+		}
+		else
+		{
+			sprintf_s(S1, "ERROR: INVALID PROPERTY FOR EL %i", iLabel);
+			outtext1(S1);
+		}
+	}
+	else
+	{
+		sprintf_s(S1, "ERROR: UNABLE TO CALCULATE PROPERTIES FOR EL %i", iLabel);
+		outtext1(S1);
+	}
 }
-
-x1=pVertex[0]->Pt_Point->x;
-y1=pVertex[0]->Pt_Point->y;
-z1=pVertex[0]->Pt_Point->z;
-x2=pVertex[1]->Pt_Point->x;
-y2=pVertex[1]->Pt_Point->y;
-z2=pVertex[1]->Pt_Point->z;
-
-x1-=x2;y1-=y2;z1-=z2;
-ell=pow(x1*x1+y1*y1+z1*z1,0.5);
-
+//Get nodal coords
+vN1 = pVertex[0]->Get_Centroid();
+vN2 = pVertex[1]->Get_Centroid();
+vN2 -= vN1;
+ell=vN2.Mag(); //Element length
 
 a1=ea/ell; a2=12.0*eiz/(ell*ell*ell);
 a3=12.0*eiy/(ell*ell*ell);a4=6.0*eiz/(ell*ell);
 a5=6.0*eiy/(ell*ell);a6=4.0*eiz/ell;
 a7=4.0*eiy/ell;a8=gj/ell;
-//End Releases
 
 *KM.mn(1,1)=a1;
 *KM.mn(7,7)=a1;
 *KM.mn(1,7)=-a1;
 *KM.mn(7,1)=-a1;
+
 *KM.mn(2,2)=a2;
 *KM.mn(8,8)=a2;
-////**********Note sure about this yet*************
-// This does not converge
-//if (iDOFA & DOF_1) //End A release
-//{
-//	outtext1("End A X release");
-//	*KM.mn(1, 1) = 1000;
-//	*KM.mn(7, 1) = 1000;
-//}
-//***********************************************
 *KM.mn(2,8)=-a2;
 *KM.mn(8,2)=-a2;
+
 *KM.mn(3,3)=a3;
 *KM.mn(9,9)=a3;
 *KM.mn(3,9)=-a3;
@@ -11963,21 +14637,22 @@ a7=4.0*eiy/ell;a8=gj/ell;
 *KM.mn(10,10)=a8;
 *KM.mn(4,10)=-a8;
 *KM.mn(10,4)=-a8;
-*KM.mn(5,5)=a7;
 
+*KM.mn(5,5)=a7;
 *KM.mn(11,11)=a7;
 *KM.mn(5,11)=0.5*a7;
 *KM.mn(11,5)=0.5*a7;
+
 *KM.mn(6,6)=a6;
 *KM.mn(12,12)=a6;
-
 *KM.mn(6,12)=0.5*a6;
 *KM.mn(12,6)=0.5*a6;
+
 *KM.mn(2,6)=a4;
 *KM.mn(6,2)=a4;
 *KM.mn(2,12)=a4;
-
 *KM.mn(12,2)=a4;
+
 *KM.mn(6,8)=-a4;
 *KM.mn(8,6)=-a4;
 *KM.mn(8,12)=-a4;
@@ -11987,45 +14662,54 @@ a7=4.0*eiy/ell;a8=gj/ell;
 *KM.mn(9,5)=a5;
 *KM.mn(9,11)=a5;
 *KM.mn(11,9)=a5;
+
 *KM.mn(3,5)=-a5;
 *KM.mn(5,3)=-a5;
 *KM.mn(3,11)=-a5;
 *KM.mn(11,3)=-a5;
-C3dMatrix r;
-r=GetElSys();
-Mat mr(3,3);
-*mr.mn(1,1)=r.m_00; *mr.mn(1,2)=r.m_01; *mr.mn(1,3)=r.m_02;
-*mr.mn(2,1)=r.m_10; *mr.mn(2,2)=r.m_11; *mr.mn(2,3)=r.m_12;
-*mr.mn(3,1)=r.m_20; *mr.mn(3,2)=r.m_21; *mr.mn(3,3)=r.m_22;
-
-
-int i,j;
-for (i=1;i<4;i++)
-{
-  for (j=1;j<4;j++)
-  {
-     *t.mn(i,j) = *mr.mn(i,j);
-     *t.mn(i+3,j+3) = *mr.mn(i,j);
-     *t.mn(i+6,j+6) = *mr.mn(i,j);
-     *t.mn(i+9,j+9) = *mr.mn(i,j);
-     *tt.mn(i,j) = *mr.mn(i,j);
-     *tt.mn(i+3,j+3) = *mr.mn(i,j);
-     *tt.mn(i+6,j+6) = *mr.mn(i,j);
-     *tt.mn(i+9,j+9) = *mr.mn(i,j);
-  }
-}
+//***************************************************************
+//                    PROCESS PIN FLAGS
+//***************************************************************
+if ((iDOFA > 0) || (iDOFB > 0))
+   PinFlgsToKE(KM);
+//***************************************************************
+//                  TRANSFORM KE TO GLOBAL
+//***************************************************************
+t = KEToKGTransform();
+tt = t;
 tt.Transpose();
 Mat Kmt;
 Mat tKmt;
 Kmt=KM*t;
 tKmt=tt*Kmt;
-
 KM=tKmt;
+//***************************************************************
+//                   OFFSETS TO GLOBAL MAT
+//***************************************************************
+if (bOpt == FALSE)
+{
+	if (HasOffsets())
+	{
+		Mat off;
+		Mat offT;
+		Mat dum1;
+		OffsetsToKG(PropsT, off);
+		offT = off;
+		offT.Transpose();
+		dum1 = KM * off;
+		KM.clear();
+		KM = offT * dum1;
+		dum1.clear();
+		off.clear();
+		offT.clear();
+	}
+}
+
 t.clear();
 tt.clear();
 Kmt.clear();
 tKmt.clear();
-mr.clear();
+
 return (KM);
 }
 
@@ -12060,6 +14744,101 @@ CString E_Object2B::GetName()
 	return("Beam (CBAR)");
 }
 
+int E_Object2B::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
+	sVar[iNo] = "PID";
+	iNo++;
+	sVar[iNo] = "CID";
+	iNo++;
+	sVar[iNo] = "N1";
+	iNo++;
+	sVar[iNo] = "N2";
+	iNo++;
+	sVar[iNo] = "RELEASE END A";
+	iNo++;
+	sVar[iNo] = "RELEASE END B";
+	iNo++;
+	return(iNo);
+}
+
+
+int E_Object2B::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", PID);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", iCSYS);
+	sVar[iNo] = S1;
+	iNo++;
+
+	sprintf_s(S1, "%i", pVertex[0]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", pVertex[1]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sVar[iNo] = GetDOFString(iDOFA);
+	iNo++;
+	sVar[iNo] = GetDOFString(iDOFB);
+	iNo++;
+	return (iNo);
+}
+
+void E_Object2B::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+
+	Node* pN;
+	ME_Object* pMe = (ME_Object*)this->pParent;
+	iFile = atoi(sVar[0]);
+	PID = atoi(sVar[1]);
+	iCSYS = atoi(sVar[2]);
+	int N1 = atof(sVar[3]);
+	int N2 = atof(sVar[4]);
+	if (pVertex[0]->iLabel != N1)
+	{
+		pN = pMe->GetNode(N1);
+		if (pN != NULL)
+			pVertex[0] = pN;
+	}
+	if (pVertex[1]->iLabel != N2)
+	{
+		pN = pMe->GetNode(N2);
+		if (pN != NULL)
+			pVertex[1] = pN;
+	}
+	iDOFA = GetDOFInt(sVar[5]);
+	iDOFB = GetDOFInt(sVar[6]);
+
+}
+
+void E_Object2B::CalcDefStiffProps(double& ea, double& eiy, double& eiz, double& gj)
+{
+
+	double DEF_G;
+	double Area = 1;
+	double R = gSTIFF_BDIA / 2;
+	double Izz, Iyy, J;
+	DEF_G = gDEF_E / (2 * (1 + gDEF_V));
+	Area = Pi * R * R ;
+
+	Izz = Pi * R * R * R * R / 4;
+	Iyy = Izz;
+	J = Pi * R * R * R * R / 2;
+	ea = gDEF_E * Area * gRIGID_MULTIPLIER;
+	eiz = gDEF_E * Izz * gRIGID_MULTIPLIER;
+	eiy = gDEF_E * Iyy * gRIGID_MULTIPLIER;
+	gj = DEF_G * J * gRIGID_MULTIPLIER;
+}
+
+
 IMPLEMENT_DYNAMIC( E_Object3, CObject )
 //----------------------------------------------------------------------------
 //    E L E M E N T   O B J E C T
@@ -12073,12 +14852,14 @@ pVertex[2]=NULL;
 
 E_Object3::E_Object3()
 {
+G_Object();
 this->iNoNodes=3;
 this->iType=91;
 this->pParent=NULL;
+iNoRemesh = 0;		  //tempoary for tet mesh gen debug.
 }
 
-void E_Object3::Create(Pt_Object* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int inMCys,double inMAng,G_Object* Parrent,Property* inPr)
+void E_Object3::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int inMCys,double inMAng,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 iMCys=inMCys;
@@ -12093,7 +14874,7 @@ dZOFFS=0;
 
 void E_Object3::Reverse()
 {
-Pt_Object* pT[8];
+Node* pT[8];
 pT[0]=pVertex[0];
 pT[1]=pVertex[1];
 pT[2]=pVertex[2];
@@ -12103,22 +14884,30 @@ pVertex[2] = pT[1];
 }
 
 
-void E_Object3::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_Object3::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 
 }
 
-BOOL E_Object3::NodeInEl(Pt_Object* pN)
+BOOL E_Object3::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 int i=0;
@@ -12187,8 +14976,9 @@ void E_Object3::Serialize(CArchive& ar,int iV,ME_Object* MESH)
     pVertex[1] = MESH->GetNode(iNd);
     ar>>iNd;
     pVertex[2] = MESH->GetNode(iNd);
+	pPr = NULL;
 	}
-  pPr=NULL;
+ 
 }
 
 void E_Object3::ExportNAS(FILE* pFile)
@@ -12266,7 +15056,7 @@ gret->pResV = NULL;
 return (gret);
 }
 
-G_Object* E_Object3::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object3::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object3* gret = new E_Object3;
@@ -12303,19 +15093,19 @@ pDC->LineTo((int) pVertex[2]->DSP_Point->x,(int) pVertex[2]->DSP_Point->y);
 pDC->LineTo((int) pVertex[0]->DSP_Point->x,(int) pVertex[0]->DSP_Point->y);
 }
 
-int E_Object3::GetLinkList(cLink* Links[200])
+int E_Object3::GetLinkList(eEdge* Links[200])
 {
-Links[0]=new cLink;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cLink;
+Links[1]=new eEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cLink;
+Links[2]=new eEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[0];
@@ -12343,7 +15133,7 @@ S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(1.0);
+glLineWidth(gEL_SIZE);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
@@ -12374,20 +15164,31 @@ Selectable=1;
     C3dVector vOff;
     vN=Get_Normal();
     //Need to calculate the offsets here
+	double dt = 0;
+	double dPCompOff = 0;
+	if (pPr != NULL)
+	{
+		dt = pPr->GetThk();
+		dt *= 0.5;
+		if (pPr->iType == 2)
+		{
+			PCOMP* pPCOMP = (PCOMP*)pPr;
+			dPCompOff = pPCOMP->dZ0 + dt;
+		}
+		else if (pPr->iType == 222)
+		{
+			PCOMPG* pPCOMP = (PCOMPG*)pPr;
+			dPCompOff = pPCOMP->dZ0 + dt;
+		}
+	}
     if (((iDspFlgs & DSP_OFF)>0) && (dZOFFS!=DBL_MAX))
     {
        vOff=vN;
-       vOff*=dZOFFS;
+	   vOff *= dZOFFS + dPCompOff;
     }
     else
     {
        vOff*=0; 
-    }
-    double dt=0;
-    if (pPr!=NULL)
-    {
-      dt=pPr->GetThk();
-      dt*=0.5;
     }
     vN*=dt;
     if ((iDspFlgs & DSP_THK)>0)
@@ -12470,19 +15271,43 @@ Selectable=1;
   }
   if ((iDspFlgs & DSP_MATL)==0)
   {
-    C3dMatrix mS = GetElSys();
-	C3dMatrix mR;
-
-    C3dVector vD = GetFirstEdge();
-	C3dVector vC = Get_Centroid();
-	vD.Normalize();
-	mR.Rotate(0,0,MAng);
-	vD=mS*vD;
-	vD=mR*vD;
-	mS.Transpose();
-	vD=mS*vD;
-	vD*=0.5*dS1;
-    vD+=vC;
+	  C3dMatrix mS = GetElSys();
+	  C3dMatrix mR;
+	  C3dVector vD;
+	  C3dVector vC;
+	  vC = Get_Centroid();
+	  vD = GetFirstEdge();
+	  if (this->iMCys == -1)
+	  {
+		  vD = mS * vD;
+		  mR.Rotate(0, 0, MAng);
+		  vD = mR * vD;
+		  mS.Transpose();
+		  vD = mS * vD;
+		  vD.Normalize();
+		  vD *= 0.5 * dS1;
+		  vD += vC;
+	  }
+	  else
+	  {
+		  C3dVector vSys;
+		  if (this->pParent != NULL)
+		  {
+			  ME_Object* ME = (ME_Object*)pParent;
+			  CoordSys* pS = ME->GetSys(this->iMCys);
+			  if (pS != NULL)
+			  {
+				  vSys = pS->mOrientMat.GetColVec(1);
+				  vD = mS * vSys;
+				  vD.z = 0;
+				  mS.Transpose();
+				  vD = mS * vD;
+				  vD.Normalize();
+				  vD *= 0.5 * dS1;
+				  vD += vC;
+			  }
+		  }
+	  }
     glBegin(GL_LINES);
       glVertex3f((float) vC.x,(float) vC.y,(float) vC.z);
       glVertex3f((float) vD.x,(float) vD.y,(float) vD.z);
@@ -12506,7 +15331,7 @@ double S;
 S=ME->dScale;
 double dFS;
 dFS = ME->dResFactor;
-glLineWidth(2.0);
+glLineWidth(gEL_SIZE);
       BOOL bD=FALSE;
       float fCols[3]={0,0,0};
       int iVar;
@@ -12536,22 +15361,33 @@ C3dVector Vn;
 C3dVector vN;
 C3dVector vOff;
 vN=Get_Normal();
+double dt = 0;
+double dPCompOff = 0;
+if (pPr != NULL)
+{
+	dt = pPr->GetThk();
+	dt *= 0.5;
+	if (pPr->iType == 2)
+	{
+		PCOMP* pPCOMP = (PCOMP*)pPr;
+		dPCompOff = pPCOMP->dZ0 + dt;
+	}
+	else if (pPr->iType == 222)
+	{
+		PCOMPG* pPCOMP = (PCOMPG*)pPr;
+		dPCompOff = pPCOMP->dZ0 + dt;
+	}
+}
 if (((iDspFlgs & DSP_OFF)>0) && (dZOFFS!=DBL_MAX))
 {
   vOff=vN;
-  vOff*=dZOFFS;
+  vOff *= dZOFFS + dPCompOff;
 }
 else
 {
   vOff*=0; 
 }
 
-double dt=0;
-if (pPr!=NULL)
-{
-  dt=pPr->GetThk();
-  dt*=0.5;
-}
 vN*=dt;
 Vn =Get_Normal();
 Vn.Normalize();
@@ -12657,9 +15493,9 @@ else
 }
 }
 
-int E_Object3::GetfaceList(cFace* Faces[6])
+int E_Object3::GetfaceList(eFace* Faces[6])
 {
-Faces[0]=new cFace();
+Faces[0]=new eFace();
 Faces[0]->pParent=this;
 Faces[0]->pVertex[0]=pVertex[0];
 Faces[0]->pVertex[1]=pVertex[1];
@@ -12710,6 +15546,19 @@ double E_Object3::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   FunPnt.clear();
   return(dTemp);
 }
+
+double E_Object3::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
 
 C3dVector E_Object3::Get_Centroid()
 {
@@ -12891,6 +15740,7 @@ return (vX);
 void E_Object3::Info()
 {
   char S1[80];
+  G_Object::Info();
   sprintf_s(S1,"LAB: %i COL: %i PID: %i ELTP: %i MCID: %i ANG: %f ",iLabel,iColour,PID,iType,iMCys,MAng);
   outtext1(S1); 
   sprintf_s(S1,"NODES %i %i %i",pVertex[0]->iLabel,pVertex[1]->iLabel,pVertex[2]->iLabel);
@@ -12902,9 +15752,13 @@ CString E_Object3::ToString()
 CString sRT;
 char S1[80];
 CString sDir;
-if (iMCys==-1)
+if ((iMCys==-1) && (MAng!=0.0))
 {
   sDir=e8(MAng);
+}
+else if (iMCys == -1)
+{
+	sDir = "        ";
 }
 else
 {
@@ -13096,6 +15950,37 @@ for (i=0;i<iNoNodes;i++)
 return (coord);
 }
 
+//*******************************************************************
+//Get The coordinates after transforming the element to the XY plain
+// For MIN3 element point are relative to first node
+//********************************************************************
+Mat E_Object3::getCoords_XEL()
+{
+	int i;
+	double dx, dy, dz;
+
+	C3dVector p;
+	Mat coord(iNoNodes, 3);
+	C3dMatrix M3 = this->GetElSys();
+	//M3.Transpose();
+	for (i = 0; i < iNoNodes; i++)
+	{
+		C3dVector p, v;
+		p.x = pVertex[i]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+		p.y = pVertex[i]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+		p.z = pVertex[i]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+		v = M3.Mult(p);
+		*coord.mn(i + 1, 1) = v.x;
+		*coord.mn(i + 1, 2) = v.y;
+		*coord.mn(i + 1, 3) = v.z;
+		dx = *coord.mn(i + 1, 1);
+		dy = *coord.mn(i + 1, 2);
+		dz = *coord.mn(i + 1, 3);
+	}
+
+	return (coord);
+}
+
 
 Mat E_Object3::ShapeDer(Mat Points, int i)
 {
@@ -13168,271 +16053,1013 @@ int E_Object3::noDof()
 return(6);
 }
 
-Mat E_Object3::GetStiffMat(PropTable* PropsT,MatTable* MatT)
+//07/01/2024 MIN3 IMPLEMENTATION
+Mat E_Object3::TMEM1_BEE(int OPT)
 {
-Mat bee;   //strain displacement matrix
-int nip=0;
+	//Membrane strain / displacement for 1 point CTRIA element
+	Mat BM(3, 18);
+	BM.MakeZero();
+	double C01 = 0;
+	double C02 = 0;
+	double C03 = 0;
+	double C04 = 0;
+	Mat XEL = getCoords_XEL();       //Local element coordinates
+//Calculate element geometry parameters from data block XEL
+//XEL is local element coods
+	double X2E = *XEL.mn(2, 1);
+	double X3E = *XEL.mn(3, 1);
+	double Y3E = *XEL.mn(3, 2);
+	double AREA = X2E * Y3E / 2.0;
 
-Mat coord2;
-Mat deriv;
-Mat deriv2;
-Mat fun;
-Mat Points;
-Mat jac;
-int i;
-double det;
-Mat bT;
-Mat db;
-Mat bdb;
-int iDof;
-int iS;
-int MID=-1;
-double dE=210e9;
-double dv=0.29;
+
+	C01 = 1 / X2E;
+	C02 = 1 / Y3E;
+	C03 = (X3E - X2E) * C01 * C02;
+	C04 = X3E * C01 * C02;
+
+	*BM.mn(1, 1) = -C01;
+	*BM.mn(1, 7) = C01;
+	*BM.mn(2, 2) = C03;
+	*BM.mn(2, 8) = -C04;
+	*BM.mn(2, 14) = C02;
+	*BM.mn(3, 1) = C03;
+	*BM.mn(3, 2) = -C01;
+	*BM.mn(3, 7) = -C04;
+	*BM.mn(3, 8) = C01;
+	*BM.mn(3, 13) = C02;
+	XEL.clear();
+	return (BM);
+}
+
+//BEE Matrix for transverse shear (strain / displacement matrix)
+//one integration point befined by XI;
+Mat E_Object3::TPLT2_BEE_TS(int OPT, Vec<double>& XI)
+{
+	int j;
+	Mat BS(2,9);
+
+	BS.MakeZero();
+	Vec<double> A(3);
+	Vec<double> B(3);
+	Mat XEL = getCoords_XEL();       //Local element coordinates
+	//Calculate element geometry parameters from data block XEL
+	//XEL is local element coods
+
+	double X2E = *XEL.mn(2, 1);
+	double X3E = *XEL.mn(3, 1);
+	double Y3E = *XEL.mn(3, 2);
+	double AREA = X2E * Y3E / 2.0;
+	*A.nn(1) = X3E - X2E;
+	*A.nn(2) = -X3E;
+	*A.nn(3) = X2E;
+	*B.nn(1) = -Y3E;
+	*B.nn(2) = Y3E;
+	*B.nn(3) = 0;
+	double A4 = 4 * AREA;
+	for (j = 1; j <= 3; j++)
+	{
+		*BS.mn(1, j) = *B.nn(j) / (2 * AREA);
+		*BS.mn(2, j) = *A.nn(j) / (2 * AREA);
+	}
+
+	*BS.mn(1, 4) = -(*B.nn(1) * (*XI.nn(2) * *B.nn(3) - *XI.nn(3) * *B.nn(2)) / A4);
+	*BS.mn(1, 5) = -(*B.nn(2) * (-*XI.nn(1) * *B.nn(3) + *XI.nn(3) * *B.nn(1)) / A4);
+	*BS.mn(1, 6) = -(*B.nn(3) * (*XI.nn(1) * *B.nn(2) - *XI.nn(2) * *B.nn(1)) / A4);
+
+	*BS.mn(1, 7) = (*XI.nn(1) * (A4 - *B.nn(2) * *A.nn(3) + *B.nn(3) * *A.nn(2)) + *B.nn(1) * (-*XI.nn(2) * *A.nn(3) + *XI.nn(3) * *A.nn(2))) / A4;
+	*BS.mn(1, 8) = (*XI.nn(2) * (A4 + *B.nn(1) * *A.nn(3) - *B.nn(3) * *A.nn(1)) + *B.nn(2) * (*XI.nn(1) * *A.nn(3) - *XI.nn(3) * *A.nn(1))) / A4;
+	*BS.mn(1, 9) = (*XI.nn(3) * (A4 + *B.nn(2) * *A.nn(1) - *B.nn(1) * *A.nn(2)) + *B.nn(3) * (-*XI.nn(1) * *A.nn(2) + *XI.nn(2) * *A.nn(1))) / A4;
+
+	*BS.mn(2, 4) = -(*XI.nn(1) * (A4 + *A.nn(2) * *B.nn(3) - *A.nn(3) * *B.nn(2)) + *A.nn(1) * (*XI.nn(2) * *B.nn(3) - *XI.nn(3) * *B.nn(2))) / A4;
+	*BS.mn(2, 5) = -(*XI.nn(2) * (A4 - *A.nn(1) * *B.nn(3) + *A.nn(3) * *B.nn(1)) + *A.nn(2) * (-*XI.nn(1) * *B.nn(3) + *XI.nn(3) * *B.nn(1))) / A4;
+	*BS.mn(2, 6) = -(*XI.nn(3) * (A4 - *A.nn(2) * *B.nn(1) + *A.nn(1) * *B.nn(2)) + *A.nn(3) * (*XI.nn(1) * *B.nn(2) - *XI.nn(2) * *B.nn(1))) / A4;
+
+	*BS.mn(2, 7) = *A.nn(1) * (-*XI.nn(2) * *A.nn(3) + *XI.nn(3) * *A.nn(2)) / A4;
+	*BS.mn(2, 8) = *A.nn(2) * (*XI.nn(1) * *A.nn(3) - *XI.nn(3) * *A.nn(1)) / A4;
+	*BS.mn(2, 9) = *A.nn(3) * (-*XI.nn(1) * *A.nn(2) + *XI.nn(2) * *A.nn(1)) / A4;
+	A.clear();
+	B.clear();
+	XEL.clear();
+	//reorder
+
+	return (BS);
+}
+
+Mat E_Object3::BEE_BM_Recovery()
+{
+	Mat BEE;
+	BEE = TMEM1_BEE(3);
+	return (BEE);
+}
+
+Mat E_Object3::BEE_BB_Recovery()
+{
+	int i, J, JJ;
+	int iDof;
+
+	Mat BB(3, 3 * iNoNodes);
+	Mat BB2(3, 6 * iNoNodes);
+	Vec <int> IDS(18);
+	BB.MakeZero();
+	BB2.MakeZero();
+
+	//****************************************************************************
+	//                            M Y   C A L C U L A T I O N
+	//****************************************************************************
+
+	Mat coord;    //Nodal Coordinates
+	Mat deriv;    //shape function derivatives
+	Mat Points;   //sample points
+	Mat deriv2;   //derivative of shape functions
+	Mat jac;
+	double det = 0;
+	coord = getCoords3d();       //Coords in element CSYS this case actually 2d
+	Points = Sample(1);
+	deriv = ShapeDer(Points, 1);  //2x4 shape fuction derivatives
+	jac = deriv * coord;
+	jac = jac.InvertJac(det);
+	deriv2 = jac * deriv;
+
+	//Bending Strain Components curvatures k11,k22,k12
+	//1 pt at el centre
+
+	BB.MakeZero();
+	C3dMatrix Bb;
+	int k;
+	//BENDING TERMS Bb is BENDING B MATRIX
+	int inc = 0;
+	double tmp;
+	for (k = 1; k < iNoNodes + 1; k++)
+	{
+		Bb.m_00 = 0;
+		Bb.m_01 = 0;
+		Bb.m_02 = -*deriv2.mn(1, k);
+		Bb.m_10 = 0;
+		Bb.m_11 = *deriv2.mn(2, k);
+		Bb.m_12 = 0;
+		Bb.m_20 = 0;
+		Bb.m_21 = *deriv2.mn(1, k);
+		Bb.m_22 = -*deriv2.mn(2, k);
+
+		*BB.mn(1, inc + 1) = 0;
+		*BB.mn(1, inc + 2) = 0;
+		*BB.mn(1, inc + 3) = -*deriv2.mn(1, k);		tmp = -*deriv2.mn(1, k);
+		*BB.mn(2, inc + 1) = 0;
+		*BB.mn(2, inc + 2) = *deriv2.mn(2, k);		tmp = *deriv2.mn(2, k);
+		*BB.mn(2, inc + 3) = 0;
+		*BB.mn(3, inc + 1) = 0;
+		*BB.mn(3, inc + 2) = *deriv2.mn(1, k);		tmp = *deriv2.mn(1, k);
+		*BB.mn(3, inc + 3) = -*deriv2.mn(2, k);		tmp = -*deriv2.mn(2, k);
+		inc += 3;
+	}
+
+	*IDS.nn(1) = 3;
+	*IDS.nn(2) = 4;
+	*IDS.nn(3) = 5;
+	*IDS.nn(4) = 9;
+	*IDS.nn(5) = 10;
+	*IDS.nn(6) = 11;
+	*IDS.nn(7) = 15;
+	*IDS.nn(8) = 16;
+	*IDS.nn(9) = 17;
+	for (i = 1; i <= 9; i++)
+	{
+		*BB2.mn(1, *IDS.nn(i)) = *BB.mn(1, i);
+		*BB2.mn(2, *IDS.nn(i)) = *BB.mn(2, i);
+		*BB2.mn(3, *IDS.nn(i)) = *BB.mn(3, i);
+	}
+
+	BB.clear();
+	coord.clear();;
+	deriv.clear();;
+	Points.clear();;
+	deriv2.clear();;
+	jac.clear();;
+	//**********************************************************
+
+
+	BB.clear();
+	IDS.clear();
+	return (BB2);
+}
+
+Mat E_Object3::BEE_TS_Recovery()
+{
+	int i;
+	Mat BS; 
+	Mat BS2(2,18);
+	Vec <int> IDS(18);
+	Vec <double> XI(3);
+	*XI.nn(1) = 0.3333333;
+	*XI.nn(2) = 0.3333333;
+	*XI.nn(3) = 0.3333333;
+	BS = TPLT2_BEE_TS(3, XI);
+	//INTEGER(LONG), PARAMETER::ID(9) = (/ 3, &!ID(1) = 3 means virgin 9x9 elem DOF 1 is MYSTRAN 18x18 elem DOF  3
+	//	9, &!ID(2) = 9 means virgin 9x9 elem DOF 2 is MYSTRAN 18x18 elem DOF  9
+	//	15, &!ID(3) = 15 means virgin 9x9 elem DOF 3 is MYSTRAN 18x18 elem DOF 15
+	//	4, &!ID(4) = 4 means virgin 9x9 elem DOF 4 is MYSTRAN 18x18 elem DOF  4
+	//	10, &!ID(5) = 10 means virgin 9x9 elem DOF 5 is MYSTRAN 18x18 elem DOF 10
+	//	16, &!ID(6) = 16 means virgin 9x9 elem DOF 6 is MYSTRAN 18x18 elem DOF 16
+	//	5, &!ID(7) = 5 means virgin 9x9 elem DOF 7 is MYSTRAN 18x18 elem DOF  5
+	//	11, &!ID(8) = 11 means virgin 9x9 elem DOF 8 is MYSTRAN 18x18 elem DOF 11
+	//	17 / ) !ID(9) = 17 mea
+	*IDS.nn(1) = 3;
+	*IDS.nn(2) = 9;
+	*IDS.nn(3) = 15;
+	*IDS.nn(4) = 4;
+	*IDS.nn(5) = 10;
+	*IDS.nn(6) = 16;
+	*IDS.nn(7) = 5;
+	*IDS.nn(8) = 11;
+	*IDS.nn(9) = 17;
+	for (i = 1; i <= 9; i++)
+	{
+		*BS2.mn(1, *IDS.nn(i)) = *BS.mn(1, i);
+		*BS2.mn(2, *IDS.nn(i)) = *BS.mn(2, i);
+	}
+	BS.clear();
+	return(BS2);
+}
+
+
+
+Mat E_Object3::TMEM1_KE(int OPT, double AREA, double X2E, double X3E, double Y3E,Mat SHELL_A)
+{
+	//Membrane strain Stiffness Matrix
+	// BMt * DEE * BM
+	Mat KE;
+	Mat BMT;
+	Mat db;
+	Mat BM = TMEM1_BEE(3);
+	BMT = BM;
+	BMT.Transpose();
+	db = SHELL_A * BM;
+	KE = BMT * db;
+	KE *= AREA;
+	//Also need to *by area
+	//KE.diag();
+
+	return (KE);
+}
+
+
+Mat E_Object3::TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E, Mat SHELL_D,  Mat SHELL_T)
+{
+	int I, J;
+	//Bending and Shear stiffness matrix
+	double BENSUM = 0;  
+	double SHRSUM = 0;
+	Mat KE(18, 18);
+	Mat KB(9, 9);   //w,thetaX,thetaY squared NOT the full matrix of 18*18
+	Mat KS(9, 9);  
+	Mat KV(9, 9);
+	Mat A(3, 1);
+	Mat B(3, 1);
+	Mat FXX(3, 3);
+	Mat FYY(3, 3);
+	Mat FXY(3, 3);
+
+	*A.mn(1, 1) = X3E - X2E;
+	*A.mn(2, 1) = -X3E;
+	*A.mn(3, 1) = X2E;
+	*B.mn(1, 1) = -Y3E;
+	*B.mn(2, 1) = Y3E;
+	*B.mn(3, 1) = 0;
+	double A4 = 4 * AREA;
+	double A42 = A4 * AREA;
+	//********************************************************************
+	//Calculate element stiffness matrix KE. Note that we need to calc KE
+	//if the stress recovery matrices(for OPT(3)) are to be cal'd
+	//since the BE strain recovery matrices use PHI_SQ
+	KB.MakeZero();
+    //Bending stiffness terms(KB)
+
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*FXX.mn(I, J) = *B.mn(I,1) * *B.mn(J,1) / A42;
+			*FYY.mn(I, J) = *A.mn(I,1) * *A.mn(J,1) / A42;
+			*FXY.mn(I, J) = *B.mn(I,1) * *A.mn(J,1) / A42;
+		}
+
+	}
+
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KB.mn(I + 3, J + 3) = AREA * (*SHELL_D.mn(2, 2) * *FYY.mn(I, J) + *SHELL_D.mn(2, 3) * (*FXY.mn(I, J) + *FXY.mn(J, I)) + *SHELL_D.mn(3, 3) * *FXX.mn(I, J));
+		}
+
+	}
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KB.mn(I + 3, J + 6) = -AREA * (*SHELL_D.mn(1, 2) * *FXY.mn(J, I) + *SHELL_D.mn(2, 3) * *FYY.mn(I, J) + *SHELL_D.mn(1, 3) * *FXX.mn(I, J) + *SHELL_D.mn(3, 3) * *FXY.mn(I, J));
+			*KB.mn(J + 6, I + 3) = *KB.mn(I + 3, J + 6);
+		}
+	}
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KB.mn(I + 6, J + 6) = AREA * (*SHELL_D.mn(1, 1) * *FXX.mn(I, J) + *SHELL_D.mn(1, 3) * (*FXY.mn(I, J) + *FXY.mn(J, I)) + *SHELL_D.mn(3, 3) * *FYY.mn(I, J));
+		}
+	}
+	BENSUM = 0;
+	for (I = 4; I < 9 + 1; I++)
+	{
+		BENSUM = BENSUM + *KB.mn(I, I);
+	}
+	//Start of shear stiffness calc
+	//Shear stress terms(KS)
+
+	KS.MakeZero();
+	Mat B2(3, 3);//NEEDS CLEARING AT END
+	*B2.mn(1, 1) = 0;
+	*B2.mn(2, 2) = 0;
+	*B2.mn(3, 3) = 0;
+	*B2.mn(1, 2) = -*B.mn(2,1) * *B.mn(3,1) / A4;
+	*B2.mn(1, 3) = -*B2.mn(1, 2);
+	*B2.mn(2, 1) = *B.mn(1,1) * *B.mn(3,1) / A4;
+	*B2.mn(2, 3) = -*B2.mn(2, 1);
+	*B2.mn(3, 1) = -*B.mn(1,1) * *B.mn(2,1) / A4;
+	*B2.mn(3, 2) = -*B2.mn(3, 1);
+	Mat A2(3, 3);//NEEDS CLEARING AT END
+	*A2.mn(1, 1) = (*A.mn(2,1) * *B.mn(3,1) - *A.mn(3,1) * *B.mn(2,1)) / A4;
+	*A2.mn(2, 2) = (-*A.mn(1,1) * *B.mn(3,1) + *A.mn(3,1) * *B.mn(1,1)) / A4;
+	*A2.mn(3, 3) = (-*A.mn(2,1) * *B.mn(1,1) + *A.mn(1,1) * *B.mn(2,1)) / A4;
+	*A2.mn(1, 2) = -*A.mn(2,1) * *B.mn(3,1) / A4;
+	*A2.mn(1, 3) = *A.mn(3,1) * *B.mn(2,1) / A4;
+	*A2.mn(2, 1) = *A.mn(1,1) * *B.mn(3,1) / A4;
+	*A2.mn(2, 3) = -*A.mn(3,1) * *B.mn(1,1) / A4;
+	*A2.mn(3, 1) = -*A.mn(1,1) * *B.mn(2,1) / A4;
+	*A2.mn(3, 2) = *A.mn(2,1) * *B.mn(1,1) / A4;
+	Mat B1(3, 3);//NEEDS CLEARING AT END
+	*B1.mn(1, 1) = (-*B.mn(2,1) * *A.mn(3,1) + *B.mn(3,1) * *A.mn(2,1)) / A4;
+	*B1.mn(2, 2) = (*B.mn(1,1) * *A.mn(3,1) - *B.mn(3,1) * *A.mn(1,1)) / A4;
+	*B1.mn(3, 3) = (*B.mn(2,1) * *A.mn(1,1) - *B.mn(1,1) * *A.mn(2,1)) / A4;
+	*B1.mn(1, 2) = *B.mn(2,1) * *A.mn(3,1) / A4;
+	*B1.mn(1, 3) = -*B.mn(3,1) * *A.mn(2,1) / A4;
+	*B1.mn(2, 1) = -*B.mn(1,1) * *A.mn(3,1) / A4;
+	*B1.mn(2, 3) = *B.mn(3,1) * *A.mn(1,1) / A4;
+	*B1.mn(3, 1) = *B.mn(1,1) * *A.mn(2,1) / A4;
+	*B1.mn(3, 2) = -*B.mn(2,1) * *A.mn(1,1) / A4;
+	Mat A1(3, 3); //NEEDS CLEARING AT END
+	*A1.mn(1, 1) = 0;
+	*A1.mn(2, 2) = 0;
+	*A1.mn(3, 3) = 0;
+	*A1.mn(1, 2) = *A.mn(2,1) * *A.mn(3,1) / A4;
+	*A1.mn(1, 3) = -*A1.mn(1, 2);
+	*A1.mn(2, 1) = -*A.mn(1,1) * *A.mn(3,1) / A4;
+	*A1.mn(2, 3) = -*A1.mn(2, 1);
+	*A1.mn(3, 1) = *A.mn(1,1) * *A.mn(2,1) / A4;
+	*A1.mn(3, 2) = -*A1.mn(3, 1);
+	Mat I00(3, 3); //NEEDS CLEARING AT END
+	*I00.mn(1, 2) = AREA / 12;
+	*I00.mn(1, 3) = *I00.mn(1, 2);
+	*I00.mn(2, 1) = *I00.mn(1, 2);
+	*I00.mn(2, 3) = *I00.mn(1, 2);
+	*I00.mn(3, 1) = *I00.mn(1, 2);
+	*I00.mn(3, 2) = *I00.mn(1, 2);
+	*I00.mn(1, 1) = 2 * *I00.mn(1, 2);
+	*I00.mn(2, 2) = *I00.mn(1, 1);
+	*I00.mn(3, 3) = *I00.mn(1, 1);
+	Mat IX0(3, 3); //NEEDS CLEARING AT END
+	*IX0.mn(1, 1) = *B.mn(1,1) / 6;
+	*IX0.mn(1, 2) = *IX0.mn(1, 1);
+	*IX0.mn(1, 3) = *IX0.mn(1, 1);
+	*IX0.mn(2, 1) = *B.mn(2,1) / 6;
+	*IX0.mn(2, 2) = *IX0.mn(2, 1);
+	*IX0.mn(2, 3) = *IX0.mn(2, 1);
+	*IX0.mn(3, 1) = *B.mn(3,1) / 6;
+	*IX0.mn(3, 2) = *IX0.mn(3, 1);
+	*IX0.mn(3, 3) = *IX0.mn(3, 1);
+	Mat IY0(3, 3); //NEEDS CLEARING AT END
+	*IY0.mn(1, 1) = *A.mn(1,1) / 6;
+	*IY0.mn(1, 2) = *IY0.mn(1, 1);
+	*IY0.mn(1, 3) = *IY0.mn(1, 1);
+	*IY0.mn(2, 1) = *A.mn(2,1) / 6;
+	*IY0.mn(2, 2) = *IY0.mn(2, 1);
+	*IY0.mn(2, 3) = *IY0.mn(2, 1);
+	*IY0.mn(3, 1) = *A.mn(3,1) / 6;
+	*IY0.mn(3, 2) = *IY0.mn(3, 1);
+	*IY0.mn(3, 3) = *IY0.mn(3, 1);
+	//SHELL_T.diag();
+	Mat S1(3, 3); //NEEDS CLEARING AT END
+	Mat S2(3, 3); //NEEDS CLEARING AT END
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			if (I == J)
+			{
+				*S1.mn(I, J) = *A2.mn(I, J) + 1;
+				*S2.mn(I, J) = *B1.mn(I, J) + 1;
+			}
+			else
+			{
+				*S1.mn(I, J) = *A2.mn(I, J);
+				*S2.mn(I, J) = *B1.mn(I, J);
+			}
+		}
+	}
+	Mat T1(3, 3); //NEEDS CLEARING AT END
+	Mat T2(3, 3); //NEEDS CLEARING AT END
+	Mat T3(3, 3); //NEEDS CLEARING AT END
+	Mat T4(3, 3); //NEEDS CLEARING AT END
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*T1.mn(I, J) = (*SHELL_T.mn(1, 1) * *B2.mn(I, J) + *SHELL_T.mn(1, 2) * *S1.mn(I, J));
+			*T2.mn(I, J) = (*SHELL_T.mn(1, 2) * *B2.mn(I, J) + *SHELL_T.mn(2, 2) * *S1.mn(I, J));
+			*T3.mn(I, J) = (*SHELL_T.mn(1, 1) * *S2.mn(I, J) + *SHELL_T.mn(1, 2) * *A1.mn(I, J));
+			*T4.mn(I, J) = (*SHELL_T.mn(1, 2) * *S2.mn(I, J) + *SHELL_T.mn(2, 2) * *A1.mn(I, J));
+		}
+	}
+
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I, J) = AREA * (*SHELL_T.mn(1, 1) * *FXX.mn(I, J) + *SHELL_T.mn(1, 2) * (*FXY.mn(I, J) + *FXY.mn(J, I)) + *SHELL_T.mn(2, 2) * *FYY.mn(I, J));
+		}
+	}
+	//3x3 KS - 12, 21 Partition
+	Mat DUM1;//NEEDS CLEARING AT END
+	Mat DUM2;//NEEDS CLEARING AT END
+
+	DUM1 = IX0 * T1;
+	DUM2 = IY0 * T2;
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I, J + 3) = -*DUM1.mn(I, J) - *DUM2.mn(I, J);
+			*KS.mn(J + 3, I) = *KS.mn(I, J + 3);
+		}
+	}
+	DUM1.clear();
+	DUM2.clear();
+	//3x3 KS - 13, 31 Partition
+	DUM1 = IX0 * T3;
+	DUM2 = IY0 * T4;
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I, J + 6) = *DUM1.mn(I, J) + *DUM2.mn(I, J);
+			*KS.mn(J + 6, I) = *KS.mn(I, J + 6);
+		}
+	}
+	DUM1.clear();
+	DUM2.clear();
+	Mat DUM3;//NEEDS CLEARING AT END
+	Mat DUM4;//NEEDS CLEARING AT END
+	Mat TT;
+	//3x3 KS - 22 Partition
+	DUM3 = I00 * T1;
+	TT = B2;
+	TT.Transpose();
+	DUM1 = TT * DUM3;
+	DUM4 = I00 * T2;
+	TT = S1;
+	TT.Transpose();
+	DUM2 = TT * DUM4;
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I + 3, J + 3) = *DUM1.mn(I, J) + *DUM2.mn(I, J);
+		}
+	}
+	DUM1.clear();
+	DUM2.clear();
+	DUM3.clear();
+	DUM4.clear();
+	//3x3 KS - 23, 32 Partition
+	DUM3 = I00 * T3;
+	TT = B2;
+	TT.Transpose();
+	DUM1 = TT * DUM3;
+	DUM4 = I00 * T4;
+	TT = S1;
+	TT.Transpose();
+	DUM2 = TT * DUM4;
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I + 3, J + 6) = -*DUM1.mn(I, J) - *DUM2.mn(I, J);
+			*KS.mn(J + 6, I + 3) = *KS.mn(I + 3, J + 6);
+		}
+	}
+	DUM1.clear();
+	DUM2.clear();
+	DUM3.clear();
+	DUM4.clear();
+	//3x3 KS - 33 Partition
+	DUM3 = I00 * T3;
+	TT = S2;
+	TT.Transpose();
+	DUM1 = TT * DUM3;
+	DUM4 = I00 * T4;
+	TT = A1;
+	TT.Transpose();
+	DUM2 = TT * DUM4;
+	for (I = 1; I < 3 + 1; I++)
+	{
+		for (J = 1; J < 3 + 1; J++)
+		{
+			*KS.mn(I + 6, J + 6) = *DUM1.mn(I, J) + *DUM2.mn(I, J);
+		}
+	}
+	DUM1.clear();
+	DUM2.clear();
+	DUM3.clear();
+	DUM4.clear();
+	SHRSUM = 0;
+	for (I = 4; I < 9 + 1; I++)
+	{
+		SHRSUM = SHRSUM + *KS.mn(I, I);
+	}
+
+	Vec<int> ID(9);
+    *ID.nn(1) = 3;
+	*ID.nn(2) = 9;
+	*ID.nn(3) = 15;
+	*ID.nn(4) = 4;
+	*ID.nn(5) = 10;
+	*ID.nn(6) = 16;
+	*ID.nn(7) = 5;
+	*ID.nn(8) = 11;
+	*ID.nn(9) = 17;
+	//double PHI_SQ = 0.318704E-03;  //Need to call function for this
+	//******** Shear Correction factor  **********
+	double CBMIN = 2.0; //for tri element - emprirical value??
+	double PSI_HAT = BENSUM / SHRSUM;
+	double DEN = 1 + CBMIN * PSI_HAT;
+	PHI_SQ = CBMIN * PSI_HAT / DEN;
+	//********************************************
+	for (I = 1; I < 9 + 1; I++)
+	{
+		for (J = 1; J < 9 + 1; J++)
+		{
+			*KV.mn(I, J) = *KB.mn(I, J) + PHI_SQ * *KS.mn(I, J);
+			*KE.mn(*ID.nn(I), *ID.nn(J)) = *KE.mn(*ID.nn(I), *ID.nn(J)) + *KV.mn(I, J);
+		}
+	}
+
+	FXX.clear();
+	FYY.clear();
+	FXY.clear();
+	A.clear();
+	B.clear();
+	B2.clear();
+	A2.clear();
+	B1.clear();
+	A1.clear();
+	I00.clear();
+	IX0.clear();
+	IY0.clear();
+	S1.clear();
+	S2.clear();
+	T1.clear();
+	T2.clear();
+	T3.clear();
+	T4.clear();
+	TT.clear();
+	DUM1.clear();
+	DUM2.clear();
+	DUM3.clear();
+	DUM4.clear();
+	KV.clear();
+	KB.clear();
+	KS.clear();
+	ID.clear();
+	
+	return (KE);
+}
+
+// 06/01/2024 MIN3 IMPLEMENTATION 
+Mat E_Object3::GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr)
+{
 char S1[80];
-double dthk=0.001;
+Mat KE;  
+Mat KEP;
+int iMID1 = -1; //Membrane
+int iMID2 = -1; //bending
+int iMID3 = -1; //shear
+int iMID4 = -1;  //Mem / Bend coupling
+Material* pM1 = nullptr;
+Material* pM2 = nullptr;
+Material* pM3 = nullptr;
+Material* pM4 = nullptr;
+double dthk =0;
+double dBRatio = 1;
+double dSHRatio = 1;
 
-Property* pS=PropsT->GetItem(PID);
-if (pS!=NULL)
-{
-  MID=pS->GetDefMatID();
-}
-Material* pM=MatT->GetItem(MID);
-if (pS==NULL)
-{
-  sprintf_s(S1,"ERROR: PROPERTY NOT FOUND FOR EL %i",iLabel);
-  outtext1(S1);
-}
-if (pM==NULL)
-{  
-  sprintf_s(S1,"ERROR: MATERIAL NOT FOUND FOR EL %i",iLabel);
-  outtext1(S1); 
-}
-//Get Shell thick ness
+//**********************************************************************************************************************************
+//!Initialize - these may need moving to higher scope 
+double BENSUM = 0;
+double SHRSUM = 0;
+double PSI_HAT = 0;
+double PHI_SQ = 0;
+double X2E = 0;
+double X3E = 0;
+double Y3E = 0;
+double AREA = 0;
 
-if (((iType==91) || (iType==94)) && (pS!=NULL))
-{
-  PSHELL* pSh = (PSHELL*) pS;
-  dthk=pSh->dT;
-}
+Mat SHELL_A;
+Mat SHELL_D;
+Mat SHELL_T;
+int i;
+	Property* pS = PropsT->GetItem(PID);
+	if (pS == NULL)
+	{
+		sprintf_s(S1, "ERROR: PROPERTY NOT FOUND FOR EL %i", iLabel);
+		outtext1(S1);
+	}
 
-if ((pM!=NULL) && (pM->iType = 1))
-{
-  MAT1* pIsen = (MAT1*) pM;
-  dE=pIsen->dE;
-  dv=pIsen->dNU;
-}
-//This part calculates the 2d membraine stiffness
-iDof=2;   //2 dof X,Y per node
-nip=1;    //1 intergration points
-iS=3;
 
-Mat KM(iDof*iNoNodes,iDof*iNoNodes);
-Mat dee=DeeMat(dE,dv,iS);
-Mat coord=getCoords3d();
-C3dMatrix M3=this->GetElSys();
-Points=Sample(nip);
-//Membraine stiffness calculation
-//for dof 12
-  for(i=1;i<nip+1;i++)
-  {
-    det = 0;
-    fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-    bT.clear();db.clear();bdb.clear();bee.clear();
-    fun=ShapeFun(Points, i);
-    deriv=ShapeDer(Points, i);
-    jac = deriv*coord;
-    jac=jac.InvertJac(det);
-    deriv2 = jac*deriv;
-    bee=bmat(coord, deriv2,iS,iDof);
-    bT = bee;
-    bT.Transpose();
-    db = dee*bee;
-    bdb = bT*db;
-    det*=*Points.mn(i,3);
-    bdb*=det;
-    KM+=bdb;
-  }
-KM*=dthk;
-fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-bT.clear();db.clear();bdb.clear();bee.clear();
-//Mindlin Formulation
-//Sheer Stifness Calculation
-//I think need to be reduced integration 1 sample point
-double G,kk;
-int k;
-dee.clear();
-dee.Create(2,2);
-G=0.5*dE/(1+dv);
-kk=5.0/6.0;
-*dee.mn(1,1) = kk*G*dthk;
-*dee.mn(2,2) = kk*G*dthk;
-*dee.mn(1,2) = 0;
-*dee.mn(2,1) = 0;
-Mat KM2(12,12); 
-nip=1;
-Points=Sample(nip);
-for(i=1;i<nip+1;i++)
-  {
-    det = 0;
-    fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-    bT.clear();db.clear();bdb.clear();bee.clear();
-    fun=ShapeFun(Points, i);
-    deriv=ShapeDer(Points, i);
-    jac = deriv*coord;
-    jac=jac.InvertJac(det);
-    deriv2 = jac*deriv;
-    bee.clear();
-    bee.Create(2,12);
-    for (k=1;k<iNoNodes+1;k++)//was m
-    {
-      *bee.mn(1,(k)*3-2) = *deriv2.mn(1,k);
-      *bee.mn(1,(k)*3-1) = 0;
-      *bee.mn(1,(k)*3-0) = *fun.mn(1,k);
-      *bee.mn(2,(k)*3-2) = *deriv2.mn(2,k);
-      *bee.mn(2,(k)*3-1) = -*fun.mn(1,k);
-      *bee.mn(2,(k)*3-0) = 0;
-    }
-    bT = bee;
-    bT.Transpose();
-    db = dee*bee;
-    bdb = bT*db;
-    det*=*Points.mn(i,3);
-    bdb*=det;
-    KM2+=bdb;
-  }
-fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-bT.clear();db.clear();bdb.clear();bee.clear();
-//The bending part
-dee.clear();
-dee.Create(3,3);
-double Cf;
-Cf=dE*dthk*dthk*dthk/(12*(1-dv*dv));
-//nip should be 3 set to 1 for debugging
-nip=1;
-//*******************************************************************
-Points=Sample(nip);
-*dee.mn(1,1) = 1;
-*dee.mn(1,2) = dv;
-*dee.mn(1,3) = 0;
-*dee.mn(2,1) = dv;
-*dee.mn(2,2) = 1;
-*dee.mn(2,3) = 0;
-*dee.mn(3,1) = 0;
-*dee.mn(3,2) = 0;
-*dee.mn(3,3) = (1-dv);
-dee*=Cf;
-Mat KM3(12,12); 
-for(i=1;i<nip+1;i++)
-  {
-    fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-    bT.clear();db.clear();bdb.clear();bee.clear();
-    det = 0;
-    fun=ShapeFun(Points, i);
-    deriv=ShapeDer(Points, i);
-    jac = deriv*coord;
-    jac=jac.InvertJac(det);
-    deriv2 = jac*deriv;
-    bee.clear();
-    bee.Create(3,12);
-    for (k=1;k<iNoNodes+1;k++)//was m
-    {
-      *bee.mn(1,(k)*3-2) = 0;
-      *bee.mn(1,(k)*3-1) = 0;
-      *bee.mn(1,(k)*3-0) = -*deriv2.mn(1,k);
-      *bee.mn(2,(k)*3-2) = 0;
-      *bee.mn(2,(k)*3-1) = *deriv2.mn(2,k);
-      *bee.mn(2,(k)*3-0) = 0;
-      *bee.mn(3,(k)*3-2) = 0;
-      *bee.mn(3,(k)*3-1) = *deriv2.mn(1,k);
-      *bee.mn(3,(k)*3-0) = -*deriv2.mn(2,k);
-    }
-    bT = bee;
-    bT.Transpose();
-    db = dee*bee;
-    bdb = bT*db;
-    det*=*Points.mn(i,3);
-    bdb*=det;
-    KM3+=bdb;
-  }
-KM2+=KM3;
-//KM2 = KM3;
-fun.clear();deriv.clear();jac.clear(),deriv2.clear();
-bT.clear();db.clear();bdb.clear();bee.clear();
-//Assemble all the components inplain,shear and bending in KMf
-Mat KMf(6*iNoNodes,6*iNoNodes);
-Vec<int> V(6);
-*V.nn(1)=1;
-*V.nn(2)=2;
-*V.nn(3)=7;
-*V.nn(4)=8;
-*V.nn(5)=13;
-*V.nn(6)=14;
+	//Get Shell Stuff
+	if (((iType == 91) || (iType == 94)) && (pS != NULL))
+	{
+		PSHELL* pSh = (PSHELL*)pS;
+		dthk = pSh->dT;
+		dBRatio = pSh->d12IT3;
+		dSHRatio = pSh->dTST;
+		iMID1 = pSh->iMID1;
+		iMID2 = pSh->iMID2;
+		iMID3 = pSh->iMID3;
+		pM1 = MatT->GetItem(iMID1);
+		if (iMID2 == -1)
+			pM2 = pM1; //defualt
+		else
+			pM2 = MatT->GetItem(iMID2);
+		if (iMID3 == -1)
+			pM3 = pM1; //defualt
+		else
+			pM3 = MatT->GetItem(iMID3);
+	}
 
-int j;
-for (i=1;i<=6;i++)
-{
-  for (j=1;j<=6;j++)
-  {
-    *KMf.mn(V[i-1],V[j-1])=*KM.mn(i,j);
-  }
-}
-Vec<int> V1(9);
-*V1.nn(1)=3;
-*V1.nn(2)=4;
-*V1.nn(3)=5;
-*V1.nn(4)=9;
-*V1.nn(5)=10;
-*V1.nn(6)=11;
-*V1.nn(7)=15;
-*V1.nn(8)=16;
-*V1.nn(9)=17;
+	if ((pM1 != nullptr) && (pM2 != nullptr) && (pM3 != nullptr))
+	{
+		SHELL_A = pM1->DeeMEM();
+		SHELL_D = pM2->DeeBM();
+		SHELL_T = pM3->DeeSH();
+	}
+	else
+	{
+		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
+		outtext1(S1);
+		bErr = TRUE;
+		return (KE);
 
-for (i=1;i<=9;i++)
-{
-  for (j=1;j<=9;j++)
-  {
-    *KMf.mn(V1[i-1],V1[j-1])=*KM2.mn(i,j);
-  }
-}
+	}
 
-for (i=6;i<=18;i+=6)
-{
-  *KMf.mn(i,i)=100;  //DRILLING STIFFNES
-}
-//Transform to global
-//M3.Transpose();
-Mat TMAT(18,18);
+Mat XEL = getCoords_XEL();       //Local element coordinates
+C3dMatrix TE = this->GetElSys(); //TE Element coord system
+//Calculate element geometry parameters from data block XEL
+//XEL is local element coods
+X2E = *XEL.mn(2, 1);
+X3E = *XEL.mn(3, 1);
+Y3E = *XEL.mn(3, 2);
+AREA = X2E * Y3E / 2.0;
+//**********************************************************************************************************************************
+//For TRIA3 generate the membrane stiffness
+//Mat BM; //Membrane strain / disp matrix 3*24
+//BM = TMEM1_BEE(3, AREA, X2E, X3E, Y3E); //OPT 3 = K mat
+//******************************************************
+//NOTE BOTH SHELL_A & SHELL_D need transforming to material direction
+Mat SHELL_D_TRIA = SHELL_D;
+Mat SHELL_T_TRIA = SHELL_T;
+SHELL_D_TRIA *= dBRatio * dthk * dthk * dthk / 12;
 
-for (i=1;i<18;i+=3)
-{
-    *TMAT.mn(i,i)=M3.m_00;
-    *TMAT.mn(i+1,i)=M3.m_10;
-    *TMAT.mn(i+2,i)=M3.m_20;
+SHELL_A *= dthk;  //Shell_A need to multiplied by thk
+*SHELL_T_TRIA.mn(1, 1) *= dSHRatio * dthk;
+*SHELL_T_TRIA.mn(2, 2) *= dSHRatio * dthk;
 
-    *TMAT.mn(i,i+1)=M3.m_01;
-    *TMAT.mn(i+1,i+1)=M3.m_11;
-    *TMAT.mn(i+2,i+1)=M3.m_21;
+KE= TMEM1_KE(3, AREA, X2E, X3E, Y3E, SHELL_A);
+//Bending and Shear KE
+KEP = TPLT2_KE(3, AREA, X2E, X3E, Y3E, SHELL_D_TRIA, SHELL_T_TRIA);
+KE += KEP;
+for (i = 6; i <= 18; i += 6)
+	{
+		*KE.mn(i, i) = gDRILL_KS;  //DRILLING STIFFNES
+	}
 
-    *TMAT.mn(i,i+2)=M3.m_02;
-    *TMAT.mn(i+1,i+2)=M3.m_12;
-    *TMAT.mn(i+2,i+2)=M3.m_22;
-}
-//TMAT.diag();
-Mat TMATT=TMAT;
-TMATT.Transpose();
-Mat T;
-Mat TT;
-T=KMf*TMAT;
-TT=TMATT*T;
-KM.clear();
-KM2.clear();
-TMATT.clear();
-TMAT.clear();
-T.clear();
+	Mat TMAT(18, 18);
+
+	for (i = 1; i < 18; i += 3)
+	{
+		*TMAT.mn(i, i) = TE.m_00;
+		*TMAT.mn(i + 1, i) = TE.m_10;
+		*TMAT.mn(i + 2, i) = TE.m_20;
+
+		*TMAT.mn(i, i + 1) = TE.m_01;
+		*TMAT.mn(i + 1, i + 1) = TE.m_11;
+		*TMAT.mn(i + 2, i + 1) = TE.m_21;
+
+		*TMAT.mn(i, i + 2) = TE.m_02;
+		*TMAT.mn(i + 1, i + 2) = TE.m_12;
+		*TMAT.mn(i + 2, i + 2) = TE.m_22;
+	}
+	//TMAT.diag();
+	Mat TMATT = TMAT;
+	TMATT.Transpose();
+	Mat T;
+	Mat TT;
+	T = KE * TMAT;
+	TT = TMATT * T;
+	//OFFSETS
+	if (HasOffsets())
+	{
+		Mat off;
+		Mat offT;
+		Mat dum1;
+		OffsetsToKG(PropsT, off);
+		offT = off;
+		offT.Transpose();
+		dum1 = TT * off;
+		TT.clear();
+		TT = offT * dum1;
+		dum1.clear();
+		off.clear();
+		offT.clear();
+	}
 return (TT);
 }
 
+//06/01/2024 old implementation of K mat which does not
+//work
+//Mat E_Object3::GetStiffMat(PropTable* PropsT, MatTable* MatT)
+//{
+//	Mat bee;   //strain displacement matrix
+//	int nip = 0;
+//
+//	Mat coord2;
+//	Mat deriv;
+//	Mat deriv2;
+//	Mat fun;
+//	Mat Points;
+//	Mat jac;
+//	int i;
+//	double det;
+//	Mat bT;
+//	Mat db;
+//	Mat bdb;
+//	int iDof;
+//	int iS;
+//	int MID = -1;
+//	double dE = 210e9;
+//	double dv = 0.29;
+//	char S1[80];
+//	double dthk = 0.001;
+//
+//	Property* pS = PropsT->GetItem(PID);
+//	if (pS != NULL)
+//	{
+//		MID = pS->GetDefMatID();
+//	}
+//	Material* pM = MatT->GetItem(MID);
+//	if (pS == NULL)
+//	{
+//		sprintf_s(S1, "ERROR: PROPERTY NOT FOUND FOR EL %i", iLabel);
+//		outtext1(S1);
+//	}
+//	if (pM == NULL)
+//	{
+//		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
+//		outtext1(S1);
+//	}
+//	//Get Shell thick ness
+//
+//	if (((iType == 91) || (iType == 94)) && (pS != NULL))
+//	{
+//		PSHELL* pSh = (PSHELL*)pS;
+//		dthk = pSh->dT;
+//	}
+//
+//	if ((pM != NULL) && (pM->iType = 1))
+//	{
+//		MAT1* pIsen = (MAT1*)pM;
+//		dE = pIsen->dE;
+//		dv = pIsen->dNU;
+//	}
+//	//This part calculates the 2d membraine stiffness
+//	iDof = 2;   //2 dof X,Y per node
+//	nip = 1;    //1 intergration points
+//	iS = 3;
+//
+//	Mat KM(iDof * iNoNodes, iDof * iNoNodes);
+//	Mat dee = DeeMat(dE, dv, iS);
+//	Mat coord = getCoords3d();
+//	C3dMatrix M3 = this->GetElSys();
+//	Points = Sample(nip);
+//	//Membraine stiffness calculation
+//	//for dof 12
+//	for (i = 1; i < nip + 1; i++)
+//	{
+//		det = 0;
+//		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//		bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//		fun = ShapeFun(Points, i);
+//		deriv = ShapeDer(Points, i);
+//		jac = deriv * coord;
+//		jac = jac.InvertJac(det);
+//		deriv2 = jac * deriv;
+//		bee = bmat(coord, deriv2, iS, iDof);
+//		bT = bee;
+//		bT.Transpose();
+//		db = dee * bee;
+//		bdb = bT * db;
+//		det *= *Points.mn(i, 3);
+//		bdb *= det;
+//		KM += bdb;
+//	}
+//	KM *= dthk;
+//	fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//	bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//	//Mindlin Formulation
+//	//Sheer Stifness Calculation
+//	//I think need to be reduced integration 1 sample point
+//	double G, kk;
+//	int k;
+//	dee.clear();
+//	dee.Create(2, 2);
+//	G = 0.5 * dE / (1 + dv);
+//	kk = 5.0 / 6.0;
+//	*dee.mn(1, 1) = kk * G * dthk;
+//	*dee.mn(2, 2) = kk * G * dthk;
+//	*dee.mn(1, 2) = 0;
+//	*dee.mn(2, 1) = 0;
+//	Mat KM2(12, 12);
+//	nip = 1;
+//	Points = Sample(nip);
+//	for (i = 1; i < nip + 1; i++)
+//	{
+//		det = 0;
+//		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//		bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//		fun = ShapeFun(Points, i);
+//		deriv = ShapeDer(Points, i);
+//		jac = deriv * coord;
+//		jac = jac.InvertJac(det);
+//		deriv2 = jac * deriv;
+//		bee.clear();
+//		bee.Create(2, 12);
+//		for (k = 1; k < iNoNodes + 1; k++)//was m
+//		{
+//			*bee.mn(1, (k) * 3 - 2) = *deriv2.mn(1, k);
+//			*bee.mn(1, (k) * 3 - 1) = 0;
+//			*bee.mn(1, (k) * 3 - 0) = *fun.mn(1, k);
+//			*bee.mn(2, (k) * 3 - 2) = *deriv2.mn(2, k);
+//			*bee.mn(2, (k) * 3 - 1) = -*fun.mn(1, k);
+//			*bee.mn(2, (k) * 3 - 0) = 0;
+//		}
+//		bT = bee;
+//		bT.Transpose();
+//		db = dee * bee;
+//		bdb = bT * db;
+//		det *= *Points.mn(i, 3);
+//		bdb *= det;
+//		KM2 += bdb;
+//	}
+//	fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//	bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//	//The bending part
+//	dee.clear();
+//	dee.Create(3, 3);
+//	double Cf;
+//	Cf = dE * dthk * dthk * dthk / (12 * (1 - dv * dv));
+//	//nip should be 3 set to 1 for debugging
+//	nip = 1;
+//	//*******************************************************************
+//	Points = Sample(nip);
+//	*dee.mn(1, 1) = 1;
+//	*dee.mn(1, 2) = dv;
+//	*dee.mn(1, 3) = 0;
+//	*dee.mn(2, 1) = dv;
+//	*dee.mn(2, 2) = 1;
+//	*dee.mn(2, 3) = 0;
+//	*dee.mn(3, 1) = 0;
+//	*dee.mn(3, 2) = 0;
+//	*dee.mn(3, 3) = (1 - dv);
+//	dee *= Cf;
+//	Mat KM3(12, 12);
+//	for (i = 1; i < nip + 1; i++)
+//	{
+//		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//		bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//		det = 0;
+//		fun = ShapeFun(Points, i);
+//		deriv = ShapeDer(Points, i);
+//		jac = deriv * coord;
+//		jac = jac.InvertJac(det);
+//		deriv2 = jac * deriv;
+//		bee.clear();
+//		bee.Create(3, 12);
+//		for (k = 1; k < iNoNodes + 1; k++)//was m
+//		{
+//			*bee.mn(1, (k) * 3 - 2) = 0;
+//			*bee.mn(1, (k) * 3 - 1) = 0;
+//			*bee.mn(1, (k) * 3 - 0) = -*deriv2.mn(1, k);
+//			*bee.mn(2, (k) * 3 - 2) = 0;
+//			*bee.mn(2, (k) * 3 - 1) = *deriv2.mn(2, k);
+//			*bee.mn(2, (k) * 3 - 0) = 0;
+//			*bee.mn(3, (k) * 3 - 2) = 0;
+//			*bee.mn(3, (k) * 3 - 1) = *deriv2.mn(1, k);
+//			*bee.mn(3, (k) * 3 - 0) = -*deriv2.mn(2, k);
+//		}
+//		bT = bee;
+//		bT.Transpose();
+//		db = dee * bee;
+//		bdb = bT * db;
+//		det *= *Points.mn(i, 3);
+//		bdb *= det;
+//		KM3 += bdb;
+//	}
+//	KM2 += KM3;
+//	//KM2 = KM3;
+//	fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//	bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//	//Assemble all the components inplain,shear and bending in KMf
+//	Mat KMf(6 * iNoNodes, 6 * iNoNodes);
+//	Vec<int> V(6);
+//	*V.nn(1) = 1;
+//	*V.nn(2) = 2;
+//	*V.nn(3) = 7;
+//	*V.nn(4) = 8;
+//	*V.nn(5) = 13;
+//	*V.nn(6) = 14;
+//
+//	int j;
+//	for (i = 1; i <= 6; i++)
+//	{
+//		for (j = 1; j <= 6; j++)
+//		{
+//			*KMf.mn(V[i - 1], V[j - 1]) = *KM.mn(i, j);
+//		}
+//	}
+//	Vec<int> V1(9);
+//	*V1.nn(1) = 3;
+//	*V1.nn(2) = 4;
+//	*V1.nn(3) = 5;
+//	*V1.nn(4) = 9;
+//	*V1.nn(5) = 10;
+//	*V1.nn(6) = 11;
+//	*V1.nn(7) = 15;
+//	*V1.nn(8) = 16;
+//	*V1.nn(9) = 17;
+//
+//	for (i = 1; i <= 9; i++)
+//	{
+//		for (j = 1; j <= 9; j++)
+//		{
+//			*KMf.mn(V1[i - 1], V1[j - 1]) = *KM2.mn(i, j);
+//		}
+//	}
+//
+//	for (i = 6; i <= 18; i += 6)
+//	{
+//		*KMf.mn(i, i) = 0.01;  //DRILLING STIFFNES
+//	}
+//	//Transform to global
+//	//M3.Transpose();
+//	Mat TMAT(18, 18);
+//
+//	for (i = 1; i < 18; i += 3)
+//	{
+//		*TMAT.mn(i, i) = M3.m_00;
+//		*TMAT.mn(i + 1, i) = M3.m_10;
+//		*TMAT.mn(i + 2, i) = M3.m_20;
+//
+//		*TMAT.mn(i, i + 1) = M3.m_01;
+//		*TMAT.mn(i + 1, i + 1) = M3.m_11;
+//		*TMAT.mn(i + 2, i + 1) = M3.m_21;
+//
+//		*TMAT.mn(i, i + 2) = M3.m_02;
+//		*TMAT.mn(i + 1, i + 2) = M3.m_12;
+//		*TMAT.mn(i + 2, i + 2) = M3.m_22;
+//	}
+//	//TMAT.diag();
+//	Mat TMATT = TMAT;
+//	TMATT.Transpose();
+//	Mat T;
+//	Mat TT;
+//	T = KMf * TMAT;
+//	TT = TMATT * T;
+//	KM.clear();
+//	KM2.clear();
+//	TMATT.clear();
+//	TMAT.clear();
+//	T.clear();
+//	return (TT);
+//}
 
 void E_Object3::TranslateAVF(C3dVector vIn)
 {
@@ -13456,6 +17083,8 @@ CString E_Object3::GetName()
 int E_Object3::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat CYS";
@@ -13478,6 +17107,9 @@ int E_Object3::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -13506,10 +17138,10 @@ int E_Object3::GetVarValues(CString sVar[])
 void E_Object3::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 {
 
-	Pt_Object* pN;
+	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -13525,12 +17157,12 @@ void E_Object3::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 		}
 
 	}
-	iMCys = atoi(sVar[1]);
-	MAng = atof(sVar[2]);;
-	dZOFFS = atof(sVar[3]);;;
-	int N1 = atoi(sVar[4]);
-	int N2 = atoi(sVar[5]);
-	int N3 = atoi(sVar[6]);
+	iMCys = atoi(sVar[2]);
+	MAng = atof(sVar[3]);;
+	dZOFFS = atof(sVar[4]);;;
+	int N1 = atoi(sVar[5]);
+	int N2 = atoi(sVar[6]);
+	int N3 = atoi(sVar[7]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -13570,13 +17202,207 @@ double E_Object3::GetArea2d()
 	return (dA);
 }
 
+
+//*************************************************************************************
+// Pre: Property Table and Material Table
+// Post: Nodal masses in col vector
+// This is an override for the general method in E_Object so we can
+// deal with PCOMPs and NSM
+//*************************************************************************************
+Mat E_Object3::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
+{
+	int nip = 0;
+	Mat coord;
+	Mat deriv;
+	Mat fun;
+	Mat NT;
+	Mat NS;
+	Mat NM;
+	Mat Points;
+	Mat jac;
+	int i;
+	double det;
+	Mat bT;
+	int iDof = -1;
+	int iS;
+	int MID = -1;
+	double dthk = 0.0;
+	double dTotthk = 0.0;
+	double dRho = 0;
+	double dNSM = 0;
+	char S1[80];
+	Property* pS = NULL;
+	Material* pM = NULL;
+
+	// Get Shell Thicknes and Density
+	// ************NEED TO DO BEAMS LATTER************ 
+
+	pS = PropsT->GetItem(PID);
+	if (pS != NULL)
+	{
+		if (pS->iType == 1)  //pShell
+		{
+			PSHELL* pSh = (PSHELL*)pS;
+			dthk = pSh->dT;
+			dNSM = pSh->dNSM;
+			MID = pS->GetDefMatID();
+			if (MatT != NULL)
+				pM = MatT->GetItem(MID);
+			if (pM != NULL)
+				dRho = pM->GetDensity();
+		}
+		else if (pS->iType == 2)
+		{
+			PCOMP* pSh = (PCOMP*)pS;
+			dNSM = pSh->dNSM;
+			dTotthk = 0.0;
+			dRho = 0.0;
+			for (i = 0; i < pSh->iNoLays; i++)
+			{
+				dthk = pSh->T[i];
+				dTotthk += dthk;
+				dNSM = pSh->dNSM;
+				MID = pS->GetDefMatID();
+				if (MatT != NULL)
+					pM = MatT->GetItem(pSh->MID[i]);
+				if (pM != NULL)
+				{
+					dRho += pM->GetDensity() * dthk;
+					//effective density
+				}
+			}
+			if (dTotthk > 0)
+			{
+				dRho /= dTotthk;
+				dthk = dTotthk;
+			}
+			else
+			{
+				dRho = 0;
+				dthk = 0;
+			}
+		}
+		else if (pS->iType == 222)
+		{
+			PCOMPG* pSh = (PCOMPG*)pS;
+			dNSM = pSh->dNSM;
+			dTotthk = 0.0;
+			dRho = 0.0;
+			for (i = 0; i < pSh->iNoLays; i++)
+			{
+				dthk = pSh->T[i];
+				dTotthk += dthk;
+				dNSM = pSh->dNSM;
+				MID = pS->GetDefMatID();
+				if (MatT != NULL)
+					pM = MatT->GetItem(pSh->MID[i]);
+				if (pM != NULL)
+				{
+					dRho += pM->GetDensity() * dthk;
+					//effective density
+				}
+			}
+			if (dTotthk > 0)
+			{
+				dRho /= dTotthk;
+				dthk = dTotthk;
+			}
+			else
+			{
+				dRho = 0;
+				dthk = 0;
+			}
+		}
+		else
+		{
+			sprintf_s(S1, "ERROR: Invalid Property EL %i", iLabel);
+			outtext1(S1);
+		}
+
+	}
+	else
+	{
+		sprintf_s(S1, "ERROR: Property Not Found For EL %i", iLabel);
+		outtext1(S1);
+	}
+
+
+	iDof = 2; nip = 1; iS = 3;
+	//*********************JUST FOR TEST*******************************
+	Mat AA(iNoNodes, 1);
+	coord = getCoords3d();
+	Points = Sample(nip);
+	for (i = 1; i < nip + 1; i++)
+	{
+		det = 0;
+		fun = ShapeFun(Points, i);
+		deriv = ShapeDer(Points, i);
+		jac = deriv * coord;
+		jac = jac.InvertJac(det);
+		NT = fun;
+		NT.Transpose();
+		//MM = NT * S;
+		det *= *Points.mn(i, 3);
+		NT *= det;
+		AA += NT;  //FS The shell nodal areas
+		//Clean up
+		fun.clear();
+		deriv.clear();
+		jac.clear();
+		NT.clear();
+	}
+
+	//Mass Area*dRho*dThk+Area*NSM
+	NM = AA;
+	NS = AA;
+	NM *= dthk * dRho;  //Element nodal volume mass
+	NS *= dNSM;			//Element NSM per Area
+	NM += NS;
+	//FS.diag();
+	coord.clear();
+	Points.clear();
+	AA.clear();
+	NS.clear();
+	return (NM);
+}
+
+
+double E_Object3::GetPHI_SQ()
+{
+	return(PHI_SQ);
+}
+
+BOOL E_Object3::HasOffsets()
+{
+	BOOL brc = FALSE;
+	if (dZOFFS !=0)
+		brc = TRUE;
+	return (brc);
+}
+
+BOOL E_Object3::GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff)
+{
+	BOOL brc = FALSE;
+	C3dVector vN;
+	vOff = Get_Normal();
+	//if its a pocmp wll have to include below
+	//vOff *= dZOFFS + dPCompOff;
+	//assuming its a PSHELL for now
+	vOff *= dZOFFS;
+	if (vOff.Mag() > 0)
+		brc = TRUE;
+	return (brc);
+
+}
+
+
 //*********************************
 IMPLEMENT_DYNAMIC( E_Object1, CObject )
 
 
 E_Object1::E_Object1()
 {
-
+	G_Object();
 }
 
 E_Object1::~E_Object1()
@@ -13584,7 +17410,7 @@ E_Object1::~E_Object1()
 pVertex=NULL;
 }
 
-void E_Object1::Create(Pt_Object* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_Object1::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 pVertex = pInVertex[0];
@@ -13606,7 +17432,7 @@ G_Object* E_Object1::GetNode(int i)
 return (pVertex);
 }
 
-BOOL E_Object1::NodeInEl(Pt_Object* pN)
+BOOL E_Object1::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 if (pVertex==pN)
@@ -13662,14 +17488,14 @@ Vec<int> E_Object1::GetSteerVec3d()
   return(V);
 }
 
-Mat E_Object1::GetStiffMat(PropTable* PropsT, MatTable* MatT)
+Mat E_Object1::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &bErr)
 {
   Mat KM(3, 3);
   KM.MakeZero();
   return (KM);
 }
 
-void E_Object1::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_Object1::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
 if (pVertex==pThis)
@@ -13688,6 +17514,7 @@ void E_Object1::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 	  // TODO: add storing code here
       E_Object::Serialize(ar,iV,MESH);
       ar << pVertex->iLabel;
+	  ar << sLab;
       ar << iCID;
       ar << dM;
       ar << dX1;
@@ -13705,6 +17532,8 @@ void E_Object1::Serialize(CArchive& ar,int iV,ME_Object* MESH)
       E_Object::Serialize(ar,iV,MESH);
       ar>>iNd;
       pVertex = MESH->GetNode(iNd);
+	  if (iV < -55)
+		  ar >> sLab;
       ar >> iCID;
       ar >> dM;
       ar >> dX1;
@@ -13723,14 +17552,25 @@ void E_Object1::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 void E_Object1::ExportUNV(FILE* pFile)
 {
 fprintf(pFile,"%10i%10i%10i%10i%10i%10i\n",iLabel,iType,PIDunv,iMatID,iColour-150,iNoNodes);
-fprintf(pFile,"%10i",pVertex->iLabel);
-fprintf(pFile,"\n","");
+fprintf(pFile,"%10i\n",pVertex->iLabel);
 }
 
 void E_Object1::ExportNAS(FILE* pFile)
 {
-fprintf(pFile,"%8s%8i%8i%8i%8s%8s%8s%8s\n","CONM2   ",iLabel,pVertex->iLabel,iCID,e8(dM),e8(dX1),e8(dX2),e8(dX3));
-fprintf(pFile,"%8s%8s%8s%8s%8s%8s%8s\n","        ",e8(dI11),e8(dI21),e8(dI22),e8(dI31),e8(dI32),e8(dI33));
+	fprintf(pFile, "%s", ToString().GetString());
+}
+
+CString E_Object1::ToString()
+{
+	char S[80] = "";
+	CString src = "";
+	sprintf_s(S, "$%s\n", sLab.GetString());
+	src = S;
+	sprintf_s(S, "%8s%8i%8i%8i%8s%8s%8s%8s\n", "CONM2   ", iLabel, pVertex->iLabel, iCID, e8(dM).GetString(), e8(dX1).GetString(), e8(dX2).GetString(), e8(dX3).GetString());
+	src += S;
+	sprintf_s(S, "%8s%8s%8s%8s%8s%8s%8s\n", "        ", e8(dI11).GetString(), e8(dI21).GetString(), e8(dI22).GetString(), e8(dI31).GetString(), e8(dI32).GetString(), e8(dI33).GetString());
+	src += S;
+	return (src);
 }
 
 void E_Object1::Transform(C3dMatrix TMat)
@@ -13837,7 +17677,7 @@ return (gret);
 
 
 
-G_Object* E_Object1::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object1::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object1* gret = new E_Object1;
@@ -13886,15 +17726,33 @@ pDC->LineTo((int) pVertex->DSP_Point->x-5,(int) pVertex->DSP_Point->y-5);
 void E_Object1::OglDraw(int iDspFlgs,double dS1,double dS2)
 {
 char sLab[20];
+C3dVector d;
 C3dVector vCent;
+double dS = 0;
+double dFS = 0.0;
+double S = 0;
+d.x = 0; d.y = 0; d.z = 0;
 vCent=this->Get_Centroid();
+ME_Object* ME = (ME_Object*)this->pParent;
+
+S = ME->dScale;
+dFS = ME->dResFactor;
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
+	if ((iDspFlgs & DSP_RESDEF) == 0)
+	{
+		if (pVertex->pResD != NULL)
+		{
+			d = pVertex->pResD->GetVec();
+			d -= ME->vRelDispOff;
+			d *= S * dFS;
+		}
+	}
 	Selectable=1;
 	glColor3fv(cols[GetCol()]);
-    glPointSize(16.0f); 
+    glPointSize(gLM_SIZE); 
 	glBegin(GL_POINTS);
-    glVertex3f((float) vCent.x,(float) vCent.y,(float) vCent.z);
+    glVertex3f((float) vCent.x+d.x,(float) vCent.y+d.y,(float) vCent.z+d.z);
     glEnd();
 }
 else
@@ -13931,6 +17789,10 @@ return (vT);
 int E_Object1::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
+	sVar[iNo] = "COMMENT";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "CID";
@@ -13969,6 +17831,10 @@ int E_Object1::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	iNo++;
+	sVar[iNo] = sLab;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -14015,27 +17881,38 @@ int E_Object1::GetVarValues(CString sVar[])
 void E_Object1::PutVarValues(PropTable* PT, int iNo, CString sVar[])
 {
 
-	Pt_Object* pN;
+	Node* pN;
 	ME_Object* pMe = (ME_Object*)this->pParent;
-	PID = atoi(sVar[0]);
-	iCID = atoi(sVar[1]);
-	dM = atof(sVar[2]);;
-	dX1 = atof(sVar[3]);;
-	dX2 = atof(sVar[4]);;
-	dX3 = atof(sVar[5]);;
-	dI11 = atof(sVar[6]);;
-	dI21 = atof(sVar[7]);;
-	dI22 = atof(sVar[8]);;
-	dI31 = atof(sVar[9]);;
-	dI32 = atof(sVar[10]);;
-	dI33 = atof(sVar[11]);;
-	int N1 = atof(sVar[12]);;
+	iFile = atoi(sVar[0]);
+	sLab = sVar[1];
+	PID = atoi(sVar[2]);
+	iCID = atoi(sVar[3]);
+	dM = atof(sVar[4]);;
+	dX1 = atof(sVar[5]);;
+	dX2 = atof(sVar[6]);;
+	dX3 = atof(sVar[7]);;
+	dI11 = atof(sVar[8]);;
+	dI21 = atof(sVar[9]);;
+	dI22 = atof(sVar[10]);;
+	dI31 = atof(sVar[11]);;
+	dI32 = atof(sVar[12]);;
+	dI33 = atof(sVar[13]);;
+	int N1 = atof(sVar[14]);;
 	if (pVertex->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
 		if (pN != NULL)
 			pVertex = pN;
 	}
+}
+
+
+void E_Object1::Info()
+{
+	char S1[200];
+	G_Object::Info();
+	sprintf_s(S1, "%sEID,%i,COL,%i,GRID,%i,MASS,%f,XYZ, %f,%f,%f ",sLab.GetString(), iLabel,iColour, pVertex->iLabel, dM, pVertex->Pt_Point->x, pVertex->Pt_Point->y, pVertex->Pt_Point->z);
+	outtext1(S1);
 }
 
 IMPLEMENT_DYNAMIC( E_CellS , CObject )
@@ -14049,7 +17926,7 @@ pVertex[3]=NULL;
 pVertex[4]=NULL;
 }
 
-void E_CellS ::Create(Pt_Object* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_CellS ::Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 
@@ -14149,7 +18026,7 @@ return (gret);
 }
 
 
-G_Object* E_CellS::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_CellS::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_CellS* gret = new E_CellS;
@@ -14185,7 +18062,7 @@ pDC->LineTo((int) pVertex[4]->DSP_Point->x,(int) pVertex[4]->DSP_Point->y);
 
 }
 
-BOOL E_CellS::NodeInEl(Pt_Object* pN)
+BOOL E_CellS::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 int i=0;
@@ -14200,18 +18077,26 @@ for (i=0;i<iNoNodes;i++)
 return (brc);
 }
 
-void E_CellS::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_CellS::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 
 }
 
@@ -14272,6 +18157,11 @@ OglDrawW(iDspFlgs,dS1,dS2);
 
 IMPLEMENT_DYNAMIC( E_Object4, CObject )
 
+E_Object4::E_Object4()
+{
+	G_Object();
+}
+
 E_Object4::~E_Object4()
 {
 pVertex[0]=NULL;
@@ -14317,29 +18207,71 @@ return (iRC);
 Mat E_Object4::Sample(int iNo)
 {
 Mat Pts(iNo,3);
-if (iNo == 4)
+if (iNo == 1)
+{
+  *Pts.mn(1, 1) = 0;
+  *Pts.mn(1, 2) = 0;
+  *Pts.mn(1, 3) = 4;
+}
+else if (iNo == 4)
 {
   double r3 = 0.577350269189626;;
-  *Pts.mn(1,1) = -r3;
-  *Pts.mn(2,1) = r3;
-  *Pts.mn(3,1) = r3;
-  *Pts.mn(4,1) = -r3;
+  *Pts.mn(1, 1) = -r3;
+  *Pts.mn(2, 1) = r3;
+  *Pts.mn(3, 1) = r3;
+  *Pts.mn(4, 1) = -r3;
 
-  *Pts.mn(1,2) = -r3;
-  *Pts.mn(2,2) = -r3;
-  *Pts.mn(3,2) = +r3;
-  *Pts.mn(4,2) = +r3;
+  *Pts.mn(1, 2) = -r3;
+  *Pts.mn(2, 2) = -r3;
+  *Pts.mn(3, 2) = +r3;
+  *Pts.mn(4, 2) = +r3;
+
+  //below as in mystran not the same??
+  //*Pts.mn(1,1) = -r3;
+  //*Pts.mn(2,1) = -r3;
+  //*Pts.mn(3,1) = r3;
+  //*Pts.mn(4,1) = r3;
+
+  //*Pts.mn(1,2) = -r3;
+  //*Pts.mn(2,2) = r3;
+  //*Pts.mn(3,2) = -r3;
+  //*Pts.mn(4,2) = +r3;
 
   *Pts.mn(1,3) = 1;
   *Pts.mn(2,3) = 1;
   *Pts.mn(3,3) = 1;
   *Pts.mn(4,3) = 1;
 }
-else if (iNo == 1)
+
+else if (iNo == 9)  //Used for the shell transverse shear terms
 {
-  *Pts.mn(1,1) = 0;
-  *Pts.mn(1,2) = 0;
-  *Pts.mn(1,3) = 4;
+	*Pts.mn(1, 1) = -0.774597E+00;
+	*Pts.mn(1, 2) = -0.774597E+00;
+	*Pts.mn(1, 3) = 0.308642E+00;
+	*Pts.mn(2, 1) = -0.774597E+00;
+	*Pts.mn(2, 2) = 0.000000E+00;
+	*Pts.mn(2, 3) = 0.493827E+00;
+	*Pts.mn(3, 1) = -0.774597E+00;
+	*Pts.mn(3, 2) = 0.774597E+00;
+	*Pts.mn(3, 3) = 0.308642E+00;
+	*Pts.mn(4, 1) = 0.000000E+00;
+	*Pts.mn(4, 2) = -0.774597E+00;
+	*Pts.mn(4, 3) = 0.493827E+00;
+	*Pts.mn(5, 1) = 0.000000E+00;
+	*Pts.mn(5, 2) = 0.000000E+00;
+	*Pts.mn(5, 3) = 0.790123E+00;
+	*Pts.mn(6, 1) = 0.000000E+00;
+	*Pts.mn(6, 2) = 0.774597E+00;
+	*Pts.mn(6, 3) = 0.493827E+00;
+	*Pts.mn(7, 1) = 0.774597E+00;
+	*Pts.mn(7, 2) = -0.774597E+00;
+	*Pts.mn(7, 3) = 0.308642E+00;
+	*Pts.mn(8, 1) = 0.774597E+00;
+	*Pts.mn(8, 2) = 0.000000E+00;
+	*Pts.mn(8, 3) = 0.493827E+00;
+	*Pts.mn(9, 1) = 0.774597E+00;
+	*Pts.mn(9, 2) = 0.774597E+00;
+	*Pts.mn(9, 3) = 0.308642E+00;
 }
 return (Pts);
 }
@@ -14634,275 +18566,1233 @@ Mat E_Object4::GetStiffMat_Ex(PropTable* PropsT, MatTable* MatT)
 	return (KM);
 }
 
-Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT)
+Mat E_Object4::getCoords_XEL()
 {
-	Mat bee;   //strain displacement matrix
-	int nip = 0;
+	int i;
+	double dx, dy, dz;
 
+	C3dVector p;
+	Mat coord(iNoNodes, 3);
+	C3dMatrix M3 = this->GetElSys();
+	//M3.Transpose();
+	for (i = 0; i < iNoNodes; i++)
+	{
+		C3dVector p, v;
+		p.x = pVertex[i]->Pt_Point->x - pVertex[0]->Pt_Point->x;
+		p.y = pVertex[i]->Pt_Point->y - pVertex[0]->Pt_Point->y;
+		p.z = pVertex[i]->Pt_Point->z - pVertex[0]->Pt_Point->z;
+		v = M3.Mult(p);
+		*coord.mn(i + 1, 1) = v.x;
+		*coord.mn(i + 1, 2) = v.y;
+		*coord.mn(i + 1, 3) = v.z;
+		dx = *coord.mn(i + 1, 1);
+		dy = *coord.mn(i + 1, 2);
+		dz = *coord.mn(i + 1, 3);
+	}
+	return (coord);
+}
+
+const double MXWARP = 0.0000001;
+//Calculate KE for bembrane 
+Mat E_Object4::QMEM1_KE(int OPT, double AREA, Vec<double>  X2E, Vec<double>  X3E, Mat SHELL_A)
+{
+	//NOTE THIS IS NOT USING REDUCED INTEGRATION AS IN MYSTRAN
+	int i,j,k;
+	double det;
+	Mat bee;   //strain displacement matrix
 	Mat coord2;
 	Mat deriv;
 	Mat deriv2;
 	Mat fun;
 	Mat Points;
 	Mat jac;
-	int i;
-	double det;
 	Mat bT;
 	Mat db;
 	Mat bdb;
+	int iDof = 2;   //2 dof X,Y per node
+	int nip = 4;    //4 intergration points
+	int iS = 3;
+	Vec<int> ID(8);
+	*ID.nn(1) = 1;
+	*ID.nn(2) = 2;
+	*ID.nn(3) = 7;
+	*ID.nn(4) = 8;
+	*ID.nn(5) = 13;
+	*ID.nn(6) = 14;
+	*ID.nn(7) = 19;
+	*ID.nn(8) = 20;
+	Vec<int> ID2(12);
+	*ID2.nn(1) = 1;
+	*ID2.nn(2) = 2;
+	*ID2.nn(3) = 3;
+	*ID2.nn(4) = 7;
+	*ID2.nn(5) = 8;
+	*ID2.nn(6) = 9;
+	*ID2.nn(7) = 13;
+	*ID2.nn(8) = 14;
+	*ID2.nn(9) = 15;
+	*ID2.nn(10) = 19;
+	*ID2.nn(11) = 20;
+	*ID2.nn(12) = 21;
+	Mat KM(iDof * iNoNodes, iDof * iNoNodes);
+	Mat KMf(6 * iNoNodes, 6 * iNoNodes);      //Full stiffness matrix
+	Mat coord = getCoords3d();          //Nodal Coordinates
+	C3dMatrix M3 = this->GetElSys();    //Element Coordinate system
+	Points = Sample(nip);               //sample points for integration
+    //Membraine stiffness calculation
+	Vec<double> DetJ(4);
+	Mat BEE[4];
+	int GAUSS_PT = 0;
+	//Points.diag();
+	for (i = 1; i < nip + 1; i++)            // for all integration points
+	{
+		GAUSS_PT = GAUSS_PT + 1;
+		det = 0;
+		fun = ShapeFun(Points, i);
+		deriv = ShapeDer(Points, i);
+		jac = deriv * coord;
+		jac = jac.InvertJac(det);
+		*DetJ.nn(GAUSS_PT) = det;  
+		deriv2 = jac * deriv;
+		bee = bmat(coord, deriv2, iS, iDof); //3*8 for 1 gauss pt
+		BEE[GAUSS_PT - 1] = bee;
+		//BEE[GAUSS_PT - 1].diag();
+		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+	}
+	//reducing the shear terms??
+	double SUMB, SUMD;
+	for (j = 1; j < 2 * iNoNodes + 1; j++)
+	{
+		SUMB = 0;
+		SUMD = 0;
+		for (k = 1; k < nip + 1; k++)
+		{
+			SUMB = SUMB + *DetJ.nn(k) * *BEE[k - 1].mn(3, j);
+			SUMD = SUMD + *DetJ.nn(k);
+		}
+		SUMB = SUMB;
+		for (k = 1; k < nip + 1; k++)
+		{
+			*BEE[k - 1].mn(3, j) = SUMB / SUMD;
+		}
+	}
+
+	for (i = 1; i < nip + 1; i++)            // for all integration points
+	{
+		bee=BEE[i - 1];
+		bT = bee;
+		bT.Transpose();
+		db = SHELL_A * bee;
+		bdb = bT * db;
+		det *= *Points.mn(i, 3);
+		bdb *= *DetJ.nn(i);;
+		KM += bdb;
+		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+		bT.clear(); db.clear(); bdb.clear(); bee.clear(); jac.clear();
+	}
+	double dWarp;
+	Mat BMEAN = WARP_BMEAN(dWarp);
+	Mat BMEANT;
+	BMEANT = BMEAN; //transform to accout for warp
+	BMEANT.Transpose();
+	Mat KMWp;
+	if (dWarp > MXWARP) //It slightly warped need to mod K terms
+	{
+		KMWp = BMEAN * KM;  //my function returns BMEAN not BMEANT
+		KM.clear();
+		KM = KMWp * BMEANT;
+		for (i = 1; i <= 12; i++)
+		{
+			for (j = 1; j <= 12; j++)
+			{
+				*KMf.mn(ID2[i - 1], ID2[j - 1]) = *KM.mn(i, j);
+			}
+		}
+	}
+	else
+	{
+		for (i = 1; i <= 8; i++)
+		{
+			for (j = 1; j <= 8; j++)
+			{
+				*KMf.mn(ID[i - 1], ID[j - 1]) = *KM.mn(i, j);
+			}
+		}
+	}
+	for (i=0;i<4;i++)
+	   BEE[i].clear();
+	KM.clear();
+	KMWp.clear();
+	Points.clear();
+	BMEANT.clear();
+	BMEAN.clear();
+	ID.clear();
+	ID2.clear();
+	//KMf.diag();
+	return (KMf);
+}
+
+Mat E_Object4::QPLT2_BEE_DD(Mat deriv)
+{
+	Mat BB(3 , 8);
+	int JJ = 0;
+	int j = 0;
+	for (j = 1; j < 4 + 1; j++)
+	{
+		JJ = JJ + 1;
+		*BB.mn(1, JJ) = 0;
+		*BB.mn(2, JJ) = -*deriv.mn(2, j);
+		*BB.mn(3, JJ) = -*deriv.mn(1, j);
+
+		JJ = JJ + 1;
+		*BB.mn(1, JJ) = *deriv.mn(1, j);
+		*BB.mn(2, JJ) = 0;
+		*BB.mn(3, JJ) = *deriv.mn(2, j);
+	}
+	return(BB);
+}
+
+//Calcs and checks elem geometry for quad elemsand provides a transformation matrix(TE) to transfer the elem stiffness matrix
+//!in the elem system to the basic coordinate system.Calculates grid point coords in local coord system.
+//!To define the elem coordinate system, a mean plane is defined which lies midway between the grid points(HBAR is mean dist).
+//!The elem z direction is in the direction of the cross product of the diagonals(V13 x V24).Initially, the x axis is along
+//!side 1 - 2 of the elem projection onto the mean plane.For elems thet are not rectangular, the x, y axes are rotated such that x
+//!splits the angle between the diagonals.
+Mat E_Object4::WARP_BMEAN(double& dWarped)
+{
+	Mat BMEAN(12,8);
+	C3dVector V13B;
+	C3dVector V24B;
+	C3dVector V12B;
+	C3dVector KVEC;
+	C3dVector IVEC;
+	C3dVector JVEC;
+	C3dVector tmp;
+	double HBAR = 0;
+	double X12 = 0;
+	double X13 = 0;
+	double X24 = 0;
+	double X14 = 0;
+	double X23 = 0;
+	double X34 = 0;
+	double Y3 = 0;
+	double Y4 = 0;
+	double Y34 = 0;
+	double L12 = 0;
+	double L23 = 0;
+	double L34 = 0;
+	double L41 = 0;
+	double X3 = 0;
+	double X4 = 0;
+
+	double SIN_TH1 = 0;
+	double COS_TH1 = 0;
+	double SIN_TH2 = 0;
+	double COS_TH2 = 0;
+	double SIN_GAM = 0;
+	double COS_GAM = 0;
+	double CTN_TH1 = 0;
+	double CTN_TH2 = 0;
+	double DELTA1 = 0;
+	double DELTA2 = 0;
+
+	//Note the checks are done with element aligned GP 1-2
+	//Generate vectors from G.P 1 to G.P 3 and from G.P. 2 to G.P. 4 (diagonals)
+	V13B = pVertex[3 - 1]->Get_Centroid() - pVertex[1 - 1]->Get_Centroid();
+	V24B = pVertex[4 - 1]->Get_Centroid() - pVertex[2 - 1]->Get_Centroid();
+	KVEC = V13B.Cross(V24B);
+	KVEC.Normalize();
+	//Calc initial elem x dir along side 1 - 2 of the elem projection onto the mean plane.
+	V12B = pVertex[2 - 1]->Get_Centroid() - pVertex[1 - 1]->Get_Centroid();
+	//HBAR is one half of the projection of V12B in z direction
+	HBAR = 0.5*V12B.Dot(KVEC); //measure of warping
+	dWarped = abs(HBAR);
+	//Now calculate initial x direction along side 1 - 2 of the elem projection onto the mean plane.
+	tmp = KVEC;
+	tmp *= 2 * HBAR;
+	IVEC = V12B;
+	IVEC -= tmp;
+	IVEC.Normalize();
+	//Calculate unit vector in initial elem.y direction(from KVEC x IVEC) :
+	JVEC = KVEC.Cross(IVEC);
+	JVEC.Normalize();
+	//Variables used in checking geometry
+	X12 = -V12B.Dot(IVEC); //-(V12B(1) * IVEC(1) + V12B(2) * IVEC(2) + V12B(3) * IVEC(3))
+	X13 = -V13B.Dot(IVEC); //-(V13B(1) * IVEC(1) + V13B(2) * IVEC(2) + V13B(3) * IVEC(3))
+	X24 = -V24B.Dot(IVEC); //-(V24B(1) * IVEC(1) + V24B(2) * IVEC(2) + V24B(3) * IVEC(3))
+	X14 = X12 + X24;
+	X23 = X13 - X12;
+	X34 = X14 - X13;
+	Y3 = V13B.Dot(JVEC); //(V13B(1) * JVEC(1) + V13B(2) * JVEC(2) + V13B(3) * JVEC(3))
+	Y4 = V24B.Dot(JVEC); //(V24B(1) * JVEC(1) + V24B(2) * JVEC(2) + V24B(3) * JVEC(3))
+	Y34 = Y3 - Y4;
+	L12 = abs(X12);
+	L23 = sqrt(X23 * X23 + Y3 * Y3);
+	L34 = sqrt(X34 * X34 + Y34 * Y34);
+	L41 = sqrt(X14 * X14 + Y4 * Y4);
+	X3 = -X13;
+	X4 = -X14;
+	//*********************************************
+	SIN_TH1 = Y4 / L41;
+	COS_TH1 = -X14 / L41;
+	SIN_TH2 = Y3 / L23;
+	COS_TH2 = X23 / L23;
+	SIN_GAM = (Y4 - Y3) / L34;
+	COS_GAM = (X3 - X4) / L34;
+	CTN_TH1 = COS_TH1 / SIN_TH1;
+	CTN_TH2 = COS_TH2 / SIN_TH2;
+	DELTA1 = SIN_TH2 * COS_GAM - COS_TH2 * SIN_GAM;
+	DELTA2 = SIN_TH1 * COS_GAM + COS_TH1 * SIN_GAM;
+
+	*BMEAN.mn(1, 1) = 1;
+	*BMEAN.mn(2, 2) = 1;
+	*BMEAN.mn(4, 3) = 1;
+	*BMEAN.mn(5, 4) = 1;
+	*BMEAN.mn(7, 5) = 1;
+	*BMEAN.mn(8, 6) = 1;
+	*BMEAN.mn(10, 7) = 1;
+	*BMEAN.mn(11, 8) = 1;
+	*BMEAN.mn(3, 1) = HBAR / L12;
+	*BMEAN.mn(3, 2) = -HBAR * (CTN_TH1 / L12 - 1 / (L41 * SIN_TH1));
+	*BMEAN.mn(3, 3) = -*BMEAN.mn(3, 1);
+	*BMEAN.mn(3, 4) = -HBAR * CTN_TH2 / L12;
+	*BMEAN.mn(3, 7) = -HBAR * SIN_GAM / (L41 * DELTA2);
+	*BMEAN.mn(3, 8) = -HBAR * COS_GAM / (L41 * DELTA2);
+
+	*BMEAN.mn(6, 1) = -*BMEAN.mn(3, 1);
+	*BMEAN.mn(6, 2) = HBAR * CTN_TH1 / L12;
+	*BMEAN.mn(6, 3) = *BMEAN.mn(3, 1);
+	*BMEAN.mn(6, 4) = HBAR * (CTN_TH2 / L12 - 1 / (L23 * SIN_TH2));
+	*BMEAN.mn(6, 5) = HBAR * SIN_GAM / (L23 * DELTA1);
+	*BMEAN.mn(6, 6) = HBAR * COS_GAM / (L23 * DELTA1);
+
+	*BMEAN.mn(9, 4) = HBAR / (L23 * SIN_TH2);
+	*BMEAN.mn(9, 5) = -HBAR * (SIN_GAM / L23 + SIN_TH2 / L34) / DELTA1;
+	*BMEAN.mn(9, 6) = -HBAR * (COS_GAM / L23 + COS_TH2 / L34) / DELTA1;
+	*BMEAN.mn(9, 7) = HBAR * SIN_TH1 / (L34 * DELTA2);
+	*BMEAN.mn(9, 8) = -HBAR * COS_TH1 / (L34 * DELTA2);
+
+	*BMEAN.mn(12, 2) = -HBAR / (L41 * SIN_TH1);
+	*BMEAN.mn(12, 5) = HBAR * SIN_TH2 / (L34 * DELTA1);
+	*BMEAN.mn(12, 6) = HBAR * COS_TH2 / (L34 * DELTA1);
+	*BMEAN.mn(12, 7) = -HBAR * (SIN_TH1 / L34 - SIN_GAM / L41) / DELTA2;
+	*BMEAN.mn(12, 8) = HBAR * (COS_TH1 / L34 + COS_GAM / L41) / DELTA2;
+	
+
+	//BMEAN.diag();
+	return (BMEAN);
+}
+
+
+void E_Object4::MIN4_SHPF(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
+	                     Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG)
+{
+	//XSD(4)            !1 - D arrays of differences in x side dimensions(local)
+	//YSD(4)            !1 - D arrays of differences in y side dimensions(local)
+	//NXSH(4)           !Constrained Nx shape functions for the MIN4 quad element
+	//NYSH(4)           !Constrained Ny shape functions for the MIN4 quad element
+	//DNXSHG(2, 4)       !Derivatives of NXSH wrt xi, eta.
+	//DNYSHG(2, 4)       !Derivatives of NYSH wrt xi, eta.
+	NXSH.Zero();
+	NYSH.Zero();
+	DNXSHG.MakeZero();
+    DNYSHG.MakeZero();
+
+	//Get constants needed from local G.P.geometry.Xij = Xi - Xj and Yij = Yi - Yj where Xi, Yi, etc., are element
+    //node coords in local element coord system
+
+	double X12 = *XSD.nn(1);
+	double X23 = *XSD.nn(2);
+	double X34 = *XSD.nn(3);
+	double X41 = *XSD.nn(4);
+
+	double Y12 = *YSD.nn(1);
+	double Y23 = *YSD.nn(2);
+	double Y34 = *YSD.nn(3);
+	double Y41 = *YSD.nn(4);
+
+	double XM = 1 - SSI;
+	double XP = 1 + SSI;
+	double YM = 1 - SSJ;
+	double YP = 1 + SSJ;
+	double X2M = 1 - SSI * SSI;
+	double Y2M = 1 - SSJ * SSJ;
+	//N5 thru N8 are the virgin shape functions used in finding the  constrained shape functions(NXSH, NYSH)
+
+	double N5 = X2M * YM / 2;
+	double N6 = Y2M * XP / 2;
+	double N7 = X2M * YP / 2;
+	double N8 = Y2M * XM / 2;
+		//N5X thru N8Y are derivatives of N5 thru N8 wrt xi, eta
+
+	double	N5X = -SSI * YM;
+	double	N6X = Y2M / 2;
+	double	N7X = -SSI * YP;
+	double	N8X = -Y2M / 2;
+
+	double N5Y = -X2M / 2;
+	double N6Y = -SSJ * XP;
+	double N7Y = X2M / 2;
+	double N8Y = -SSJ * XM;
+
+	//Constrained shapes :
+	*NXSH.nn(1) = (-Y41 * N8 + Y12 * N5) / 8;
+	*NXSH.nn(2) = (-Y12 * N5 + Y23 * N6) / 8;
+	*NXSH.nn(3) = (-Y23 * N6 + Y34 * N7) / 8;
+	*NXSH.nn(4) = (-Y34 * N7 + Y41 * N8) / 8;
+	*NYSH.nn(1) = (-X41 * N8 + X12 * N5) / 8;
+	*NYSH.nn(2) = (-X12 * N5 + X23 * N6) / 8;
+	*NYSH.nn(3) = (-X23 * N6 + X34 * N7) / 8;
+	*NYSH.nn(4) = (-X34 * N7 + X41 * N8) / 8;
+
+	//Derivatives of NXSH wrt xi, eta:
+	*DNXSHG.mn(1, 1) = (-Y41 * N8X + Y12 * N5X) / 8;
+	*DNXSHG.mn(1, 2) = (-Y12 * N5X + Y23 * N6X) / 8;
+	*DNXSHG.mn(1, 3) = (-Y23 * N6X + Y34 * N7X) / 8;
+	*DNXSHG.mn(1, 4) = (-Y34 * N7X + Y41 * N8X) / 8;
+	*DNXSHG.mn(2, 1) = (-Y41 * N8Y + Y12 * N5Y) / 8;
+	*DNXSHG.mn(2, 2) = (-Y12 * N5Y + Y23 * N6Y) / 8;
+	*DNXSHG.mn(2, 3) = (-Y23 * N6Y + Y34 * N7Y) / 8;
+	*DNXSHG.mn(2, 4) = (-Y34 * N7Y + Y41 * N8Y) / 8;
+
+	//Derivatives of NYSH wrt xi, eta:
+	*DNYSHG.mn(1, 1) = (-X41 * N8X + X12 * N5X) / 8;
+	*DNYSHG.mn(1, 2) = (-X12 * N5X + X23 * N6X) / 8;
+	*DNYSHG.mn(1, 3) = (-X23 * N6X + X34 * N7X) / 8;
+	*DNYSHG.mn(1, 4) = (-X34 * N7X + X41 * N8X) / 8;
+	*DNYSHG.mn(2, 1) = (-X41 * N8Y + X12 * N5Y) / 8;
+	*DNYSHG.mn(2, 2) = (-X12 * N5Y + X23 * N6Y) / 8;
+	*DNYSHG.mn(2, 3) = (-X23 * N6Y + X34 * N7Y) / 8;
+	*DNYSHG.mn(2, 4) = (-X34 * N7Y + X41 * N8Y) / 8;
+}
+
+//Think this is B matix for transverse shear
+Mat E_Object4::QPLT2_BEE_TS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX)
+{
+	Mat BS(2,12);
+	int J, JJ;
+	JJ = 0;
+	
+	for (J = 1; J < 4 + 1; J++)
+	{
+		JJ = JJ + 1;
+		*BS.mn(1, JJ) = *DPSHX.mn(1, J);
+		*BS.mn(2, JJ) = *DPSHX.mn(2, J);
+
+		JJ = JJ + 1;
+		*BS.mn(1, JJ) = -*DNXSHX.mn(1, J);
+		*BS.mn(2, JJ) = -*DNXSHX.mn(2, J) - *PSH.mn(1,J);
+
+		JJ = JJ + 1;
+		*BS.mn(1, JJ) = *DNYSHX.mn(1, J) + *PSH.mn(1,J);
+		*BS.mn(2, JJ) = *DNYSHX.mn(2, J);
+	}
+	return (BS);
+}
+
+Mat E_Object4::BEE_BM_Recovery()
+{
+	int i;
+	Vec <int> IDS(18);
+	Mat BM;
+	Mat BM2(3, 6 * iNoNodes);
+	Mat coord;    //Nodal Coordinates
+	Mat deriv;    //shape function derivatives
+	Mat Points;   //sample points
+	Mat deriv2;   //derivative of shape functions
+	Mat jac;
+	double det = 0;
+	coord =getCoords3d();       //Coords in element CSYS this case actually 2d
+	Points = Sample(1);         //Only 1 integration point at centre of element
+	det = 0;
+	deriv = ShapeDer(Points, 1);  //2x4 shape fuction derivatives
+	jac = deriv * coord;
+	jac = jac.InvertJac(det);
+	deriv2 = jac * deriv;
+	BM = bmat(coord, deriv2, 3, 2);
+	*IDS.nn(1) = 1;
+	*IDS.nn(2) = 2;
+	*IDS.nn(3) = 7;
+	*IDS.nn(4) = 8;
+	*IDS.nn(5) = 13;
+	*IDS.nn(6) = 14;
+	*IDS.nn(7) = 19;
+	*IDS.nn(8) = 20;
+	for (i = 1; i <= 8; i++)
+	{
+		*BM2.mn(1, *IDS.nn(i)) = *BM.mn(1, i);
+		*BM2.mn(2, *IDS.nn(i)) = *BM.mn(2, i);
+		*BM2.mn(3, *IDS.nn(i)) = *BM.mn(3, i);
+	}
+
+
+	return (BM2);
+}
+
+Mat E_Object4::BEE_BB_Recovery()
+{
+	int i, J, JJ;
 	int iDof;
-	int iS;
-	int MID = -1;
-	double dE = 210e9;
-	double dv = 0.29;
+
+	Mat BB(3, 3 * iNoNodes);
+	Mat BB2(3, 6 * iNoNodes);
+	Vec <int> IDS(12);
+	BB.MakeZero();
+	BB2.MakeZero();
+
+	//****************************************************************************
+	//                            M Y   C A L C U L A T I O N
+	//****************************************************************************
+
+	Mat coord;    //Nodal Coordinates
+	Mat deriv;    //shape function derivatives
+	Mat Points;   //sample points
+	Mat deriv2;   //derivative of shape functions
+	Mat jac;
+	double det = 0;
+	coord = getCoords3d();       //Coords in element CSYS this case actually 2d
+	Points = Sample(1);
+	deriv = ShapeDer(Points, 1);  //2x4 shape fuction derivatives
+	jac = deriv * coord;
+	jac = jac.InvertJac(det);
+	deriv2 = jac * deriv;
+
+	//Bending Strain Components curvatures k11,k22,k12
+	//1 pt at el centre
+
+	BB.MakeZero();
+	C3dMatrix Bb;
+	int k;
+	//BENDING TERMS Bb is BENDING B MATRIX
+	int inc = 0;
+	double tmp;
+	for (k = 1; k < iNoNodes + 1; k++)
+	{
+		Bb.m_00 = 0;
+		Bb.m_01 = 0;
+		Bb.m_02 = -*deriv2.mn(1, k);
+		Bb.m_10 = 0;
+		Bb.m_11 = *deriv2.mn(2, k);
+		Bb.m_12 = 0;
+		Bb.m_20 = 0;
+		Bb.m_21 = *deriv2.mn(1, k);
+		Bb.m_22 = -*deriv2.mn(2, k);
+
+		*BB.mn(1, inc + 1) = 0;
+		*BB.mn(1, inc + 2) = 0;
+		*BB.mn(1, inc + 3) = -*deriv2.mn(1, k);		tmp = -*deriv2.mn(1, k);
+		*BB.mn(2, inc + 1) = 0;
+		*BB.mn(2, inc + 2) = *deriv2.mn(2, k);		tmp = *deriv2.mn(2, k);
+		*BB.mn(2, inc + 3) = 0;
+		*BB.mn(3, inc + 1) = 0;
+		*BB.mn(3, inc + 2) = *deriv2.mn(1, k);		tmp = *deriv2.mn(1, k);
+		*BB.mn(3, inc + 3) = -*deriv2.mn(2, k);		tmp = -*deriv2.mn(2, k);
+		inc += 3;
+	}
+
+	*IDS.nn(1) = 3;
+	*IDS.nn(2) = 4;
+	*IDS.nn(3) = 5;
+	*IDS.nn(4) = 9;
+	*IDS.nn(5) = 10;
+	*IDS.nn(6) = 11;
+	*IDS.nn(7) = 15;
+	*IDS.nn(8) = 16;
+	*IDS.nn(9) = 17;
+	*IDS.nn(10) = 21;
+	*IDS.nn(11) = 22;
+	*IDS.nn(12) = 23;
+	for (i = 1; i <= 12; i++)
+	{
+		*BB2.mn(1, *IDS.nn(i)) = *BB.mn(1, i);
+		*BB2.mn(2, *IDS.nn(i)) = *BB.mn(2, i);
+		*BB2.mn(3, *IDS.nn(i)) = *BB.mn(3, i);
+	}
+
+	BB.clear();
+	coord.clear();;
+	deriv.clear();;
+	Points.clear();;
+	deriv2.clear();;
+	jac.clear();;
+	//**********************************************************
+
+
+	BB.clear();
+	IDS.clear();
+	return (BB2);
+}
+
+//Bee matrix for recovering transverse shear results
+//average of 4 guass points 
+//will also need PGI_SQ to calc results so will need
+//to save id on call to GetStiffMat
+Mat E_Object4::BEE_TS_Recovery()
+{
+	Vec<int> IDS(12);
+	int i;
+	double det;
+	Mat BS;
+	Mat BS2(2, 12);
+	Mat BST(2,24);
+	Mat Points;
+	Mat fun;
+	Mat jac;
+	Mat deriv;
+	double SSI, SSJ;
+	Vec<double> NXSH(4);
+	Vec<double> NYSH(4);
+	Mat DPSHX;
+	Mat DNXSHX;
+	Mat DNYSHX;
+	Mat DNXSHG(2, 4);
+	Mat DNYSHG(2, 4);
+	Points.clear();
+	Vec <double> XSD(4);
+	Vec <double> YSD(4);
+	Mat XEL = getCoords_XEL();						//Local element coordinates
+	//WARNING TE is not nastran diagonal bisector trying as I have it
+	C3dMatrix TE = this->GetElSys();	//TE Element coord system
+	*XSD.nn(1) = *XEL.mn(1, 1) - *XEL.mn(2, 1);		//x coord diffs(in local elem coords)
+	*XSD.nn(2) = *XEL.mn(2, 1) - *XEL.mn(3, 1);
+	*XSD.nn(3) = *XEL.mn(3, 1) - *XEL.mn(4, 1);
+	*XSD.nn(4) = *XEL.mn(4, 1) - *XEL.mn(1, 1);
+	*YSD.nn(1) = *XEL.mn(1, 2) - *XEL.mn(2, 2);		//y coord diffs(in local elem coords)
+	*YSD.nn(2) = *XEL.mn(2, 2) - *XEL.mn(3, 2);
+	*YSD.nn(3) = *XEL.mn(3, 2) - *XEL.mn(4, 2);
+	*YSD.nn(4) = *XEL.mn(4, 2) - *XEL.mn(1, 2);
+	//Note my area is not calculated by numerial integration
+
+
+	//Transverse Shear average of 4 points
+	int nip = 4;  //4 INTEGRATION POINTS
+	Points = Sample(nip);
+	Mat coord = getCoords3d();
+	BS2.MakeZero();
+	for (i = 1; i < nip + 1; i++)
+	{
+		SSI = *Points.mn(i, 1);
+		SSJ = *Points.mn(i, 2);
+		det = 0;
+		fun.clear();
+		fun = ShapeFun(Points, i);
+		deriv.clear();
+		deriv = ShapeDer(Points, i);
+		MIN4_SHPF(SSI, SSJ, XSD, YSD, NXSH, NYSH, DNXSHG, DNYSHG);
+		jac = deriv * coord;
+		jac = jac.InvertJac(det);
+		DPSHX.clear();
+		DPSHX = jac * deriv;
+		DNXSHX.clear();
+		DNXSHX = jac * DNXSHG;
+		DNYSHX.clear();
+		DNYSHX = jac * DNYSHG;
+		BS.clear();
+		BS = QPLT2_BEE_TS(fun, DPSHX, DNXSHX, DNYSHX);  //B MAT for Transverse SHEAR
+		BS *= 0.25;
+		BS2 += BS;
+	}
+	BS.clear();
+	Points.clear();
+	coord.clear();
+	fun.clear();
+	deriv.clear();
+	XEL.clear();
+    XSD.clear();
+    YSD.clear();
+	DPSHX.clear();
+	DNXSHX.clear();
+	DNYSHX.clear();
+	//THESE MAY BE WRONG ORDER???
+	*IDS.nn(1) = 3;
+	*IDS.nn(2) = 4;
+	*IDS.nn(3) = 5;
+	*IDS.nn(4) = 9;
+    *IDS.nn(5) = 10;
+	*IDS.nn(6) = 11;
+	*IDS.nn(7) = 15;
+	*IDS.nn(8) = 16;
+    *IDS.nn(9) = 17;
+	*IDS.nn(10) = 21;
+	*IDS.nn(11) = 22;
+	*IDS.nn(12) = 23;
+	for (i = 1; i <= 12; i++)
+	{
+		*BST.mn(1, *IDS.nn(i)) = *BS2.mn(1, i);
+		*BST.mn(2, *IDS.nn(i)) = *BS2.mn(2, i);
+	}
+	IDS.clear();
+	BS.clear();
+	BS2.clear();
+	return (BST);
+}
+
+
+Mat E_Object4::QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD, Mat SHELL_D, Mat SHELL_T)
+{
+	char S1[80];
+	double BENSUM = 0;
+	double SHRSUM = 0;
+	Mat bee;   //strain displacement matrix
+	int nip = 0;
+	Mat coord2;
+	Mat deriv;
+	Mat deriv2;
+	Mat DPSHX; //Same as deriv2
+	Mat DNXSHX;
+	Mat DNYSHX;
+	Mat BS;
+	Mat fun;
+	Mat Points;
+	Mat jac;
+	Mat bT;
+	Mat db;
+	Mat bdb;
+	Mat KB(8, 8);
+	Mat KS(12, 12);
+	Mat KE(24 , 24);
+	KE.MakeZero();
+	int i,j;
+	double det;
+	nip = 4;
+	Points = Sample(nip);
+	Mat coord = getCoords3d();
+	//bending
+	for (i = 1; i < nip + 1; i++)
+	{
+		det = 0;
+		fun = ShapeFun(Points, i);
+		deriv = ShapeDer(Points, i);
+		jac = deriv * coord;
+        jac = jac.InvertJac(det);
+		deriv2 = jac * deriv;
+		bee = QPLT2_BEE_DD(deriv2); //B MAT for bending
+		bT = bee;
+		bT.Transpose();
+		db = SHELL_D * bee;
+		bdb = bT * db;
+		det *= *Points.mn(i, 3);  //DET * weight
+		bdb *= det;
+		KB += bdb;
+    }
+	BENSUM = 0;                                 //Add all diag terms from KB
+	for (i = 1; i < 8 + 1; i++)
+	{
+		BENSUM = BENSUM + *KB.mn(i, i);
+	}
+	//SHEAR TERMS 
+	//CALL ORDER_GAUSS(IORDXX, SSS, HHH)
+	double SSI, SSJ;
+	Vec<double> NXSH(4);
+	Vec<double> NYSH(4);
+	Mat DNXSHG(2,4);
+	Mat DNYSHG(2,4);
+	Points.clear();
+	//Transverse Shear
+	nip = 9;  //NINE INTEGRATION POINTS
+	Points = Sample(nip);
+	for (i = 1; i < nip + 1; i++)
+	{
+		SSI = *Points.mn(i, 1);  
+		SSJ = *Points.mn(i, 2);
+		det = 0;
+		fun = ShapeFun(Points, i);
+		deriv = ShapeDer(Points, i);
+		MIN4_SHPF(SSI, SSJ, XSD, YSD, NXSH, NYSH, DNXSHG, DNYSHG);
+		jac = deriv * coord;
+		jac = jac.InvertJac(det);
+		DPSHX.clear();
+		DPSHX = jac * deriv;
+		DNXSHX.clear();
+		DNXSHX = jac * DNXSHG;
+		DNYSHX.clear();
+		DNYSHX = jac * DNYSHG;
+		BS.clear();
+		BS= QPLT2_BEE_TS(fun, DPSHX, DNXSHX, DNYSHX);  //B MAT for Transverse SHEAR
+		bT = BS;
+		bT.Transpose();
+		db = SHELL_T * BS;
+		bdb = bT * db;
+		det *= *Points.mn(i, 3);  //DET * weight
+		bdb *= det;
+		KS += bdb;
+	}
+
+	//Add all diagonal terms from KS for rotational DOF's to get SHRSUM
+	SHRSUM = *KS.mn(2, 2) + *KS.mn(3, 3) + *KS.mn(5, 5) + *KS.mn(6, 6) + *KS.mn(8, 8) + *KS.mn(9, 9) + *KS.mn(11, 11) + *KS.mn(12, 12);
+	if (abs(SHRSUM) < 0.00001)
+	{
+		sprintf_s(S1, "ERROR: SHRSUM TOO SMALL %g", SHRSUM);
+		outtext1(S1);
+	}
+
+//******** Shear Correction factor  **********
+	double CBMIN = 3.6; //for quad element - emprirical value??
+	double PSI_HAT = BENSUM / SHRSUM;
+	double DEN = 1 + CBMIN * PSI_HAT;
+	PHI_SQ = CBMIN * PSI_HAT / DEN;
+
+
+//******** End Shear Correction factor  **********
+//populate the stiffness matrix
+	Vec<int> IDB(8);
+	*IDB.nn(1) = 4;
+	*IDB.nn(2) = 5;
+	*IDB.nn(3) = 10;
+	*IDB.nn(4) = 11;
+	*IDB.nn(5) = 16;
+	*IDB.nn(6) = 17;
+	*IDB.nn(7) = 22;
+	*IDB.nn(8) = 23;
+	//KB.diag();
+	for (i = 1; i < 8 + 1; i++)
+	{
+		for (j = 1; j < 8 + 1; j++)
+		{
+			*KE.mn(*IDB.nn(i), *IDB.nn(j)) = *KE.mn(*IDB.nn(i), *IDB.nn(j)) + *KB.mn(i, j);
+		}
+	}
+
+	Vec<int> IDS(12);
+	*IDS.nn(1) = 3;
+	*IDS.nn(2) = 4;
+	*IDS.nn(3) = 5;
+	*IDS.nn(4) = 9;
+	*IDS.nn(5) = 10;
+	*IDS.nn(6) = 11;
+	*IDS.nn(7) = 15;
+	*IDS.nn(8) = 16;
+	*IDS.nn(9) = 17;
+	*IDS.nn(10) = 21;
+	*IDS.nn(11) = 22;
+	*IDS.nn(12) = 23;
+	for (i = 1; i < 12 + 1; i++)
+	{
+		for (j = 1; j < 12 + 1; j++)
+		{
+			*KE.mn(*IDS.nn(i), *IDS.nn(j)) = *KE.mn(*IDS.nn(i), *IDS.nn(j)) + PHI_SQ * *KS.mn(i, j);
+		}
+	}
+	//KS.diag();
+
+	return (KE);
+}
+
+Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &bErr)
+{
+	//******************************************************************************************************************************
+	//MIN4 quadrilateral thick(Mindlin) plate bending plate element.This element is based on the following work :
+	//"An Improved Treatment Of Transverse Shear In The Mindlin-Type Four-Node Quadrilateral Element", by Alexander Tessler and
+	//Thomas J.R.Hughes, Computer Methods In Applied Mechanics And Engineering 39 (1983) pp 311 - 335
+	//******************************************************************************************************************************
+	int i;
+	int iMID1 = -1; //Membrane
+	int iMID2 = -1; //bending
+	int iMID3 = -1; //shear
+	int iMID4 = -1;  //Mem / Bend coupling
+	Material* pM1 = nullptr;
+	Material* pM2 = nullptr;
+	Material* pM3 = nullptr;
+	Material* pM4 = nullptr;
 	char S1[80];
 	double dthk = 0.001;
-
+	double dBRatio = 1;
+	double dSHRatio = 1;
+	double AREA = 1;
+	Mat SHELL_A;
+	Mat SHELL_D;
+	Mat SHELL_T;
 	Property* pS = PropsT->GetItem(PID);
-	if (pS != NULL)
-	{
-		MID = pS->GetDefMatID();
-	}
-	Material* pM = MatT->GetItem(MID);
 	if (pS == NULL)
 	{
 		sprintf_s(S1, "ERROR: PROPERTY NOT FOUND FOR EL %i", iLabel);
 		outtext1(S1);
 	}
-	if (pM == NULL)
-	{
-		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
-		outtext1(S1);
-	}
-	//Get Shell thickness
 
+	//Get Shell Stuff
 	if (((iType == 91) || (iType == 94)) && (pS != NULL))
 	{
 		PSHELL* pSh = (PSHELL*)pS;
 		dthk = pSh->dT;
+		dBRatio = pSh->d12IT3;
+		dSHRatio = pSh->dTST;
+		iMID1 = pSh->iMID1;
+		iMID2 = pSh->iMID2;
+		iMID3 = pSh->iMID3;
+		pM1 = MatT->GetItem(iMID1);
+		if (iMID2 == -1)
+			pM2 = pM1; //defualt
+		else
+			pM2 = MatT->GetItem(iMID2);
+		if (iMID3 == -1)
+			pM3 = pM1; //defualt
+		else
+			pM3 = MatT->GetItem(iMID3);
 	}
 
-	if ((pM != NULL) && (pM->iType = 1))
+	if ((pM1!=nullptr) && (pM2!= nullptr) && (pM3 != nullptr))
 	{
-		MAT1* pIsen = (MAT1*)pM;
-		dE = pIsen->dE;
-		dv = pIsen->dNU;
+		SHELL_A = pM1->DeeMEM();
+		SHELL_D = pM2->DeeBM();
+		SHELL_T = pM3->DeeSH();
 	}
+	else
+    {
+	  sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
+	  outtext1(S1);
+    }
 	//This part calculates the 2d membraine stiffness
-	iDof = 2;   //2 dof X,Y per node
-	nip = 4;    //4 intergration points
-	iS = 3;
+	//iDof = 2;   //2 dof X,Y per node
+	//nip = 4;    //4 intergration points
+	//iS = 3;
+	double BENSUM = 0;
+	double SHRSUM = 0;
+	double PSI_HAT = 0;
+	double PHI_SQ = 0;
+	Vec <double> XSD(4);
+	Vec <double> YSD(4);
+	Mat XEL = getCoords_XEL();						//Local element coordinates
+	//WARNING TE is not nastran diagonal bisector trying as I have it
+	C3dMatrix TE = this->GetElSys();	//TE Element coord system
+	*XSD.nn(1) = *XEL.mn(1, 1) - *XEL.mn(2, 1);		//x coord diffs(in local elem coords)
+	*XSD.nn(2) = *XEL.mn(2, 1) - *XEL.mn(3, 1);
+	*XSD.nn(3) = *XEL.mn(3, 1) - *XEL.mn(4, 1);
+	*XSD.nn(4) = *XEL.mn(4, 1) - *XEL.mn(1, 1);
+	*YSD.nn(1) = *XEL.mn(1, 2) - *XEL.mn(2, 2);		//y coord diffs(in local elem coords)
+	*YSD.nn(2) = *XEL.mn(2, 2) - *XEL.mn(3, 2);
+	*YSD.nn(3) = *XEL.mn(3, 2) - *XEL.mn(4, 2);
+	*YSD.nn(4) = *XEL.mn(4, 2) - *XEL.mn(1, 2);
+	//Note my area is not calculated by numerial integration
+	AREA = this->GetArea2d();
 
-	Mat KM(iDof*iNoNodes, iDof*iNoNodes);
-	Mat dee = DeeMat(dE, dv, iS);         //plain stress material matrix
-	Mat coord = getCoords3d();          //Nodal Coordinates
-	C3dMatrix M3 = this->GetElSys();    //Element Coordinate system
-	//M3.MakeUnit();
-	Points = Sample(nip);               //sample points for integration
-	//Membraine stiffness calculation
-	//for dof 12
-	for (i = 1; i < nip + 1; i++)            // for all integration points
-	{
-		det = 0;
-		fun = ShapeFun(Points, i);
-		deriv = ShapeDer(Points, i);
-		jac = deriv * coord;
-		jac = jac.InvertJac(det);
-		deriv2 = jac * deriv;
-		bee = bmat(coord, deriv2, iS, iDof);
-		bT = bee;
-		bT.Transpose();
-		db = dee * bee;
-		bdb = bT * db;
-		det *= *Points.mn(i, 3);
-		bdb *= det;
-		KM += bdb;
-		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
-		bT.clear(); db.clear(); bdb.clear(); bee.clear(); jac.clear();
-	}
-	KM *= dthk;
-	Points.clear();
-	dee.clear();
-	//Mindlin Formulation
-	//Sheer Stifness Calculation
-	//reduced integration 1 sample point
-	double G, kk;
-	int k;
-	dee.Create(2, 2);
-	G = 0.5*dE / (1 + dv);
-	kk = 5.0 / 6.0;
-	*dee.mn(1, 1) = kk * G*dthk;
-	*dee.mn(2, 2) = kk * G*dthk;
-	*dee.mn(1, 2) = 0;
-	*dee.mn(2, 1) = 0;
-	Mat KM2(12, 12);
-	nip = 1;                        //1 reduced integration point
-	Points = Sample(nip);
-	for (i = 1; i < nip + 1; i++)
-	{
-		det = 0;
-		fun = ShapeFun(Points, i);
-		deriv = ShapeDer(Points, i);
-		jac = deriv * coord;
-		jac = jac.InvertJac(det);
-		deriv2 = jac * deriv;
-		bee.clear();
-		bee.Create(2, 12);
-		for (k = 1; k < 4 + 1; k++)//was m
-		{
-			*bee.mn(1, (k) * 3 - 2) = *deriv2.mn(1, k);
-			*bee.mn(1, (k) * 3 - 1) = 0;
-			*bee.mn(1, (k) * 3 - 0) = *fun.mn(1, k);
-			*bee.mn(2, (k) * 3 - 2) = *deriv2.mn(2, k);
-			*bee.mn(2, (k) * 3 - 1) = -*fun.mn(1, k);
-			*bee.mn(2, (k) * 3 - 0) = 0;
-		}
-		bT = bee;
-		bT.Transpose();
-		db = dee * bee;
-		bdb = bT * db;
-		det *= *Points.mn(i, 3);
-		bdb *= det;
-		KM2 += bdb;
-		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
-		bT.clear(); db.clear(); bdb.clear(); bee.clear();
-	}
+	//NOTE BOTH SHELL_A & SHELL_D need transforming to material direction
+	Mat SHELL_D_TRIA = SHELL_D;
+	Mat SHELL_T_TRIA = SHELL_T;
+	SHELL_D_TRIA *= dBRatio * dthk * dthk * dthk / 12;
 
-	//The bending part
-	Points.clear();
-	dee.clear();
-	dee.Create(3, 3);
-	double Cf;
-	Cf = dE * dthk*dthk*dthk / (12 * (1 - dv * dv));
-	nip = 4;
-	Points = Sample(nip);
-	*dee.mn(1, 1) = 1;
-	*dee.mn(1, 2) = dv;
-	*dee.mn(1, 3) = 0;
-	*dee.mn(2, 1) = dv;
-	*dee.mn(2, 2) = 1;
-	*dee.mn(2, 3) = 0;
-	*dee.mn(3, 1) = 0;
-	*dee.mn(3, 2) = 0;
-	*dee.mn(3, 3) = (1 - dv);
-	dee *= Cf;
-	Mat KM3(12, 12);
-	for (i = 1; i < nip + 1; i++)
-	{
-
-		det = 0;
-		fun = ShapeFun(Points, i);
-		deriv = ShapeDer(Points, i);
-		jac = deriv * coord;
-		jac = jac.InvertJac(det);
-		deriv2 = jac * deriv;
-		bee.clear();
-		bee.Create(3, 12);
-		for (k = 1; k < 4 + 1; k++)//was m
-		{
-			*bee.mn(1, (k) * 3 - 2) = 0;
-			*bee.mn(1, (k) * 3 - 1) = 0;
-			*bee.mn(1, (k) * 3 - 0) = -*deriv2.mn(1, k);
-			*bee.mn(2, (k) * 3 - 2) = 0;
-			*bee.mn(2, (k) * 3 - 1) = *deriv2.mn(2, k);
-			*bee.mn(2, (k) * 3 - 0) = 0;
-			*bee.mn(3, (k) * 3 - 2) = 0;
-			*bee.mn(3, (k) * 3 - 1) = *deriv2.mn(1, k);
-			*bee.mn(3, (k) * 3 - 0) = -*deriv2.mn(2, k);
-		}
-		bT = bee;
-		bT.Transpose();
-		db = dee * bee;
-		bdb = bT * db;
-		det *= *Points.mn(i, 3);
-		bdb *= det;
-		KM3 += bdb;
-		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
-		bT.clear(); db.clear(); bdb.clear(); bee.clear();
-	}
-	KM2 += KM3;
-	//Assemble all the components inplain,shear and bending in KMf
-	Mat KMf(6 * iNoNodes, 6 * iNoNodes);
-	Vec<int> V(8);
-	*V.nn(1) = 1;
-	*V.nn(2) = 2;
-	*V.nn(3) = 7;
-	*V.nn(4) = 8;
-	*V.nn(5) = 13;
-	*V.nn(6) = 14;
-	*V.nn(7) = 19;
-	*V.nn(8) = 20;
-	int j;
-	for (i = 1; i <= 8; i++)
-	{
-		for (j = 1; j <= 8; j++)
-		{
-			*KMf.mn(V[i - 1], V[j - 1]) = *KM.mn(i, j);
-		}
-	}
-	Vec<int> V1(12);
-	*V1.nn(1) = 3;
-	*V1.nn(2) = 4;
-	*V1.nn(3) = 5;
-	*V1.nn(4) = 9;
-	*V1.nn(5) = 10;
-	*V1.nn(6) = 11;
-	*V1.nn(7) = 15;
-	*V1.nn(8) = 16;
-	*V1.nn(9) = 17;
-	*V1.nn(10) = 21;
-	*V1.nn(11) = 22;
-	*V1.nn(12) = 23;
-
-	for (i = 1; i <= 12; i++)
-	{
-		for (j = 1; j <= 12; j++)
-		{
-			*KMf.mn(V1[i - 1], V1[j - 1]) = *KM2.mn(i, j);
-		}
-	}
-
+	SHELL_A *= dthk;  //Shell_A need to multiplied by thk
+	*SHELL_T_TRIA.mn(1, 1) *= dSHRatio * dthk;
+	*SHELL_T_TRIA.mn(2, 2) *= dSHRatio * dthk;
+	//For QUAD generate the membrane stiffness
+	Mat KE; 
+	KE = QMEM1_KE(3, AREA, XSD, YSD,SHELL_A); //OPT 3 = K mat
+	Mat KBS;
+	//bending and trnasverse shear
+	KBS = QPLT2_KE(3, AREA, XSD, YSD, SHELL_D_TRIA, SHELL_T_TRIA);
+	KE += KBS;
 	for (i = 6; i <= 24; i += 6)
-	{   //BECAREFUL MAKING THIS VALUE LARGE MESSES THINGS UP
-		*KMf.mn(i, i) = 100;       //DRILLING STIFFNESS
-	}
-	//Transform to global
-	//M3.Transpose();
-	Mat TMAT(24, 24);
-
-	for (i = 1; i < 24; i += 3)
-	{
-		*TMAT.mn(i, i) = M3.m_00;
-		*TMAT.mn(i + 1, i) = M3.m_10;
-		*TMAT.mn(i + 2, i) = M3.m_20;
-
-		*TMAT.mn(i, i + 1) = M3.m_01;
-		*TMAT.mn(i + 1, i + 1) = M3.m_11;
-		*TMAT.mn(i + 2, i + 1) = M3.m_21;
-
-		*TMAT.mn(i, i + 2) = M3.m_02;
-		*TMAT.mn(i + 1, i + 2) = M3.m_12;
-		*TMAT.mn(i + 2, i + 2) = M3.m_22;
-	}
-	//TMAT.diag();
+		*KE.mn(i, i) = gDRILL_KS;  //DRILLING STIFFNES
+	Mat TMAT;
+	TMAT = KEToKGTransform2(TE);  //20/02/2024 changed to this new function to get TMAT
 	Mat TMATT = TMAT;
 	TMATT.Transpose();
 	Mat T;
 	Mat TT;
-	T = KMf * TMAT;
+	T = KE * TMAT;
 	TT = TMATT * T;
-	KM.clear();
-	KM2.clear();
-	KM3.clear();
-	KMf.clear();
-	TMATT.clear();
-	TMAT.clear();
+	//Need to clean up
+	SHELL_A.clear();
+	SHELL_D.clear();
+	SHELL_T.clear();
+	SHELL_D_TRIA.clear();
+	SHELL_T_TRIA.clear();
+	XEL.clear();
+	KE.clear();
+	KBS.clear();
 	T.clear();
-	V.clear();
-	V1.clear();
-
+	TMAT.clear();
+	TMATT.clear();
+	//OFFSETS
+	if (HasOffsets())
+	{
+		Mat off;
+		Mat offT;
+		Mat dum1;
+		OffsetsToKG(PropsT, off);
+		offT = off;
+		offT.Transpose();
+		dum1 = TT * off;
+		TT.clear();
+		TT = offT * dum1;
+		dum1.clear();
+		off.clear();
+		offT.clear();
+	}
+	
 	return (TT);
 }
+
+//01/02/2024 replacing with improved transverse shear above
+//Mat E_Object4::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &bErr)
+//{
+//	Mat bee;   //strain displacement matrix
+//	int nip = 0;
+//
+//	Mat coord2;
+//	Mat deriv;
+//	Mat deriv2;
+//	Mat fun;
+//	Mat Points;
+//	Mat jac;
+//	int i;
+//	double det;
+//	Mat bT;
+//	Mat db;
+//	Mat bdb;
+//	int iDof;
+//	int iS;
+//	int MID = -1;
+//	double dE = 210e9;
+//	double dv = 0.29;
+//	char S1[80];
+//	double dthk = 0.001;
+//
+//	Property* pS = PropsT->GetItem(PID);
+//	if (pS != NULL)
+//	{
+//		MID = pS->GetDefMatID();
+//	}
+//	Material* pM = MatT->GetItem(MID);
+//	if (pS == NULL)
+//	{
+//		sprintf_s(S1, "ERROR: PROPERTY NOT FOUND FOR EL %i", iLabel);
+//		outtext1(S1);
+//	}
+//	if (pM == NULL)
+//	{
+//		sprintf_s(S1, "ERROR: MATERIAL NOT FOUND FOR EL %i", iLabel);
+//		outtext1(S1);
+//	}
+//	//Get Shell thickness
+//
+//	if (((iType == 91) || (iType == 94)) && (pS != NULL))
+//	{
+//		PSHELL* pSh = (PSHELL*)pS;
+//		dthk = pSh->dT;
+//	}
+//
+//	if ((pM != NULL) && (pM->iType = 1))
+//	{
+//		MAT1* pIsen = (MAT1*)pM;
+//		dE = pIsen->dE;
+//		dv = pIsen->dNU;
+//	}
+//	//This part calculates the 2d membraine stiffness
+//	iDof = 2;   //2 dof X,Y per node
+//	nip = 4;    //4 intergration points
+//	iS = 3;
+//
+//	Mat KM(iDof * iNoNodes, iDof * iNoNodes);
+//	Mat dee = DeeMat(dE, dv, iS);         //plain stress material matrix
+//	Mat coord = getCoords3d();          //Nodal Coordinates
+//	C3dMatrix M3 = this->GetElSys();    //Element Coordinate system
+//	//M3.MakeUnit();
+//	Points = Sample(nip);               //sample points for integration
+//	//Membraine stiffness calculation
+//	//for dof 12
+//	for (i = 1; i < nip + 1; i++)            // for all integration points
+//	{
+//		det = 0;
+//		fun = ShapeFun(Points, i);
+//		deriv = ShapeDer(Points, i);
+//		jac = deriv * coord;
+//		jac = jac.InvertJac(det);
+//		deriv2 = jac * deriv;
+//		bee = bmat(coord, deriv2, iS, iDof);
+//		bT = bee;
+//		bT.Transpose();
+//		db = dee * bee;
+//		bdb = bT * db;
+//		det *= *Points.mn(i, 3);
+//		bdb *= det;
+//		KM += bdb;
+//		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//		bT.clear(); db.clear(); bdb.clear(); bee.clear(); jac.clear();
+//	}
+//	KM *= dthk;
+//	Points.clear();
+//	dee.clear();
+//	//Mindlin Formulation
+//	//Sheer Stifness Calculation
+//	//reduced integration 1 sample point
+//	double G, kk;
+//	int k;
+//	dee.Create(2, 2);
+//	G = 0.5 * dE / (1 + dv);
+//	kk = 5.0 / 6.0;
+//	*dee.mn(1, 1) = kk * G * dthk;
+//	*dee.mn(2, 2) = kk * G * dthk;
+//	*dee.mn(1, 2) = 0;
+//	*dee.mn(2, 1) = 0;
+//	Mat KM2(12, 12);
+//	nip = 1;                        //1 reduced integration point
+//	Points = Sample(nip);
+//	for (i = 1; i < nip + 1; i++)
+//	{
+//		det = 0;
+//		fun = ShapeFun(Points, i);
+//		deriv = ShapeDer(Points, i);
+//		jac = deriv * coord;
+//		jac = jac.InvertJac(det);
+//		deriv2 = jac * deriv;
+//		bee.clear();
+//		bee.Create(2, 12);
+//		for (k = 1; k < 4 + 1; k++)//was m
+//		{
+//			*bee.mn(1, (k) * 3 - 2) = *deriv2.mn(1, k);
+//			*bee.mn(1, (k) * 3 - 1) = 0;
+//			*bee.mn(1, (k) * 3 - 0) = *fun.mn(1, k);
+//			*bee.mn(2, (k) * 3 - 2) = *deriv2.mn(2, k);
+//			*bee.mn(2, (k) * 3 - 1) = -*fun.mn(1, k);
+//			*bee.mn(2, (k) * 3 - 0) = 0;
+//		}
+//		bT = bee;
+//		bT.Transpose();
+//		db = dee * bee;
+//		bdb = bT * db;
+//		det *= *Points.mn(i, 3);
+//		bdb *= det;
+//		KM2 += bdb;
+//		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//		bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//	}
+//
+//	//The bending part
+//	Points.clear();
+//	dee.clear();
+//	dee.Create(3, 3);
+//	double Cf;
+//	Cf = dE * dthk * dthk * dthk / (12 * (1 - dv * dv));
+//	nip = 4;
+//	Points = Sample(nip);
+//	*dee.mn(1, 1) = 1;
+//	*dee.mn(1, 2) = dv;
+//	*dee.mn(1, 3) = 0;
+//	*dee.mn(2, 1) = dv;
+//	*dee.mn(2, 2) = 1;
+//	*dee.mn(2, 3) = 0;
+//	*dee.mn(3, 1) = 0;
+//	*dee.mn(3, 2) = 0;
+//	*dee.mn(3, 3) = (1 - dv);
+//	dee *= Cf;
+//	Mat KM3(12, 12);
+//	for (i = 1; i < nip + 1; i++)
+//	{
+//
+//		det = 0;
+//		fun = ShapeFun(Points, i);
+//		deriv = ShapeDer(Points, i);
+//		jac = deriv * coord;
+//		jac = jac.InvertJac(det);
+//		deriv2 = jac * deriv;
+//		bee.clear();
+//		bee.Create(3, 12);
+//		for (k = 1; k < 4 + 1; k++)//was m
+//		{
+//			*bee.mn(1, (k) * 3 - 2) = 0;
+//			*bee.mn(1, (k) * 3 - 1) = 0;
+//			*bee.mn(1, (k) * 3 - 0) = -*deriv2.mn(1, k);
+//			*bee.mn(2, (k) * 3 - 2) = 0;
+//			*bee.mn(2, (k) * 3 - 1) = *deriv2.mn(2, k);
+//			*bee.mn(2, (k) * 3 - 0) = 0;
+//			*bee.mn(3, (k) * 3 - 2) = 0;
+//			*bee.mn(3, (k) * 3 - 1) = *deriv2.mn(1, k);
+//			*bee.mn(3, (k) * 3 - 0) = -*deriv2.mn(2, k);
+//		}
+//		bT = bee;
+//		bT.Transpose();
+//		db = dee * bee;
+//		bdb = bT * db;
+//		det *= *Points.mn(i, 3);
+//		bdb *= det;
+//		KM3 += bdb;
+//		fun.clear(); deriv.clear(); jac.clear(), deriv2.clear();
+//		bT.clear(); db.clear(); bdb.clear(); bee.clear();
+//	}
+//	KM2 += KM3;
+//	//Assemble all the components inplain,shear and bending in KMf
+//	Mat KMf(6 * iNoNodes, 6 * iNoNodes);
+//	Vec<int> V(8);
+//	*V.nn(1) = 1;
+//	*V.nn(2) = 2;
+//	*V.nn(3) = 7;
+//	*V.nn(4) = 8;
+//	*V.nn(5) = 13;
+//	*V.nn(6) = 14;
+//	*V.nn(7) = 19;
+//	*V.nn(8) = 20;
+//	int j;
+//	for (i = 1; i <= 8; i++)
+//	{
+//		for (j = 1; j <= 8; j++)
+//		{
+//			*KMf.mn(V[i - 1], V[j - 1]) = *KM.mn(i, j);
+//		}
+//	}
+//	Vec<int> V1(12);
+//	*V1.nn(1) = 3;
+//	*V1.nn(2) = 4;
+//	*V1.nn(3) = 5;
+//	*V1.nn(4) = 9;
+//	*V1.nn(5) = 10;
+//	*V1.nn(6) = 11;
+//	*V1.nn(7) = 15;
+//	*V1.nn(8) = 16;
+//	*V1.nn(9) = 17;
+//	*V1.nn(10) = 21;
+//	*V1.nn(11) = 22;
+//	*V1.nn(12) = 23;
+//
+//	for (i = 1; i <= 12; i++)
+//	{
+//		for (j = 1; j <= 12; j++)
+//		{
+//			*KMf.mn(V1[i - 1], V1[j - 1]) = *KM2.mn(i, j);
+//		}
+//	}
+//
+//	for (i = 6; i <= 24; i += 6)
+//	{   //BECAREFUL MAKING THIS VALUE LARGE MESSES THINGS UP
+//		*KMf.mn(i, i) = 0.01;       //DRILLING STIFFNESS
+//	}
+//	//Transform to global
+//	//M3.Transpose();
+//	Mat TMAT(24, 24);
+//
+//	for (i = 1; i < 24; i += 3)
+//	{
+//		*TMAT.mn(i, i) = M3.m_00;
+//		*TMAT.mn(i + 1, i) = M3.m_10;
+//		*TMAT.mn(i + 2, i) = M3.m_20;
+//
+//		*TMAT.mn(i, i + 1) = M3.m_01;
+//		*TMAT.mn(i + 1, i + 1) = M3.m_11;
+//		*TMAT.mn(i + 2, i + 1) = M3.m_21;
+//
+//		*TMAT.mn(i, i + 2) = M3.m_02;
+//		*TMAT.mn(i + 1, i + 2) = M3.m_12;
+//		*TMAT.mn(i + 2, i + 2) = M3.m_22;
+//	}
+//	//TMAT.diag();
+//	Mat TMATT = TMAT;
+//	TMATT.Transpose();
+//	Mat T;
+//	Mat TT;
+//	T = KMf * TMAT;
+//	TT = TMATT * T;
+//
+//	KM.clear();
+//	KM2.clear();
+//	KM3.clear();
+//	KMf.clear();
+//	TMATT.clear();
+//	TMAT.clear();
+//	T.clear();
+//	V.clear();
+//	V1.clear();
+//	//TT.diag();
+//	return (TT);
+//}
 
 int E_Object4::noDof()
 {
@@ -14910,7 +19800,7 @@ return(6);
 }
 
 
-void E_Object4::Create(Pt_Object* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int inMCys,double inMAng,G_Object* Parrent,Property* inPr)
+void E_Object4::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int inMCys,double inMAng,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 iMCys= inMCys;
@@ -14926,7 +19816,7 @@ dZOFFS=0;
 void E_Object4::Reverse()
 {
 
-Pt_Object* pT[8];
+Node* pT[8];
 pT[0]=pVertex[0];
 pT[1]=pVertex[1];
 pT[2]=pVertex[2];
@@ -14937,21 +19827,29 @@ pVertex[2] = pT[2];
 pVertex[3] = pT[1];
 }
 
-void E_Object4::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_Object4::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
-BOOL E_Object4::NodeInEl(Pt_Object* pN)
+BOOL E_Object4::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 int i=0;
@@ -14996,8 +19894,9 @@ void E_Object4::Serialize(CArchive& ar,int iV,ME_Object* MESH)
     pVertex[2] = MESH->GetNode(iNd);
     ar>>iNd;
     pVertex[3] = MESH->GetNode(iNd);
+	pPr = NULL;
 	}
-  pPr=NULL;
+  
 }
 
 
@@ -15080,7 +19979,7 @@ return (gret);
 }
 
 
-G_Object* E_Object4::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_Object4::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 ME_Object* MESH =(ME_Object*) Parrent;
 E_Object4* gret = new E_Object4;
@@ -15125,26 +20024,26 @@ G_Object* E_Object4::GetNode(int i)
 return (pVertex[i]);
 }
 
-int E_Object4::GetLinkList(cLink* Links[200])
+int E_Object4::GetLinkList(eEdge* Links[200])
 {
 int ic;
 ic=GetCol();
-Links[0]=new cLink;
+Links[0]=new eEdge;
 Links[0]->pParent=this;
 Links[0]->pVertex[0]=pVertex[0];
 Links[0]->pVertex[1]=pVertex[1];
 Links[0]->iColour=iColour;
-Links[1]=new cLink;
+Links[1]=new eEdge;
 Links[1]->pParent=this;
 Links[1]->pVertex[0]=pVertex[1];
 Links[1]->pVertex[1]=pVertex[2];
 Links[1]->iColour=iColour;
-Links[2]=new cLink;
+Links[2]=new eEdge;
 Links[2]->pParent=this;
 Links[2]->pVertex[0]=pVertex[2];
 Links[2]->pVertex[1]=pVertex[3];
 Links[2]->iColour=iColour;
-Links[3]=new cLink;
+Links[3]=new eEdge;
 Links[3]->pParent=this;
 Links[3]->pVertex[0]=pVertex[3];
 Links[3]->pVertex[1]=pVertex[0];
@@ -15167,7 +20066,7 @@ double S;
 S=ME->dScale;
 dFS = ME->dResFactor;
 ind=ME->iCVar;
-glLineWidth(1.0);
+glLineWidth(gEL_SIZE);
 if ((iDspFlgs & DSP_ELEMENTS)>0)
 {
   if ((iDspFlgs & DSP_RESDEF)==0)
@@ -15207,6 +20106,11 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
 	  {
         PCOMP* pPCOMP= (PCOMP*) pPr;
 		dPCompOff=pPCOMP->dZ0+dt;
+	  }
+	  else if (pPr->iType == 222)
+	  {
+		  PCOMPG* pPCOMP = (PCOMPG*)pPr;
+		  dPCompOff = pPCOMP->dZ0 + dt;
 	  }
     }
     if (((iDspFlgs & DSP_OFF)>0) && (dZOFFS!=DBL_MAX))
@@ -15313,19 +20217,53 @@ if ((iDspFlgs & DSP_ELEMENTS)>0)
 
   if ((iDspFlgs & DSP_MATL)==0)
   {
-    C3dMatrix mS = GetElSys();
+	C3dMatrix mS = GetElSys();
 	C3dMatrix mR;
+	C3dVector vD;
+	C3dVector vC;
+	vC = Get_Centroid();
+    vD = GetFirstEdge();
+	if (this->iMCys == -1)
+	{
+		//Note material angle is relative to first edge
+		//not element X as I coded below
+		//vD.Set(1, 0, 0);
+		//mR.Rotate(0, 0, MAng);
+        //vD = mR * vD;
+		//mS.Transpose();
+        //vD = mS * vD;
+		//vD *= 0.5 * dS1;
+		//vD += vC;
+		vD = mS * vD;
+		mR.Rotate(0, 0, MAng);
+        vD = mR * vD;
+		mS.Transpose();
+		vD = mS * vD;
+		vD.Normalize();
+		vD *= 0.5 * dS1;
+		vD += vC;
+	}
+	else
+	{
+		C3dVector vSys;
+		if (this->pParent != NULL)
+		{
+			ME_Object* ME = (ME_Object*)pParent;
+			CoordSys* pS = ME->GetSys(this->iMCys);
+			if (pS != NULL)
+			{
+				vSys = pS->mOrientMat.GetColVec(1);
+				vD = mS * vSys;
+				vD.z = 0;
+				mS.Transpose();
+				vD = mS * vD;
+				vD.Normalize();
+				vD *= 0.5 * dS1;
+				vD += vC;
+			}
+		}
+	}
 
-    C3dVector vD = GetFirstEdge();
-	C3dVector vC = Get_Centroid();
-	vD.Normalize();
-	mR.Rotate(0,0,MAng);
-	vD=mS*vD;
-	vD=mR*vD;
-	mS.Transpose();
-	vD=mS*vD;
-	vD*=0.5*dS1;
-    vD+=vC;
     glBegin(GL_LINES);
       glVertex3f((float) vC.x,(float) vC.y,(float) vC.z);
       glVertex3f((float) vD.x,(float) vD.y,(float) vD.z);
@@ -15354,7 +20292,7 @@ BOOL bD=FALSE;
 int iVar;
 iVar=ME->iCVar;
 //Nodal data
-glLineWidth(2.0);
+glLineWidth(gEL_SIZE);
 if ((pVertex[0]->pResV != NULL) &&
     (pVertex[1]->pResV != NULL) &&
     (pVertex[2]->pResV != NULL) &&
@@ -15390,6 +20328,11 @@ if (pPr!=NULL)
   {
     PCOMP* pPCOMP= (PCOMP*) pPr;
     dPCompOff=pPCOMP->dZ0+dt;
+  }
+  else if (pPr->iType == 222)
+  {
+	  PCOMPG* pPCOMP = (PCOMPG*)pPr;
+	  dPCompOff = pPCOMP->dZ0 + dt;
   }
 }
 
@@ -15524,11 +20467,11 @@ else
 }
 }
 
-int E_Object4::GetfaceList(cFace* Faces[6])
+int E_Object4::GetfaceList(eFace* Faces[6])
 {
 int ic;
 ic=GetCol();
-Faces[0]=new cFace();
+Faces[0]=new eFace();
 Faces[0]->pParent=this;
 Faces[0]->pVertex[0]=pVertex[0];
 Faces[0]->pVertex[1]=pVertex[1];
@@ -15567,6 +20510,20 @@ double E_Object4::GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp)
   return(dTemp);
 }
 
+
+double E_Object4::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
+
 C3dVector E_Object4::Get_Centroid()
 {
 Mat fun;
@@ -15590,6 +20547,7 @@ return (vT);
 void E_Object4::Info()
 {
   char S1[200]="";
+  G_Object::Info();
   sprintf_s(S1,"LAB: %i COL: %i PID: %i ELTP: %i MCID: %i ANG: %f OFF: %f ",iLabel,iColour,PID,iType,iMCys,MAng,dZOFFS);
   outtext1(S1); 
   sprintf_s(S1,"NODES %i %i %i %i",pVertex[0]->iLabel,pVertex[1]->iLabel,pVertex[2]->iLabel,pVertex[3]->iLabel);
@@ -15605,9 +20563,13 @@ CString sDir;
 if (iLabel==28839)
  iLabel= iLabel;
 
-if (iMCys==-1)
+if ((iMCys==-1) && (MAng!=0.0))
 {
-  sDir=e8(MAng);
+  sDir=e8(MAng); //It is an angle
+}
+else if (iMCys == -1)
+{
+  sDir = "        ";
 }
 else
 {
@@ -15644,31 +20606,50 @@ return (vT);
 
 C3dMatrix E_Object4::GetElSys()
 {
-Mat fun;
-Mat FunPnt(1,2);
-*FunPnt.mn(1,1)=0;
-*FunPnt.mn(1,2)=0;
-fun=ShapeDer(FunPnt,1);
-C3dVector vX,vY,vT;
-vX.Set(0,0,0);
-vY.Set(0,0,0);
-int j=0;
-for (j=0;j<iNoNodes;j++)
-{
-   vX+=pVertex[j]->Get_Centroid()**fun.mn(1,j+1);
-   vY+=pVertex[j]->Get_Centroid()**fun.mn(2,j+1);
-}
-vX.Normalize();
-vY.Normalize();
-vT=vX.Cross(vY);
-vT.Normalize();
-vY=vT.Cross(vX);
-fun.clear();
-FunPnt.clear();
+//Mat fun;
+//Mat FunPnt(1,2);
+//*FunPnt.mn(1,1)=0;
+//*FunPnt.mn(1,2)=0;
+//fun=ShapeDer(FunPnt,1);
+//C3dVector vX,vY,vT;
+//vX.Set(0,0,0);
+//vY.Set(0,0,0);
+//int j=0;
+//for (j=0;j<iNoNodes;j++)
+//{
+//   vX+=pVertex[j]->Get_Centroid()**fun.mn(1,j+1);
+//   vY+=pVertex[j]->Get_Centroid()**fun.mn(2,j+1);
+//}
+//vX.Normalize();
+//vY.Normalize();
+//vT=vX.Cross(vY);
+//vT.Normalize();
+//vY=vT.Cross(vX);
+//fun.clear();
+//FunPnt.clear();
+//C3dMatrix vR;
+//vR.SetColVec(1,vX);
+//vR.SetColVec(2,vY);
+//vR.SetColVec(3,vT);
+//vR.Transpose();
+//
+//ERROR: QUAD MEMBRANE COOR TRAN TE
 C3dMatrix vR;
-vR.SetColVec(1,vX);
-vR.SetColVec(2,vY);
-vR.SetColVec(3,vT);
+C3dVector vX, vY, vT;
+C3dVector vN13, vN42,vN;
+vN13 = pVertex[2]->Get_Centroid();
+vN13-= pVertex[0]->Get_Centroid();
+vN13.Normalize();
+vN42 = pVertex[1]->Get_Centroid();
+vN42 -= pVertex[3]->Get_Centroid();
+vN42.Normalize();
+vX = vN13 + vN42;
+vX.Normalize();
+vN = vN42.Cross(vN13); vN.Normalize();
+vY= vN.Cross(vX);
+vR.SetColVec(1, vX);
+vR.SetColVec(2, vY);
+vR.SetColVec(3, vN);
 vR.Transpose();
 return (vR);
 }
@@ -15798,6 +20779,8 @@ CString E_Object4::GetName()
 int E_Object4::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "PID";
 	iNo++;
 	sVar[iNo] = "Mat CYS";
@@ -15822,6 +20805,9 @@ int E_Object4::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", PID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -15853,10 +20839,10 @@ int E_Object4::GetVarValues(CString sVar[])
 void E_Object4::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 {
 
-	Pt_Object* pN;
+	Node* pN;
 	ME_Object* pMe = (ME_Object*) this->pParent;
-	
-	int newPID = atoi(sVar[0]);
+	iFile = atoi(sVar[0]);
+	int newPID = atoi(sVar[1]);
 	if (newPID != PID)
 	{
 
@@ -15871,13 +20857,13 @@ void E_Object4::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 		}
 
 	}
-	iMCys = atoi(sVar[1]);
-	MAng = atof(sVar[2]);;
-	dZOFFS = atof(sVar[3]);;;
-	int N1 = atoi(sVar[4]);
-	int N2 = atoi(sVar[5]);
-	int N3 = atoi(sVar[6]);
-	int N4 = atoi(sVar[7]);
+	iMCys = atoi(sVar[2]);
+	MAng = atof(sVar[3]);;
+	dZOFFS = atof(sVar[4]);;;
+	int N1 = atoi(sVar[5]);
+	int N2 = atoi(sVar[6]);
+	int N3 = atoi(sVar[7]);
+	int N4 = atoi(sVar[8]);
 	if (pVertex[0]->iLabel != N1)
 	{
 		pN = pMe->GetNode(N1);
@@ -15926,7 +20912,200 @@ double E_Object4::GetArea2d()
 	w.x = pVertex[3]->Pt_Point->x - pVertex[0]->Pt_Point->x;
 	w.y = pVertex[3]->Pt_Point->y - pVertex[0]->Pt_Point->y;
 	dA += 0.5*abs(v.Cross(w));
+
 	return (dA);
+}
+
+//*************************************************************************************
+// Pre: Property Table and Material Table
+// Post: Nodal masses in col vector
+// This is an override for the general method in E_Object so we can
+// deal with PCOMPs and NSM
+//*************************************************************************************
+Mat E_Object4::GetElNodalMass(PropTable* PropsT, MatTable* MatT)
+{
+
+	int nip = 0;
+	Mat coord;
+	Mat deriv;
+	Mat fun;
+	Mat NT;
+	Mat NS;
+	Mat NM;
+	Mat Points;
+	Mat jac;
+	int i;
+	double det;
+	Mat bT;
+	int iDof = -1;
+	int iS;
+	int MID = -1;
+	double dthk = 0.0;
+	double dTotthk = 0.0;
+	double dRho = 0;
+	double dNSM = 0;
+	char S1[80];
+	Property* pS = NULL;
+	Material* pM = NULL;
+
+	// Get Shell Thicknes and Density
+	// ************NEED TO DO BEAMS LATTER************ 
+
+	pS = PropsT->GetItem(PID);
+	if (pS != NULL)
+	{
+		if (pS->iType == 1)  //pShell
+		{
+			PSHELL* pSh = (PSHELL*)pS;
+			dthk = pSh->dT;
+			dNSM = pSh->dNSM;
+			MID = pS->GetDefMatID();
+			if (MatT != NULL)
+				pM = MatT->GetItem(MID);
+			if (pM != NULL)
+				dRho = pM->GetDensity();
+		}
+		else if (pS->iType == 2)
+		{
+			PCOMP* pSh = (PCOMP*)pS;
+			dNSM = pSh->dNSM;
+			dTotthk = 0.0;
+			dRho = 0.0;
+			for (i = 0; i < pSh->iNoLays; i++)
+			{
+				dthk = pSh->T[i];
+				dTotthk += dthk;
+				dNSM = pSh->dNSM;
+				MID = pS->GetDefMatID();
+				if (MatT != NULL)
+					pM = MatT->GetItem(pSh->MID[i]);
+				if (pM != NULL)
+				{
+					dRho += pM->GetDensity()*dthk;
+					//effective density
+				}
+			}
+			if (dTotthk > 0)
+			{
+				dRho /= dTotthk;
+				dthk = dTotthk;
+			}
+			else
+			{
+				dRho = 0;
+				dthk = 0;
+			}
+		}
+		else if (pS->iType == 222)
+		{
+			PCOMPG* pSh = (PCOMPG*)pS;
+			dNSM = pSh->dNSM;
+			dTotthk = 0.0;
+			dRho = 0.0;
+			for (i = 0; i < pSh->iNoLays; i++)
+			{
+				dthk = pSh->T[i];
+				dTotthk += dthk;
+				dNSM = pSh->dNSM;
+				MID = pS->GetDefMatID();
+				if (MatT != NULL)
+					pM = MatT->GetItem(pSh->MID[i]);
+				if (pM != NULL)
+				{
+					dRho += pM->GetDensity() * dthk;
+					//effective density
+				}
+			}
+			if (dTotthk > 0)
+			{
+				dRho /= dTotthk;
+				dthk = dTotthk;
+			}
+			else
+			{
+				dRho = 0;
+				dthk = 0;
+			}
+		}
+		else
+		{
+			sprintf_s(S1, "ERROR: Invalid Property EL %i", iLabel);
+			outtext1(S1);
+		}
+
+	}
+	else
+	{
+		sprintf_s(S1, "ERROR: Property Not Found For EL %i", iLabel);
+		outtext1(S1);
+	}
+
+
+	iDof = 2; nip = 4; iS = 3;
+	//*********************JUST FOR TEST*******************************
+	Mat AA(iNoNodes, 1);
+	coord = getCoords3d();
+	Points = Sample(nip);
+	for (i = 1; i < nip + 1; i++)
+	{
+		det = 0;
+		fun = ShapeFun(Points, i);
+		deriv = ShapeDer(Points, i);
+		jac = deriv * coord;
+		jac = jac.InvertJac(det);
+		NT = fun;
+		NT.Transpose();
+		//MM = NT * S;
+		det *= *Points.mn(i, 3);
+		NT *= det;
+		AA += NT;  //FS The shell nodal areas
+		//Clean up
+		fun.clear();
+		deriv.clear();
+		jac.clear();
+		NT.clear();
+	}
+
+	//Mass Area*dRho*dThk+Area*NSM
+	NM = AA;
+	NS = AA;
+	NM *= dthk * dRho;  //Element nodal volume mass
+	NS *= dNSM;			//Element NSM per Area
+	NM += NS;
+	//FS.diag();
+	coord.clear();
+	Points.clear();
+	AA.clear();
+	NS.clear();
+	return (NM);
+}
+
+double E_Object4::GetPHI_SQ()
+{
+	return(PHI_SQ);
+}
+
+BOOL E_Object4::HasOffsets()
+{
+	BOOL brc = FALSE;
+	if (dZOFFS != 0)
+		brc = TRUE;
+	return (brc);
+}
+
+BOOL E_Object4::GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff)
+{
+	BOOL brc = FALSE;
+	C3dVector vN;
+	vOff = Get_Normal();
+	//if its a pocmp wll have to include below
+	//vOff *= dZOFFS + dPCompOff;
+	//assuming its a PSHELL for now
+	vOff *= dZOFFS;
+	if (vOff.Mag() > 0)
+		brc = TRUE;
+	return (brc);
+
 }
 
 //----------------------------------------------------------------------------
@@ -15937,13 +21116,18 @@ IMPLEMENT_DYNAMIC( E_ObjectR, CObject )
 
 E_ObjectR::E_ObjectR()
 {
+G_Object();
 iDOF=DOF_ALL;
 PID=999;
 PIDunv=999;
-dALPHA=0;
+dALPHA = gDEF_CTE;;
 }
 
-void E_ObjectR::Create(Pt_Object* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+E_ObjectR::~E_ObjectR()
+{
+	dTemps.clear();
+}
+void E_ObjectR::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -15952,24 +21136,33 @@ for (i=0;i<iNoNodes;i++)
     pVertex[i] = pInVertex[i];
    }
 iDOF=DOF_ALL;
+dALPHA = gDEF_CTE;;
 }
 
-void E_ObjectR::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_ObjectR::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 
 }
 
-BOOL E_ObjectR::NodeInEl(Pt_Object* pN)
+BOOL E_ObjectR::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 int i=0;
@@ -16068,7 +21261,7 @@ gret->pResV = NULL;
 return (gret);
 }
 
-G_Object* E_ObjectR::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_ObjectR::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 int i;
 ME_Object* MESH =(ME_Object*) Parrent;
@@ -16112,6 +21305,36 @@ for (i=0;i<iNoNodes;i++)
   iC++;
 }
 fprintf(pFile,"\n","");
+}
+
+CString E_ObjectR::ToString()
+{
+	char S[200] = "";
+	CString src = "";
+	
+	int i;
+	int iFN;
+	CString sDof;
+	sDof = GetDOFString(iDOF);
+	sprintf_s(S, "%8s%8i%8i%8s", "RBE2    ", iLabel, pVertex[0]->iLabel, sDof);
+	iFN = 5;
+	src += S;
+	for (i = 1; i < iNoNodes; i++)
+	{
+		sprintf_s(S, "%8i", pVertex[i]->iLabel);
+		src += S;
+		iFN++;
+		if (iFN > 9)
+		{
+			iFN = 2;
+			sprintf_s(S, "\n%8s", "        ");
+			src += S;
+		}
+		
+	}
+	sprintf_s(S, "%8s\n", e8(dALPHA));
+	src += S;
+	return (src);
 }
 
 void E_ObjectR::ExportNAS(FILE* pFile)
@@ -16168,6 +21391,7 @@ void E_ObjectR::SetDOFString(CString sDOF)
 void E_ObjectR::Info()
 {
   char S1[80];
+  G_Object::Info();
   CString sDOF;
   sDOF=GetDOFString(iDOF);
   sprintf_s(S1,"LAB: %i COL: %i PID: %i ELTP: %i",iLabel,iColour,PID,iType);
@@ -16175,7 +21399,60 @@ void E_ObjectR::Info()
   outtext1(sDOF); 
 }
 
+CString E_ObjectR::GetName()
+{
+	return ("Rigid Spider (RBE2)");
+}
 
+int E_ObjectR::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = "File No";
+	iNo++;
+	sVar[iNo] = "Centre Node";
+	iNo++;
+	sVar[iNo] = "DOF String";
+	iNo++;
+	sVar[iNo] = "CTE Alpha";
+	iNo++;
+	return(iNo);
+
+}
+
+
+int E_ObjectR::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", pVertex[0]->iLabel);
+	sVar[iNo] = S1;
+	iNo++;
+	sVar[iNo] = GetDOFString(iDOF);
+	iNo++;
+	sprintf_s(S1, "%g", dALPHA);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void E_ObjectR::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	ME_Object* pMe = (ME_Object*)this->pParent;
+	Node* pN;
+	iFile = atoi(sVar[0]);
+	int N1 = atoi(sVar[1]);
+	if ((pVertex[0]->iLabel != N1) && (pMe!=NULL))
+	{
+		pN = pMe->GetNode(N1);
+		if (pN != NULL)
+			pVertex[0] = pN;
+	}
+	SetDOFString(sVar[2]);
+	dALPHA = atof(sVar[3]);;
+}
 
 
 
@@ -16184,11 +21461,11 @@ void E_ObjectR::OglDraw(int iDspFlgs,double dS1,double dS2)
 int i;
 char sLab[20];
 BOOL bD = FALSE;
-C3dVector d[200];
+C3dVector d[MaxSelNodes];
 double S=1.0;
 double dFS = 1.0;
 
-for (i = 0; i < 200; i++)
+for (i = 0; i < MaxSelNodes; i++)
 {
 	d[i].x = 0; d[i].y = 0; d[i].z = 0;
 }
@@ -16216,7 +21493,7 @@ if ((iDspFlgs & DSP_ELEMENTS) > 0)
 			}
 		}
 	}
-	glLineWidth(2.0);
+	glLineWidth(gEL_SIZE);
 	glBegin(GL_LINES);
 	for (i=1;i<iNoNodes;i++)
 	{
@@ -16227,8 +21504,13 @@ if ((iDspFlgs & DSP_ELEMENTS) > 0)
 	vCent=Get_Centroid();
 	if (bDrawLab==TRUE)
 	{
-	  sprintf_s(sLab,"E%i",iLabel);
+	  sprintf_s(sLab," R%i",iLabel);
 	  OglString(iDspFlgs,vCent.x,vCent.y,vCent.z,&sLab[0]);
+	}
+	else
+	{
+		sprintf_s(sLab, "%s", " R");
+		OglString(iDspFlgs, vCent.x, vCent.y, vCent.z, &sLab[0]);
 	}
 }
 else
@@ -16237,12 +21519,12 @@ else
 }
 }
 
-int E_ObjectR::GetLinkList(cLink* Links[200])
+int E_ObjectR::GetLinkList(eEdge* Links[200])
 {
 int i;
 for (i=0;i<iNoNodes-1;i++)
 {
-  Links[i]=new cLink;
+  Links[i]=new eEdge;
   Links[i]->pParent=this;
   Links[i]->pVertex[0]=pVertex[0];
   Links[i]->pVertex[1]=pVertex[i+1];
@@ -16263,8 +21545,322 @@ return (vT);
 }
 
 
+int E_ObjectR::noDof()
+{
+	return(6);
+}
+
+int E_ObjectR::MaxBW()
+{
+	int i;
+	int j;
+
+	int MaxDof;
+	int MinDof;
+	MaxDof = 0;
+	MinDof = 99999999;
+	for (i = 0; i < iNoNodes; i++)
+	{
+		for (j = 0; j < noDof(); j++)
+		{
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] > MaxDof))
+			{
+				MaxDof = pVertex[i]->dof[j];
+			}
+			if ((pVertex[i]->dof[j] > 0) && (pVertex[i]->dof[j] < MinDof))
+			{
+				MinDof = pVertex[i]->dof[j];
+			}
+		}
+	}
+	int iRC;
+	if (MaxDof - MinDof < 0)
+	{
+		iRC = 0;
+	}
+	else
+	{
+		iRC = MaxDof - MinDof;
+	}
+	return (iRC);
+}
+
+Vec<int> E_ObjectR::GetSteerVec1d()
+{
+	int i;
+	int iOff = 0;
+	Vec<int> V(1 * iNoNodes);
+	for (i = 0; i < iNoNodes; i++)
+	{
+		*V.nn(1 + i) = pVertex[i]->dof[0];
+	}
+
+	return(V);
+}
 
 
+Vec<int> E_ObjectR::GetSteerVec3d()
+{
+	int i;
+	int iOff = 0;
+	Vec<int> V(6*iNoNodes);
+	for (i = 0; i < iNoNodes; i++)
+	{
+		*V.nn(1 + iOff) = pVertex[i]->dof[0];
+		*V.nn(2 + iOff) = pVertex[i]->dof[1];
+		*V.nn(3 + iOff) = pVertex[i]->dof[2];
+		*V.nn(4 + iOff) = pVertex[i]->dof[3];
+		*V.nn(5 + iOff) = pVertex[i]->dof[4];
+		*V.nn(6 + iOff) = pVertex[i]->dof[5];
+		iOff += 6;
+	}
+
+	return(V);
+}
+
+
+Mat E_ObjectR::GetThermMat(PropTable* PropsT, MatTable* MatT)
+{
+	Mat KM(1 * iNoNodes, 1 * iNoNodes);
+	KM.MakeZero();
+	Mat KMB(2,2);
+	Node* pNDs[200];
+	Vec<int> Steer(12);
+	*Steer.nn(1) = 1;
+	*Steer.nn(2) = 2;
+
+	double a, b;
+	int i, j, k;
+	//virtual void Create(Node * pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object * Parrent, Property * inPr);
+	*KMB.mn(1, 1) = gDEF_THERM_LNK;
+	*KMB.mn(2, 1) = -gDEF_THERM_LNK;
+	*KMB.mn(1, 2) = -gDEF_THERM_LNK;
+	*KMB.mn(2, 2) = gDEF_THERM_LNK;
+	for (k = 1; k < iNoNodes; k++)
+	{	
+		for (i = 1; i <= 2; i++)
+		{
+			for (j = 1; j <= 2; j++)
+			{
+				a = *Steer.nn(i);
+				b = *Steer.nn(j);
+				*KM.mn(*Steer.nn(i), *Steer.nn(j)) += *KMB.mn(i, j);
+			}
+		}
+		*Steer.nn(2) += 1;
+	}
+	//KM.diag();
+	Steer.clear();
+	KMB.clear();
+	return (KM);
+}
+
+Mat E_ObjectR::GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr)
+{
+	CString sRel = "";
+	Mat KM(6*iNoNodes, 6*iNoNodes);
+	KM.MakeZero();
+	Mat KMB;
+	Node* pNDs[200];
+	Vec<int> Steer(12);
+	*Steer.nn(1) = 1;
+	*Steer.nn(2) = 2;
+	*Steer.nn(3) = 3;
+	*Steer.nn(4) = 4;
+	*Steer.nn(5) = 5;
+	*Steer.nn(6) = 6;
+	//second node
+	*Steer.nn(7) = 7;
+	*Steer.nn(8) = 8;
+	*Steer.nn(9) = 9;
+	*Steer.nn(10) = 10;
+	*Steer.nn(11) = 11;
+	*Steer.nn(12) = 12;
+	double a, b;
+	int i,j, k;
+	//virtual void Create(Node * pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object * Parrent, Property * inPr);
+	E_Object2B* pEB = new E_Object2B();
+	pNDs[0] = pVertex[0];
+	for (k = 1; k < iNoNodes; k++)
+	{
+		pNDs[1] = pVertex[k];
+		pEB->Create(pNDs, k, 1, 21, 2, -1, 2, nullptr, nullptr);
+
+		KMB = pEB->GetStiffMat(PropsT, MatT, 2, bErr);
+		for (i = 1; i <= 12; i++)
+		{
+			for (j = 1; j <= 12; j++)
+			{
+				a = *Steer.nn(i);
+				b = *Steer.nn(j);
+				*KM.mn(*Steer.nn(i), *Steer.nn(j)) += *KMB.mn(i, j);
+			}
+		}
+		KMB.clear();
+		*Steer.nn(7) += 6;
+		*Steer.nn(8) += 6;
+		*Steer.nn(9) += 6;
+		*Steer.nn(10) += 6;
+		*Steer.nn(11) += 6;
+		*Steer.nn(12) += 6;
+	}
+
+//***************************************************************
+//                    PROCESS PIN FLAGS
+//***************************************************************
+	sRel = GetDofRelString();
+	//This is not working
+	//pEB->SetDOFStringA("");     //end release
+	//pEB->SetDOFStringB(sRel);   //end release
+	//NEED TO SETUP PIN FLAGS
+	if (iDOF > 0)
+		PinFlgsToKE(KM); 
+
+	Steer.clear();
+	delete (pEB);
+	return (KM);
+}
+
+
+Mat E_ObjectR::GetThermalStrainMat3d(PropTable* PropsT, MatTable* MatT, double dT)
+{
+	int k;
+	double L = 1;
+	double Area = 1;
+	C3dMatrix M3;
+	C3dVector vFl;
+	C3dVector vFg;
+	Node* pNDs[200];
+	Mat FS(iNoNodes,3);
+	Area = Pi * gSTIFF_BDIA * gSTIFF_BDIA / 4;
+	//gDEF_CTE = atof(sVar[iC++]);
+	double dF;
+	E_Object2B* pEB = new E_Object2B();
+	pNDs[0] = pVertex[0];
+	for (k = 1; k < iNoNodes; k++)
+	{
+		pNDs[1] = pVertex[k];
+		pEB->Create(pNDs, k, 1, 21, 2, -1, 2, nullptr, nullptr);
+		M3 = pEB->GetElSys();
+		M3.Transpose();
+		L = pEB->getLen();
+		dF = Area * gDEF_E * gDEF_CTE * dT * gRIGID_MULTIPLIER;
+		vFl.x = dF; vFl.y = 0; vFl.z = 0;
+		vFg = M3 * vFl;
+		*FS.mn(1, 1) += -vFg.x;
+		*FS.mn(1, 2) += -vFg.y;
+		*FS.mn(1, 3) += -vFg.z;
+		*FS.mn(k + 1, 1) += vFg.x;
+		*FS.mn(k + 1, 2) += vFg.y;
+		*FS.mn(k + 1, 3) += vFg.z;
+		//dTemps = dF;
+	}
+	delete (pEB);
+	return (FS);
+}
+
+double E_ObjectR::GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp)
+{
+	double dTemp = 0;
+	int iDOFID;
+	double T;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		T = 0;;
+		iDOFID = this->pVertex[j]->dof[iDof];
+		if (iDOFID > 0)
+		{
+			T = *Disp.nn(iDOFID);
+		}
+		dTemp += T;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
+
+double E_ObjectR::GetElCentriodVal()
+{
+	double dTemp = 0;
+	int j;
+	for (j = 0; j < this->iNoNodes; j++)
+	{
+		dTemp += pVertex[j]->dTemp;
+	}
+	dTemp /= iNoNodes;
+	return(dTemp);
+}
+
+CString E_ObjectR::GetDofRelString()
+{
+	CString sRel = "";
+
+	if (!(iDOF & DOF_1))
+	{
+		sRel = sRel + "1";
+	}
+	if (!(iDOF & DOF_2))
+	{
+		sRel = sRel + "2";
+	}
+	if (!(iDOF & DOF_3))
+	{
+		sRel = sRel + "3";
+	}
+	if (!(iDOF & DOF_4))
+	{
+		sRel = sRel + "4";
+	}
+	if (!(iDOF & DOF_5))
+	{
+		sRel = sRel + "5";
+	}
+	if (!(iDOF & DOF_6))
+	{
+		sRel = sRel + "6";
+	}
+	return (sRel);
+}
+
+//These are the DOF to releae fro this RBE
+void E_ObjectR::GetPinFlags(Vec<int>& PDOFS, int& iNoPINs)
+{
+	iNoPINs = 1;  //1 indeded
+	PDOFS.Size((iNoNodes-1)*6);
+	int iD = 6;
+	int i;
+	for (i = 1; i < iNoNodes; i++)
+	{
+		if (!(iDOF & DOF_1))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 1;
+		}
+		if (!(iDOF & DOF_2))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 2;
+		}
+		if (!(iDOF & DOF_3))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 3;
+		}
+		if (!(iDOF & DOF_4))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 4;
+		}
+		if (!(iDOF & DOF_5))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 5;
+		}
+		if (!(iDOF & DOF_6))
+		{
+			*PDOFS.nn(iNoPINs++) = iD + 6;
+		}
+		iD += 6;
+	}
+
+
+}
 
 
 
@@ -16273,6 +21869,7 @@ IMPLEMENT_DYNAMIC( E_ObjectR2, CObject )
 
 E_ObjectR2::E_ObjectR2()
 {
+	G_Object();
 iCNA=DOF_ALL;
 iCNB=0;
 iCMA=0;
@@ -16281,7 +21878,7 @@ dALPHA=0;
 PIDunv=999;
 }
 
-void E_ObjectR2::Create(Pt_Object* pInVertex[200], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
+void E_ObjectR2::Create(Node* pInVertex[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr)
 {
 E_Object::Create(iLab,iCol,iType,iPID,iMat,iNo,Parrent,inPr);
 int i=0;
@@ -16382,7 +21979,7 @@ gret->pResV = NULL;
 return (gret);
 }
 
-G_Object* E_ObjectR2::Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv)
+G_Object* E_ObjectR2::Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv)
 {
 int i;
 ME_Object* MESH =(ME_Object*) Parrent;
@@ -16431,6 +22028,7 @@ C3dVector vCent;
 if ((iDspFlgs & DSP_ELEMENTS) > 0)
 {
 	Selectable = 1;
+	glLineWidth(gEL_SIZE);
 	glColor3fv(cols[iColour]);
 	glBegin(GL_LINES);
 	  glVertex3f((float)pVertex[0]->Pt_Point->x, (float)pVertex[0]->Pt_Point->y, (float)pVertex[0]->Pt_Point->z);
@@ -16460,7 +22058,7 @@ for (i=0;i<iNoNodes;i++)
   }
 }
 
-BOOL E_ObjectR2::NodeInEl(Pt_Object* pN)
+BOOL E_ObjectR2::NodeInEl(Node* pN)
 {
 BOOL brc=FALSE;
 int i=0;
@@ -16476,18 +22074,26 @@ return (brc);
 }
 
 
-void E_ObjectR2::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void E_ObjectR2::RepNodeInEl(Node* pThis,Node* pWith)
 {
 
-int i=0;
-for (i=0;i<iNoNodes;i++)
-{
-  if (pVertex[i] == pThis)
-  {
-    pVertex[i]=pWith;
-	  break;
-  }
-}
+	int i = 0;
+	int iInd = -1;
+	BOOL bRep = TRUE;
+
+	for (i = 0; i < iNoNodes; i++)
+	{
+		if (pVertex[i] == pWith)
+		{
+			bRep = FALSE;
+		}
+		if (pVertex[i] == pThis)
+		{
+			iInd = i;
+		}
+	}
+	if ((bRep) && (iInd > -1))
+		pVertex[iInd] = pWith;
 }
 
 void E_ObjectR2::ExportUNV(FILE* pFile)
@@ -16773,7 +22379,7 @@ if ((iDspFlgs & DSP_WP) > 0)
 		T_Point[i] = mWPTransform * V;
 	}
 	glColor3fv(cols[GetCol()]);
-	glLineWidth(12.0);
+	glLineWidth(gWP_SIZE);
 	glBegin(GL_LINE_LOOP);
 	glVertex3f((float)T_Point[0].x, (float)T_Point[0].y, (float)T_Point[0].z);
 	glVertex3f((float)T_Point[1].x, (float)T_Point[1].y, (float)T_Point[1].z);
@@ -17000,6 +22606,50 @@ void WP_Object::HighLight(CDC* pDC)
 Draw(pDC,4);
 }
 
+void WP_Object::Serialize(CArchive& ar, int iV)
+{
+	G_Object::Serialize(ar, iV);
+	if (ar.IsStoring())
+	{
+		ar << mWPTransform.m_00;
+		ar << mWPTransform.m_01;
+		ar << mWPTransform.m_02;
+		ar << mWPTransform.m_03;
+		ar << mWPTransform.m_10;
+		ar << mWPTransform.m_11;
+		ar << mWPTransform.m_12;
+		ar << mWPTransform.m_13;
+		ar << mWPTransform.m_20;
+		ar << mWPTransform.m_21;
+		ar << mWPTransform.m_22;
+		ar << mWPTransform.m_23;
+		ar << mWPTransform.m_30;
+		ar << mWPTransform.m_31;;
+		ar << mWPTransform.m_32;
+		ar << mWPTransform.m_33;
+		ar << iWPMode; 
+	}
+	else
+	{
+		ar >> mWPTransform.m_00;
+		ar >> mWPTransform.m_01;
+		ar >> mWPTransform.m_02;
+		ar >> mWPTransform.m_03;
+		ar >> mWPTransform.m_10;
+		ar >> mWPTransform.m_11;
+		ar >> mWPTransform.m_12;
+		ar >> mWPTransform.m_13;
+		ar >> mWPTransform.m_20;
+		ar >> mWPTransform.m_21;
+		ar >> mWPTransform.m_22;
+		ar >> mWPTransform.m_23;
+		ar >> mWPTransform.m_30;
+		ar >> mWPTransform.m_31;;
+		ar >> mWPTransform.m_32;
+		ar >> mWPTransform.m_33;
+		ar >> iWPMode;
+	}
+}
 
 G_ObjectD WP_Object::SelDist(CPoint InPT,Filter FIL)
 {
@@ -17007,7 +22657,6 @@ double MinDist = 1e36;
 double dDist;
 int i;
 G_ObjectD Ret;
-G_Object* pO;
 Ret.Dist = MinDist;
 Ret.pObj = this;
 Ret.Z = 0;
@@ -17077,6 +22726,7 @@ void Solution::AddStep(CString sT,int idLS,int idBS,int idTS,BOOL bRS)
     TS[iNo]=idTS; 
     RS[iNo]=bRS;
     sStepTitle[iNo]=sT;
+	iCur = iNo;
     iNo++;
   }
   else
@@ -17467,6 +23117,80 @@ pResVectors = NULL;
 FcList=NULL;
 LkList=NULL;
 pSOLS=new SolSets("UNDEFINED");
+iIntID =  (int) this;
+iFileNo=-1;
+}
+
+CString ME_Object::GetName()
+{
+	return ("Mesh Object)");
+}
+
+int ME_Object::GetVarHeaders(CString sVar[])
+{
+	sVar[0] = "Name";
+	return(1);
+}
+
+int ME_Object::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = sName;
+	iNo++;
+	return (iNo);
+}
+
+void ME_Object::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	sName = sVar[0];
+}
+
+
+
+
+void ME_Object::GetBoundingBox(C3dVector& vll, C3dVector& vur)
+{
+	int i;
+	C3dVector vMinXYZ;
+	C3dVector vMaxXYZ;
+	BOOL bFirst = TRUE;
+	C3dVector vPt;
+		for (i = 0; i < iNdNo; i++)
+		{
+			vPt = pNodes[i]->Pt_Point;
+			if (bFirst)
+			{
+				vMinXYZ = vPt;
+				vMaxXYZ = vPt;
+				bFirst = FALSE;
+			}
+			else
+			{
+				if (vPt.x < vMinXYZ.x)
+					vMinXYZ.x = vPt.x;
+				if (vPt.y < vMinXYZ.y)
+					vMinXYZ.y = vPt.y;
+				if (vPt.z < vMinXYZ.z)
+					vMinXYZ.z = vPt.z;
+
+				if (vPt.x > vMaxXYZ.x)
+					vMaxXYZ.x = vPt.x;
+				if (vPt.y > vMaxXYZ.y)
+					vMaxXYZ.y = vPt.y;
+				if (vPt.z > vMaxXYZ.z)
+					vMaxXYZ.z = vPt.z;
+			}
+		}
+		vll = vMinXYZ;
+		vur = vMaxXYZ;
+		BBox[0].Pt_Point->Set(vMinXYZ.x, vMinXYZ.y, vMinXYZ.z);
+		BBox[1].Pt_Point->Set(vMinXYZ.x, vMaxXYZ.y, vMinXYZ.z);
+		BBox[2].Pt_Point->Set(vMaxXYZ.x, vMaxXYZ.y, vMinXYZ.z);
+		BBox[3].Pt_Point->Set(vMaxXYZ.x, vMinXYZ.y, vMinXYZ.z);
+		BBox[4].Pt_Point->Set(vMinXYZ.x, vMinXYZ.y, vMaxXYZ.z);
+		BBox[5].Pt_Point->Set(vMinXYZ.x, vMaxXYZ.y, vMaxXYZ.z);
+		BBox[6].Pt_Point->Set(vMaxXYZ.x, vMaxXYZ.y, vMaxXYZ.z);
+		BBox[7].Pt_Point->Set(vMaxXYZ.x, vMinXYZ.y, vMaxXYZ.z);
 }
 
 void ME_Object::Create(CString inName,G_Object* Parrent,int iLab)
@@ -17511,23 +23235,39 @@ iSecVecID = -1;
 
 void ME_Object::Info()
 {
+  int i;
   char S1[200];
   sprintf_s(S1,"%s%i%s%i%s%i","Type ",iObjType,"; Label ",iLabel," Col; ",iColour);
   outtext1("MESH OBJECT");
   outtext1(S1); 
-  sprintf_s(S1,"%s%s","Name : ",sName);
+  outtext1("FILES:-");
+  outtext1(S1);
+  for (i = 0; i < iFileNo; i++)
+  {
+	  sprintf_s(S1, "File No %i %s", i, sFiles[i]);
+	  outtext1(S1);
+  }
+  sprintf_s(S1, "%s%i%s%X","ID : ", iLabel, " Internal ID : ", iIntID);
+  outtext1(S1);
+  sprintf_s(S1,"%s%s","Name : ",sName.GetString());
   outtext1(S1);
   sprintf_s(S1, "%s%i", "Number of Nodes : ", iNdNo);
   outtext1(S1); 
   sprintf_s(S1,"%s%i","Number of Elements : ",iElNo);
   outtext1(S1); 
-  sprintf_s(S1, "%s%i", "Max Node Label : ", iNodeLab);
+  sprintf_s(S1, "%s%i", "Min Node Label : ", iNodeMinLab);
   outtext1(S1);
-  sprintf_s(S1, "%s%i", "Max Elem Label : ", iElementLab);
+  sprintf_s(S1, "%s%i", "Min Elem Label : ", iElementMinLab);
   outtext1(S1);
-  sprintf_s(S1, "%s%i", "Max CSYS Label : ", iCYSLab);
+  sprintf_s(S1, "%s%i", "Min CSYS Label : ", iCYSMinLab);
   outtext1(S1);
-  outtext1("    ****");
+  sprintf_s(S1, "%s%i", "Max Node Label : ", iNodeLab-1);
+  outtext1(S1);
+  sprintf_s(S1, "%s%i", "Max Elem Label : ", iElementLab-1);
+  outtext1(S1);
+  sprintf_s(S1, "%s%i", "Max CSYS Label : ", iCYSLab-1);
+  outtext1(S1);
+  outtext1("LOAD / BOUNDARY SETS:-");
   int iS;
   iS = GetLCID(iCurLC);
   sprintf_s(S1, "%s%i", "Current Load Set : ", iS);
@@ -17632,6 +23372,92 @@ int ME_Object::NestTSetID()
   irc++;
   return (irc);
 }
+
+
+
+void ME_Object::LabGaps(int iGap)
+{
+	char buff[200];
+	int i=0;
+	int iCur;
+	int iS;
+	vector<int> iLabs;
+	vector<int> iSt;
+	vector<int> iEnd;
+    sprintf_s(buff, "%s %i", "Finding Node Labeling Gaps > ",iGap);
+	outtext1(buff);
+	//Node label sparsity
+	if ((iNdNo >2) && iGap>0)
+	{
+		for (i = 0; i < iNdNo; i++)
+			iLabs.push_back(pNodes[i]->iLabel);
+		sort(iLabs.begin(), iLabs.end());
+		iSt.push_back(iLabs.front());
+		for (i = 1; i < iLabs.size(); i++)
+		{
+			iCur = iLabs.at(i-1);
+			iS = iLabs.at(i) - iCur ;
+			if (iS > iGap)
+			{
+				iEnd.push_back(iCur);
+				sprintf_s(buff, "%s %i to %i size %i", "Gap Found at:  ", iCur+1, iLabs.at(i)-1,iS-1);
+				outtext1(buff);
+				iCur = iLabs.at(i);
+				iSt.push_back(iCur);
+			}
+		}
+		iEnd.push_back(iLabs.back());
+		outtext1("Blocks of Nodes");
+		for (i = 0; i < iSt.size(); i++)
+		{
+			sprintf_s(buff, "%i %i",iSt.at(i),iEnd.at(i));
+			outtext1(buff);
+		}
+	}
+	else
+	{
+	  outtext1("ERROR: No Node Gaps Found.");
+	}
+	iLabs.clear();
+	iSt.clear();
+	iEnd.clear();
+	sprintf_s(buff, "%s %i", "Finding Element Labeling Gaps > ", iGap);
+	outtext1(buff);
+	if ((iElNo > 2) && (iGap > 0))
+	{
+		for (i = 0; i < iElNo; i++)
+			iLabs.push_back(pElems[i]->iLabel);
+		sort(iLabs.begin(), iLabs.end());
+		iSt.push_back(iLabs.front());
+		for (i = 1; i < iLabs.size(); i++)
+		{
+			iCur = iLabs.at(i - 1);
+			iS = iLabs.at(i) - iCur;
+			if (iS > iGap)
+			{
+				iEnd.push_back(iCur);
+				sprintf_s(buff, "%s %i to %i size %i", "Gap Found at:  ", iCur + 1, iLabs.at(i) - 1, iS-1);
+				outtext1(buff);
+				iCur = iLabs.at(i);
+				iSt.push_back(iCur);
+			}
+		}
+		iEnd.push_back(iLabs.back());
+		outtext1("Blocks of Elements");
+		for (i = 0; i < iSt.size(); i++)
+		{
+			sprintf_s(buff, "%i %i", iSt.at(i), iEnd.at(i));
+			outtext1(buff);
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Element Gaps Found.");
+	}
+}
+
+
+
 
 int ME_Object::GetLCID(int ind)
 {
@@ -18005,271 +23831,369 @@ return (irc);
 
 //iType is resulatant entity type
 //pThis the object that has the association
-void ME_Object::RelTo(G_Object* pThis,ObjList* pList,int iType)
+void ME_Object::RelTo(G_Object* pThis, ObjList* pList, int iType)
 {
-int i;
-int j;
+	int i;
+	int j;
 
-//we are looking for Loads related to either element or node
-if ((iType==321) || (iType==323) 
-||  (iType==324) || (iType==326) 
-||  (iType==328) || (iType==329))
-{
-  if (iCurLC!=-1)
-  {
-    BCLD* pNext;
-    pNext=(BCLD*) LCS[iCurLC]->Head;
-    while (pNext!=NULL)
-    {
-      if (pNext->pObj==pThis)
-        pList->AddEx(pNext);
-      pNext=(BCLD*) pNext->next;
-    }
-  }
-}
-//we are looking for Restrainrs related to node
-if ((iType==322) || (iType==327))
-{
-  if (iCurBC!=-1)
-  {
-    BCLD* pNext;
-    pNext=(BCLD*) BCS[iCurBC]->Head;
-    while (pNext!=NULL)
-    {
-      if (pNext->pObj==pThis)
-        pList->AddEx(pNext);
-      pNext=(BCLD*) pNext->next;
-    }
-  }
-}
+	//we are looking for Loads related to either element or node
+	if ((iType == 321) || (iType == 323)
+		|| (iType == 324) || (iType == 326)
+		|| (iType == 328) || (iType == 329))
+	{
+		if (iCurLC != -1)
+		{
+			BCLD* pNext;
+			pNext = (BCLD*)LCS[iCurLC]->Head;
+			while (pNext != NULL)
+			{
+				if (pNext->pObj == pThis)
+					pList->AddEx(pNext);
+				pNext = (BCLD*)pNext->next;
+			}
+		}
+	}
+	//we are looking for Restrainrs related to node
+	if ((iType == 322) || (iType == 327))
+	{
+		if (iCurBC != -1)
+		{
+			BCLD* pNext;
+			pNext = (BCLD*)BCS[iCurBC]->Head;
+			while (pNext != NULL)
+			{
+				if (pNext->pObj == pThis)
+					pList->AddEx(pNext);
+				pNext = (BCLD*)pNext->next;
+			}
+		}
+	}
 
-if (iType==325)
-{
-  if (iCurTSet!=-1)
-  {
-    BCLD* pNext;
-    pNext=(BCLD*) TSETS[iCurTSet]->Head;
-    while (pNext!=NULL)
-    {
-      if (pNext->pObj==pThis)
-        pList->AddEx(pNext);
-      pNext=(BCLD*) pNext->next;
-    }
-  }
-}
+	if (iType == 325)
+	{
+		if (iCurTSet != -1)
+		{
+			BCLD* pNext;
+			pNext = (BCLD*)TSETS[iCurTSet]->Head;
+			while (pNext != NULL)
+			{
+				if (pNext->pObj == pThis)
+					pList->AddEx(pNext);
+				pNext = (BCLD*)pNext->next;
+			}
+		}
+	}
 
 
-if ((iType==1) ||  (iType==3) ||  (iType==4) ||  (iType==12))
-{
-if ((pThis->iObjType==1) ||  
-	  (pThis->iObjType==3) ||  
-    (pThis->iObjType==200) ||
-    (pThis->iObjType==201) ||
-    (pThis->iObjType==202))
-{
-  if (iType==4)
-  {
-    if (pThis->pParent!=NULL)
-    {
-     pList->AddEx(pThis->pParent);
-    }
-  }
-  else if ((iType==1) &&  (pThis->iObjType==3)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     for (i=0;i<iElNo;i++)
-     {
-       if (pElems[i]== pThis)
-       {
-          for (j=0;j<pElems[i]->iNoNodes;j++)
-          {
-             pList->AddEx(pElems[i]->GetNode(j));
-          }
-          break;
-       }
-     }
-  }
-  else if ((iType==1) &&  (pThis->iObjType==321)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     G_Object* pN;
-     pN=GetNode(pThis->iLabel);
-     if (pN!=NULL)
-       pList->AddEx(pN);
-  }
-  else if ((iType==1) &&  (pThis->iObjType==322)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     G_Object* pN;
-     pN=GetNode(pThis->iLabel);
-     if (pN!=NULL)
-       pList->AddEx(pN);
-  }
-  else if ((iType==1) &&  (pThis->iObjType==326)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     G_Object* pN;
-     pN=GetNode(pThis->iLabel);
-     if (pN!=NULL)
-       pList->AddEx(pN);
-  }
-    else if ((iType==1) &&  (pThis->iObjType==327)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     G_Object* pN;
-     pN=GetNode(pThis->iLabel);
-     if (pN!=NULL)
-       pList->AddEx(pN);
-  }
-  else if ((iType==3) &&  (pThis->iObjType==324)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     E_Object* pE;
-     pE=GetElement(pThis->iLabel);
-     if (pE!=NULL)
-       pList->AddEx(pE);
-  }
-  else if ((iType==3) &&  (pThis->iObjType==325)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     E_Object* pE;
-     pE=GetElement(pThis->iLabel);
-     if (pE!=NULL)
-       pList->AddEx(pE);
-  }
-  else if ((iType==3) &&  (pThis->iObjType==328)  &&  (pThis->pParent==this))
-  {
-     //Node related to element pThis
-     E_Object* pE;
-     pE=GetElement(pThis->iLabel);
-     if (pE!=NULL)
-       pList->AddEx(pE);
-  }
-  else if ((iType == 3) && (pThis->iObjType == 329) && (pThis->pParent == this))
-  {
-    //Node related to element pThis
-    E_Object* pE;
-    pE = GetElement(pThis->iLabel);
-    if (pE != NULL)
-      pList->AddEx(pE);
-  }
-  else if ((iType==3) &&  (pThis->iObjType==1)  &&  (pThis->pParent==this))
-  {
-     //Element related to Node pThis
-     for (i=0;i<iElNo;i++)
-     {
-       for (j=0;j<pElems[i]->iNoNodes;j++)
-       {
-         if (pElems[i]->GetNode(j)==pThis)
-         {
-             pList->AddEx(pElems[i]);
-         }
-       }
-     }
-  }
-  else if ((iType==12) &&  (pThis->iObjType==1)  &&  (pThis->pParent==this))
-  {
-     //Coord related to Node pThis
-     G_Object* pC;
-	 Pt_Object* pN;
-	 pN=(Pt_Object*) pThis;
-	 if (pN->DefSys>0)
-	 {
-       pC=GetSys(pN->DefSys);
-       if (pC!=NULL)
-	   {
-         pList->AddEx(pC);
-	   }
-	 }
-	 if (pN->OutSys>0)
-	 {
-       pC=GetSys(pN->OutSys);
-       if (pC!=NULL)
-	   {
-         pList->AddEx(pC);
-	   }
-     }
-  }
-}
-}
+	if ((iType == 1) || (iType == 3) || (iType == 4) || (iType == 12))
+	{
+		if ((pThis->iObjType == 1) ||
+			(pThis->iObjType == 3) ||
+			(pThis->iObjType == 12) ||
+			(pThis->iObjType == 200) ||
+			(pThis->iObjType == 201) ||
+			(pThis->iObjType == 202))
+		{
+			if (iType == 4)
+			{
+				if (pThis->pParent != NULL)
+				{
+					pList->AddEx(pThis->pParent);
+				}
+			}
+			else if ((iType == 1) && (pThis->iObjType == 3) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				E_Object* pE = (E_Object*) pThis;
+				for (j = 0; j < pE->iNoNodes; j++)
+				{
+					pList->AddEx(pE->GetNode(j));
+				}
+			}
+			else if ((iType == 1) && (pThis->iObjType == 12) && (pThis->pParent == this))
+			{
+				//Nodes related to coordsys
+				for (i = 0; i < iNdNo; i++)
+				{
+					if ((pNodes[i]->DefSys == pThis->iLabel) || (pNodes[i]->OutSys == pThis->iLabel))
+                        pList->AddEx(pNodes[i]);
+				}
+			}
+			else if ((iType == 3) && (pThis->iObjType == 12) && (pThis->pParent == this))
+			{
+				//Elements related to coordsys
+				//iMCys need to move to E_Object as all element can have it
+				for (i = 0; i < iElNo; i++)
+				{
+					if (pElems[i]->iType == 94)
+					{
+						E_Object4* p4 = (E_Object4*) pElems[i];
+						if (p4->iMCys == pThis->iLabel)
+							pList->AddEx(pElems[i]);
+					}
+					else if (pElems[i]->iType == 91)
+					{
+						E_Object3* p3 = (E_Object3*)pElems[i];
+						if (p3->iMCys == pThis->iLabel)
+							pList->AddEx(pElems[i]);
+					}
+					else if (pElems[i]->iType == 136)
+					{
+						E_Object2* p2 = (E_Object2*)pElems[i];
+						if (p2->iCSYS == pThis->iLabel)
+							pList->AddEx(pElems[i]);
+					}
+				}
+			}
+			else if ((iType == 1) && (pThis->iObjType == 321) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				G_Object* pN;
+				pN = GetNode(pThis->iLabel);
+				if (pN != NULL)
+					pList->AddEx(pN);
+			}
+			else if ((iType == 1) && (pThis->iObjType == 322) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				G_Object* pN;
+				pN = GetNode(pThis->iLabel);
+				if (pN != NULL)
+					pList->AddEx(pN);
+			}
+			else if ((iType == 1) && (pThis->iObjType == 326) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				G_Object* pN;
+				pN = GetNode(pThis->iLabel);
+				if (pN != NULL)
+					pList->AddEx(pN);
+			}
+			else if ((iType == 1) && (pThis->iObjType == 327) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				G_Object* pN;
+				pN = GetNode(pThis->iLabel);
+				if (pN != NULL)
+					pList->AddEx(pN);
+			}
+			else if ((iType == 3) && (pThis->iObjType == 324) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				E_Object* pE;
+				pE = GetElement(pThis->iLabel);
+				if (pE != NULL)
+					pList->AddEx(pE);
+			}
+			else if ((iType == 3) && (pThis->iObjType == 325) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				E_Object* pE;
+				pE = GetElement(pThis->iLabel);
+				if (pE != NULL)
+					pList->AddEx(pE);
+			}
+			else if ((iType == 3) && (pThis->iObjType == 328) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				E_Object* pE;
+				pE = GetElement(pThis->iLabel);
+				if (pE != NULL)
+					pList->AddEx(pE);
+			}
+			else if ((iType == 3) && (pThis->iObjType == 329) && (pThis->pParent == this))
+			{
+				//Node related to element pThis
+				E_Object* pE;
+				pE = GetElement(pThis->iLabel);
+				if (pE != NULL)
+					pList->AddEx(pE);
+			}
+			else if ((iType == 3) && (pThis->iObjType == 1) && (pThis->pParent == this))
+			{
+				//Element related to Node pThis
+				for (i = 0; i < iElNo; i++)
+				{
+					for (j = 0; j < pElems[i]->iNoNodes; j++)
+					{
+						if (pElems[i]->GetNode(j) == pThis)
+						{
+							pList->AddEx(pElems[i]);
+						}
+					}
+				}
+			}
+			else if ((iType == 12) && (pThis->iObjType == 1) && (pThis->pParent == this))
+			{
+				//Coord related to Node pThis
+				G_Object* pC;
+				Node* pN;
+				pN = (Node*)pThis;
+				if (pN->DefSys > 0)
+				{
+					pC = GetSys(pN->DefSys);
+					if (pC != NULL)
+					{
+						pList->AddEx(pC);
+					}
+				}
+				if (pN->OutSys > 0)
+				{
+					pC = GetSys(pN->OutSys);
+					if (pC != NULL)
+					{
+						pList->AddEx(pC);
+					}
+				}
+			}
+			else if ((iType == 12) && (pThis->iObjType == 3) && (pThis->pParent == this))
+			{
+				//Coord related to Element pThis
+				G_Object* pC;
+				E_Object* pE;
+				pE = (E_Object*)pThis;
+				if (pE->iType == 136)
+				{
+					E_Object2* pE2;
+					pE2 = (E_Object2*)pE;
+					if (pE2->iCSYS > 0)
+					{
+						pC = GetSys(pE2->iCSYS);
+						if (pC != NULL)
+						{
+							pList->AddEx(pC);
+						}
+					}
+				}
+				else if (pE->iType == 91)
+				{
+					E_Object3* pE3;
+					pE3 = (E_Object3*)pE;
+					if (pE3->iMCys > 0)
+					{
+						pC = GetSys(pE3->iMCys);
+						if (pC != NULL)
+						{
+							pList->AddEx(pC);
+						}
+					}
+				}
+				else if (pE->iType == 94)
+				{
+					E_Object4* pE4;
+					pE4 = (E_Object4*)pE;
+					if (pE4->iMCys > 0)
+					{
+						pC = GetSys(pE4->iMCys);
+						if (pC != NULL)
+						{
+							pList->AddEx(pC);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void ME_Object::Serialize(CArchive& ar,int iV)
 {
   int i;
   int iE;
-	if (ar.IsStoring())
-	{
-		// TODO: add storing code here
-    G_Object::Serialize(ar,iV);
-    ar<<sName;
-	  ar<<bDrawN;
-	  ar<<TransMat.m_00; ar<<TransMat.m_01; ar<<TransMat.m_02; ar<<TransMat.m_03;
-	  ar<<TransMat.m_10; ar<<TransMat.m_11; ar<<TransMat.m_12; ar<<TransMat.m_13;
-	  ar<<TransMat.m_20; ar<<TransMat.m_21; ar<<TransMat.m_22; ar<<TransMat.m_23;
-	  ar<<TransMat.m_30; ar<<TransMat.m_31; ar<<TransMat.m_32; ar<<TransMat.m_33;
-    ar<<iCYS;
-	  for (i=0;i<iCYS;i++)
-    {
-      pSys[i]->Serialize(ar,iV);
-    }
-    ar<<iNdNo;
-    for (i=0;i<iNdNo;i++)
-    {
-      pNodes[i]->Serialize(ar,iV);
-    }
-    ar << iElNo;
-    for (i=0;i<iElNo;i++)
-    {
-      ar<<pElems[i]->iType;
-      pElems[i]->Serialize(ar,iV,this);
-    }
-	  // LOAD AND BOUNDARY SETS
-    ar<<iCurLC;
-    ar<<iNoLCs;
-	  for (i=0;i<iNoLCs;i++)
-    {
-      LCS[i]->Serialize(ar,iV,this);
-	  }
-    ar<<iCurBC;
-    ar<<iNoBCs;
-	  for (i=0;i<iNoBCs;i++)
-    {
-      BCS[i]->Serialize(ar,iV,this);
-	  }
-    ar<<iCurTSet;
-    ar<<iNoTSets;
-	  for (i=0;i<iNoTSets;i++)
-    {
-      TSETS[i]->Serialize(ar,iV,this);
-	  }
-    pSOLS->Serialize(ar,iV);
-	}
-	else
-	{
-    G_Object::Serialize(ar,iV);
-    ar>>sName;
-	  ar>>bDrawN;
-    ar>>TransMat.m_00; ar>>TransMat.m_01; ar>>TransMat.m_02; ar>>TransMat.m_03;
-	  ar>>TransMat.m_10; ar>>TransMat.m_11; ar>>TransMat.m_12; ar>>TransMat.m_13;
-	  ar>>TransMat.m_20; ar>>TransMat.m_21; ar>>TransMat.m_22; ar>>TransMat.m_23;
-	  ar>>TransMat.m_30; ar>>TransMat.m_31; ar>>TransMat.m_32; ar>>TransMat.m_33;
-    ar>>iCYS;
-	  for (i=0;i<iCYS;i++)
-    {
-      pSys[i]= new CoordSys;
-      pSys[i]->Serialize(ar,iV);
-      pSys[i]->pParent=this;
-    }
+  if (ar.IsStoring())
+  {
+
+		  // TODO: add storing code here
+		  G_Object::Serialize(ar, iV);
+			  ar << sName;
+			  ar << iFileNo;					//new
+			  for (i = 0; i < iFileNo; i++)		//new
+				ar << sFiles[i];				//new
+			  ar << iIntID;
+			  ar << bDrawN;
+			  ar << TransMat.m_00; ar << TransMat.m_01; ar << TransMat.m_02; ar << TransMat.m_03;
+			  ar << TransMat.m_10; ar << TransMat.m_11; ar << TransMat.m_12; ar << TransMat.m_13;
+			  ar << TransMat.m_20; ar << TransMat.m_21; ar << TransMat.m_22; ar << TransMat.m_23;
+			  ar << TransMat.m_30; ar << TransMat.m_31; ar << TransMat.m_32; ar << TransMat.m_33;
+			  ar << iCYS;
+			  for (i = 0; i < iCYS; i++)
+			  {
+				  pSys[i]->Serialize(ar, iV);
+			  }
+			  if (sName != "NULL")
+			  {
+		         ar << iNdNo;
+		         for (i = 0; i < iNdNo; i++)
+		         {
+			        pNodes[i]->Serialize(ar, iV);
+		         }
+		         ar << iElNo;
+				 for (i = 0; i < iElNo; i++)
+				 {
+					 ar << pElems[i]->iType;
+					 pElems[i]->Serialize(ar, iV, this);
+				 }
+		      }
+			  else
+			  {
+				  ar << 0;
+				  ar << 0;
+			  }
+		  // LOAD AND BOUNDARY SETS
+		  ar << iCurLC;
+		  ar << iNoLCs;
+		  for (i = 0; i < iNoLCs; i++)
+		  {
+			  LCS[i]->Serialize(ar, iV, this);
+		  }
+		  ar << iCurBC;
+		  ar << iNoBCs;
+		  for (i = 0; i < iNoBCs; i++)
+		  {
+			  BCS[i]->Serialize(ar, iV, this);
+		  }
+		  ar << iCurTSet;
+		  ar << iNoTSets;
+		  for (i = 0; i < iNoTSets; i++)
+		  {
+			  TSETS[i]->Serialize(ar, iV, this);
+		  }
+		  pSOLS->Serialize(ar, iV);
+	  
+  }
+	  else
+	  {
+        G_Object::Serialize(ar,iV);
+        ar>>sName;
+		if (iV <= -63)
+		{
+			ar >> iFileNo;						//new
+			for (i = 0; i < iFileNo; i++)		//new
+				ar >> sFiles[i];				//new
+		}
+		if (iV<=-62)
+		  ar >> iIntID;
+	    ar>>bDrawN;
+        ar>>TransMat.m_00; ar>>TransMat.m_01; ar>>TransMat.m_02; ar>>TransMat.m_03;
+	    ar>>TransMat.m_10; ar>>TransMat.m_11; ar>>TransMat.m_12; ar>>TransMat.m_13;
+	    ar>>TransMat.m_20; ar>>TransMat.m_21; ar>>TransMat.m_22; ar>>TransMat.m_23;
+	    ar>>TransMat.m_30; ar>>TransMat.m_31; ar>>TransMat.m_32; ar>>TransMat.m_33;
+        ar>>iCYS;
+	    for (i=0;i<iCYS;i++)
+        {
+          pSys[i]= new CoordSys;
+          pSys[i]->Serialize(ar,iV);
+          pSys[i]->pParent=this;
+        }
 	  ar>>iNdNo;
     if (iNdNo>5000)
       {TempList=new ObjTempList();}
     for (i=0;i<iNdNo;i++)
     {
-      pNodes[i]= new Pt_Object;
+      pNodes[i]= new Node;
       pNodes[i]->Serialize(ar,iV);
       pNodes[i]->pParent=this;
-      if (TempList!=NULL)
+      if ((TempList!=NULL)  && (pNodes[i]->iLabel<99999999))
         {TempList->Objs[pNodes[i]->iLabel]=pNodes[i];}
     }
     ar >> iElNo;
@@ -18299,6 +24223,9 @@ void ME_Object::Serialize(CArchive& ar,int iV)
 		  case 137:
             pElems[i] = new E_Object2;
             break;
+		  case 138:
+			  pElems[i] = new E_Object2BUSH;
+			  break;
       case 91:
             pElems[i] = new E_Object3;
             break;
@@ -18311,6 +24238,9 @@ void ME_Object::Serialize(CArchive& ar,int iV)
       case 111:
             pElems[i] = new E_Object34;
             break;
+	  case 310:
+		  pElems[i] = new E_Object310;
+		  break;
       case 112:
             pElems[i] = new E_Object36;
             break;
@@ -18386,8 +24316,8 @@ rME->pParent = NULL;
 //}
 for (i=0;i<iNdNo;i++)
 {
-  rME->pNodes[i]= new Pt_Object;
-  rME->pNodes[i]= (Pt_Object*) pNodes[i]->Copy(rME);
+  rME->pNodes[i]= new Node;
+  rME->pNodes[i]= (Node*) pNodes[i]->Copy(rME);
 }
 
 rME->iElNo=iElNo;
@@ -18426,12 +24356,15 @@ for (i=0;i<iElNo;i++)
     case 111:
       rME->pElems[i] = (E_Object34*) pElems[i]->Copy(rME);
       break;
-	  case 112:
+	case 112:
       rME->pElems[i] = (E_Object36*) pElems[i]->Copy(rME);
       break;
     case 122:
       rME->pElems[i] = (E_ObjectR*) pElems[i]->Copy(rME);
       break;
+	case 310:
+	  rME->pElems[i] = (E_Object310*) pElems[i]->Copy(rME);
+	  break;
   }
   rME->pElems[i]->pParent = rME;
 }
@@ -18445,10 +24378,10 @@ for (i=0;i<iCYS;i++)
 return (rME);
 }
 
-BOOL ME_Object::isFaceDeletable(cFace* inFace)
+BOOL ME_Object::isFaceDeletable(eFace* inFace)
 {
 BOOL bRet=TRUE;
-cFace* Fc[8];
+eFace* Fc[8];
 int iN;
 int i,j;
 int iC;
@@ -18476,10 +24409,10 @@ if (iC>1)
 return(bRet);
 }
 
-BOOL ME_Object::isLinkDeletable(cLink* inLink)
+BOOL ME_Object::isLinkDeletable(eEdge* inLink)
 {
 BOOL bRet=TRUE;
-cLink* Lk[12];
+eEdge* Lk[12];
 int iN;
 int i,j;
 int iC;
@@ -18510,8 +24443,8 @@ return(bRet);
 
 void ME_Object::BuildLinkList()
 {
-cFace* Fc[8];
-cLink* Lk[200];
+eFace* Fc[8];
+eEdge* Lk[200];
 int iN;
 int i,j;
 for(i=0;i<iElNo;i++)
@@ -18552,8 +24485,8 @@ if (pMexh!=NULL)
   iNoGps++;
   for (i=0;i<pMexh->iNdNo;i++)
   {
-    this->pNodes[iNdNo]= new Pt_Object;
-    this->pNodes[iNdNo]= (Pt_Object*) pMexh->pNodes[i]->Copy(this);
+    this->pNodes[iNdNo]= new Node;
+    this->pNodes[iNdNo]= (Node*) pMexh->pNodes[i]->Copy(this);
     this->pNodes[iNdNo]->iLabel=iNdNo+1+iNInc; 
     GPs[iNoGps-1]->ids[GPs[iNoGps-1]->iNo] = this->pNodes[iNdNo]->iLabel;
     GPs[iNoGps-1]->iType[GPs[iNoGps-1]->iNo] = 1;
@@ -18657,61 +24590,168 @@ for (i=0;i<iNoRes;i++)
 }
 }
 
+void ME_Object::ExportNASExec(FILE* pFile, SecTable* pS)
+{
+	int iC = pSOLS->iCur;
+	if (iC!=-1)
+	{
+		if (pSOLS->pSols[iC]->iType == 0)
+		{
+			//SOL 101
+			fprintf(pFile, "%s\n", "SOL 101");
+			fprintf(pFile, "%s\n", "CEND");
+			ExportNASCase101(pFile, pS);
+		}
+		else if (pSOLS->pSols[iC]->iType == 1)
+		{
+			//SOL STEADY STATE HEAT
+			fprintf(pFile, "%s\n", "$ERROR NO EXECUTIVE STATEMENT AVAILABLE FOR STEADY STATE HEAT TRANSFUR");
+		}
+		else if (pSOLS->pSols[iC]->iType == 2)
+		{
+			//SOL 101
+			fprintf(pFile, "%s\n", "SOL 101");
+			fprintf(pFile, "%s\n", "CEND");
+			ExportNASCase101(pFile, pS);
+		}
+		else if (pSOLS->pSols[iC]->iType == 3)
+		{
+			fprintf(pFile, "%s\n", "SOL 103");
+			fprintf(pFile, "%s\n", "CEND");
+			fprintf(pFile, "%s\n", "$ERROR CASE CONTROL NOT IMPLEMENTED YET");
+		}
+	}
+}
 
-void ME_Object::ExportNAS(FILE* pFile,SecTable* pS)	 
+void ME_Object::ExportNASCase101(FILE* pFile, SecTable* pS)
+{
+int i = 0;
+int iNoSteps = 0;
+int iC = pSOLS->iCur;
+fprintf(pFile, "%s\n", "$******************* CASE CONTROL *************************");
+fprintf(pFile, "%s\n", "$");
+fprintf(pFile, "TITLE = %s\n", pSOLS->pSols[iC]->sTitle);
+fprintf(pFile, "%s\n", "ECHO = NONE");
+Solution* pSOL = pSOLS->pSols[iC];
+iNoSteps = pSOL->iNo;
+for (i = 0; i < iNoSteps; i++)
+{
+	fprintf(pFile, "SUBCASE %i\n", i + 1);
+	fprintf(pFile, "    TITLE = %s\n", pSOL->sStepTitle[i]);
+	if (pSOL->LS[i] > 0)
+	{
+		fprintf(pFile, "    LOAD = %i\n", pSOL->LS[i]);
+	}
+	if (pSOL->BS[i] > 0)
+	{
+		fprintf(pFile, "    SPC  = %i\n", pSOL->BS[i]);
+	}
+	if (pSOL->TS[i] > 0)
+	{
+		fprintf(pFile, "    TEMP = %i\n", pSOL->TS[i]);
+	}
+	fprintf(pFile, "    %s\n", "DISPLACEMENT(PRINT, PLOT) = ALL");
+	fprintf(pFile, "    %s\n", "FORCE(PRINT, PLOT) = ALL");
+	fprintf(pFile, "    %s\n", "STRESS(PRINT, PLOT, CENTER) = ALL");
+	fprintf(pFile, "    %s\n", "OLOAD(PRINT) = ALL");
+}
+}
+
+void ME_Object::ExportNAS(FILE* pFile,SecTable* pS,int iFileNo)
 {
 int i;
 fprintf(pFile,"%s\n","$***************COORDINATE SYSTEMS*************************");
 for (i=0;i<iCYS;i++)
 {
-	pSys[i]->ExportNAS(pFile);
+	if ((iFileNo==-1) || (pSys[i]->iFile==iFileNo))
+	  pSys[i]->ExportNAS(pFile);
 }
 
 fprintf(pFile,"%s\n","$********************NODES*********************************");
 for (i=0;i<iNdNo;i++)
 {
-  CoordSys* pDef = GetSys(pNodes[i]->DefSys);
-	pNodes[i]->ExportNAS(pFile,pDef);
+    CoordSys* pDef = GetSys(pNodes[i]->DefSys);
+	if ((iFileNo == -1) || (pNodes[i]->iFile == iFileNo))
+	  pNodes[i]->ExportNAS(pFile,pDef);
 }
 fprintf(pFile,"%s\n","$*******************ELEMENTS******************************");
 for (i=0;i<iElNo;i++)
 {
-	pElems[i]->ExportNAS(pFile);
+	if ((iFileNo == -1) || (pElems[i]->iFile == iFileNo))
+	  pElems[i]->ExportNAS(pFile);
 }
 
-if (iCurLC != -1)
-{
-  cLinkedList* pCLC = LCS[iCurLC];
-  if (pCLC!=NULL)
-  {
-	fprintf(pFile, "%s\n", "$********************LOADING*******************************");
-    BCLD* pNext;
-    pNext = (BCLD*) pCLC->Head;
-    while (pNext != NULL)
-    {
-      pNext->ExportNAS(pFile);	
-	  pNext = (BCLD*) pNext->next;
-    }
-  }
+
 }
 
-if (iCurBC != -1)
+void ME_Object::ExportNAS_SETS(FILE* pFile, SecTable* pS, int iFileNo)
 {
-	cLinkedList* pCBC = BCS[iCurBC];
-	if (pCBC != NULL)
+	NEList*  LCS = new NEList(); 
+	NEList* BCS = new NEList(); ;
+	NEList* TS = new NEList(); ;
+	int i;
+	int iC = pSOLS->iCur;
+	Solution* pSOL = pSOLS->pSols[iC];
+	int iNoSteps = pSOL->iNo;
+	for (i = 0; i < iNoSteps; i++)
 	{
-		fprintf(pFile, "%s\n", "$********************RESTRAINTS*******************************");
-		BCLD* pNext;
-		pNext = (BCLD*)pCBC->Head;
-		while (pNext != NULL)
+		if ((pSOL->LS[i] > 0) && (!LCS->IsIn(pSOL->LS[i])))
 		{
-			pNext->ExportNAS(pFile);
-			pNext = (BCLD*)pNext->next;
+			    LCS->Add(pSOL->LS[i], 1);
+				cLinkedList* pCLC = GetLC(pSOL->LS[i]);
+				if (pCLC != nullptr)
+				{
+					fprintf(pFile, "$%s\n", pCLC->sTitle);
+					BCLD* pNext;
+					pNext = (BCLD*)pCLC->Head;
+					while (pNext != NULL)
+					{
+						if ((iFileNo == -1) || (pNext->iFile == iFileNo))
+							pNext->ExportNAS(pFile);
+						pNext = (BCLD*)pNext->next;
+					}
+				}
 		}
-	}
+		if ((pSOL->BS[i] > 0) && (!BCS->IsIn(pSOL->BS[i])))
+		{
+			    BCS->Add(pSOL->BS[i], 1);
+				cLinkedList* pCBC = GetBC(pSOL->BS[i]);
+				if (pCBC != nullptr)
+				{
+					fprintf(pFile, "$%s\n", pCBC->sTitle);
+					BCLD* pNext;
+					pNext = (BCLD*)pCBC->Head;
+					while (pNext != NULL)
+					{
+						if ((iFileNo == -1) || (pNext->iFile == iFileNo))
+							pNext->ExportNAS(pFile);
+						pNext = (BCLD*)pNext->next;
+					}
+				}
+		}
+		if ((pSOL->TS[i] > 0) && (!TS->IsIn(pSOL->TS[i])))
+		{
+			    TS->Add(pSOL->TS[i], 1);
+				cLinkedList* pTSET = GetTSET(pSOL->TS[i]);
+				if (pTSET != nullptr)
+				{
+					fprintf(pFile, "$%s\n", pTSET->sTitle);
+					BCLD* pNext;
+					pNext = (BCLD*)pTSET->Head;
+					while (pNext != NULL)
+					{
+						if ((iFileNo == -1) || (pNext->iFile == iFileNo))
+							pNext->ExportNAS(pFile);
+						pNext = (BCLD*)pNext->next;
+					}
+				}
+		}
+}
+	delete (LCS);
+	delete (BCS);
+	delete (TS);
 }
 
-}
 
 ResSet* ME_Object::GetResultsSet(int iSet)
 {
@@ -18762,7 +24802,230 @@ iCVarDef=-1;
 iPostOpt=0;
 }
 
+void ME_Object::ResEnvMin(CString sSeq[], int iNo)
+{
+	int iRS[50];
+	int iVAR[50];
+	int iOPT[50];
+	//ExtractSubString2(int iP, CString sIn)
 
+	int i;
+	int j;
+	for (i = 0; i < iNo; i++)
+	{
+		iRS[i] = atoi(ExtractSubString2(1, sSeq[i]));
+		iVAR[i] = atoi(ExtractSubString2(2, sSeq[i]));
+		iOPT[i] = atoi(ExtractSubString2(3, sSeq[i]));
+	}
+
+	double dVal;
+	ResSet* pENV = NULL;
+	ResSet* pC = NULL;
+
+	//Create New ResSet
+	ResultsSets[iNoRes] = new ResSet();
+	ResultsSets[iNoRes]->sFile = "None";
+	ResultsSets[iNoRes]->sTitle = "Envelop Min";
+	ResultsSets[iNoRes]->sSubTitle = "Derived Results";
+	ResultsSets[iNoRes]->ACODE = ResultsSets[iRS[0]]->ACODE;
+	ResultsSets[iNoRes]->TCODE = ResultsSets[iRS[0]]->TCODE;
+	ResultsSets[iNoRes]->TYPE = ResultsSets[iRS[0]]->TYPE;
+	ResultsSets[iNoRes]->LC = 0;
+	ResultsSets[iNoRes]->WID = 1;;
+	pENV = ResultsSets[iNoRes];
+	pENV->iNoV = 4;
+	pENV->sName = "ENV MIN";
+	iNoRes++;
+	// create intial results to first set
+	pC = ResultsSets[iRS[0]];
+	pENV->lab[0] = "Res Set ID";
+	pENV->lab[1] = "Varible ID";
+	pENV->lab[2] = "Optional ID";
+	pENV->lab[3] = pC->lab[iVAR[0]];
+	for (i = 0; i < iElNo; i++)
+	{
+		Res* pR = pC->Get(pElems[i]->iLabel, iOPT[0]);
+		if (pR != NULL)
+		{
+			Res4* pRes = new Res4();
+			pRes->ID = pR->ID;
+			pRes->v[0] = iRS[0];
+			pRes->v[1] = iVAR[0];
+			pRes->v[2] = iOPT[0];
+			pRes->v[3] = *pR->GetAddress(iVAR[0]);
+			pENV->Add(pRes);
+		}
+	}
+	for (j = 1; j < iNo; j++)
+	{
+		pC = ResultsSets[iRS[j]];
+		for (i = 0; i < iElNo; i++)
+		{
+			Res* pR = pC->Get(pElems[i]->iLabel, iOPT[j]);
+			if (pR != NULL)
+			{
+				Res4* pRes = (Res4*)pENV->Get(pElems[i]->iLabel, 0);
+				//pRes->ID = pR->ID;
+				dVal = *pR->GetAddress(iVAR[j]);
+				if (dVal < pRes->v[3])
+				{
+					pRes->v[0] = iRS[j];
+					pRes->v[1] = iVAR[j];
+					pRes->v[2] = iOPT[j];
+					pRes->v[3] = dVal;
+				}
+			}
+		}
+	}
+}
+
+void ME_Object::ResEnvMax(CString sSeq[], int iNo)
+{
+	int iRS[50];
+	int iVAR[50];
+	int iOPT[50];
+	//ExtractSubString2(int iP, CString sIn)
+
+	int i;
+	int j;
+	for (i = 0; i < iNo; i++)
+	{
+		iRS[i] = atoi(ExtractSubString2(1, sSeq[i]));
+		iVAR[i] = atoi(ExtractSubString2(2, sSeq[i]));
+		iOPT[i] = atoi(ExtractSubString2(3, sSeq[i]));
+	}
+
+	double dVal;
+	ResSet* pENV = NULL;
+	ResSet* pC = NULL;
+
+	//Create New ResSet
+	ResultsSets[iNoRes] = new ResSet();
+	ResultsSets[iNoRes]->sFile = "None";
+	ResultsSets[iNoRes]->sTitle = "Envelop Max";
+	ResultsSets[iNoRes]->sSubTitle = "Derived Results";
+	ResultsSets[iNoRes]->ACODE = ResultsSets[iRS[0]]->ACODE;
+	ResultsSets[iNoRes]->TCODE = ResultsSets[iRS[0]]->TCODE;
+	ResultsSets[iNoRes]->TYPE = ResultsSets[iRS[0]]->TYPE;
+	ResultsSets[iNoRes]->LC = 0;
+	ResultsSets[iNoRes]->WID = 1;;
+	pENV = ResultsSets[iNoRes];
+	pENV->iNoV = 4;
+	pENV->sName = "ENV MAX";
+	iNoRes++;
+	// create intial results to first set
+	pC = ResultsSets[iRS[0]];
+	pENV->lab[0] = "Res Set ID";
+	pENV->lab[1] = "Varible ID";
+	pENV->lab[2] = "Optional ID";
+	pENV->lab[3] = pC->lab[iVAR[0]];
+	for (i = 0; i < iElNo; i++)
+	{
+		Res* pR = pC->Get(pElems[i]->iLabel, iOPT[0]);
+		if (pR != NULL)
+		{
+			Res4* pRes = new Res4();
+			pRes->ID = pR->ID;
+			pRes->v[0] = iRS[0];
+			pRes->v[1] = iVAR[0];
+			pRes->v[2] = iOPT[0];
+			pRes->v[3] = *pR->GetAddress(iVAR[0]);
+			pENV->Add(pRes);
+		}
+	}
+	for (j = 1; j < iNo; j++)
+	{
+		pC = ResultsSets[iRS[j]];
+		for (i = 0; i < iElNo; i++)
+		{
+			Res* pR = pC->Get(pElems[i]->iLabel, iOPT[j]);
+			if (pR != NULL)
+			{
+				Res4* pRes =(Res4*) pENV->Get(pElems[i]->iLabel, 0);
+				//pRes->ID = pR->ID;
+				dVal= *pR->GetAddress(iVAR[j]);
+				if (dVal > pRes->v[3])
+				{
+					pRes->v[0] = iRS[j];
+					pRes->v[1] = iVAR[j];
+					pRes->v[2] = iOPT[j];
+					pRes->v[3] = dVal;
+				}
+			}
+		}
+	}
+}
+
+void ME_Object::ResSetScale(CString sSeq, double dS)
+{
+	int iRS;
+	int iVAR;
+	int iOPT;
+	
+
+	int i;
+	iRS = atoi(ExtractSubString2(1, sSeq));
+	iVAR = atoi(ExtractSubString2(2, sSeq));
+	iOPT = atoi(ExtractSubString2(3, sSeq));
+
+
+	ResSet* pC = NULL;
+	pC = ResultsSets[iRS];
+	if (pC != NULL)
+	{
+		for (i = 0; i < iElNo; i++)
+		{
+			Res* pR = pC->Get(pElems[i]->iLabel, iOPT);
+			if (pR != NULL)
+			{
+				*pR->GetAddress(iVAR) *= dS;
+			}
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Results Set Found.");
+	}
+
+}
+
+void ME_Object::ResSetDivInTo(CString sSeq, double dS)
+{
+	int iRS;
+	int iVAR;
+	int iOPT;
+	double dV;
+
+	int i;
+	int j;
+	iRS = atoi(ExtractSubString2(1, sSeq));
+	iVAR = atoi(ExtractSubString2(2, sSeq));
+	iOPT = atoi(ExtractSubString2(3, sSeq));
+
+	double dVal;
+	ResSet* pC = NULL;
+	pC = ResultsSets[iRS];
+	if (pC != NULL)
+	{
+		for (i = 0; i < iElNo; i++)
+		{
+			Res* pR = pC->Get(pElems[i]->iLabel, iOPT);
+			if (pR != NULL)
+			{
+				dV = *pR->GetAddress(iVAR);
+				if (abs(dV) > 1.0e-36)
+					*pR->GetAddress(iVAR) = dS / dV;
+				else
+					*pR->GetAddress(iVAR) = 1.0e36;
+			}
+		}
+	}
+	else
+	{
+		outtext1("ERROR: No Results Set Found.");
+	}
+
+}
 
 void ME_Object::PostElResScalar(ResSet* pRes,int iVar,int iOpt,float &fMax,float &fMin)
 {
@@ -18778,7 +25041,14 @@ if ((pRes!=CResSet) || (iOpt!=iPostOpt))
   iPostOpt=iOpt;
   if (iElNo > 0) 
   {
-    if ((pRes->TCODE==4) || (pRes->TCODE==5) || (pRes->TCODE==25) || (pRes->TCODE == 18))
+    if ((pRes->TCODE==4) || 
+		(pRes->TCODE==5) || 
+		(pRes->TCODE==25) || 
+		(pRes->TCODE == 18) ||	
+		(pRes->TCODE == 1004) ||
+		(pRes->TCODE == 1005) || 
+		(pRes->TCODE == 4004) ||  //GRMS FORCE?
+		(pRes->TCODE == 4005))  //Not sure where this tcode is documented Grms Rand
     {
     for (i = 0; i < iElNo; i++)
     {
@@ -18790,10 +25060,9 @@ if ((pRes!=CResSet) || (iOpt!=iPostOpt))
     }
 	}
   }
-
   if (iNdNo > 0) 
   {
-    if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 1011))
+    if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 39) || (pRes->TCODE == 1011) || (pRes->TCODE == 1039))
     {
       for (i = 0; i < iNdNo; i++)
       {
@@ -18830,7 +25099,7 @@ float fResVal;
 bFirst = TRUE;
   if (iNdNo > 0) 
   {
-    if ((pRes->TCODE==1)||(pRes->TCODE==7) || (pRes->TCODE == 1011))
+    if ((pRes->TCODE==1) || (pRes->TCODE==7) || (pRes->TCODE == 39) || (pRes->TCODE == 1011) || (pRes->TCODE == 1039))
     {
       for (i = 0; i < iNdNo; i++)
       {
@@ -18854,7 +25123,14 @@ bFirst = TRUE;
   }
   if (iElNo > 0) 
   {
-	if((pRes->TCODE==4) || (pRes->TCODE==5) || (pRes->TCODE==25) || (pRes->TCODE == 18))
+	if((pRes->TCODE==4) || 
+		(pRes->TCODE==5) || 
+		(pRes->TCODE==25) || 
+		(pRes->TCODE == 18) || 
+		(pRes->TCODE == 1004) ||
+		(pRes->TCODE == 1005) ||
+		(pRes->TCODE == 4004) ||  //GRMS FORCE
+		(pRes->TCODE == 4005))    //GRMS FORCE
     {
     for (i = 0; i < iElNo; i++)
     {
@@ -19009,6 +25285,58 @@ void ME_Object::GenResVectors(int iSet, int iVec, int iDf)
 						pResVectors->Add(pDspVec);
 				}
 				
+			}
+			SetColBarVec(fMin, fMax);
+		}
+		else if ((pDef->iLoc == 1) && (pDef->iResType == 1))
+		{
+			for (i = 0; i < iElNo; i++)
+			{
+				iS = 1;
+				pR = pRes->Get(pElems[i]->iLabel, 0);
+				if (pR != NULL)
+				{
+					vC = pElems[i]->Get_Centroid();
+					iD = pElems[i]->iLabel;
+					vVec.x = 0; vVec.y = 0; vVec.z = 0;
+					iS = 1;
+					if (iDf == 3)
+					{
+						vVec.x = *pR->GetAddress(pDef->iComponents[0]);
+						vVec.y = *pR->GetAddress(pDef->iComponents[1]);
+						vVec.z = *pR->GetAddress(pDef->iComponents[2]);
+						iS = 1; //Sign is magnitude
+					}
+					else if (iDf == 0)
+					{
+						vVec.x = *pR->GetAddress(pDef->iComponents[0]);
+						if (vVec.x < 0)
+							iS = -1;
+					}
+					else if (iDf == 1)
+					{
+						vVec.y = *pR->GetAddress(pDef->iComponents[1]);
+						if (vVec.y < 0)
+							iS = -1;
+					}
+					else if (iDf == 2)
+					{
+						vVec.z = *pR->GetAddress(pDef->iComponents[2]);
+						if (vVec.z < 0)
+							iS = -1;
+					}
+
+					double dM;
+					dM = iS * vVec.Mag();
+					if (dM > fMax)
+						fMax = dM;
+					if (dM < fMin)
+						fMin = dM;
+					pDspVec = new ResultsVec(iD, vC, vVec, 4, iDf, iS, pDef->iResType);
+					pDspVec->pParent = this;
+					pResVectors->Add(pDspVec);
+				}
+
 			}
 			SetColBarVec(fMin, fMax);
 		}
@@ -19232,7 +25560,7 @@ void ME_Object::ExportGroups(FILE* pFile)
 int i;
 int j;
 E_Object* pE;
-Pt_Object* pN;
+Node* pN;
  fprintf(pFile,"%-10s%-10s%-10s%-10s%-10s\n","ELEM","ID","COL","PID","TYPE");
  fprintf(pFile,"%-10s%-10s%-10s%-10s%-10s\n","NODE","ID","COL","DEF","OUT");
 for (i=0;i<iNoGps;i++)
@@ -19269,7 +25597,7 @@ timeStart = COleDateTime::GetCurrentTime();
 
 int year=timeStart.GetYear();
 int Mon=timeStart.GetMonth();
-if (year<2020)
+if (year<2050)
 {
 BOOL bNL;
 //Dataset 164 Units
@@ -19345,6 +25673,101 @@ fprintf(pFile,"%6s\n","-1");
 }
 }
 
+void ME_Object::ExportSTL(CString sFileName)
+{
+	int i;
+	int j;
+	C3dVector vN;
+	std::ofstream file(sFileName);
+	if (!file.is_open()) {
+		outtext1("ERROR: Opening File.");
+		return;
+	}
+
+	COleDateTime timeStart;
+	timeStart = COleDateTime::GetCurrentTime();
+
+	int year = timeStart.GetYear();
+	int Mon = timeStart.GetMonth();
+	file << "solid " << sFileName << std::endl;
+	for (i = 0; i < iElNo; i++)
+	{
+		if (pElems[i]->iType == 91)  //its a tri element (facet);
+		{
+			//pElems[i]->ExportSTL(pFile);
+			E_Object3* pE = (E_Object3*) pElems[i]->Copy(this);
+			pE->Reverse();
+			vN = pElems[i]->Get_Normal();
+			
+				file << "  facet normal " << vN.x << " " << vN.y << " " << vN.z << std::endl;
+				file << "    outer loop" << std::endl;
+				for (int i = 0; i < 3; i++) 
+				{
+					file << "      vertex " << pE->pVertex[i]->Pt_Point->x << " " << pE->pVertex[i]->Pt_Point->y << " " << pE->pVertex[i]->Pt_Point->z << std::endl;
+				}
+			file << "    endloop" << std::endl;
+			file << "  endfacet" << std::endl;
+			delete (pE);
+		}
+	}
+	file << "endsolid " << sFileName << std::endl;
+	file.close();
+	outtext1("STL file written successfully");
+}
+
+void ME_Object::ImportSTL(CString sFileName)
+{
+	int i;
+	int j;
+	C3dVector vN;
+	C3dVector vP;
+	Node* pENodes[MaxSelNodes];
+	std::ifstream file(sFileName);
+	if (!file.is_open()) {
+		outtext1("ERROR: Reading File.");
+		return;
+	}
+
+	COleDateTime timeStart;
+	timeStart = COleDateTime::GetCurrentTime();
+
+	int year = timeStart.GetYear();
+	int Mon = timeStart.GetMonth();
+
+	std::string line;
+	std::string token;
+	int vertexIndex = 0;
+
+
+
+	while (std::getline(file, line)) {
+		std::istringstream iss(line);
+		iss >> token;
+
+		if (token == "facet") {
+			iss >> token; // Read "normal"
+			iss >> vN.x >> vN.y >> vN.z;
+		}
+		else if (token == "vertex") {
+			iss >> vP.x >> vP.y >> vP.z;
+			pENodes[vertexIndex] = AddNode(vP, iNodeLab, 0, 0, 11, 0, 0);
+			iNodeLab++;
+			++vertexIndex;
+			if (vertexIndex == 3) 
+			{
+				vertexIndex = 0;
+				E_Object* cAddedEl = AddEl(pENodes, iElementLab, 4, 91, -1, -1, 3, -1, -1, -1, FALSE, -1, 0);
+				cAddedEl->Reverse();
+				iElementLab++;
+			}
+		}
+	}
+
+
+	file.close();
+	outtext1("STL file read successfully");
+}
+
 int ME_Object::GetNoNode(int iType)
 {
 int iRC=-1;
@@ -19364,17 +25787,19 @@ case 161: iRC = 1; //SCALAR
     break;
 case 121: iRC = 2; //UNKNOWN 2
     break;
-case 136: iRC = 2; //UNKNOWN 2
+case 136: iRC = 2; //TSPRING
     break;
-case 137: iRC = 2; //UNKNOWN 2
+case 137: iRC = 2; //RSPRING
     break;
+case 138: iRC = 2; //BUSH
+	break;
 case 21: iRC = 2;  //BEAM 2
     break;
 case 11: iRC = 2;  //ROD 2
     break;
 case 22: iRC = 2;    //UNKNOWN 2
     break;
-case 122: iRC = 200; //RIGID 200
+case 122: iRC = 2000; //RIGID 200
     break;
 case 1000: iRC = 4; //STAGGERED CELL
     break;
@@ -19389,6 +25814,9 @@ return (iRC);
 void ME_Object::Test(PropTable* PropsT,MatTable* MatT)
 {
 int i,j,neq;
+BOOL bOpt, bErr;
+bOpt = FALSE;
+bErr = FALSE;
 COleDateTime timeStart;
 timeStart = COleDateTime::GetCurrentTime();
 int Hour=timeStart.GetHour();
@@ -19398,87 +25826,123 @@ char s1[80];
 int iLC=-1;
 CString sSol("");
 CString sStep("");
-
-
+bool bGo;
+BOOL bRS;
+double AA;
+int iStep = 0;
+cLinkedList* pLC = NULL;
+cLinkedListB* pBC = NULL;
+cLinkedListT* pTC = NULL;
 sprintf_s(s1,"%s %i:%i:%i\n","START TIME",Hour,Min,Sec);
 outtext1(s1);
-for(i=0;i<iNdNo;i++)
+bGo = GetStepCasesLinStat(iStep, sSol, sStep, AA, pLC, pBC, pTC, bRS);
+if (iStep == -1)
 {
-  for (j=0;j<6;j++)
-  {
-    pNodes[i]->dof[j]=0;
-  }
+	outtext1("ERROR: No Solution Step is Active.");
+
 }
-
-
-
-Mat KME;
-//Mat dee=DeeMat(100,0.29,6);
-this->ApplyRes(NULL);
-neq=GenDofs();
-if (neq==0)
+if (bGo)
 {
-  outtext1("ERROR: No Degrees of Freedoms Exist.");
-  outtext1("Ensure the Correct F.E. Model is Active.");
+	for (i = 0; i < iNdNo; i++)
+	{
+		for (j = 0; j < 6; j++)
+		{
+			pNodes[i]->dof[j] = 0;
+		}
+	}
+
+	Mat KME;
+	//Mat dee=DeeMat(100,0.29,6);
+	this->ApplyRes(pBC);
+	neq = GenDofs();
+	if (neq == 0)
+	{
+		outtext1("ERROR: No Degrees of Freedoms Exist.");
+		outtext1("Ensure the Correct F.E. Model is Active.");
+	}
+	else
+	{
+		Vec<double> FVec;
+		Vec<int> Steer;
+
+		if (neq != 0)
+		{
+			ZeroThermalStrains(0.0);
+			BuildForceVector(PropsT, MatT, pLC, pTC, neq, FVec);
+			bGo = TRUE;
+		}
+
+		//FVec = GetForceVec(pLC,neq);
+		//GetPressureLoads(pLC,neq,FVec);
+		//if (pTC != NULL)
+		//{
+		   // //convert nodal temps to element centroid
+		   // cLinkedList* pTC_ELEM;
+		   // double dDefT = 0;
+		   // BOOL bTEMPD = FALSE;
+		   // bTEMPD = TSEThasTEMPD(pTC, dDefT);
+		   // pTC_ELEM = TSetNodaltoElement(pTC, dDefT);
+		   // GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
+		//}
+
+		int iBW = this->MaxBW();
+		Vec <double> KM(neq * (iBW + 1));
+		LocalRes(neq, Steer, KM);
+		outtext1("STARTING ASSY");
+		E_Object* pE;
+
+
+		for (i = 0; i < iElNo; i++)
+		{
+			pE = pElems[i];
+
+			if (pE->ChkNegJac() == FALSE)
+			{
+				KME = pE->GetStiffMat(PropsT, MatT, bOpt, bErr);
+				Steer = pE->GetSteerVec3d();
+			}
+			else
+			{
+
+				pE = (E_Object*)pElems[i]->Copy(this);
+				pE->Reverse();
+				KME = pE->GetStiffMat(PropsT, MatT, bOpt, bErr);
+				Steer = pE->GetSteerVec3d();
+				delete(pE);
+				pE = NULL;
+			}
+
+			formkv(KM, KME, Steer, neq);
+			//KME.diag();
+			KME.clear();
+		}
+
+		//KM.diag();
+		outtext1("STARTING BAND REDUCTION");
+		banred(KM, neq);
+		outtext1("STARTING BACK SUBSTITUTION");
+		bacsub(KM, FVec);
+		outtext1("FINISHED SOLUTION");
+		Displacements(iStep, sSol, sStep, Steer, FVec);
+		ForcesRod(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+		ForcesBUSH(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+		ForcesBeam(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+		//Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
+		RecoverShell(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+		Stresses3d(iStep, sSol, sStep, PropsT, MatT, Steer, FVec);
+		outtext1("FINISHED SOLUTION");
+
+		KM.DeleteAll();
+		Steer.DeleteAll();
+	}
+	timeStart = COleDateTime::GetCurrentTime();
+	Hour = timeStart.GetHour();
+	Min = timeStart.GetMinute();
+	Sec = timeStart.GetSecond();
+	sprintf_s(s1, "%s %i:%i:%i\n", "END TIME", Hour, Min, Sec);
 }
 else
-{
-  Vec<double> FVec;
-  Vec<int> Steer;
-  FVec = GetForceVec(NULL,neq);
-  GetPressureLoads(NULL,neq,FVec);
-  int iBW=this->MaxBW();
-
-  Vec <double> KM(neq*(iBW+1));
-  LocalRes(neq,Steer,KM);
-  outtext1("STARTING ASSY");
-  E_Object* pE;
-
-
-  for (i=0;i<iElNo;i++)
-  {
-    pE=pElems[i];
-    
-    if (pE->ChkNegJac()==FALSE)
-    {
-      KME=pE->GetStiffMat(PropsT,MatT);
-      Steer=pE->GetSteerVec3d();
-    }
-    else
-    {
-
-      pE=(E_Object*) pElems[i]->Copy(this);
-      pE->Reverse();
-      KME=pE->GetStiffMat(PropsT,MatT);
-      Steer=pE->GetSteerVec3d();
-      delete(pE);
-      pE=NULL;
-    }
-
-    formkv(KM,KME,Steer,neq);
-    //KME.diag();
-    KME.clear();
-  }
-
-  //KM.diag();
-  outtext1("STARTING BAND REDUCTION");
-  banred(KM,neq);
-  outtext1("STARTING BACK SUBSTITUTION");
-  bacsub(KM,FVec);
-  outtext1("FINISHED SOLUTION");
-  Displacements(iLC,sSol,sStep,Steer,FVec);
-  StressesBeam(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
-  Stresses2d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
-  Stresses3d(iLC, sSol, sStep, PropsT,MatT,Steer,FVec);
-  KM.DeleteAll();
-  Steer.DeleteAll();
-}
-timeStart = COleDateTime::GetCurrentTime();
-Hour=timeStart.GetHour();
-Min=timeStart.GetMinute();
-Sec=timeStart.GetSecond();
-sprintf_s(s1,"%s %i:%i:%i\n","END TIME",Hour,Min,Sec);
-outtext1(s1);
+    outtext1("FATAL ERROR");
 }
 
 Mat GetG(Vec<double> &AA,Vec<int> &G)
@@ -19530,6 +25994,7 @@ int iS;
 int i;
 double dP=0;
 iS=AA.n;
+
 for (i=0;i<iS;i++)
 {
 double f=AA(i);
@@ -19580,9 +26045,9 @@ pLC=NULL;
 pBC=NULL;
 pTC=NULL;
 bRS=TRUE;
-int iLC;
-int iBC;
-int iTC;
+int iLC = -1;
+int iBC = -1;
+int iTC = -1;
 char S1[200];
 sSol="NULL";
 sStep="NULL";
@@ -19593,7 +26058,7 @@ if (pSOLS->iCur!=-1)
   pCSol=pSOLS->pSols[pSOLS->iCur];
 
   dTol=pCSol->dTol;                       //solution tolerence
-  if ((pCSol->iType==0) || (pCSol->iType==1))
+  if ((pCSol->iType==0) || (pCSol->iType==1) || (pCSol->iType == 2))
   {
     iStep=pCSol->GetCurStep();
     if ((iStep<pCSol->iNo) && (iStep!=-1))
@@ -19616,7 +26081,7 @@ if (pSOLS->iCur!=-1)
   }
   else
   {
-     outtext1("ERROR: Only Linear Static Available.");
+     outtext1("ERROR: N/A.");
   }
 }
 
@@ -19627,6 +26092,7 @@ return (bRet);
 
 void ME_Object::IterSol3dLin(PropTable* PropsT,MatTable* MatT)
 {
+BOOL bOpt, bErr;
 CString sSol;
 CString sStep;
 int i,j,neq;
@@ -19646,12 +26112,17 @@ int iStep;
 cLinkedList* pLC=NULL;
 cLinkedListB* pBC=NULL;
 cLinkedListT* pTC=NULL;
+
 double dTol;
 BOOL bRS;
 iStep=0;
 
   PrintTime("START TIME: ");
   bGo=GetStepCasesLinStat(iStep, sSol, sStep,dTol,pLC,pBC,pTC,bRS);
+  if (iStep == -1)
+  {
+	  outtext1("ERROR: No Solution Step is Active.");
+  }
   if (bGo)
   {
   ZeroDOF();                    //Zero the DOFS
@@ -19662,7 +26133,7 @@ iStep=0;
   outtext1(s1);
   if (neq!=0)
   {
-    ZeroThermalStrains();
+    ZeroThermalStrains(0.0);
     BuildForceVector(PropsT,MatT,pLC,pTC,neq,FVec);
     bGo=TRUE;
   }
@@ -19688,14 +26159,14 @@ iStep=0;
       pE=pElems[i];
       if (pE->ChkNegJac()==FALSE)
       {
-        KME=pE->GetStiffMat(PropsT,MatT);
+        KME=pE->GetStiffMat(PropsT,MatT,FALSE, bErr);
         Steer=pE->GetSteerVec3d();
       }
       else
       {
-	      outtext1("ERROR: negative jacobian");
+	    outtext1("ERROR: negative jacobian");
         pE->Reverse();
-        KME=pE->GetStiffMat(PropsT,MatT);
+        KME=pE->GetStiffMat(PropsT,MatT, FALSE, bErr);
         Steer=pE->GetSteerVec3d();
       }
       KM[iELCnt]=KME;
@@ -19705,6 +26176,7 @@ iStep=0;
       Steer.clear();
     }
     //***************************************************************
+	
     for (i=0;i<iELCnt;i++)
     {
       for (m=1;m<=KM[i].m;m++)
@@ -19783,8 +26255,11 @@ iStep=0;
     outtext1("FINISHED SOLUTION");
     Displacements(iStep, sSol, sStep,Steer,xnew);
     TranslationalSpringForces(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
-    StressesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
-    Stresses2d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
+	ForcesBUSH(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
+	ForcesRod(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
+	ForcesBeam(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
+	//Stresses2d(iStep, sSol, sStep, PropsT, MatT, Steer, xnew);
+    RecoverShell(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
     Stresses3d(iStep, sSol, sStep, PropsT,MatT,Steer,xnew);
   }
   PrintTime("END TIME: ");
@@ -19908,7 +26383,7 @@ void ME_Object::ExplicitSolTest(PropTable* PropsT, MatTable* MatT)
 	}
 	bGo = GetStepCasesLinStat(iStep, sSol, sStep, dTol, pLC, pBC, pTC, bRS);
 	E_Object4* pE;
-	Pt_Object* pN;
+	Node* pN;
 	//Get Current Loadcase and solution set
 	ZeroDOF();                            //Zero the DOFS                                //THIS NEED TO BE REPORFED ONLY IF BC CHANGE THEN NEED TO RESTART ALL
 	int iDof = 1;   
@@ -19936,7 +26411,7 @@ void ME_Object::ExplicitSolTest(PropTable* PropsT, MatTable* MatT)
 	{
 		for (i = 0; i < iNdNo; i++)
 		{
-			pN = (Pt_Object*)pNodes[i];
+			pN = (Node*)pNodes[i];
 			//Update the displacement central diff
 			*u.nn(pN->dof[0]) = *xd.nn(pN->dof[0])*dT + *xdd.nn(pN->dof[0])*dT*dT;
 			*u.nn(pN->dof[1]) = *xd.nn(pN->dof[1])*dT + *xdd.nn(pN->dof[1])*dT*dT;
@@ -19945,7 +26420,7 @@ void ME_Object::ExplicitSolTest(PropTable* PropsT, MatTable* MatT)
 			*x.nn(pN->dof[1]) += *xd.nn(pN->dof[1])*dT + *xdd.nn(pN->dof[1])*dT*dT;
 			*x.nn(pN->dof[2]) += *xd.nn(pN->dof[2])*dT + *xdd.nn(pN->dof[2])*dT*dT;
 		}
-		x.diag();
+
 		*u.nn(1) = 0;
 		*u.nn(2) = 0;
 		*u.nn(3) = 0;
@@ -20052,7 +26527,7 @@ void ME_Object::ExplicitSolTest(PropTable* PropsT, MatTable* MatT)
 
 		for (i = 0; i < iNdNo; i++)
 		{
-			pN = (Pt_Object*)pNodes[i];
+			pN = (Node*)pNodes[i];
 			//Calc acceleration t+dt
 			double acctdt;
 			acctdt = (*FE.nn(pN->dof[0]) -*FI.nn(pN->dof[0])) / dMass;
@@ -20148,7 +26623,9 @@ else
   {
     TVec=GetTempVec(pBC, neq);
     //TVec.diag();
-    QVec=GetForceVec(pLC, neq);
+	QVec.Size(neq);
+	QVec.Zero();
+    GetForceVec(pLC, neq, QVec);
     //QVec.diag();
     ReportQResultant(QVec);
     //BuildForceVector(PropsT,MatT,pLC,pTC,neq,QVec);
@@ -20344,7 +26821,7 @@ for (i=0;i<iElNo;i++)
 return (iMaxBW);
 }
 
-G_Object* ME_Object::AddForce(Pt_Object* pInNode,C3dVector inF,int inSetID)
+G_Object* ME_Object::AddForce(Node* pInNode,C3dVector inF,int inSetID)
 {
 cLinkedList* pSet=NULL;
 Force* pF=NULL;
@@ -20377,7 +26854,63 @@ if (pSet!=NULL)
 return (pF);
 }
 
-G_Object* ME_Object::AddTemperature(E_Object* pInE,double inT,int inSetID)
+G_Object* ME_Object::AddTempD(double inT, int inSetID)
+{
+	cLinkedList* pSet = NULL;
+	TEMPD* pT = nullptr;
+	int ID;
+	if ((inSetID == -1) && (iCurTSet == -1))
+	{
+		outtext1("ERROR: No Temperature Set Active.");
+	}
+	else if ((inSetID == -1) && (iCurTSet != -1))
+	{
+		pSet = TSETS[iCurTSet];
+	}
+	else if (inSetID != -1)
+	{
+		pSet = GetTSET(inSetID);
+	}
+	if (pSet != nullptr)
+	{
+		pT = new TEMPD();
+		pT->Create(this->Get_Centroid(), pSet, inSetID, inT);
+		pSet->Add(pT);
+		outtext1("TEMPD Created.");
+	}
+	return (pT);
+}
+
+G_Object* ME_Object::AddGRAV(int inSetID, int iCID, double dScl, C3dVector vV)
+{
+	cLinkedList* pSet = NULL;
+	GRAV* pT = nullptr;
+	int ID;
+	if ((inSetID == -1) && (iCurLC == -1))
+	{
+		outtext1("ERROR: No Temperature Set Active.");
+	}
+	else if ((inSetID == -1) && (iCurLC != -1))
+	{
+		pSet = LCS[iCurLC];
+		ID = pSet->iLabel;
+	}
+	else if (inSetID != -1)
+	{
+		pSet = GetLC(inSetID);
+		ID = pSet->iLabel;
+	}
+	if (pSet != nullptr)
+	{
+		pT = new GRAV();
+		pT->Create(this->Get_Centroid(), pSet, inSetID,  iCID,  dScl,  vV);
+		pSet->Add(pT);
+	}
+	return (pT);
+}
+
+
+G_Object* ME_Object::AddTemperature(Node* pN,double inT,int inSetID)
 {
 cLinkedList* pSet=NULL;
 Temperature* pT=NULL;
@@ -20399,10 +26932,10 @@ else if (inSetID!=-1)
 if (pSet!=NULL)
 {
   pT=new Temperature();
-  pT->Create(pInE,
-	  	       pSet,
-	  	       inT,
-	 	         ID);
+  pT->Create(pN,
+	  	     pSet,
+	  	     inT,
+	 	     ID);
   pSet->Add(pT);
 }
 return (pT);
@@ -20474,7 +27007,7 @@ G_Object* ME_Object::AddRotAccel(E_Object* pInE, C3dVector vAxisD, C3dVector vAx
 }
 
 
-G_Object* ME_Object::AddFluxQ(Pt_Object* pInNode,double inT,int inSetID)
+G_Object* ME_Object::AddFluxQ(Node* pInNode,double inT,int inSetID)
 {
 cLinkedList* pSet=NULL;
 Temperature* pT=NULL;
@@ -20505,7 +27038,7 @@ if (pSet!=NULL)
 return (pT);
 }
 
-G_Object* ME_Object::AddTemperatureBC(Pt_Object* pInNode,double inT,int inSetID)
+G_Object* ME_Object::AddTemperatureBC(Node* pInNode,double inT,int inSetID)
 {
 cLinkedList* pSet=NULL;
 Temperature* pT=NULL;
@@ -20538,7 +27071,7 @@ return (pT);
 
 
 
-G_Object* ME_Object::AddMoment(Pt_Object* pInNode,C3dVector inF,int inSetID)
+G_Object* ME_Object::AddMoment(Node* pInNode,C3dVector inF,int inSetID)
 {
 cLinkedList* pSet=NULL;
 Moment* pF=NULL;
@@ -20604,16 +27137,37 @@ return (pF);
 
 void ME_Object::BuildForceVector(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,cLinkedList* pTC,int neq,Vec<double> &FVec)
 {
+  FVec.Size(neq);
+  FVec.Zero();
   if (pLC!=NULL)
   {
-    FVec = GetForceVec(pLC,neq);                  //Get all external forces
+    GetForceVec(pLC,neq, FVec);                  //Get all external forces
     GetPressureLoads(pLC,neq,FVec);               //Add in all Surface pressure loads
+	//****************** IS THRE A NASTRAN GRAV CARD **************************
+	GRAV* pGRAV = nullptr;
+	pGRAV = LSEThasGRAV(pLC);
+	if (pGRAV != nullptr)
+	{
+		GetGRAVLoads(PropsT, MatT, pGRAV, neq, FVec);	//need to gen nastrn style grave loads
+	}
+	//*************************************************************************
     GetAccelLoads(PropsT,MatT,pLC,neq,FVec);      //Add In all Body loads
     GetRotAccelLoads(PropsT, MatT, pLC, neq, FVec);      //Add In all Rotational Body loads
+	ReportFResultant(FVec);
   }
-  ReportFResultant(FVec);
-  if (pTC!=NULL)
-    GetThermalLoads(PropsT,MatT,pTC,neq,FVec);    //Add Thermal loads
+  
+
+  if (pTC != NULL)
+  {
+	  //convert nodal temps to element centroid
+	  cLinkedList* pTC_ELEM;
+	  double dDefT = 0;
+	  BOOL bTEMPD = FALSE;
+	  bTEMPD = TSEThasTEMPD(pTC, dDefT);
+	  pTC_ELEM = TSetNodaltoElement(pTC, dDefT);
+	  GetThermalLoads(PropsT, MatT, pTC_ELEM, neq, FVec);    //Add Thermal loads
+  }
+
 }
 
 
@@ -20628,7 +27182,7 @@ void ME_Object::ReportFResultant(Vec<double> &FVec)
   double MXTot=0;
   double MYTot=0;
   double MZTot=0;
-  Pt_Object* pN;
+  Node* pN;
   C3dVector vC;
   C3dVector vF;
   C3dVector vM;
@@ -20695,7 +27249,7 @@ void ME_Object::ReportQResultant(Vec<double> &QVec)
   char s1[80];
   double Q=0;
 
-  Pt_Object* pN;
+  Node* pN;
 
 //sprintf_s(s1,"%s: %i %s: %1.16f\n","ITER",i,"Err",dErr);
   outtext1("GLOBAL FLUX RESULTANT:-");
@@ -20711,6 +27265,82 @@ void ME_Object::ReportQResultant(Vec<double> &QVec)
   outtext1(_T(s1));
 }
 
+GRAV* ME_Object::LSEThasGRAV(cLinkedList* pLC)
+{
+	GRAV* pGRAV = nullptr;
+	BCLD* pNext;
+	//Search for TEMPD Card
+	pNext = (BCLD*) pLC->Head;
+	while (pNext != nullptr)
+	{
+		if (pNext->iObjType == 332)
+		{
+			pGRAV = (GRAV*) pNext;
+			break;
+		}
+		pNext = (BCLD*)pNext->next;
+	}
+
+	return (pGRAV);
+}
+
+BOOL ME_Object::TSEThasTEMPD(cLinkedList* pTC, double& defT)
+{
+	BOOL brc = FALSE;
+	BCLD* pNext;
+	//Search for TEMPD Card
+	pNext = (BCLD*)pTC->Head;
+	while (pNext != nullptr)
+	{
+		if (pNext->iObjType == 331)
+		{
+			TEMPD* pTD = (TEMPD*)pNext;
+			defT = pTD->dTempD;
+			brc = TRUE;
+			break;
+		}
+		pNext = (BCLD*)pNext->next;
+	}
+
+	return (brc);
+}
+
+//recently changed temperature to be on node as in nastran
+//we need element temps to cal force so creating the original 
+//element based temps
+cLinkedList* ME_Object::TSetNodaltoElement(cLinkedList* pTC_Nodal, double defT)
+{
+	double dT;
+	int i;
+	cLinkedList* pTC_Elem = new cLinkedList();
+	BCLD* pNext;
+	SetDefNodeTemp(defT); //just using dTemp to cal average element T from modes
+	pNext = (BCLD*)pTC_Nodal->Head;
+	while (pNext != nullptr)
+	{
+		if (pNext->iObjType == 325)
+		{
+			Temperature* pT = (Temperature*)pNext;
+			if (pT->pObj->iObjType == 1)
+			{
+				Node* pN = (Node*)pT->pObj;
+				pN->dTemp = pT->dV;
+			}
+		}
+		pNext = (BCLD*)pNext->next;
+	}
+	
+	//for all elements get centroid temperatre and add to pTC_Elem
+	for (i = 0; i < iElNo; i++)
+	{
+		dT = pElems[i]->GetElCentriodVal();
+		Temperature* pT = new Temperature();
+		pT->Create(pElems[i], pTC_Elem, dT, pTC_Nodal->iLabel);
+		pTC_Elem->Add(pT);
+	}
+	return (pTC_Elem);
+}
+
 void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pTC,int neq,Vec<double> &FVec)
 {
   BCLD* pNext;
@@ -20719,28 +27349,33 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
   E_Object* pE;
   int iNS;
   int iD;
+  int i,j,k;
+  BOOL bOff;
+  C3dVector vOff;
+  C3dVector vFl;
+  C3dVector vFg;
+  C3dMatrix M3;
 
-  if ((PropsT==NULL) || (MatT==NULL))
+  if (PropsT == nullptr || MatT == nullptr)
   {
-    outtext1("ERROR: Property or Mat Table Missing, Body Loads Not Calculated.");
+	  outtext1("ERROR: Property or Mat Table Missing, Body Loads Not Calculated.");
+	  return;
   }
-  else if (pTC!=NULL)
-  {
+
     pNext=(BCLD*) pTC->Head;
-    while (pNext!=NULL)
+    while (pNext!= nullptr)
     {
       if (pNext->iObjType==325)
       { 
-        Temperature* pT=(Temperature*) pNext;
-        double dT=pT->dV;
-        pE=(E_Object*) pNext->pObj;
-        if (pE!=NULL)
-        {
+          Temperature* pT=(Temperature*) pNext;
+          double dT=pT->dV;
+		  pE=(E_Object*) pNext->pObj;
+		  M3 = pE->GetElSys();
+		  M3.Transpose();
           vS=pE->GetSteerVec3d();
           TF=pE->GetThermalStrainMat3d(PropsT,MatT,dT);
           iNS=pE->iNoNodes;
           iD=pE->noDof();
-          int i;
           if ((pE->iType==115) || (pE->iType==111) || (pE->iType==112))
           {
             for (i=0;i<iNS;i++)
@@ -20757,69 +27392,197 @@ void ME_Object::GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pT
                 *FVec.nn(iDD2)+=*TF.mn(i*iD+3,1);
             }
           }
-          else if ((pE->iType==91) || (pE->iType==94)) //this will be a 2DOF forcece vec
-          {                                                // needs to be transfoemed to 3d
-            C3dMatrix M3=pE->GetElSys();                   // The element transformation matrix
-            M3.Transpose();
-            C3dVector vFl;
-            C3dVector vFg;
+          else if ((pE->iType==91) || (pE->iType==94)) 
+          {    
+			Mat TOff(6, 6);
+			Mat vF(6, 1);
+			Mat vFoff;
             for (i=0;i<iNS;i++)                            //For each node 
             {
-              vFg.x=*TF.mn(i*2+1,1);
-              vFg.y=*TF.mn(i*2+2,1);
-              vFg.z=0;
-              vFl=M3*vFg;
+				vFoff.clear();		//Offset
+				vF.MakeZero();		//Offset
+				TOff.MakeZero();	//Offset
+				vFl.Set(*TF.mn(i * 2 + 1, 1), *TF.mn(i * 2 + 2, 1), 0);
+				vFg=M3*vFl;
+				//NEED TODO OFFSET TRANSFORM
+				*vF.mn(1, 1) = vFg.x;
+				*vF.mn(2, 1) = vFg.y;
+				*vF.mn(3, 1) = vFg.z;
+				vFoff = vF;
+				bOff = pE->GetOffset(PropsT, i, vOff);
+				if (bOff) //Element has non zeror offsets
+				{
+					vFoff.clear();
+					pE->OffsetsTransform(TOff, vOff);
+					TOff.Transpose();
+					vFoff = TOff * (vF);
+				}
+
+				for (k = 1; k <= iD; k++)
+				{
+					int iDD0;
+					iDD0 = *vS.nn(i * iD + k);
+					if (iDD0 != -1)
+						*FVec.nn(iDD0) += *vFoff.mn(k, 1);
+				}
+            }
+          }
+          else if (pE->iType==11)  //for rod and psuedo rbe2
+          {                                               
+
+            for (i=0;i<iNS;i++)                            //For each node 
+            {
+			  vFl.Set(*TF.mn(i + 1, 1), 0, 0);
+              vFg=M3*vFl;
               int iDD0,iDD1,iDD2;
               iDD0=*vS.nn(i*iD+1);
               iDD1=*vS.nn(i*iD+2);
               iDD2=*vS.nn(i*iD+3);
               if (iDD0!=-1)
-                *FVec.nn(iDD0)+=vFl.x;
+                *FVec.nn(iDD0)+=vFg.x;
               if (iDD1!=-1)
-                *FVec.nn(iDD1)+=vFl.y;
+                *FVec.nn(iDD1)+=vFg.y;
               if (iDD2!=-1)
-                *FVec.nn(iDD2)+=vFl.z;
+                *FVec.nn(iDD2)+=vFg.z;
             }
           }
-          else if ((pE->iType==11) || (pE->iType==21)) //this will be a 1DOF forcece vec for RODS AND BEAMS
-          {                                                // needs to be transfoemed to 3d
-            C3dMatrix M3=pE->GetElSys();                   // The element transformation matrix
-            M3.Transpose();
-            C3dVector vFl;
-            C3dVector vFg;
-            for (i=0;i<iNS;i++)                            //For each node 
-            {
-              vFg.x=*TF.mn(i+1,1);
-              vFg.y=0;
-              vFg.z=0;
-              vFl=M3*vFg;
-              int iDD0,iDD1,iDD2;
-              iDD0=*vS.nn(i*iD+1);
-              iDD1=*vS.nn(i*iD+2);
-              iDD2=*vS.nn(i*iD+3);
-              if (iDD0!=-1)
-                *FVec.nn(iDD0)+=vFl.x;
-              if (iDD1!=-1)
-                *FVec.nn(iDD1)+=vFl.y;
-              if (iDD2!=-1)
-                *FVec.nn(iDD2)+=vFl.z;
-            }
-          }
-        }
+		  else if (pE->iType == 122)  //for rod and psuedo rbe2
+		  {
+
+			  for (i = 0; i < iNS; i++)                            //For each node 
+			  {
+				  //For the PSEUDO RBE2 forces allready in element
+				  vFg.Set(*TF.mn(i + 1, 1), *TF.mn(i + 1, 2), *TF.mn(i + 1, 3));
+				  int iDD0, iDD1, iDD2;
+				  iDD0 = *vS.nn(i * iD + 1);
+				  iDD1 = *vS.nn(i * iD + 2);
+				  iDD2 = *vS.nn(i * iD + 3);
+				  if (iDD0 != -1)
+					  *FVec.nn(iDD0) += vFg.x;
+				  if (iDD1 != -1)
+					  *FVec.nn(iDD1) += vFg.y;
+				  if (iDD2 != -1)
+					  *FVec.nn(iDD2) += vFg.z;
+			  }
+		  }
+		  else if (pE->iType == 21) //BEAM ELEMENT THERMAL LOAD IS AXIAL
+		  {
+			  E_Object2B* pB = (E_Object2B*)pE;
+			  Mat TOff(6,6);
+			  Mat vF(6,1);
+			  Mat vFoff;
+			  for (i = 0; i < iNS; i++)
+			  {
+				  vFoff.clear();
+				  vF.MakeZero();
+				  TOff.MakeZero();
+				  vFl.Set(*TF.mn(i + 1, 1), 0, 0);
+				  vFg = M3 * vFl;                    //IN GLONAL
+				  //NEED TODO OFFSET TRANSFORM
+				  *vF.mn(1, 1) = vFg.x;
+				  *vF.mn(2, 1) = vFg.y;
+				  *vF.mn(3, 1) = vFg.z;
+				  vFoff = vF;
+				  bOff = pB->GetOffset(PropsT, i, vOff);
+				  if (bOff) //Element has non zeror offsets
+				  {
+					  vFoff.clear();
+					  pB->OffsetsTransform(TOff, vOff);
+					  TOff.Transpose();
+					  vFoff = TOff * (vF);
+				  }
+				  for (k = 1; k <= iD; k++)
+				  {
+					  int iDD0;
+					  iDD0 = *vS.nn(i * iD + k);
+					  if (iDD0 != -1)
+						  *FVec.nn(iDD0) += *vFoff.mn(k, 1);
+				  }
+				  
+			  }
+			  TOff.clear();
+			  vF.clear();
+			  vFoff.clear();
+		  }
       }
     pNext=(BCLD*) pNext->next;
     }
-  }
+
 }
 
-void ME_Object::ZeroThermalStrains()
+void ME_Object::ZeroThermalStrains(double dVal)
 {
   int i;
   for (i=0;i<iElNo;i++)
   {
-    pElems[i]->dTemp=0;
+    pElems[i]->dTemp = dVal;
   }
 }
+
+void ME_Object::SetDefNodeTemp(double dVal)
+{
+	int i;
+	for (i = 0; i < iNdNo; i++)
+	{
+		pNodes[i]->dTemp = dVal;
+	}
+}
+
+void ME_Object::GetGRAVLoads(PropTable* PropsT, MatTable* MatT, GRAV* pGrav, int neq, Vec<double>& FVec)
+{
+	E_Object* pE;
+	Mat MM;
+	Vec<int> vS;
+	int iNS;
+	int iD;
+	int i;
+	C3dVector vAC;
+#
+	if (pGrav->iCID > 0)
+	{
+		outtext1("ERROR: Only GRAV loads in Basic Cartesian Support at Present.");
+		return;
+	}
+	vAC = pGrav->vV;
+	vAC *= pGrav->dScl;  //Acceleration vector in global
+
+	if ((PropsT == NULL) || (MatT == NULL))
+	{
+		outtext1("ERROR: Property or Mat Table Missing, Body Loads Not Calculated.");
+	}
+	else 
+	{
+		for (i = 0; i < iElNo; i++)
+		{
+			pE = pElems[i];
+			if (pE != NULL)
+			{
+				vS = pE->GetSteerVec3d();
+				MM = pE->GetElNodalMass(PropsT, MatT);
+				iNS = pE->iNoNodes;
+				iD = pE->noDof();
+				int i;
+				for (i = 0; i < iNS; i++)
+				{
+					int iDD0, iDD1, iDD2;
+					iDD0 = *vS.nn(i * iD + 1);
+					iDD1 = *vS.nn(i * iD + 2);
+					iDD2 = *vS.nn(i * iD + 3);
+					double dTTT = *MM.mn(i + 1, 1);
+					if (iDD0 != -1)
+						*FVec.nn(iDD0) += *MM.mn(i + 1, 1) * vAC.x;
+					if (iDD1 != -1)
+						*FVec.nn(iDD1) += *MM.mn(i + 1, 1) * vAC.y;
+					if (iDD2 != -1)
+						*FVec.nn(iDD2) += *MM.mn(i + 1, 1) * vAC.z;
+				}
+			}
+		}
+	}
+
+}
+
+
 
 void ME_Object::GetAccelLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,int neq,Vec<double> &FVec)
 {
@@ -20937,6 +27700,7 @@ void ME_Object::GetRotAccelLoads(PropTable* PropsT, MatTable* MatT, cLinkedList*
 
 void ME_Object::GetPressureLoads(cLinkedList* pLC,int neq,Vec<double> &FVec)
 {
+double dTot = 0;
 int j,k;
 double P;
 Mat coord;
@@ -20989,10 +27753,11 @@ while (pNext!=NULL)
      C3dVector vN;
      vN=pE->Get_Normal();
      vN.Normalize();
-     Pt_Object* pN;
+     Node* pN;
+
      for (j=0;j<pE->iNoNodes;j++)
      {
-       pN=(Pt_Object*) pE->GetNode(j);
+       pN=(Node*) pE->GetNode(j);
        if (pN->dof[0]>0)
 	     {
          *FVec.nn(pN->dof[0])+=*Press.mn(1,j+1)*vN.x;
@@ -21004,12 +27769,14 @@ while (pNext!=NULL)
        if (pN->dof[2]>0)
 	     {
          *FVec.nn(pN->dof[2])+=*Press.mn(1,j+1)*vN.z;
+		
 	     }
      }
+
   }
 pNext=(BCLD*) pNext->next;
 }
-
+dTot = dTot;
 }
 
 Vec <double> ME_Object::GetTempVec(cLinkedList* pTS,int neq)
@@ -21025,7 +27792,7 @@ if (pTS!=NULL)
       if (pNext->iObjType==327)
       {
         TemperatureBC* pR=(TemperatureBC*) pNext;
-        Pt_Object* pNode=(Pt_Object*) pR->pObj;
+        Node* pNode=(Node*) pR->pObj;
         *TVec.nn(pNode->dof[0])=-pR->dV;
       }
       pNext=(BCLD*) pNext->next;
@@ -21035,65 +27802,68 @@ return (TVec);
 }
 
 
-Vec <double> ME_Object::GetForceVec(cLinkedList* pLC,int neq)
+void  ME_Object::GetForceVec(cLinkedList* pLC,int neq, Vec<double>& FVec)
 {
-Vec <double> FVec(neq);
-BCLD* pNext;
-pNext=(BCLD*) pLC->Head;
-while (pNext!=NULL)
+
+if (pLC != nullptr)
 {
-  if (pNext->iObjType==321)
-  {
-     Pt_Object* pNode = (Pt_Object*) pNext->pObj;
-     Force* pF=(Force*) pNext;
-     if (pNode->dof[0]>0)
-	   {
-       *FVec.nn(pNode->dof[0])=pF->F.x;
-	   }
-	   if (pNode->dof[1]>0)
-	   {
-       *FVec.nn(pNode->dof[1])=pF->F.y;
-	   }
-	   if (pNode->dof[2]>0)
-	   {
-       *FVec.nn(pNode->dof[2])=pF->F.z;
-	   }
-  }
-  else if (pNext->iObjType==323)
-  {
-     Pt_Object* pNode = (Pt_Object*) pNext->pObj;
-     Moment* pF=(Moment*) pNext;
-     if (pNode->dof[3]>0)
-	   {
-       *FVec.nn(pNode->dof[3])=pF->F.x;
-	   }
-	   if (pNode->dof[4]>0)
-	   {
-       *FVec.nn(pNode->dof[4])=pF->F.y;
-	   }
-	   if (pNode->dof[5]>0)
-	   {
-       *FVec.nn(pNode->dof[5])=pF->F.z;
-	   }
-  }
-  else if (pNext->iObjType==326)
-  {
-     Pt_Object* pNode = (Pt_Object*) pNext->pObj;
-     FluxLoad* pF=(FluxLoad*) pNext;
-     if (pNode->dof[0]>0)
-	   {
-         *FVec.nn(pNode->dof[0])=pF->dV;
-	   }
-  }
-pNext=(BCLD*) pNext->next;
+	BCLD* pNext;
+	pNext = (BCLD*)pLC->Head;
+	while (pNext != NULL)
+	{
+		if (pNext->iObjType == 321)
+		{
+			Node* pNode = (Node*)pNext->pObj;
+			Force* pF = (Force*)pNext;
+			if (pNode->dof[0] > 0)
+			{
+				*FVec.nn(pNode->dof[0]) = pF->F.x;
+			}
+			if (pNode->dof[1] > 0)
+			{
+				*FVec.nn(pNode->dof[1]) = pF->F.y;
+			}
+			if (pNode->dof[2] > 0)
+			{
+				*FVec.nn(pNode->dof[2]) = pF->F.z;
+			}
+		}
+		else if (pNext->iObjType == 323)
+		{
+			Node* pNode = (Node*)pNext->pObj;
+			Moment* pF = (Moment*)pNext;
+			if (pNode->dof[3] > 0)
+			{
+				*FVec.nn(pNode->dof[3]) = pF->F.x;
+			}
+			if (pNode->dof[4] > 0)
+			{
+				*FVec.nn(pNode->dof[4]) = pF->F.y;
+			}
+			if (pNode->dof[5] > 0)
+			{
+				*FVec.nn(pNode->dof[5]) = pF->F.z;
+			}
+		}
+		else if (pNext->iObjType == 326)
+		{
+			Node* pNode = (Node*)pNext->pObj;
+			FluxLoad* pF = (FluxLoad*)pNext;
+			if (pNode->dof[0] > 0)
+			{
+				*FVec.nn(pNode->dof[0]) = pF->dV;
+			}
+		}
+		pNext = (BCLD*)pNext->next;
+	}
 }
-return (FVec);
+
 }
 
 
 
 
-G_Object* ME_Object::AddRestraint(Pt_Object* pInNode,
+G_Object* ME_Object::AddRestraint(Node* pInNode,
 								                  BOOL xon,
                                   BOOL yon,
                                   BOOL zon,
@@ -21105,7 +27875,7 @@ G_Object* ME_Object::AddRestraint(Pt_Object* pInNode,
 
 cLinkedList* pSet=NULL;
 Restraint* pF=NULL;
-int ID;
+int ID = -1;
 if ((inSetID==-1) && (iCurBC==-1))
 {
   outtext1("ERROR: No Boundary Set Active.");
@@ -21144,7 +27914,7 @@ void ME_Object::ApplyRes(cLinkedListB* pBC)
     if (pNext->iObjType==322)
     {
       Restraint* pR=(Restraint*) pNext;
-      Pt_Object* pNode=(Pt_Object*) pR->pObj;
+      Node* pNode=(Node*) pR->pObj;
       // only apply the restrain if it a global dof restraint
       // else it local and need transformation
       if (pNode->OutSys==0)
@@ -21177,7 +27947,7 @@ int ME_Object::ApplyResSS(cLinkedListB* pBC)
       if (pNext->iObjType==327)
       {
         TemperatureBC* pR=(TemperatureBC*) pNext;
-        Pt_Object* pNode=(Pt_Object*) pR->pObj;
+        Node* pNode=(Node*) pR->pObj;
         // only apply the restrain if its ZEROR else need to use penulty method
         pNode->dof[0]=iDof;  
         iDof++;
@@ -21206,7 +27976,7 @@ for (k=0;k<iBCLDs;k++)
   if (pBCLDs[k]->iObjType==322)
   {
    Restraint* pR=(Restraint*) pBCLDs[k];
-   Pt_Object* pNode=(Pt_Object*) pR->pObj;
+   Node* pNode=(Node*) pR->pObj;
    if (pNode->OutSys!=0)
    {
      pS=this->GetSys(pNode->OutSys);
@@ -21290,7 +28060,7 @@ for (k=0;k<iBCLDs;k++)
   if (pBCLDs[k]->iObjType==322)
   {
    Restraint* pR=(Restraint*) pBCLDs[k];
-   Pt_Object* pNode=(Pt_Object*) pR->pObj;
+   Node* pNode=(Node*) pR->pObj;
    if (pNode->OutSys!=0)
    {
      iCnt++;
@@ -21320,7 +28090,7 @@ Mat Kmt;
 Mat tKmt;
 
 
-Pt_Object* pNode=(Pt_Object*) pR->pObj;
+Node* pNode=(Node*) pR->pObj;
 if (pNode->OutSys!=0)
 {
  pS=this->GetSys(pNode->OutSys);
@@ -21409,7 +28179,7 @@ void ME_Object::GenLocalResraints(Mat* KM,Vec<int> *G, int &iELCnt)
     if (pBCLDs[i]->iObjType==322)
     {
       Restraint* pR=(Restraint*) pBCLDs[i];
-      Pt_Object* pNode=(Pt_Object*) pR->pObj;
+      Node* pNode=(Node*) pR->pObj;
       if (pNode->OutSys!=0)
       {
         LocalResIter(pR,SResT,KResT,SResB,KResB);
@@ -21432,9 +28202,9 @@ int i,j;
 int iDof=1;
 int mdof;
 FILE* pFile;
-pFile = fopen("GENDOF_DIAG.txt","w");
+//pFile = fopen("GENDOF_DIAG.txt","w");
 
-fprintf(pFile,"%s%i\n","NO of Nodes ",iNdNo);
+//fprintf(pFile,"%s%i\n","NO of Nodes ",iNdNo);
 for(i=0;i<iNdNo;i++)
 {
   mdof=MaxDof(pNodes[i]);
@@ -21442,7 +28212,7 @@ for(i=0;i<iNdNo;i++)
   {
     if (pNodes[i]->dof[j]!=-1)
     {
-      fprintf(pFile,"%s %i %s %i\n","Node ",pNodes[i]->iLabel,"DOF",j);
+      //fprintf(pFile,"%s %i %s %i\n","Node ",pNodes[i]->iLabel,"DOF",j);
       pNodes[i]->dof[j]=iDof;
       iDof++;
     }
@@ -21452,8 +28222,8 @@ for(i=0;i<iNdNo;i++)
     pNodes[i]->dof[j]=0;
   }
 }
-fprintf(pFile,"%s%i\n","iDof ",iDof);
-fclose(pFile);
+//fprintf(pFile,"%s%i\n","iDof ",iDof);
+//fclose(pFile);
 return(iDof-1);
 }
 
@@ -21463,19 +28233,19 @@ int ME_Object::GenDofs1D(int iD)
 int i;
 int iDof=iD;
 FILE* pFile;
-pFile = fopen("GENDOF_DIAG.txt","w");
-fprintf(pFile,"%s%i\n","NO of Nodes ",iNdNo);
+//pFile = fopen("GENDOF_DIAG.txt","w");
+//fprintf(pFile,"%s%i\n","NO of Nodes ",iNdNo);
 for(i=0;i<iNdNo;i++)
 {
   if (pNodes[i]->dof[0]==0)
   {
-    fprintf(pFile,"%s %i %s %i\n","Node ",pNodes[i]->iLabel,"DOF",0);
+    //fprintf(pFile,"%s %i %s %i\n","Node ",pNodes[i]->iLabel,"DOF",0);
     pNodes[i]->dof[0]=iDof;
     iDof++;
   }
 }
-fprintf(pFile,"%s%i\n","iDof ",iDof);
-fclose(pFile);
+//fprintf(pFile,"%s%i\n","iDof ",iDof);
+//fclose(pFile);
 return(iDof-1);
 }
 
@@ -21514,7 +28284,7 @@ int ME_Object::GenDofs3D(int iD)
 }
 
 
-C3dMatrix ME_Object::GetNodalSys(Pt_Object* pN)
+C3dMatrix ME_Object::GetNodalSys(Node* pN)
 {
 C3dMatrix mRC;
 C3dMatrix mInvRC;
@@ -21561,7 +28331,7 @@ return (mInvRC);
 
 
 
-BOOL ME_Object::DeleteNd(Pt_Object* pN)
+BOOL ME_Object::DeleteNd(Node* pN)
 {
 BOOL b1=FALSE;
 BOOL brc=FALSE;
@@ -21587,6 +28357,36 @@ if (b1==FALSE)
   }
 }
 return (brc);
+}
+
+void ME_Object::IncludeToGroup(int iF,ObjGp* Group)
+{
+	int i;
+	//Coordinate systems
+	for (i = 0; i < iCYS; i++)
+	{
+      if (pSys[i]->iFile==iF)
+		  Group->Add(pSys[i]);
+	}
+	//Nodes
+	for (i = 0; i < iNdNo; i++)
+	{
+		if (pNodes[i]->iFile == iF)
+			Group->Add(pNodes[i]);
+	}
+	//Elements
+	for (i = 0; i < iElNo; i++)
+	{
+		if (pElems[i]->iFile == iF)
+			Group->Add(pElems[i]);
+	}
+	//Boundary Conditions
+	for (i = 0; i < iBCLDs; i++)
+	{
+		if (pBCLDs[i]->iFile == iF)
+			Group->Add(pBCLDs[i]);
+	}
+
 }
 
 BOOL ME_Object::CanDeleteEl(E_Object* pEl)
@@ -21670,7 +28470,7 @@ return (brc);
 
 //Check to see if a node is used in any boundary set.
 //if so we can delete if
-BOOL ME_Object::NodeInBCSet(Pt_Object* pN)
+BOOL ME_Object::NodeInBCSet(Node* pN)
 {
 int i;
 BOOL brc=FALSE;
@@ -21690,7 +28490,7 @@ for (i = 0; i < iNoLCs; i++)
         brc = TRUE;
         break;
       }
-      pC = (cLink*)pC->next;
+      pC = (eEdge*)pC->next;
     }
   }
 }
@@ -21707,7 +28507,7 @@ for (i = 0; i < iNoBCs; i++)
         brc = TRUE;
         break;
       }
-      pC = (cLink*)pC->next;
+      pC = (eEdge*)pC->next;
     }
   }
 }
@@ -21737,7 +28537,7 @@ BOOL ME_Object::ElemInBCSet(E_Object* pE)
           brc = TRUE;
           break;
         }
-        pC = (cLink*)pC->next;
+        pC = (eEdge*)pC->next;
       }
     }
   }
@@ -21754,7 +28554,7 @@ BOOL ME_Object::ElemInBCSet(E_Object* pE)
           brc = TRUE;
           break;
         }
-        pC = (cLink*)pC->next;
+        pC = (eEdge*)pC->next;
       }
     }
   }
@@ -21778,13 +28578,13 @@ void ME_Object::GetClosestNodes(C3dVector pTrg,ObjList* pRes,double dTol)
 }
 
 
-Pt_Object* ME_Object::GetClosestNode(Pt_Object* pIn,double* dMinDist)
+Node* ME_Object::GetClosestNode(Node* pIn,double* dMinDist)
 {
 int i;
 double dDist=1e36;
 *dMinDist=1e36;
 
-Pt_Object* pRet=NULL;
+Node* pRet=NULL;
 C3dVector pT;
 C3dVector pS=pIn->GetCoords();
 for (i=0;i<iNdNo;i++)
@@ -21805,13 +28605,13 @@ for (i=0;i<iNdNo;i++)
 return (pRet);
 }
 
-Pt_Object* ME_Object::GetClosestNode2(C3dVector pIn, double &dMinDist)
+Node* ME_Object::GetClosestNode2(C3dVector pIn, double &dMinDist)
 {
 	int i;
 	double dDist = 1e36;
 	dMinDist = 1e36;
 
-	Pt_Object* pRet = NULL;
+	Node* pRet = NULL;
 	C3dVector pT;
 	C3dVector pS = pIn;
 	for (i = 0; i < iNdNo; i++)
@@ -21832,7 +28632,7 @@ Pt_Object* ME_Object::GetClosestNode2(C3dVector pIn, double &dMinDist)
 
 void ME_Object::CNodesMerge(double dTol)
 {
-Pt_Object* pWith=NULL;
+Node* pWith=NULL;
 double dDist;
 int i;
 int j;
@@ -21860,7 +28660,7 @@ for (i=0;i<iNdNo;i++)
 }
 
 
-void ME_Object::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
+void ME_Object::RepNodeInEl(Node* pThis,Node* pWith)
 {
   int j;
   if (pThis!=pWith)
@@ -21875,7 +28675,7 @@ void ME_Object::RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith)
 
 ObjList* ME_Object::CNodesMerge2(double dTol,BOOL UpLab,BOOL bDel)
 {
-Pt_Object* pWith=NULL;
+Node* pWith=NULL;
 ObjList* DelNode=new ObjList();
 double dDist;
 int i;
@@ -21910,7 +28710,7 @@ for (i=0;i<iNdNo;i++)
 return (DelNode);
 }
 
-BOOL ME_Object::NodeInEl(Pt_Object* pN)
+BOOL ME_Object::NodeInEl(Node* pN)
 {
 int i;
 BOOL brc=FALSE;
@@ -21926,7 +28726,7 @@ return (brc);
 }
 
 
-int ME_Object::MaxDof(Pt_Object* pN)
+int ME_Object::MaxDof(Node* pN)
 {
 int i;
 int id=0;
@@ -21945,14 +28745,48 @@ for(i=0;i<iElNo;i++)
 return (imax);
 }
 
+void ME_Object::CoordToGlocal()
+{
+	int i;
+	int iRID;
+	CoordSys* pC=NULL;
+	CoordSys* pCNext=NULL;
+	for (i = 0; i < iCYS; i++)
+	{
+		pC = (CoordSys*) pSys[i];
+		iRID = pC->RID;
+		if (iRID > 0)
+		{
+			do
+			{
+				pCNext= GetSys(iRID);
+				if (pCNext == NULL)
+				{
+					outtext1("ERROR: Coordinate Sys Not Found.");
+				}
+				else
+				{
+					iRID = pCNext->RID;
+					C3dMatrix A = pCNext->mOrientMat;
+					pC->Origin = A * pC->Origin;
+					pC->Origin += pCNext->Origin;
+					pC->mOrientMat = A * pC->mOrientMat;
+					if (pCNext->bG)
+						iRID = 0;  //Has been transformed already - quit
+				}
+			} while (iRID > 0);
+
+		}
+		pC->bG = TRUE;
+	}
+}
+
 void ME_Object::UpdatePropRef(PropTable* pT)
 {
 int i;
-Property* p;
+Property* p=NULL;
 for (i=0;i<iElNo;i++)
 {
-if (pElems[i]->iLabel==68700267)
-  i=i;
   p=pT->GetItem(pElems[i]->PID);
   if (p!=NULL)
   {
@@ -21973,23 +28807,27 @@ void ME_Object::AddElEx(E_Object* pEl)
 	iElNo++;
 }
 
-E_Object* ME_Object::AddEl2(int pVnode[200], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C,int iMatCys,double dMatAng)
+E_Object* ME_Object::AddEl2(int pVnode[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C,int iMatCys,double dMatAng)
 {
-  int iCnt;
+  int iCnt=-1;
   E_Object* cAddedEl;
-  Pt_Object *pENodes[100];
+  Node *pENodes[MaxSelNodes];
+  if (iCnt> MaxSelNodes)
+     outtext1("WARNING: Max RBE2 Nodes Exceeded.");
   if (TempList!=NULL)
   {
     for (iCnt = 0; iCnt < iNoNodes; iCnt ++)
     {
-      pENodes[iCnt] =(Pt_Object*) TempList->Objs[pVnode[iCnt]];
+	  if (iCnt < MaxSelNodes)
+         pENodes[iCnt] =(Node*) TempList->Objs[pVnode[iCnt]];
     }
   }
   else
   {
     for (iCnt = 0; iCnt < iNoNodes; iCnt ++)
     {
-      pENodes[iCnt] = GetNode(pVnode[iCnt]);
+	  if (iCnt < MaxSelNodes)
+        pENodes[iCnt] = GetNode(pVnode[iCnt]);
     }
   }
   if (iLab>iElementLab)
@@ -22006,33 +28844,69 @@ int iCnt;
 iNodeLab=0;
 iElementLab=0;
 iCYSLab=0;
-for (iCnt = 0; iCnt < iNdNo; iCnt ++)
+iNodeMinLab=99999999;
+iElementMinLab = 99999999;
+iCYSMinLab = 99999999;
+if (iNdNo == 0)
 {
-   if (pNodes[iCnt]->iLabel>iNodeLab)
-   {
-     iNodeLab=pNodes[iCnt]->iLabel;
-   }
+	iNodeMinLab = 0;
 }
-for (iCnt = 0; iCnt < iElNo; iCnt ++)
+else
 {
-   if (pElems[iCnt]->iLabel>iElementLab)
-   {
-     iElementLab=pElems[iCnt]->iLabel;
-   }
+	for (iCnt = 0; iCnt < iNdNo; iCnt++)
+	{
+		if (pNodes[iCnt]->iLabel > iNodeLab)
+		{
+			iNodeLab = pNodes[iCnt]->iLabel;
+		}
+		if (pNodes[iCnt]->iLabel < iNodeMinLab)
+		{
+			iNodeMinLab = pNodes[iCnt]->iLabel;
+		}
+	}
 }
-for (iCnt = 0; iCnt < iCYS; iCnt ++)
+if (iElNo == 0)
 {
-   if (pSys[iCnt]->iLabel>iCYSLab)
-   {
-     iCYSLab=pSys[iCnt]->iLabel;
-   }
+	iElementMinLab = 0;
+}
+else
+{
+	for (iCnt = 0; iCnt < iElNo; iCnt++)
+	{
+		if (pElems[iCnt]->iLabel > iElementLab)
+		{
+			iElementLab = pElems[iCnt]->iLabel;
+		}
+		if (pElems[iCnt]->iLabel < iElementMinLab)
+		{
+			iElementMinLab = pElems[iCnt]->iLabel;
+		}
+	}
+}
+if (iCYS == 0)
+{
+	iCYSMinLab = 0;
+}
+else
+{
+	for (iCnt = 0; iCnt < iCYS; iCnt++)
+	{
+		if (pSys[iCnt]->iLabel > iCYSLab)
+		{
+			iCYSLab = pSys[iCnt]->iLabel;
+		}
+		if (pSys[iCnt]->iLabel < iCYSMinLab)
+		{
+			iCYSMinLab = pSys[iCnt]->iLabel;
+		}
+	}
 }
 iNodeLab++;
 iElementLab++;
 iCYSLab++;
 }
 
-// pInVertex[200]	Nodes
+// pInVertex[2000]	Nodes
 // int iLab			Element Label
 // int iCol			Element Colour
 // int iType		Element Type
@@ -22045,7 +28919,7 @@ iCYSLab++;
 // BOOL AddDisp
 // int iMatCys
 // double dMatAng)
-E_Object* ME_Object::AddEl(Pt_Object* pInVertex[200],int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int iA,int iB,int iC,BOOL AddDisp,int iMatCys,double dMatAng)
+E_Object* ME_Object::AddEl(Node* pInVertex[MaxSelNodes],int iLab,int iCol,int iType,int iPID,int iMat,int iNo,int iA,int iB,int iC,BOOL AddDisp,int iMatCys,double dMatAng)
 {
 E_Object* pERet=NULL;
 
@@ -22105,11 +28979,19 @@ else if (iType == 161)
 else if ((iType == 136) || (iType == 137))
   {
   E_Object2 *pEL2 = new E_Object2();
-  pEL2->Create(pInVertex,iLab,iCol,iType,iPID,iMat,iNo,this,NULL);
+  pEL2->Create(pInVertex,iLab,iCol,iType,iPID, iMatCys,iNo,this,NULL);
   pElems[iElNo] = pEL2;
   pERet= pEL2;
   iElNo++;
   }
+else if (iType == 138) 
+{
+	E_Object2BUSH* pEL2 = new E_Object2BUSH();
+	pEL2->Create(pInVertex, iLab, iCol, iType, iPID, iMatCys, iNo, this, NULL);
+	pElems[iElNo] = pEL2;
+	pERet = pEL2;
+	iElNo++;
+}
 else if (iType == 121) 
   {
   E_ObjectR2 *pEL2 = new E_ObjectR2();
@@ -22149,6 +29031,19 @@ else if (iType == 111)
   pERet= pEL34;
   iElNo++;
   }
+else if (iType == 310)
+{
+	E_Object310* pEL310 = new E_Object310();
+	pEL310->Create(pInVertex, iLab, iCol, iType, iPID, iMat, iNo, this, NULL);
+	if (pEL310->ChkNegJac() == TRUE)
+	{
+		pEL310->Reverse();
+		outtext1("ERROR: Reversing.");
+	}
+	pElems[iElNo] = pEL310;
+	pERet = pEL310;
+	iElNo++;
+}
 else if (iType == 122)
   {
   E_ObjectR *pELR = new E_ObjectR();
@@ -22176,7 +29071,40 @@ else
 return (pERet);
 }
 
-
+void ME_Object::GlobalToLocal(C3dVector& vRet, int iDef)
+{
+	int iRet;
+	iRet = 0;
+	CoordSys* Cys;
+	//int CysID;
+	if (iDef != 0)
+	{
+		Cys = GetSys(iDef);
+		if (Cys == NULL)
+		{
+			outtext1("ERROR: Coordinate Sys Not Found.");
+		}
+		else
+		{
+			C3dMatrix A = Cys->mOrientMat;
+			A.Transpose();
+			iRet = Cys->RID;
+			if (Cys->CysType == 1)
+			{
+				vRet = A * vRet;
+				vRet -= Cys->Origin;
+			}
+			else if (Cys->CysType == 2)
+			{
+				outtext1("ERROR: Not Implemented for Cylindrical.");
+			}
+			else if (Cys->CysType == 3)
+			{
+				outtext1("ERROR: Not Implemented for Sperical.");
+			}
+		}
+	}
+}
 
 int ME_Object::NodeToGlobal(C3dVector &vRet,int iDef)
 {
@@ -22253,7 +29181,7 @@ C3dVector ME_Object::CartToCylCYS(CoordSys* pCy, C3dVector pP)
 	return (vCyl);
 }
 
-int ME_Object::VecToGlobal(Pt_Object* pN, C3dVector &vRet,int iDef)
+int ME_Object::VecToGlobal(Node* pN, C3dVector &vRet,int iDef)
 {
 int iRet;
 int iLab;
@@ -22305,7 +29233,7 @@ iRet=0;
 return (iRet);
 }
 
-Pt_Object* ME_Object::AddNode(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut)
+Node* ME_Object::AddNode(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut)
 {
 int iRID;
 iRID=iDef;
@@ -22316,7 +29244,7 @@ if (iNdNo<MAX_FESIZE)
     iRID=NodeToGlobal(InPt,iRID);
   }
   while (iRID>0);
-  pNodes[iNdNo] = new Pt_Object;
+  pNodes[iNdNo] = new Node;
   pNodes[iNdNo]->Create(InPt,iLab,i2,i3,iC,iDef,iOut,this);
   if (TempList!=NULL)
   {
@@ -22377,13 +29305,13 @@ return (oRet);
 }
 
 
-Pt_Object* ME_Object::GetNode(int iRLab)
+Node* ME_Object::GetNode(int iRLab)
 {
 int iCnt;
-Pt_Object *pRetPt = NULL;
-if ((TempList!=NULL) && (iRLab<=99999999))
+Node *pRetPt = NULL;
+if ((TempList!=NULL) && (iRLab<99999999))
 {
-  pRetPt = (Pt_Object*) TempList->Objs[iRLab];
+  pRetPt = (Node*) TempList->Objs[iRLab];
 }
 else
 {
@@ -22399,7 +29327,7 @@ for (iCnt = 0; iCnt < iNdNo;iCnt++)
 return (pRetPt);
 }
 
-int ME_Object::GetNodeInd(Pt_Object* pThisNode)
+int ME_Object::GetNodeInd(Node* pThisNode)
 {
 int iCnt;
 
@@ -22432,6 +29360,28 @@ for (iCnt = 0; iCnt < iElNo;iCnt++)
 return (pRetPt);
 }
 	
+E_Object* ME_Object::GetShellFromNodes(int n1, int n2, int n3)
+{
+	int iCnt;
+	BOOL bIS = FALSE;
+	E_Object* pRetPt = nullptr;
+
+	for (iCnt = 0; iCnt < iElNo; iCnt++)
+	{
+		if ((pElems[iCnt]->iType == 92) ||
+			(pElems[iCnt]->iType == 94))
+		{
+			if ((pElems[iCnt]->NodeInEl(this->GetNode(n1))) &&
+				(pElems[iCnt]->NodeInEl(this->GetNode(n2))) &&
+				(pElems[iCnt]->NodeInEl(this->GetNode(n3))))
+			{
+				pRetPt = pElems[iCnt];
+				break;
+			}
+		}
+	}
+	return (pRetPt);
+}
 
 // contour map
 //float Texture17[30][3] =
@@ -22748,6 +29698,10 @@ for (i = 0; i < iCYS; i++)
 void ME_Object::SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran)
 {
 int i;
+C3dVector ll, uu;
+GetBoundingBox(ll, uu);
+for (i = 0; i < 8; i++)
+	BBox[i].SetToScr(pModMat, pScrTran);
 if (iNdNo > 0)
 {
   for (i = 0; i < iNdNo; i++)
@@ -22843,14 +29797,38 @@ if (iCYS > 0)
 
 void ME_Object::HighLight(CDC* pDC)
 {
-int i;
-if (iElNo > 0)
-  {
-  for (i = 0; i < iElNo; i++)
-    {
-    pElems[i]->Draw(pDC,4);	
-    }
-  }
+	int i = 0;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	for (i = 1; i < 4; i++)
+		pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 0;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+
+	i = 4;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	for (i = 5; i < 8; i++)
+		pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 4;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+
+	i = 0;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 4;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 1;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 5;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 2;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 6;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 3;
+	pDC->MoveTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+	i = 7;
+	pDC->LineTo((int)BBox[i].DSP_Point->x, (int)BBox[i].DSP_Point->y);
+
+
 }
 
 
@@ -23192,7 +30170,7 @@ for (i=1;i<ndof+1;i++)
 	    {
         icd = *g.nn(j) - *g.nn(i) + 1;
         if ((icd - 1) >= 0)
-		    {
+		{
           ival = neq * (icd - 1) + *g.nn(i);
           *bk.nn(ival) = *bk.nn(ival) + *KM.mn(i, j);
         }
@@ -23300,6 +30278,29 @@ dret=*Disp.nn(iDof);
 return(dret);
 }
 
+Mat ME_Object::GetNodalDispVec(E_Object* pE, Vec<int>& Steer, Vec<double>& Disp)
+{
+	int i, j;
+	int iDof, iNoNds, iPos;
+	iDof = pE->noDof();
+	iNoNds = pE->iNoNodes;
+	Mat DispG(iDof* iNoNds,1);
+	DispG.MakeZero();
+	iPos = 1;
+	for (i = 0; i < iNoNds; i++)
+	{
+	   for (j = 0; j < iDof; j++)
+	   {
+         Node* pN = (Node*) pE->GetNode(i);
+		 if (pN->dof[j] > 0)
+		 {
+		   *DispG.mn(iPos,1) = GetDisp(pN->dof[j], Steer, Disp);
+		 }
+		 iPos++;
+	  }
+    }
+	return(DispG);
+}
 
 void ME_Object::Displacements(int iLC, CString sSol, CString sStep, Vec<int> &Steer,Vec<double> &Disp)
 {
@@ -23324,8 +30325,8 @@ Res->lab[5]="RZ";
 
 int i;
 FILE* pFile;
-pFile = fopen("DispRes.txt","w");
-fprintf(pFile,"%s\n","DISPLACEMENTS");
+//pFile = fopen("DispRes.txt","w");
+//fprintf(pFile,"%s\n","DISPLACEMENTS");
 float X,Y,Z;
 
 for(i=0;i<iNdNo;i++)
@@ -23373,9 +30374,9 @@ for(i=0;i<iNdNo;i++)
   pRes->v[5]=Z;
   }
   Res->Add(pRes);
-  fprintf_s(pFile,"%s%6i%s%6.4f%s%6.4f%s%6.4f\n","Node ",pNodes[i]->iLabel," X: ",X," Y: ",Y," Z: ",Z);
+  //fprintf_s(pFile,"%s%6i%s%6.4f%s%6.4f%s%6.4f\n","Node ",pNodes[i]->iLabel," X: ",X," Y: ",Y," Z: ",Z);
 }
-fclose(pFile);
+//fclose(pFile);
 if (Res->iCnt>0)
 {
   ResultsSets[iNoRes]=Res;
@@ -23480,23 +30481,24 @@ void ME_Object::TempBCSet(int iLC, CString sSol, CString sStep, Vec<int> &Steer,
   int i;
   int iTS;
   int iTSetID;
-  E_Object* pE;
+  Node* pN;
   double dTemp;
   iTSetID = NestTSetID();
   iTS = CreateTSET(iTSetID, sStep);
   cLinkedListT* pTS =  GetTSET(iTSetID);
-  for (i = 0; i<iElNo; i++)
+  for (i = 0; i < iNdNo; i++)
   {
-    pE = pElems[i];
-    dTemp = pE->GetCentriodVal(0, Steer, Disp);
+	pN = pNodes[i];
+    dTemp = *Disp.nn(pN->dof[0]);
     Temperature* pT = new Temperature();
-    pT->Create(pE, pTS, dTemp, pTS->iLabel);
+    pT->Create(pN, pTS, dTemp, pTS->iLabel);
     pTS->Add(pT);
   }
 }
 
 void ME_Object::TranslationalSpringForces(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp)
 {
+BOOL bOpt, bErr;
 int i,j,k,iNoNodes;
 double dof1;
 ResSet* ResS=new ResSet();
@@ -23544,7 +30546,7 @@ for(i=0;i<iElNo;i++)
       for (k=0;k<3;k++)
       {
         dof1=0;
-        Pt_Object* pN=(Pt_Object*) pElems[i]->GetNode(j);
+        Node* pN=(Node*) pElems[i]->GetNode(j);
         if (pN->dof[k]>0)
         {
           dof1=GetDisp(pN->dof[k],Steer,Disp);
@@ -23554,7 +30556,7 @@ for(i=0;i<iElNo;i++)
     }
     if (pElems[i]->iLabel==84)
       aa++;
-      KM=pElems[i]->GetStiffMat(PropsT,MatT);
+      KM=pElems[i]->GetStiffMat(PropsT,MatT,TRUE, bErr);
     //KM.diag();
     //Res=KM*disp;
     C3dVector vFG;
@@ -23597,8 +30599,216 @@ else
 }
 }
 
-void ME_Object::StressesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp)
+
+void ME_Object::ForcesBUSH(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp)
 {
+	BOOL bOpt, bErr;
+	int i, j, k, iNoNodes;
+	double dof1;
+	Mat disp;
+	Mat KM;
+	Mat Res;
+	Mat t;
+	Mat F;
+	Mat FG;
+	C3dMatrix r; 
+	CoordSys* pCSYS = nullptr;
+	ResSet* ResS = new ResSet();
+	ResS->ACODE = 11;
+	ResS->TCODE = 4;
+	ResS->TYPE = 0;
+	ResS->LC = iLC;
+	ResS->sSubTitle = sStep;
+	ResS->sTitle = sSol;
+	ResS->WID = 6;
+
+	ResS->sName = "BUSH FORCES/MOMENTS";
+	ResS->iNoV = 6;
+	ResS->lab[0] = "FX";
+	ResS->lab[1] = "FY";
+	ResS->lab[2] = "FZ";
+	ResS->lab[3] = "MX";
+	ResS->lab[4] = "MY";
+	ResS->lab[5] = "MZ";
+
+
+	int aa = 0;
+	for (i = 0; i < iElNo; i++)
+	{
+		iNoNodes = 0;
+		if (pElems[i]->iType == 138) 
+		{
+			E_Object2BUSH* pE2 = (E_Object2BUSH*)pElems[i];
+			iNoNodes = 2;
+			disp.Create(12, 1);
+			for (j = 0; j < iNoNodes; j++)
+			{
+				for (k = 0; k < 6; k++)
+				{
+					dof1 = 0;
+					Node* pN = (Node*)pElems[i]->GetNode(j);
+					if (pN->dof[k] > 0)
+					{
+						dof1 = GetDisp(pN->dof[k], Steer, Disp);
+					}
+					*disp.mn(6 * j + (k + 1), 1) = dof1;
+				}
+			}
+
+			KM = pElems[i]->GetStiffMat(PropsT, MatT, TRUE, bErr);
+			FG = KM * disp;
+			//TRANSFORM TO LOCAL
+			int iCS = pE2->iCSYS;
+			if (iCS != -1)
+			{
+					pCSYS = GetSys(iCS);
+					if (pCSYS != NULL)
+					{
+						r = pE2->GetSpringSys(pCSYS);
+						t = pE2->KEToKGTransform2(r);
+						t.Transpose();
+						F = t * FG;
+					}
+					else
+					{
+						bErr = TRUE;
+					}
+			}
+
+			Res6* pRes = new Res6;
+			pRes->ID = pElems[i]->iLabel;
+			pRes->v[0] = (float)*F.mn(7, 1);
+			pRes->v[1] = (float)*F.mn(8, 1);
+			pRes->v[2] = (float)*F.mn(9, 1);
+			pRes->v[3] = (float)*F.mn(10, 1);
+			pRes->v[4] = (float)*F.mn(11, 1);
+			pRes->v[5] = (float)*F.mn(12, 1);
+
+			ResS->Add(pRes);
+			KM.clear();
+			Res.clear();
+			disp.clear();
+			t.clear();
+			F.clear();
+		}
+	}
+	if (ResS->iCnt > 0)
+	{
+		ResultsSets[iNoRes] = ResS;
+		iNoRes++;
+	}
+	else
+	{
+		delete(ResS);
+	}
+}
+
+void ME_Object::ForcesRod(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp)
+{
+	BOOL bOpt, bErr;
+	bOpt = FALSE;
+	bErr = FALSE;
+	int i, j, k, iNoNodes;
+	double dof1;
+	Mat disp;
+	Mat KM;
+	Mat Res;
+	C3dMatrix TMAT;
+	C3dVector TRA;
+	C3dVector RRA;
+	C3dVector TRB;
+	C3dVector RRB;
+	double dL = 0;
+
+	ResSet* ResS = new ResSet();
+	ResS->ACODE = 11;
+	ResS->TCODE = 4;
+	ResS->TYPE = 0;
+	ResS->LC = iLC;
+	ResS->sSubTitle = sStep;
+	ResS->sTitle = sSol;
+	ResS->WID = 2;
+	ResS->sName = "ROD FORCES";
+	ResS->iNoV = 2;
+	ResS->lab[0] = "AF (axial force)";
+	ResS->lab[1] = "TRQ (torque)";
+
+	for (i = 0; i < iElNo; i++)
+	{
+		iNoNodes = 0;
+		if (pElems[i]->iType == 11)
+		{
+			E_Object2R* pE = (E_Object2R*)pElems[i];
+			TMAT = pElems[i]->GetElSys();
+			iNoNodes = 2;
+			disp.Create(12, 1);
+			for (j = 0; j < iNoNodes; j++)
+			{
+				for (k = 0; k < 6; k++)
+				{
+					dof1 = 0;
+					Node* pN = (Node*)pElems[i]->GetNode(j);
+					if (pN->dof[k] > 0)
+					{
+						dof1 = GetDisp(pN->dof[k], Steer, Disp);
+					}
+					*disp.mn(6 * j + (k + 1), 1) = dof1;
+				}
+			}
+
+			KM = pElems[i]->GetStiffMat(PropsT, MatT, TRUE, bErr);
+			Res = KM * disp;
+
+			TRA.x = *Res.mn(1, 1);
+			TRA.y = *Res.mn(2, 1);
+			TRA.z = *Res.mn(3, 1);
+			RRA.x = *Res.mn(4, 1);
+			RRA.y = *Res.mn(5, 1);
+			RRA.z = *Res.mn(6, 1);
+
+			TRB.x = *Res.mn(7, 1);
+			TRB.y = *Res.mn(8, 1);
+			TRB.z = *Res.mn(9, 1);
+			RRB.x = *Res.mn(10, 1);
+			RRB.y = *Res.mn(11, 1);
+			RRB.z = *Res.mn(12, 1);
+			//Transform global forces to element local
+			TRA = TMAT * TRA;
+			RRA = TMAT * RRA;
+			TRB = TMAT * TRB;
+			RRB = TMAT * RRB;
+
+			KM.clear();
+			Res.clear();
+			disp.clear();
+			//****************************************
+			Res2* pRes = new Res2;
+			pRes->ID = pElems[i]->iLabel;
+			pRes->v[0] = (float)(TRB.x - pElems[i]->dTemp);		//Fx(axial force for BAR or ROD)
+			pRes->v[1] = (float)RRB.x;							//T(torque for BAR or ROD)
+			ResS->Add(pRes);
+		}
+	}
+	if (ResS->iCnt > 0)
+	{
+		ResultsSets[iNoRes] = ResS;
+		iNoRes++;
+	}
+	else
+	{
+		delete(ResS);
+	}
+}
+
+
+void ME_Object::ForcesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp)
+{
+BOOL bOpt, bErr;
+bOpt = FALSE;
+bErr = FALSE;
+C3dVector vOff1, vOff2;
+vOff1.Set(0, 0, 0);
+vOff2.Set(0, 0, 0);
 int i,j,k,iNoNodes;
 double dof1;
 ResSet* ResS=new ResSet();
@@ -23611,19 +30821,19 @@ ResS->sTitle = sSol;
 ResS->WID=8;
 
 ResS->sName="BEAM GRID PT REACTIONS";
-ResS->iNoV=12;
-ResS->lab[0]="END A FX";
-ResS->lab[1]="END A FY";
-ResS->lab[2]="END A FZ";
-ResS->lab[3]="END A BX";
-ResS->lab[4]="END A BY";
-ResS->lab[5]="END A BZ";
-ResS->lab[6]="END B FX";
-ResS->lab[7]="END B FY";
-ResS->lab[8]="END B FZ";
-ResS->lab[9]="END B BX";
-ResS->lab[10]="END B BY";
-ResS->lab[11]="END B BZ";
+ResS->iNoV=8;
+ResS->lab[0]="BM1A (bending moment, plane 1, end a)";
+ResS->lab[1]="BM2A (bending moment, plane 2, end a)";
+ResS->lab[2]="BM1B (bending moment, plane 1, end b)";
+ResS->lab[3]="BM2B (bending moment, plane 2, end b)";
+ResS->lab[4]="TS1 (plane 1 shear)";
+ResS->lab[5]="TS2 (plane 2 shear)";
+ResS->lab[6]="AF (axial force)";
+ResS->lab[7]="TRQ (torque)";
+//ResS->lab[8]="END B FZ";
+//ResS->lab[9]="END B BX";
+//ResS->lab[10]="END B BY";
+//ResS->lab[11]="END B BZ";
 
 Mat disp;
 Mat KM;
@@ -23633,11 +30843,16 @@ C3dVector TRA;
 C3dVector RRA;
 C3dVector TRB;
 C3dVector RRB;
+double dL = 0;
 for(i=0;i<iElNo;i++)
 {
   iNoNodes=0;
   if (pElems[i]->iType==21)
   {
+	E_Object2R* pE = (E_Object2R*)pElems[i];
+	dL = pE->getLen();
+	vOff1 = pE->OffA;
+	vOff2 = pE->OffB;
     TMAT=pElems[i]->GetElSys();
     iNoNodes=2;
     disp.Create(12,1);
@@ -23646,7 +30861,7 @@ for(i=0;i<iElNo;i++)
       for (k=0;k<6;k++)
       {
         dof1=0;
-        Pt_Object* pN=(Pt_Object*) pElems[i]->GetNode(j);
+        Node* pN=(Node*) pElems[i]->GetNode(j);
         if (pN->dof[k]>0)
         {
           dof1=GetDisp(pN->dof[k],Steer,Disp);
@@ -23654,8 +30869,22 @@ for(i=0;i<iElNo;i++)
         *disp.mn(6*j+(k+1),1)=dof1;
       }
     }
-    KM=pElems[i]->GetStiffMat(PropsT,MatT);
+
+	//account for offset in global disp
+	//move disp from grid to offset node
+	if (pElems[i]->HasOffsets())
+		pElems[i]->DispOffsets(PropsT, disp);
+	//*disp.mn(1, 1) += +vOff1.z * *disp.mn(5, 1) - vOff1.y * *disp.mn(6, 1);
+	//*disp.mn(2, 1) += -vOff1.z * *disp.mn(4, 1) + vOff1.x * *disp.mn(6, 1);
+	//*disp.mn(3, 1) += +vOff1.y * *disp.mn(4, 1) - vOff1.x * *disp.mn(5, 1);
+
+	//*disp.mn(7, 1) += +vOff2.z * *disp.mn(11, 1) - vOff2.y * *disp.mn(12, 1);
+	//*disp.mn(8, 1) += -vOff2.z * *disp.mn(10, 1) + vOff2.x * *disp.mn(12, 1);
+	//*disp.mn(9, 1) += +vOff2.y * *disp.mn(10, 1) - vOff2.x * *disp.mn(11, 1);
+	//******************************************************
+    KM=pElems[i]->GetStiffMat(PropsT,MatT,TRUE,bErr);
     Res=KM*disp;
+
     TRA.x=*Res.mn(1,1);
     TRA.y=*Res.mn(2,1);
     TRA.z=*Res.mn(3,1);
@@ -23669,7 +30898,7 @@ for(i=0;i<iElNo;i++)
     RRB.x=*Res.mn(10,1);
     RRB.y=*Res.mn(11,1);
     RRB.z=*Res.mn(12,1);
-
+	//Transform global forces to element local
     TRA=TMAT*TRA;
     RRA=TMAT*RRA;
     TRB=TMAT*TRB;
@@ -23678,22 +30907,17 @@ for(i=0;i<iElNo;i++)
     KM.clear();
     Res.clear();
     disp.clear();
-    //Need to transform to local
-    Res12* pRes=new Res12;
+    //****************************************
+    Res8* pRes=new Res8;
     pRes->ID = pElems[i]->iLabel;
-    pRes->v[0]=(float) TRA.x+pElems[i]->dTemp;
-    pRes->v[1]=(float) TRA.y;
-    pRes->v[2]=(float) TRA.z;
-    pRes->v[3]=(float) RRA.x;
-    pRes->v[4]=(float) RRA.y;
-    pRes->v[5]=(float) RRA.z;
-
-    pRes->v[6]=(float) TRB.x-pElems[i]->dTemp;
-    pRes->v[7]=(float) TRB.y;
-    pRes->v[8]=(float) TRB.z;
-    pRes->v[9]=(float) RRB.x;
-    pRes->v[10]=(float) RRB.y;
-    pRes->v[11]=(float) RRB.z;
+	pRes->v[0] = (float) -RRA.z;							//M1a(bending moment, plane 1, end a for BAR)
+	pRes->v[1] = (float)  RRA.y;							//M2a(bending moment, plane 1, end b for BAR)
+	pRes->v[2] = (float) -RRA.z + dL * TRA.y;				//M1a(bending moment, plane 2, end a for BAR)
+	pRes->v[3] = (float)  RRA.y + dL * TRA.z;							//M2b(bending moment, plane 2, end b for BAR)
+	pRes->v[4] = (float)  TRB.y;							//V1(plane 1 shear for BAR)
+	pRes->v[5] = (float)  TRB.z;							//V2(plane 2 shear for BAR)
+	pRes->v[6] = (float)  (TRB.x - pElems[i]->dTemp);		//Fx(axial force for BAR or ROD)
+	pRes->v[7] = (float)  RRB.x;							//T(torque for BAR or ROD)
 
     ResS->Add(pRes);
   }
@@ -23757,6 +30981,45 @@ ResSet* ME_Object::Create2dStrainResSet(CString sTitle, int iLC, CString sStep, 
 	return (ResStrn);
 }
 
+ResSet* ME_Object::Create2dForceResSet(CString sTitle, int iLC, CString sStep, CString sSol)
+{
+	ResSet* ResS = new ResSet();
+	ResS->ACODE = 11;
+	ResS->TCODE = 4;
+	ResS->TYPE = 0;
+	ResS->LC = iLC;
+	ResS->sSubTitle = sStep;
+	ResS->sTitle = sSol;
+	ResS->WID = 8;
+
+	ResS->sName = sTitle;
+	ResS->iNoV = 8;
+	ResS->lab[0] = "Nxx: Normal x Force";
+	ResS->lab[1] = "Nyy: Normal y Force";
+	ResS->lab[2] = "Nxy: Shear xy Force";
+	ResS->lab[3] = "Mxx: Moment x Plane";
+	ResS->lab[4] = "Myy: Moment y Plane";
+	ResS->lab[5] = "Mxy: Twist Mom xy";
+	ResS->lab[6] = "Qx : Transv Shear x";
+	ResS->lab[7] = "Qy : Transv Shear y";
+
+
+	ResSet* ResSt = new ResSet();
+	ResDef* pVT;
+	pVT = new ResDef();
+	pVT->sResType = sTitle + "(Flux Mid)";
+	pVT->iResType = 3;        //2d Tensor
+	pVT->iLoc = 1;            //Element Centroid(cys global)
+	pVT->iComponents[0] = 0;
+	pVT->iComponents[1] = 1;
+	pVT->iComponents[2] = 2;
+
+	pVT->iCompNo = 3;
+	pVT->GenDefualtHeaders();
+	ResS->AddResDef(pVT);
+	return (ResS);
+}
+
 ResSet* ME_Object::Create2dStressResSet(CString sTitle,int iLC,CString sStep,CString sSol)
 {
 	ResSet* ResS = new ResSet();
@@ -23793,7 +31056,7 @@ ResSet* ME_Object::Create2dStressResSet(CString sTitle,int iLC,CString sStep,CSt
 	ResS->lab[18] = "Min Prin (Z2 Top)";
 	ResS->lab[19] = "Max Shear (Z2 Top)";
 	ResS->lab[20] = "Von Mises (Z2 Top)";
-	ResSet* ResSt = new ResSet();
+	//ResSet* ResSt = new ResSet();
 	ResDef* pVT;
 	pVT = new ResDef();
 	pVT->sResType = sTitle + "(Mid)";
@@ -23911,7 +31174,8 @@ Mat ResZ2;
 Mat disp; 
 Mat disp3d; 
 Mat disp3dR;
-
+Mat MAT_TS;
+double dSHRatio = 1;
 C3dVector v; C3dVector R;
 int n;
 double det;
@@ -23953,12 +31217,15 @@ for(i=0;i<iElNo;i++)
     MID=pS->GetDefMatID();
   }
   Material* pM=MatT->GetItem(MID);
+  
 //Get Shell thickness
 
  if (((pElems[i]->iType==91) || (pElems[i]->iType==94)) && (pS!=NULL))
  {
    PSHELL* pSh = (PSHELL*) pS;
    dthk=pSh->dT;
+   dSHRatio = pSh->dTST;
+   
  }
 
  if ((pM!=NULL) && (pM->iType = 1))
@@ -23966,6 +31233,8 @@ for(i=0;i<iElNo;i++)
    MAT1* pIsen = (MAT1*) pM;
    dE=pIsen->dE;
    dv=pIsen->dNU;
+   MAT_TS = pM->DeeSH();
+
  }
  //************START OF CALCULATION************
  if (iNoNodes > 0)
@@ -23976,7 +31245,7 @@ for(i=0;i<iElNo;i++)
 		 {
 			 dof1 = 0;
 			 dofR = 0;
-			 Pt_Object* pN = (Pt_Object*)pElems[i]->GetNode(j);
+			 Node* pN = (Node*)pElems[i]->GetNode(j);
 			 if (pN->dof[k] > 0)
 			 {
 				 dof1 = GetDisp(pN->dof[k], Steer, Disp);
@@ -23989,33 +31258,43 @@ for(i=0;i<iElNo;i++)
 			 *disp3dR.mn(k + 1, j + 1) = dofR; // Nodal Rotations
 		 }
 	 }
-	 C3dMatrix M = pElems[i]->GetElSys();
 
-	 //displacement in plain of element
+	 //WILL NEED TO MODIFY DICPLACEMENT TO ACCOUNT FOR OFFSET
+	 // BE DONE
+	 C3dMatrix M = pElems[i]->GetElSys();
+	 //TRANSFORM GLOBAL DISPS TO LOCAL ELEMENT
+	 int iNoNds = pElems[i]->iNoNodes;
+	 Mat DispTS(iNoNds*6,1);
 	 for (j = 0; j < iNoNodes; j++)
 	 {
 		 //Translations
-		 v.x = *disp3d.mn(1, j + 1);
+		 v.x = *disp3d.mn(1, j + 1);  
 		 v.y = *disp3d.mn(2, j + 1);
 		 v.z = *disp3d.mn(3, j + 1);
 		 v = M.Mult(v);
 		 n = 1 + j * 2;
-		 *disp.mn(n, 1) = v.x;
+		 *disp.mn(n, 1) = v.x;			//Displecement vector for membarne
 		 *disp.mn(n + 1, 1) = v.y;
-		 //Rotations
-		 R.x = *disp3dR.mn(1, j + 1);  //Theta global X
-		 R.y = *disp3dR.mn(2, j + 1);  //Theta global Y
-		 R.z = *disp3dR.mn(3, j + 1);  //Theta global Z
+		 //Rotations					//Diplacements for bending and TShear
+		 R.x = *disp3dR.mn(1, j + 1);	//Theta global X
+		 R.y = *disp3dR.mn(2, j + 1);	//Theta global Y
+		 R.z = *disp3dR.mn(3, j + 1);	//Theta global Z
 		 R = M.Mult(R);
 		 //update the plate bending / shear disp vector
 		 *disp3dR.mn(1, j + 1) = v.z;   // Z displacement
 		 *disp3dR.mn(2, j + 1) = R.x;   // theta X
 		 *disp3dR.mn(3, j + 1) = R.y;   // theta Y (disregard theta Z)
+		 //full TS local element disp vector
+		 *DispTS.mn(j * 6 + 1, 1) = v.x;
+		 *DispTS.mn(j * 6 + 2, 1) = v.y;
+		 *DispTS.mn(j * 6 + 3, 1) = v.z;
+		 *DispTS.mn(j * 6 + 4, 1) = R.x;
+		 *DispTS.mn(j * 6 + 5, 1) = R.y;
+		 *DispTS.mn(j * 6 + 6, 1) = R.z;
 	 }
 	 disp3d.clear();
 	 dee = pElems[i]->DeeMat(dE, dv, 3);
 	 coord = pElems[i]->getCoords3d();       //Coords in element CSYS this case actually 2d
-	 Mat NdDisp(iNoNodes, 2);
 	 Points = pElems[i]->Sample(nip);         //Only 1 integration point at centre of element
 	 det = 0;
 	 fun = pElems[i]->ShapeFun(Points, 1);    //1x4 shape fuction values at el centre
@@ -24023,12 +31302,14 @@ for(i=0;i<iElNo;i++)
 	 jac = deriv * coord;
 	 jac = jac.InvertJac(det);
 	 deriv2 = jac * deriv;
+
 	 //Bending Strain Components curvatures k11,k22,k12
 	 //1 pt at el centre
 	 C3dMatrix Bb;
 	 C3dVector d;
 	 C3dVector Curv;
 	 Curv.Set(0, 0, 0);
+	 //BENDING TERMS Bb is BENDING B MATRIX
 	 for (k = 1; k < iNoNodes+1; k++)
 	 {
 	   Bb.m_00 = 0;
@@ -24048,12 +31329,16 @@ for(i=0;i<iElNo;i++)
 	 
 
 	//Out of Plain Shear Strain Components gamma1, gamma2
+	Mat BEE_TS = pElems[i]->BEE_TS_Recovery();
+	Mat STRAIN_TV = BEE_TS * DispTS;
+	Mat STRESS_TV = MAT_TS * STRAIN_TV;
+	STRESS_TV *= pElems[i]->GetPHI_SQ();
+	//NOTE FOR TRANSVERSE FORCES * by dSHRatio
+	//end shear strains
 
-	 disp3dR.clear();
+	disp3dR.clear();
 	//in plane components x,y,xy
-
     bee=pElems[i]->bmat(coord, deriv2,3,2);
-	//bee.diag();
     db=bee*disp;
 	SX=*db.mn(1,1);
     SY=*db.mn(2,1);
@@ -24061,14 +31346,13 @@ for(i=0;i<iElNo;i++)
 	//RX = *db.mn(4, 1);
 	//RY = *db.mn(5, 1);
 	//RXY = *db.mn(6, 1);
-	SXY *= 0.5; //Not sure about
+	SXY *= 0.5; //Not sure about ENGINEERING SHEAR STRAIN!!
     Res10* pResStrn=new Res10;
 	pResStrn->ID = pElems[i]->iLabel;
 	pResStrn->v[0]=(float) SX;
 	pResStrn->v[1]=(float) SY;
 	pResStrn->v[2]=(float) SXY;
 	cS = (SX + SY)*0.5;
-	
 	Mag = pow((SX - cS)*(SX - cS) + (SXY*SXY), 0.5);
 	pResStrn->v[3] = (float)(cS + Mag);
 	pResStrn->v[4] = (float)(cS - Mag);
@@ -24083,28 +31367,27 @@ for(i=0;i<iElNo;i++)
 	pResStrn->v[8] = (float)(cS + Mag);
 	pResStrn->v[9] = (float)(cS - Mag);
 	//Principals 
-
 	ResStrn->Add(pResStrn);
-
+	//THERMAL STRAINS REMOVED
     *db.mn(1,1)-=pElems[i]->dTemp;   //Subtract thermal strains 
     *db.mn(2,1)-=pElems[i]->dTemp;   //Subtract thermal strains
-	//Z2 bending Stress (Top surface Z2 is thick/2 z1 is -thick/2)
+	//Z1 bending Stress (Top surface Z2 is thick/2 z1 is -thick/2)
 	mStrn = db;
-	*mStrn.mn(1, 1) -= 0.5*Curv.x*dthk;   //Subtract thermal strains 
-	*mStrn.mn(2, 1) -= 0.5*Curv.y*dthk;
-	*mStrn.mn(3, 1) -= 0.5*Curv.z*dthk;  //Engininerring Strain to Strain????
-    Res=dee* mStrn;                        //Calculare Stresses
-	mStrn.clear();
-	//Z1 bending Stress (Bot surface Z1 is -thick/2 z1 is -thick/2)
-	mStrn = db;
-	*mStrn.mn(1, 1) += 0.5*Curv.x*dthk;   //Subtract thermal strains 
+	*mStrn.mn(1, 1) += 0.5*Curv.x*dthk;   
 	*mStrn.mn(2, 1) += 0.5*Curv.y*dthk;
-	*mStrn.mn(3, 1) += 0.5*Curv.z*dthk;
-	ResZ1 = dee * mStrn;                        //Calculare Stresses
+	*mStrn.mn(3, 1) += 0.5*Curv.z*dthk;		 //Engininerring Strain to Strain????
+    ResZ1=dee* mStrn;                        //Calculate Stresses
+	mStrn.clear();
+	//Z2 bending Stress (Bot surface Z1 is -thick/2 z1 is -thick/2)
+	mStrn = db;
+	*mStrn.mn(1, 1) -= 0.5*Curv.x*dthk;   
+	*mStrn.mn(2, 1) -= 0.5*Curv.y*dthk;
+	*mStrn.mn(3, 1) -= 0.5*Curv.z*dthk;
+	ResZ2 = dee * mStrn;                        //Calculare Stresses
 	mStrn.clear();
 	//Mid bending Stress (Bot surface Z1 is thick/2 z1 is -thick/2)
 	mStrn = db;
-	ResZ2 = dee * mStrn;
+	Res = dee * mStrn;
 	Add2dStressRes(ResS, pElems[i]->iLabel, Res,ResZ1,ResZ2);
 	Res.clear();
 	ResZ1.clear();
@@ -24120,8 +31403,220 @@ if (ResS->iCnt>0)
 {ResultsSets[iNoRes] = ResS; iNoRes++;}
 else
 {delete(ResS);}
-
 }
+
+// was Stresses2d
+//rewriten for shell strains stress and engineering forces including
+//transverse shear
+void ME_Object::RecoverShell(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp)
+{
+	//ALL THESE MATS NEED TO BE CLEARED!!!
+
+	Mat mStrn;
+	Mat Res;
+	Mat ResZ1;
+	Mat ResZ2;
+
+	Mat DispGlobal;  //Global displacements
+	Mat DispEl;      //local element displacements
+	Mat TMAT;              //transfomation mat global to local
+	Mat MAT_TS;
+	Mat MAT_BM;
+	Mat MAT_BB;
+	double dSHRatio = 1;
+	double dthk = 0.001;
+	double cS;
+	double Mag;
+	int MID = -1;
+	int i; int j; int k;
+	double SX, SY, SXY, RX, RY, RXY, TX, TY, BX, BY, BXY;
+	ResSet* ResF;
+	ResSet* ResS;                        //Mid Stress Results Set
+	ResSet* ResStrn;                     //Strain (dir & cur) Results Set
+	ResF = Create2dForceResSet("2d EL FORCES", iLC, sStep, sSol);
+	ResS = Create2dStressResSet("2d EL STRESSES", iLC, sStep, sSol);
+	ResStrn = Create2dStrainResSet("2d EL STRAINS (Mid)", iLC, sStep, sSol);
+
+	SX = 0; SY = 0, SXY = 0; RX = 0; RY = 0; RXY = 0;
+	int iNoNodes = 0;
+	for (i = 0; i < iElNo; i++)
+	{
+		//If its a shell element then process
+		if ((pElems[i]->iType == 91) || (pElems[i]->iType == 94))
+		{
+			Property* pS = PropsT->GetItem(pElems[i]->PID);
+			if (pS != NULL)
+			{
+				MID = pS->GetDefMatID();
+			}
+			Material* pM = MatT->GetItem(MID);
+			//Get Shell thickness
+			if (((pElems[i]->iType == 91) || (pElems[i]->iType == 94)) && (pS != NULL))
+			{
+				PSHELL* pSh = (PSHELL*)pS;
+				dthk = pSh->dT;
+				dSHRatio = pSh->dTST;
+			}
+			
+			if ((pM != NULL) && (pM->iType = 1))
+			{
+				MAT1* pIsen = (MAT1*)pM;
+				MAT_TS = pM->DeeSH();
+				MAT_BM = pM->DeeMEM();
+				MAT_BB = pM->DeeBM();
+			}
+			//************START OF CALCULATION************
+
+			DispGlobal = GetNodalDispVec(pElems[i], Steer, Disp);
+			//WE NEED TO MODIFY DICPLACEMENT TO ACCOUNT FOR OFFSET
+            if (pElems[i]->HasOffsets())
+             	pElems[i]->DispOffsets(PropsT, DispGlobal);
+      		TMAT = pElems[i]->KEToKGTransform();
+			//TMAT.Transpose();
+			DispEl = TMAT * DispGlobal;
+
+
+			Mat BEE_BM = pElems[i]->BEE_BM_Recovery();
+			Mat STRAIN_BM = BEE_BM * DispEl;
+			Mat STRESS_BM = MAT_BM * STRAIN_BM;
+			//*********** End of Membrane Components ****************
+			//**************  Bending Components ********************
+			Mat BEE_BB = pElems[i]->BEE_BB_Recovery();
+			Mat STRAIN_BB = BEE_BB * DispEl;
+			//NOT SURE WHY I HAVE TO *-1!!??????????????????????????????
+			//STRAIN_BB *= -1; //Mystran gives -ve BB ???????????????
+			*STRAIN_BB.mn(3, 1) *= 0.5;
+			Mat STRESS_BB = MAT_BB * STRAIN_BB;
+			//************ End of Bending Components *****************
+			//**************Transverse Shear Components***************
+			Mat BEE_TS = pElems[i]->BEE_TS_Recovery();
+			Mat STRAIN_TV = BEE_TS * DispEl;
+			Mat STRESS_TV = MAT_TS * STRAIN_TV;
+			STRESS_TV *= pElems[i]->GetPHI_SQ();
+			//        NOTE FOR TRANSVERSE FORCES * by dSHRatio
+			//************End of Transverse Shear Components**********
+			// 
+			//***********  R E P O R T    R E SU L T S ***************
+			//                   S T R A I N S
+			SX = *STRAIN_BM.mn(1,1);
+			SY = *STRAIN_BM.mn(2, 1);
+			SXY = *STRAIN_BM.mn(3, 1);
+			SXY *= 0.5;					//Not sure about ENGINEERING SHEAR STRAIN!!
+			RX = *STRAIN_BB.mn(1, 1);  //not sure why we have a -
+			RY = *STRAIN_BB.mn(2, 1);
+			RXY = *STRAIN_BB.mn(3, 1);
+			TX = *STRESS_TV.mn(1, 1);
+			TY = *STRESS_TV.mn(2, 1);
+
+			Res10* pResStrn = new Res10;
+			pResStrn->ID = pElems[i]->iLabel;
+			pResStrn->v[0] = (float) SX;
+			pResStrn->v[1] = (float) SY;
+			pResStrn->v[2] = (float) SXY;
+			cS = (SX + SY) * 0.5;
+			Mag = pow((SX - cS) * (SX - cS) + (SXY * SXY), 0.5);
+			pResStrn->v[3] = (float) (cS + Mag);
+			pResStrn->v[4] = (float) (cS - Mag);
+			pResStrn->v[5] = (float) RX;
+			pResStrn->v[6] = (float) RY;
+			pResStrn->v[7] = (float) RXY;
+
+			BX = *STRAIN_BB.mn(1, 1);
+			BY = *STRAIN_BB.mn(2, 1);
+			BXY = *STRAIN_BB.mn(3, 1);
+			cS = (BX + BY) * 0.5;
+			Mag = pow((BX - cS) * (BX - cS) + (BXY * BXY), 0.5);
+			pResStrn->v[8] = (float)(cS + Mag);
+			pResStrn->v[9] = (float)(cS - Mag);
+
+			ResStrn->Add(pResStrn);
+			//THERMAL STRAINS REMOVED
+			*STRAIN_BM.mn(1,1) -= pElems[i]->dTemp;   //Subtract thermal strains ;
+			*STRAIN_BM.mn(2, 1) -= pElems[i]->dTemp;   //Subtract thermal strains ;
+			//Z1 bending Stress (Top surface Z2 is thick/2 z1 is -thick/2)
+			mStrn = STRAIN_BM;
+			*mStrn.mn(1, 1) += 0.5 * *STRAIN_BB.mn(1, 1) * dthk;
+			*mStrn.mn(2, 1) += 0.5 * *STRAIN_BB.mn(2, 1) * dthk;
+			*mStrn.mn(3, 1) += 0.5 * *STRAIN_BB.mn(3, 1) * dthk;		  //Engininerring Strain to Strain????
+			ResZ1 = MAT_BM * mStrn;                        //Calculate Stresses
+			mStrn.clear();
+			//Z2 bending Stress (Bot surface Z1 is -thick/2 z1 is -thick/2)
+			mStrn = STRAIN_BM;
+			*mStrn.mn(1, 1) -= 0.5 * *STRAIN_BB.mn(1, 1) *dthk;
+			*mStrn.mn(2, 1) -= 0.5 * *STRAIN_BB.mn(2, 1) *dthk;
+			*mStrn.mn(3, 1) -= 0.5 * *STRAIN_BB.mn(3, 1) *dthk;		  //Engininerring Strain to Strain????
+			ResZ2 = MAT_BM * mStrn;                          //Calculare Stresses
+			mStrn.clear();
+			//Mid bending Stress (Bot surface Z1 is thick/2 z1 is -thick/2)
+			mStrn = STRAIN_BM;
+			Res = MAT_BM * mStrn;
+			Add2dStressRes(ResS, pElems[i]->iLabel, Res, ResZ1, ResZ2);
+			//add element forces
+			Res8* pRes = new Res8;
+			pRes->ID = pElems[i]->iLabel;
+			pRes->v[0] = (float)(*Res.mn(1, 1) * dthk);
+			pRes->v[1] = (float)(*Res.mn(2, 1) * dthk);
+			pRes->v[2] = (float)(*Res.mn(3, 1) * dthk);
+
+			pRes->v[3] = (float)(*STRESS_BB.mn(1, 1) * dthk * dthk * dthk / 12);
+			pRes->v[4] = (float)(*STRESS_BB.mn(2, 1) * dthk * dthk * dthk / 12);
+			pRes->v[5] = (float)(*STRESS_BB.mn(3, 1) * dthk * dthk * dthk / 12);
+
+			pRes->v[6] = (float) (TX*dthk*dSHRatio);
+			pRes->v[7] = (float) (TY*dthk*dSHRatio);
+			ResF->Add(pRes);
+			Res.clear();
+			ResZ1.clear();
+			ResZ2.clear();
+			mStrn.clear();
+
+
+            DispGlobal.clear();
+			DispEl.clear();
+			TMAT.clear();
+
+			MAT_TS.clear();
+			BEE_TS.clear();
+			STRAIN_TV.clear();
+			STRESS_TV.clear();
+
+			MAT_BB.clear();
+			BEE_BB.clear();
+			STRAIN_BB.clear();
+			STRESS_BB.clear();
+
+			MAT_BM.clear();
+			BEE_BM.clear();
+			STRAIN_BM.clear();
+			STRESS_BM.clear();
+		}
+	}
+	if (ResF->iCnt > 0)
+	{
+		ResultsSets[iNoRes] = ResF; iNoRes++;
+	}
+	else
+	{
+		delete(ResF);
+	}
+	if (ResStrn->iCnt > 0)
+	{
+		ResultsSets[iNoRes] = ResStrn; iNoRes++;
+	}
+	else
+	{
+		delete(ResStrn);
+	}
+	if (ResS->iCnt > 0)
+	{
+		ResultsSets[iNoRes] = ResS; iNoRes++;
+	}
+	else
+	{
+		delete(ResS);
+	}
+}
+
 
 C3dVector ME_Object::EigenVector3d(int iEID,C3dVector rX, C3dVector rY, C3dVector rZ, double lambda)
 {
@@ -24159,7 +31654,7 @@ C3dVector ME_Object::EigenVector2d(int iEID, C3dVector rX, C3dVector rY, double 
 	rX.x -= lambda;
 	rY.y -= lambda;
 	char s80[80];
-	//Assume trail X=1 for eigen vetoy
+	//Assume trail X=1 for eigen vector
 	if (rX.y != 0)
 	{
 		res.x = 1;
@@ -24367,7 +31862,7 @@ if ((pElems[i]->iType==115) || (pElems[i]->iType==112) || (pElems[i]->iType==111
       for (k=0;k<3;k++)
       {
         dof1=0;
-        Pt_Object* pN=(Pt_Object*) pElems[i]->GetNode(j);
+        Node* pN=(Node*) pElems[i]->GetNode(j);
         if (pN->dof[k]>0)
 	        dof1=GetDisp(pN->dof[k],Steer,Disp);
         int n;
@@ -24464,56 +31959,80 @@ else
 void ME_Object::AddOEFRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName)
 {
 int i;
-
+int iTC;
 ResultsSets[iNoRes]=new ResSet();
 ResultsSets[iNoRes]->sFile=inName;
 ResultsSets[iNoRes]->sTitle=sTitle;
 ResultsSets[iNoRes]->sSubTitle=sSubTitle;
-ResultsSets[iNoRes]->ACODE=Vals[0];
-ResultsSets[iNoRes]->TCODE=Vals[1];
-ResultsSets[iNoRes]->TYPE=Vals[2];
-ResultsSets[iNoRes]->LC=Vals[3];
-ResultsSets[iNoRes]->WID=Vals[6];
+ResultsSets[iNoRes]->ACODE = Vals[0];
+ResultsSets[iNoRes]->TCODE = Vals[1];
+ResultsSets[iNoRes]->TYPE = Vals[2];
+ResultsSets[iNoRes]->LC = Vals[3];
+ResultsSets[iNoRes]->WID = Vals[6];
+ResultsSets[iNoRes]->FCODE = Vals[7];
+ResultsSets[iNoRes]->SCODE = Vals[8];
+iTC = ResultsSets[iNoRes]->TCODE / 1000;
 CString sEL;
 BOOL isGood=FALSE;
 
-if (Vals[2]==33)
+if (Vals[2] == 33)
 {
-  isGood=TRUE;
-  sEL="FORCE CQUAD4";
+	isGood = TRUE;
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FORCE CQUAD4";
+	else
+		sEL = "FORCE CQUAD4";
 }
-else if (Vals[2]==74)
+else if (Vals[2] == 74)
 {
-  isGood=TRUE;
-  sEL="FORCE CTRIA3";
+	isGood = TRUE;
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FORCE CTRIA3";
+	else
+		sEL = "FORCE CTRIA3";
 }
 else if (Vals[2]==2)
 {
   sEL="FORCE CBEAM (not read)";
   ResultsSets[iNoRes]->sName=sEL;
 }
-else if (Vals[2]==102)
+else if (Vals[2] == 102)
 {
-  sEL="FORCE CBUSH";
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FORCE CBUSH";
+	else
+		sEL = "FORCE CBUSH";
 }
-else if (Vals[2]==34)
+else if (Vals[2] == 34)
 {
-  sEL="FORCE CBAR";
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FORCE CBAR";
+	else
+		sEL = "FORCE CBAR";
 }
-else if (Vals[2]==95)
+else if (Vals[2] == 95)
 {
-  sEL="FAILURE INDICES CQUAD4";
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FAILURE INDICES CQUAD4";
+	else
+		sEL = "FAILURE INDICES CQUAD4";
 }
-else if (Vals[2]==97)
+else if (Vals[2] == 97)
 {
-  sEL="FAILURE INDICES CTRIA3";
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FAILURE INDICES CTRIA3";
+	else
+		sEL = "FAILURE INDICES CTRIA3";
 }
-else if (Vals[2]==1)
+else if (Vals[2] == 1)
 {
-  sEL="FORCE CROD";
+	if ((iTC == 4) || (iTC == 5))
+		sEL = "RMS FORCE CROD";
+	else
+		sEL = "FORCE CROD";
 }
 
-if ((iCnt>7) && (isGood))
+if ((iCnt>10) && (isGood))
 {
   ResultsSets[iNoRes]->sName=sEL;
   ResultsSets[iNoRes]->iNoV=8;
@@ -24525,7 +32044,7 @@ if ((iCnt>7) && (isGood))
   ResultsSets[iNoRes]->lab[5]="MXY";
   ResultsSets[iNoRes]->lab[6]="TX";
   ResultsSets[iNoRes]->lab[7]="TY";
-  for (i=7;i<iCnt;i+=9)
+  for (i=10;i<iCnt;i+=9)
   {
     Res8* pRes=new Res8;
     pRes->ID=Vals[i] / 10;
@@ -24555,7 +32074,7 @@ if ((iCnt>5) && ((ResultsSets[iNoRes]->TYPE==95) || (ResultsSets[iNoRes]->TYPE==
   int ID;
   char* ss;
   CString S;
-  for (i=7;i<iCnt;i+=9)
+  for (i=10;i<iCnt;i+=9)
   {
     Res5* pRes=new Res5;
 	if (Vals[i]!=-1)
@@ -24589,7 +32108,7 @@ if ((iCnt>5) && (ResultsSets[iNoRes]->TYPE==102))
   ResultsSets[iNoRes]->lab[4]="MY";
   ResultsSets[iNoRes]->lab[5]="MZ";
 
-  for (i=7;i<iCnt;i+=7)
+  for (i=10;i<iCnt;i+=7)
   {
     Res6* pRes=new Res6;
     pRes->ID=Vals[i] / 10;
@@ -24614,7 +32133,7 @@ if ((iCnt>5) && (ResultsSets[iNoRes]->TYPE==34))
   ResultsSets[iNoRes]->lab[5]="TS2";
   ResultsSets[iNoRes]->lab[6]="AF";
   ResultsSets[iNoRes]->lab[7]="TRQ";
-  for (i=7;i<iCnt;i+=9)
+  for (i=10;i<iCnt;i+=9)
   {
     Res8* pRes=new Res8;
     pRes->ID=Vals[i] / 10;
@@ -24624,8 +32143,8 @@ if ((iCnt>5) && (ResultsSets[iNoRes]->TYPE==34))
     pRes->v[3]=*(float*) &Vals[i+4];
     pRes->v[4]=*(float*) &Vals[i+5];
     pRes->v[5]=*(float*) &Vals[i+6];
-	pRes->v[4]=*(float*) &Vals[i+7];
-    pRes->v[5]=*(float*) &Vals[i+8];
+	pRes->v[6]=*(float*) &Vals[i+7];
+    pRes->v[7]=*(float*) &Vals[i+8];
     ResultsSets[iNoRes]->Add(pRes);
   }
 }
@@ -24636,7 +32155,7 @@ if ((iCnt>5) && (ResultsSets[iNoRes]->TYPE==1))
   ResultsSets[iNoRes]->lab[0]="Axial Force";
   ResultsSets[iNoRes]->lab[1]="Torque";
 
-  for (i=7;i<iCnt;i+=9)
+  for (i=10;i<iCnt;i+=9)
   {
     Res8* pRes=new Res8;
     pRes->ID=Vals[i] / 10;
@@ -24648,6 +32167,205 @@ if ((iCnt>5) && (ResultsSets[iNoRes]->TYPE==1))
 iNoRes++;
 }
 
+
+void ME_Object::AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dF)
+{
+	int i;
+	char s80[80];
+	ResultsSets[iNoRes] = new ResSet();
+	ResultsSets[iNoRes]->sFile = inName;
+	ResultsSets[iNoRes]->sTitle = sTitle;
+	ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+	ResultsSets[iNoRes]->ACODE = Vals[0];
+	ResultsSets[iNoRes]->TCODE = Vals[1];
+	ResultsSets[iNoRes]->TYPE = Vals[2];
+	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	ResultsSets[iNoRes]->SCODE = Vals[8];
+	ResultsSets[iNoRes]->dFreq = dF;
+	int iWID = ResultsSets[iNoRes]->WID;
+	CString sEL;
+	BOOL isGood = FALSE;
+
+	if (Vals[2] == 33)
+	{
+		isGood = TRUE;
+		sEL = "FORCE CQUAD4";
+	}
+	else if (Vals[2] == 74)
+	{
+		isGood = TRUE;
+		sEL = "FORCE CTRIA3";
+	}
+	else if (Vals[2] == 2)
+	{
+		sEL = "FORCE CBEAM (not read)";
+		ResultsSets[iNoRes]->sName = sEL;
+	}
+	else if (Vals[2] == 102)
+	{
+		sEL = "FORCE CBUSH";
+	}
+	else if (Vals[2] == 34)
+	{
+		sEL = "FORCE CBAR";
+	}
+	else if (Vals[2] == 95)
+	{
+		sEL = "FAILURE INDICES CQUAD4";
+	}
+	else if (Vals[2] == 97)
+	{
+		sEL = "FAILURE INDICES CTRIA3";
+	}
+	else if (Vals[2] == 1)
+	{
+		sEL = "FORCE CROD";
+	}
+
+
+	if ((iCnt > 5) && (ResultsSets[iNoRes]->TYPE == 102))
+	{
+		sprintf_s(s80, "%s %g %s", sEL, dF, "Hz");
+		ResultsSets[iNoRes]->sName = s80;
+		ResultsSets[iNoRes]->iNoV = 13;
+		if (ResultsSets[iNoRes]->FCODE == 3)
+		{	 //MAG / PHASE
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "(Mag) FX";
+			ResultsSets[iNoRes]->lab[2] = "(Mag) FY";
+			ResultsSets[iNoRes]->lab[3] = "(Mag) FZ";
+			ResultsSets[iNoRes]->lab[4] = "(Mag) MX";
+			ResultsSets[iNoRes]->lab[5] = "(Mag) MY";
+			ResultsSets[iNoRes]->lab[6] = "(Mag) MZ";
+			ResultsSets[iNoRes]->lab[7] = "(Phi) FX";
+			ResultsSets[iNoRes]->lab[8] = "(Phi) FY";
+			ResultsSets[iNoRes]->lab[9] = "(Phi) FZ";
+			ResultsSets[iNoRes]->lab[10] = "(Phi) MX";
+			ResultsSets[iNoRes]->lab[11] = "(Phi) MY";
+			ResultsSets[iNoRes]->lab[12] = "(Phi) MZ";
+			//**********Define the Vector********************
+			ResDef* pVT = new ResDef();
+			pVT->sResType = "FORCE TRANS MAG VEC";
+			pVT->iResType = 1;   //Vector Forec Magnitude Translation
+			pVT->iLoc = 1;       //Element
+			pVT->iComponents[0] = 1;
+			pVT->iComponents[1] = 2;
+			pVT->iComponents[2] = 3;
+			pVT->iComponents[3] = -1;
+			pVT->iCompNo = 4;
+			pVT->GenDefualtHeaders();
+			ResultsSets[iNoRes]->AddResDef(pVT);
+		}
+		else
+		{
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "(Re) FX";
+			ResultsSets[iNoRes]->lab[2] = "(Re) FY";
+			ResultsSets[iNoRes]->lab[3] = "(Re) FZ";
+			ResultsSets[iNoRes]->lab[4] = "(Re) MX";
+			ResultsSets[iNoRes]->lab[5] = "(Re) MY";
+			ResultsSets[iNoRes]->lab[6] = "(Re) MZ";
+			ResultsSets[iNoRes]->lab[7] = "(Im) FX";
+			ResultsSets[iNoRes]->lab[8] = "(Im) FY";
+			ResultsSets[iNoRes]->lab[9] = "(Im) FZ";
+			ResultsSets[iNoRes]->lab[10] = "(Im) MX";
+			ResultsSets[iNoRes]->lab[11] = "(Im) MY";
+			ResultsSets[iNoRes]->lab[12] = "(Im) MZ";
+		}
+
+		for (i = 10; i < iCnt; i += iWID)
+		{
+			Res13* pRes = new Res13;
+			pRes->ID = Vals[i] / 10;
+			pRes->v[0] = dF;
+			pRes->v[1] = *(float*)&Vals[i + 1];
+			pRes->v[2] = *(float*)&Vals[i + 2];
+			pRes->v[3] = *(float*)&Vals[i + 3];
+			pRes->v[4] = *(float*)&Vals[i + 4];
+			pRes->v[5] = *(float*)&Vals[i + 5];
+			pRes->v[6] = *(float*)&Vals[i + 6];
+			pRes->v[7] = *(float*)&Vals[i + 7];
+			pRes->v[8] = *(float*)&Vals[i + 8];
+			pRes->v[9] = *(float*)&Vals[i + 9];
+			pRes->v[10] = *(float*)&Vals[i + 10];
+			pRes->v[11] = *(float*)&Vals[i + 11];
+			pRes->v[12] = *(float*)&Vals[i + 12];
+			ResultsSets[iNoRes]->Add(pRes);
+		}
+	}
+	else if ((iCnt > 5) && ((ResultsSets[iNoRes]->TYPE == 33) || (ResultsSets[iNoRes]->TYPE == 74)))
+	{	//QUAD4 FEQUENCY RESULTS
+		sprintf_s(s80, "%s %g %s", sEL, dF, "Hz");
+		ResultsSets[iNoRes]->sName = s80;
+		ResultsSets[iNoRes]->iNoV = iWID-1;
+		if (ResultsSets[iNoRes]->FCODE == 3)
+		{	 //MAG / PHASE
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "(Mag) Membrane in x";
+			ResultsSets[iNoRes]->lab[2] = "(Mag) Membrane in y";
+			ResultsSets[iNoRes]->lab[3] = "(Mag) Membrane in xy";
+			ResultsSets[iNoRes]->lab[4] = "(Mag) Bending in x";
+			ResultsSets[iNoRes]->lab[5] = "(Mag) Bending in y";
+			ResultsSets[iNoRes]->lab[6] = "(Mag) Bending in xy";
+			ResultsSets[iNoRes]->lab[7] = "(Mag) Transverse Shear in x";
+			ResultsSets[iNoRes]->lab[8] = "(Mag) Transverse Shear in y";
+			ResultsSets[iNoRes]->lab[9] = "(Phi)  Membrane in x";
+			ResultsSets[iNoRes]->lab[10] = "(Phi) Membrane in y";
+			ResultsSets[iNoRes]->lab[11] = "(Phi) Membrane in xy";
+			ResultsSets[iNoRes]->lab[12] = "(Phi) Bending in x";
+			ResultsSets[iNoRes]->lab[13] = "(Phi) Bending in y";
+			ResultsSets[iNoRes]->lab[14] = "(Phi) Transverse Shear in x";
+			ResultsSets[iNoRes]->lab[15] = "(Phi) Transverse Shear in y";
+		}
+		else
+		{
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "(Re) Membrane in x";
+			ResultsSets[iNoRes]->lab[2] = "(Re) Membrane in y";
+			ResultsSets[iNoRes]->lab[3] = "(Re) Membrane in xy";
+			ResultsSets[iNoRes]->lab[4] = "(Re) Bending in x";
+			ResultsSets[iNoRes]->lab[5] = "(Re) Bending in y";
+			ResultsSets[iNoRes]->lab[6] = "(Re) Bending in xy";
+			ResultsSets[iNoRes]->lab[7] = "(Re) Transverse Shear in x";
+			ResultsSets[iNoRes]->lab[8] = "(Re) Transverse Shear in y";
+			ResultsSets[iNoRes]->lab[9] = "(Im)  Membrane in x";
+			ResultsSets[iNoRes]->lab[10] = "(Im) Membrane in y";
+			ResultsSets[iNoRes]->lab[11] = "(Im) Membrane in xy";
+			ResultsSets[iNoRes]->lab[12] = "(Im) Bending in x";
+			ResultsSets[iNoRes]->lab[13] = "(Im) Bending in y";
+			ResultsSets[iNoRes]->lab[14] = "(Im) Transverse Shear in x";
+			ResultsSets[iNoRes]->lab[15] = "(Im) Transverse Shear in y";
+		}
+
+		for (i = 10; i < iCnt; i += iWID)
+		{
+			Res15* pRes = new Res15;
+			pRes->ID = Vals[i] / 10;
+			pRes->v[0] = dF;
+			pRes->v[1] = *(float*)&Vals[i + 1];
+			pRes->v[2] = *(float*)&Vals[i + 2];
+			pRes->v[3] = *(float*)&Vals[i + 3];
+			pRes->v[4] = *(float*)&Vals[i + 4];
+			pRes->v[5] = *(float*)&Vals[i + 5];
+			pRes->v[6] = *(float*)&Vals[i + 6];
+			pRes->v[7] = *(float*)&Vals[i + 7];
+			pRes->v[8] = *(float*)&Vals[i + 8];
+			pRes->v[9] = *(float*)&Vals[i + 9];
+			pRes->v[10] = *(float*)&Vals[i + 10];
+			pRes->v[11] = *(float*)&Vals[i + 11];
+			pRes->v[12] = *(float*)&Vals[i + 12];
+			pRes->v[13] = *(float*)&Vals[i + 13];
+			pRes->v[14] = *(float*)&Vals[i + 14];
+			pRes->v[15] = *(float*)&Vals[i + 15];
+			ResultsSets[iNoRes]->Add(pRes);
+		}
+	}
+
+	iNoRes++;
+}
+
 void ME_Object::AddOES1Res(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName)
 {
 int i;
@@ -24656,11 +32374,13 @@ ResultsSets[iNoRes]=new ResSet();
 ResultsSets[iNoRes]->sFile=inName;
 ResultsSets[iNoRes]->sTitle=sTitle;
 ResultsSets[iNoRes]->sSubTitle=sSubTitle;
-ResultsSets[iNoRes]->ACODE=Vals[0];
-ResultsSets[iNoRes]->TCODE=Vals[1];
-ResultsSets[iNoRes]->TYPE=Vals[2];
-ResultsSets[iNoRes]->LC=Vals[3];
-ResultsSets[iNoRes]->WID=Vals[6];
+ResultsSets[iNoRes]->ACODE = Vals[0];
+ResultsSets[iNoRes]->TCODE = Vals[1];
+ResultsSets[iNoRes]->TYPE = Vals[2];
+ResultsSets[iNoRes]->LC = Vals[3];
+ResultsSets[iNoRes]->WID = Vals[6];
+ResultsSets[iNoRes]->FCODE = Vals[7];
+ResultsSets[iNoRes]->SCODE = Vals[8];
 CString sEL;
 BOOL isGood=FALSE;
 
@@ -24749,7 +32469,7 @@ else if (Vals[2]==97)
 {
   sEL="STRESS CTRIA LAYERED";
 }
-if ((iCnt>7) && (isGood))
+if ((iCnt>10) && (isGood))
 {
   ResultsSets[iNoRes]->sName=sEL;
   ResultsSets[iNoRes]->iNoV=18;
@@ -24774,7 +32494,7 @@ if ((iCnt>7) && (isGood))
   double p1;
   double p2;
   double vm;
-  for (i=7;i<iCnt;i+=17)
+  for (i=10;i<iCnt;i+=17)
   {
     Res18* pRes=new Res18;
     pRes->ID=Vals[i] / 10;
@@ -24797,11 +32517,11 @@ if ((iCnt>7) && (isGood))
 	pRes->v[12]=*(float*) &Vals[i+12];
 	pRes->v[13]=*(float*) &Vals[i+13];
 	pRes->v[14]=*(float*) &Vals[i+14];
-	pRes->v[15]=*(float*) &Vals[i+15];
-	pRes->v[16]=*(float*) &Vals[i+16];
+	pRes->v[15]=*(float*) &Vals[i+15]; //Minor prin
 	p1=*(float*) &Vals[i+14];
 	p2=*(float*) &Vals[i+15];
 	vm=pow(p1*p1-p1*p2+p2*p2,0.5);
+	pRes->v[16] = 0.5 * (p1 - p2);
 	pRes->v[17]=vm;
     ResultsSets[iNoRes]->Add(pRes);
   }
@@ -24825,7 +32545,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==34))
   ResultsSets[iNoRes]->lab[12]="SB maximum";
   ResultsSets[iNoRes]->lab[13]="SB minimum";
   ResultsSets[iNoRes]->lab[14]="Safety margin in comp*";
-  for (i=7;i<iCnt;i+=16)
+  for (i=10;i<iCnt;i+=16)
   {
     Res15* pRes=new Res15;
     pRes->ID=Vals[i] / 10;
@@ -24849,8 +32569,11 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==34))
 }
 if ((iCnt>7) && ((ResultsSets[iNoRes]->TYPE==95) || (ResultsSets[iNoRes]->TYPE==97)))
 {
+	double p1;
+	double p2;
+	double vm;
   ResultsSets[iNoRes]->sName=sEL;
-  ResultsSets[iNoRes]->iNoV=10;
+  ResultsSets[iNoRes]->iNoV=11;
   ResultsSets[iNoRes]->sOpName="Layer ";
   ResultsSets[iNoRes]->iDefID=1;
   ResultsSets[iNoRes]->iSecondaryID=0;
@@ -24863,8 +32586,9 @@ if ((iCnt>7) && ((ResultsSets[iNoRes]->TYPE==95) || (ResultsSets[iNoRes]->TYPE==
   ResultsSets[iNoRes]->lab[6]="Shear angle";
   ResultsSets[iNoRes]->lab[7]="Major principal*";
   ResultsSets[iNoRes]->lab[8]="Minor principal";
-  ResultsSets[iNoRes]->lab[9]="von Mises or Maximum shear";
-  for (i=7;i<iCnt;i+=11)
+  ResultsSets[iNoRes]->lab[9]="Maximum shear";
+  ResultsSets[iNoRes]->lab[10] = "Derived VM Stress";
+  for (i=10;i<iCnt;i+=11)
   {
     Res15* pRes=new Res15;
     pRes->ID=Vals[i] / 10;
@@ -24878,6 +32602,10 @@ if ((iCnt>7) && ((ResultsSets[iNoRes]->TYPE==95) || (ResultsSets[iNoRes]->TYPE==
     pRes->v[7]=*(float*) &Vals[i+8];
 	pRes->v[8]=*(float*) &Vals[i+9];
 	pRes->v[9]=*(float*) &Vals[i+10];
+	p1 = *(float*)&Vals[i + 8];
+	p2 = *(float*)&Vals[i + 9];
+	vm = pow(p1 * p1 - p1 * p2 + p2 * p2, 0.5);
+	pRes->v[10] = vm;
     ResultsSets[iNoRes]->Add(pRes);
   }
 }
@@ -24891,7 +32619,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==102))
   ResultsSets[iNoRes]->lab[3]="Rotation x";
   ResultsSets[iNoRes]->lab[4]="Rotation y";
   ResultsSets[iNoRes]->lab[5]="Rotation z";
-  for (i=7;i<iCnt;i+=7)
+  for (i=10;i<iCnt;i+=7)
   {
     Res6* pRes=new Res6;
     pRes->ID=Vals[i] / 10;
@@ -24913,7 +32641,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==1))
   ResultsSets[iNoRes]->lab[2]="Torsional strain";
   ResultsSets[iNoRes]->lab[3]="Torsional safety margin*";
 
-  for (i=7;i<iCnt;i+=5)
+  for (i=10;i<iCnt;i+=5)
   {
     Res4* pRes=new Res4;
     pRes->ID=Vals[i] / 10;
@@ -24959,7 +32687,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==67))    //CHEXA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=193)
+  for (i=10;i<iCnt;i+=193)
   {
     Res189* pRes=new Res189;
     pRes->ID=Vals[i] / 10;
@@ -25012,7 +32740,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==68))    //CPENTA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=151)
+  for (i=10;i<iCnt;i+=151)
   {
     Res147* pRes=new Res147;
     pRes->ID=Vals[i] / 10;
@@ -25063,7 +32791,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==39))    //CTETRA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=109)
+  for (i=10;i<iCnt;i+=109)
   {
     Res105* pRes=new Res105;
     pRes->ID=Vals[i] / 10;
@@ -25087,6 +32815,203 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==39))    //CTETRA LIN STRESS
 iNoRes++;
 }
 
+void ME_Object::AddOES1ResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	char s80[80];
+	int i;
+	int iWID = -1;
+	int iFC = -1;
+	ResultsSets[iNoRes] = new ResSet();
+	ResultsSets[iNoRes]->sFile = inName;
+	ResultsSets[iNoRes]->sTitle = sTitle;
+	ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+	ResultsSets[iNoRes]->ACODE = Vals[0];
+	ResultsSets[iNoRes]->TCODE = Vals[1];
+	ResultsSets[iNoRes]->TYPE = Vals[2];
+	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	iWID = ResultsSets[iNoRes]->WID;
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	iFC = ResultsSets[iNoRes]->FCODE;
+	ResultsSets[iNoRes]->SCODE = Vals[8];
+	CString sEL;
+	BOOL isGood = FALSE;
+	//Just reading shell element for now CQUAD and CTRIA
+	if (Vals[2] == 33)
+	{
+		isGood = TRUE;
+		sEL = "STRESS CENTRE CQUAD4";
+	}
+	else if (Vals[2] == 74)
+	{
+		isGood = TRUE;
+		sEL = "STRESS CENTRE CTRIA3";
+	}
+	else
+	{
+		isGood = FALSE;
+	}
+	if ((iCnt > 10) && (isGood))
+	{
+		sprintf_s(s80, "%s %g %s", sEL, dF, "Hz");
+		ResultsSets[iNoRes]->sName = s80;
+		ResultsSets[iNoRes]->iNoV = iWID-1;
+		if (iFC == 2)	//Real and Imaginary
+		{
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "(Re) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[2] = "(Im) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[3] = "(Re) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[4] = "(Im) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[5] = "(Re) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[6] = "(Im) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[7] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[8] = "(Re) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[9] = "(Im) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[10] = "(Re) Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[11] = "(Im)Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[12] = "(Re) Shear in xy at Z2";
+			ResultsSets[iNoRes]->lab[13] = "(Im)Shear in xy at Z2";
+		}
+		else if (iFC == 3)   //Magnitude and Phase
+		{
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "(Mag) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[2] = "(Phi) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[3] = "(Mag) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[4] = "(Phi) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[5] = "(Re) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[6] = "(Phi) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[7] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[8] = "(Mag) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[9] = "(Phi) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[10] = "(Mag) Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[11] = "(Phi)Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[12] = "(Mag) Shear in xy at Z2";
+			ResultsSets[iNoRes]->lab[13] = "(Phi)Shear in xy at Z2";
+		}
+		for (i = 10; i < iCnt; i += iWID)
+		{
+			Res13* pRes = new Res13;
+			pRes->ID = Vals[i] / 10;
+			pRes->v[0] = *(float*)&Vals[i + 1];
+			pRes->v[1] = *(float*)&Vals[i + 2];
+			pRes->v[2] = *(float*)&Vals[i + 3];
+			pRes->v[3] = *(float*)&Vals[i + 4];
+			pRes->v[4] = *(float*)&Vals[i + 5];
+			pRes->v[5] = *(float*)&Vals[i + 6];
+			pRes->v[6] = *(float*)&Vals[i + 7];
+			pRes->v[7] = *(float*)&Vals[i + 8];
+			pRes->v[8] = *(float*)&Vals[i + 9];
+			pRes->v[9] = *(float*)&Vals[i + 10];
+			pRes->v[10] = *(float*)&Vals[i + 11];
+			pRes->v[11] = *(float*)&Vals[i + 12];
+			pRes->v[12] = *(float*)&Vals[i + 13];
+			pRes->v[13] = *(float*)&Vals[i + 14];
+			ResultsSets[iNoRes]->Add(pRes);
+		}
+	}
+	iNoRes++;
+}
+
+void ME_Object::AddOSTRResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	char s80[80];
+	int i;
+	int iWID = -1;
+	int iFC = -1;
+	ResultsSets[iNoRes] = new ResSet();
+	ResultsSets[iNoRes]->sFile = inName;
+	ResultsSets[iNoRes]->sTitle = sTitle;
+	ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+	ResultsSets[iNoRes]->ACODE = Vals[0];
+	ResultsSets[iNoRes]->TCODE = Vals[1];
+	ResultsSets[iNoRes]->TYPE = Vals[2];
+	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	iWID = ResultsSets[iNoRes]->WID;
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	iFC = ResultsSets[iNoRes]->FCODE;
+	ResultsSets[iNoRes]->SCODE = Vals[8];
+	CString sEL;
+	BOOL isGood = FALSE;
+	//Just reading shell element for now CQUAD and CTRIA
+	if (Vals[2] == 33)
+	{
+		isGood = TRUE;
+		sEL = "STRAIN CENTRE CQUAD4";
+	}
+	else if (Vals[2] == 74)
+	{
+		isGood = TRUE;
+		sEL = "STRAIN CENTRE CTRIA3";
+	}
+	else
+	{
+		isGood = FALSE;
+	}
+	if ((iCnt > 10) && (isGood))
+	{
+		sprintf_s(s80, "%s %g %s", sEL, dF, "Hz");
+		ResultsSets[iNoRes]->sName = s80;
+		ResultsSets[iNoRes]->iNoV = iWID - 1;
+		if (iFC == 2)	//Real and Imaginary
+		{
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "(Re) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[2] = "(Im) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[3] = "(Re) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[4] = "(Im) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[5] = "(Re) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[6] = "(Im) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[7] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[8] = "(Re) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[9] = "(Im) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[10] = "(Re) Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[11] = "(Im)Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[12] = "(Re) Shear in xy at Z2";
+			ResultsSets[iNoRes]->lab[13] = "(Im)Shear in xy at Z2";
+		}
+		else if (iFC == 3)   //Magnitude and Phase
+		{
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "(Mag) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[2] = "(Phi) Normal in x at Z1";
+			ResultsSets[iNoRes]->lab[3] = "(Mag) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[4] = "(Phi) Normal in y at Z1";
+			ResultsSets[iNoRes]->lab[5] = "(Re) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[6] = "(Phi) Shear in xy at Z1";
+			ResultsSets[iNoRes]->lab[7] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[8] = "(Mag) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[9] = "(Phi) Normal in x at Z2";
+			ResultsSets[iNoRes]->lab[10] = "(Mag) Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[11] = "(Phi)Normal in y at Z2";
+			ResultsSets[iNoRes]->lab[12] = "(Mag) Shear in xy at Z2";
+			ResultsSets[iNoRes]->lab[13] = "(Phi)Shear in xy at Z2";
+		}
+		for (i = 10; i < iCnt; i += iWID)
+		{
+			Res13* pRes = new Res13;
+			pRes->ID = Vals[i] / 10;
+			pRes->v[0] = *(float*)&Vals[i + 1];
+			pRes->v[1] = *(float*)&Vals[i + 2];
+			pRes->v[2] = *(float*)&Vals[i + 3];
+			pRes->v[3] = *(float*)&Vals[i + 4];
+			pRes->v[4] = *(float*)&Vals[i + 5];
+			pRes->v[5] = *(float*)&Vals[i + 6];
+			pRes->v[6] = *(float*)&Vals[i + 7];
+			pRes->v[7] = *(float*)&Vals[i + 8];
+			pRes->v[8] = *(float*)&Vals[i + 9];
+			pRes->v[9] = *(float*)&Vals[i + 10];
+			pRes->v[10] = *(float*)&Vals[i + 11];
+			pRes->v[11] = *(float*)&Vals[i + 12];
+			pRes->v[12] = *(float*)&Vals[i + 13];
+			pRes->v[13] = *(float*)&Vals[i + 14];
+			ResultsSets[iNoRes]->Add(pRes);
+		}
+	}
+	iNoRes++;
+}
 
 void ME_Object::AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName)
 {
@@ -25096,11 +33021,13 @@ ResultsSets[iNoRes]=new ResSet();
 ResultsSets[iNoRes]->sFile=inName;
 ResultsSets[iNoRes]->sTitle=sTitle;
 ResultsSets[iNoRes]->sSubTitle=sSubTitle;
-ResultsSets[iNoRes]->ACODE=Vals[0];
-ResultsSets[iNoRes]->TCODE=Vals[1];
-ResultsSets[iNoRes]->TYPE=Vals[2];
-ResultsSets[iNoRes]->LC=Vals[3];
-ResultsSets[iNoRes]->WID=Vals[6];
+ResultsSets[iNoRes]->ACODE = Vals[0];
+ResultsSets[iNoRes]->TCODE = Vals[1];
+ResultsSets[iNoRes]->TYPE = Vals[2];
+ResultsSets[iNoRes]->LC = Vals[3];
+ResultsSets[iNoRes]->WID = Vals[6];
+ResultsSets[iNoRes]->FCODE = Vals[7];
+ResultsSets[iNoRes]->SCODE = Vals[8];
 CString sEL;
 BOOL isGood=FALSE;
 
@@ -25146,7 +33073,7 @@ else if (Vals[2]==97)
 {
   sEL="STRAIN CTRIA LAYERED";
 }
-if ((iCnt>7) && (isGood))
+if ((iCnt>10) && (isGood))
 {
 
 
@@ -25155,7 +33082,7 @@ if ((iCnt>7) && (isGood))
   double dXY;
   double vm;
   bool isLayered = FALSE;
-  for (i=7;i<iCnt;i+=17)
+  for (i=10;i<iCnt;i+=17)
   {
     Res18* pRes=new Res18;
     pRes->ID=Vals[i] / 10;
@@ -25292,7 +33219,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==34))
   ResultsSets[iNoRes]->lab[12]="SB maximum";
   ResultsSets[iNoRes]->lab[13]="SB minimum";
   ResultsSets[iNoRes]->lab[14]="Safety margin in comp*";
-  for (i=7;i<iCnt;i+=16)
+  for (i=10;i<iCnt;i+=16)
   {
     Res15* pRes=new Res15;
     pRes->ID=Vals[i] / 10;
@@ -25331,7 +33258,7 @@ ResultsSets[iNoRes]->iSecondaryID=0;
   ResultsSets[iNoRes]->lab[7]="Major principal*";
   ResultsSets[iNoRes]->lab[8]="Minor principal";
   ResultsSets[iNoRes]->lab[9]="von Mises or Maximum shear";
-  for (i=7;i<iCnt;i+=11)
+  for (i=10;i<iCnt;i+=11)
   {
     Res15* pRes=new Res15;
     pRes->ID=Vals[i] / 10;
@@ -25358,7 +33285,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==102))
   ResultsSets[iNoRes]->lab[3]="Rotation x";
   ResultsSets[iNoRes]->lab[4]="Rotation y";
   ResultsSets[iNoRes]->lab[5]="Rotation z";
-  for (i=7;i<iCnt;i+=7)
+  for (i=10;i<iCnt;i+=7)
   {
     Res6* pRes=new Res6;
     pRes->ID=Vals[i] / 10;
@@ -25380,7 +33307,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==1))
   ResultsSets[iNoRes]->lab[2]="Torsional strain";
   ResultsSets[iNoRes]->lab[3]="Torsional safety margin*";
 
-  for (i=7;i<iCnt;i+=5)
+  for (i=10;i<iCnt;i+=5)
   {
     Res4* pRes=new Res4;
     pRes->ID=Vals[i] / 10;
@@ -25426,7 +33353,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==67))    //CHEXA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=193)
+  for (i=10;i<iCnt;i+=193)
   {
     Res189* pRes=new Res189;
     pRes->ID=Vals[i] / 10;
@@ -25479,7 +33406,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==68))    //CPENTA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=151)
+  for (i=10;i<iCnt;i+=151)
   {
     Res147* pRes=new Res147;
     pRes->ID=Vals[i] / 10;
@@ -25530,7 +33457,7 @@ if ((iCnt>7) && (ResultsSets[iNoRes]->TYPE==39))    //CTETRA LIN STRESS
   ResultsSets[iNoRes]->lab[19] = "Second principal z cosine";
   ResultsSets[iNoRes]->lab[20] = "Third principal z cosine";
   int j;
-  for (i=7;i<iCnt;i+=109)
+  for (i=10;i<iCnt;i+=109)
   {
     Res105* pRes=new Res105;
     pRes->ID=Vals[i] / 10;
@@ -25563,11 +33490,13 @@ ResultsSets[iNoRes]=new ResSet();
 ResultsSets[iNoRes]->sFile=inName;
 ResultsSets[iNoRes]->sTitle=sTitle;
 ResultsSets[iNoRes]->sSubTitle=sSubTitle;
-ResultsSets[iNoRes]->ACODE=Vals[0];
-ResultsSets[iNoRes]->TCODE=Vals[1];
-ResultsSets[iNoRes]->TYPE=Vals[2];
-ResultsSets[iNoRes]->LC=Vals[3];
-ResultsSets[iNoRes]->WID=Vals[6];
+ResultsSets[iNoRes]->ACODE = Vals[0];
+ResultsSets[iNoRes]->TCODE = Vals[1];
+ResultsSets[iNoRes]->TYPE = Vals[2];
+ResultsSets[iNoRes]->LC = Vals[3];
+ResultsSets[iNoRes]->WID = Vals[6];
+ResultsSets[iNoRes]->FCODE = Vals[7];
+ResultsSets[iNoRes]->SCODE = Vals[8];
 CString sEL;
 BOOL isGood=FALSE;
 if (Vals[2]==90)
@@ -25584,14 +33513,14 @@ else if (Vals[2]==88)
 isGood = TRUE;
 sEL = "STRAIN ENERGY";
 
-if ((iCnt>7) && (isGood))
+if ((iCnt>10) && (isGood))
 {
   ResultsSets[iNoRes]->sName=sEL;
   ResultsSets[iNoRes]->iNoV=3;
   ResultsSets[iNoRes]->lab[0]="Energy";
   ResultsSets[iNoRes]->lab[1]="Energy % Tot";
   ResultsSets[iNoRes]->lab[2]="Energy Density";
-  for (i=7;i<iCnt;i+=4)
+  for (i=10;i<iCnt;i+=4)
   {
     Res3* pRes=new Res3;
     pRes->ID=Vals[i] / 10;
@@ -25614,11 +33543,13 @@ void ME_Object::AddOESNRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
     ResultsSets[iNoRes]->sFile = inName;
     ResultsSets[iNoRes]->sTitle = sTitle;
     ResultsSets[iNoRes]->sSubTitle = sSubTitle;
-    ResultsSets[iNoRes]->ACODE = Vals[0];
-    ResultsSets[iNoRes]->TCODE = Vals[1];
-    ResultsSets[iNoRes]->TYPE = Vals[2];
-    ResultsSets[iNoRes]->LC = Vals[3];
-    ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->ACODE = Vals[0];
+	ResultsSets[iNoRes]->TCODE = Vals[1];
+	ResultsSets[iNoRes]->TYPE = Vals[2];
+	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	ResultsSets[iNoRes]->SCODE = Vals[8];
     CString sEL;
     BOOL isGood = FALSE;
     if (Vals[2] == 90)
@@ -25632,7 +33563,7 @@ void ME_Object::AddOESNRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
       sEL = "STRESS NONLIN CENTRE CTRIA3";
     }
 
-    if ((iCnt>7) && (isGood))
+    if ((iCnt>10) && (isGood))
     {
       ResultsSets[iNoRes]->sName = sEL;
       ResultsSets[iNoRes]->iNoV = 24;
@@ -25660,7 +33591,7 @@ void ME_Object::AddOESNRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
       ResultsSets[iNoRes]->lab[21] = "Strain in y at Z2";
       ResultsSets[iNoRes]->lab[22] = "UNDEF";
       ResultsSets[iNoRes]->lab[23] = "Shear strain in xy at Z2";
-      for (i = 7; i<iCnt; i += 25)
+      for (i = 10; i<iCnt; i += 25)
       {
         Res24* pRes = new Res24;
         pRes->ID = Vals[i] / 10;
@@ -25695,7 +33626,300 @@ void ME_Object::AddOESNRes(int Vals[], int iCnt, CString sTitle, CString sSubTit
   }
 }
 
-void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+void ME_Object::AddOESResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
+{
+	int i;
+	double ds11;
+	double ds22;
+	double ds12;
+	double dvmMax;
+	double dvm;
+	if (iCnt > 5)
+	{
+		ResultsSets[iNoRes] = new ResSet();
+		ResultsSets[iNoRes]->sFile = inName;
+		ResultsSets[iNoRes]->sTitle = sTitle;
+		ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+		ResultsSets[iNoRes]->ACODE = Vals[0];
+		ResultsSets[iNoRes]->TCODE = Vals[1];
+		ResultsSets[iNoRes]->TYPE = Vals[2];
+		ResultsSets[iNoRes]->LC = Vals[3];
+		ResultsSets[iNoRes]->WID = Vals[6];
+		ResultsSets[iNoRes]->FCODE = Vals[7];
+		ResultsSets[iNoRes]->SCODE = Vals[8];
+		CString sEL;
+		BOOL isGood = FALSE;
+		if (Vals[2] == 33)
+		{
+			isGood = TRUE;
+			sEL = "RMS STRESS CENTRE CQUAD4";
+		}
+		else if (Vals[2] == 74)
+		{
+			isGood = TRUE;
+			sEL = "RMS STRESS CENTRE CTRIA3";
+		}
+
+		if ((iCnt > 10) && (isGood))
+		{
+			ResultsSets[iNoRes]->sName = sEL;
+			ResultsSets[iNoRes]->iNoV = 11;
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "Normal X at Z1";
+			ResultsSets[iNoRes]->lab[2] = "Normal Y at Z1";
+			ResultsSets[iNoRes]->lab[3] = "Shear stress in xy at Z1";
+			ResultsSets[iNoRes]->lab[4] = "Thales VM at Z1";
+			ResultsSets[iNoRes]->lab[5] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[6] = "Normal X at Z2";
+			ResultsSets[iNoRes]->lab[7] = "Normal Y at Z2";
+			ResultsSets[iNoRes]->lab[8] = "Shear stress in xy at Z2";
+			ResultsSets[iNoRes]->lab[9] = "Thales VM at Z2";
+			ResultsSets[iNoRes]->lab[10] = "Thales Max VM at Z1 & Z2";
+			for (i = 10; i < iCnt; i += 9)
+			{
+				Res11* pRes = new Res11;
+				pRes->ID = Vals[i] / 10;
+				pRes->v[0] = *(float*)&Vals[i + 1];
+				pRes->v[1] = *(float*)&Vals[i + 2];
+				pRes->v[2] = *(float*)&Vals[i + 3];
+				pRes->v[3] = *(float*)&Vals[i + 4];
+				ds11 = pRes->v[1];
+				ds22 = pRes->v[2];
+				ds12 = pRes->v[3];
+				//For proper RMS VM see Pitoiset e.a. [1]
+				//dvm = pow((ds11 * ds11 - ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				//Note the + where - would be but this is Thales method for
+				//RMS VM note all values are +ve
+				dvm = pow((ds11 * ds11 + ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				pRes->v[4] = dvm;
+				pRes->v[5] = *(float*)&Vals[i + 5];
+				pRes->v[6] = *(float*)&Vals[i + 6];
+				pRes->v[7] = *(float*)&Vals[i + 7];
+				pRes->v[8] = *(float*)&Vals[i + 8];
+				ds11 = pRes->v[6];
+				ds22 = pRes->v[7];
+				ds12 = pRes->v[8];
+				dvmMax = dvm;
+				dvm = pow((ds11 * ds11 + ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				pRes->v[9] = dvm;
+				if (dvm > dvmMax)
+					dvmMax = dvm;
+				pRes->v[10] = dvmMax;
+				ResultsSets[iNoRes]->Add(pRes);
+			}
+		}
+		iNoRes++;
+	}
+}
+
+void ME_Object::AddOSTRResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq)
+{
+	int i;
+	double ds11;
+	double ds22;
+	double ds12;
+	double dvmMax;
+	double dvm;
+	if (iCnt > 5)
+	{
+		ResultsSets[iNoRes] = new ResSet();
+		ResultsSets[iNoRes]->sFile = inName;
+		ResultsSets[iNoRes]->sTitle = sTitle;
+		ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+		ResultsSets[iNoRes]->ACODE = Vals[0];
+		ResultsSets[iNoRes]->TCODE = Vals[1];
+		ResultsSets[iNoRes]->TYPE = Vals[2];
+		ResultsSets[iNoRes]->LC = Vals[3];
+		ResultsSets[iNoRes]->WID = Vals[6];
+		ResultsSets[iNoRes]->FCODE = Vals[7];
+		ResultsSets[iNoRes]->SCODE = Vals[8];
+		CString sEL;
+		char s30[30];
+		BOOL isGood = FALSE;
+		if (Vals[2] == 33)
+		{
+			isGood = TRUE;
+			sEL = "RMS STRAIN CENTRE CQUAD4";
+		}
+		else if (Vals[2] == 74)
+		{
+			isGood = TRUE;
+			sEL = "RMS STRAIN CENTRE CTRIA3";
+		}
+
+		if ((iCnt > 10) && (isGood))
+		{	
+			if (ResultsSets[iNoRes]->SCODE == 10)
+			{	//Strain curvature maximum shear or octahedral
+				ResultsSets[iNoRes]->sName = sEL;
+				ResultsSets[iNoRes]->iNoV = 11;
+				ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+				ResultsSets[iNoRes]->lab[1] = "Normal X at Z0";
+				ResultsSets[iNoRes]->lab[2] = "Normal Y at Z0";
+				ResultsSets[iNoRes]->lab[3] = "Shear strain in xy at Z0";
+				ResultsSets[iNoRes]->lab[4] = "void";
+				ResultsSets[iNoRes]->lab[5] = "Z2 = Fibre distance";
+				ResultsSets[iNoRes]->lab[6] = "Curvature X at Z0";
+				ResultsSets[iNoRes]->lab[7] = "Curvature Y at Z0";
+				ResultsSets[iNoRes]->lab[8] = "Curvature in xy at Z0";
+				ResultsSets[iNoRes]->lab[9] = "void";
+				ResultsSets[iNoRes]->lab[10] = "void";
+			}
+			else if (ResultsSets[iNoRes]->SCODE == 14)
+			{	//Strain fiber maimum shear or octahedral
+				ResultsSets[iNoRes]->sName = sEL;
+				ResultsSets[iNoRes]->iNoV = 11;
+				ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+				ResultsSets[iNoRes]->lab[1] = "Normal X at Z1";
+				ResultsSets[iNoRes]->lab[2] = "Normal Y at Z1";
+				ResultsSets[iNoRes]->lab[3] = "Shear strain in xy at Z1";
+				ResultsSets[iNoRes]->lab[4] = "Thales VM at Z1";
+				ResultsSets[iNoRes]->lab[5] = "Z1 = Fibre distance";
+				ResultsSets[iNoRes]->lab[6] = "Normal X at Z2";
+				ResultsSets[iNoRes]->lab[7] = "Normal Y at Z2";
+				ResultsSets[iNoRes]->lab[8] = "Shear strain in xy at Z2";
+				ResultsSets[iNoRes]->lab[9] = "Thales VM at Z2";
+				ResultsSets[iNoRes]->lab[10] = "Thales Max VM at Z1 & Z2";
+			}
+			else
+			{
+				ResultsSets[iNoRes]->sName = sEL;
+				ResultsSets[iNoRes]->iNoV = 11;
+				ResultsSets[iNoRes]->lab[0] = "error void";
+				ResultsSets[iNoRes]->lab[1] = "error void";
+				ResultsSets[iNoRes]->lab[2] = "error void";
+				ResultsSets[iNoRes]->lab[3] = "error void";
+				ResultsSets[iNoRes]->lab[4] = "error void";
+				ResultsSets[iNoRes]->lab[5] = "error void";
+				ResultsSets[iNoRes]->lab[6] = "error void";
+				ResultsSets[iNoRes]->lab[7] = "error void";
+				ResultsSets[iNoRes]->lab[8] = "error void";
+				ResultsSets[iNoRes]->lab[9] = "error void";
+				ResultsSets[iNoRes]->lab[10] = "error void";
+			}
+			for (i = 10; i < iCnt; i += 9)
+			{
+				Res11* pRes = new Res11;
+				pRes->ID = Vals[i] / 10;
+				pRes->v[0] = *(float*)&Vals[i + 1];
+				pRes->v[1] = *(float*)&Vals[i + 2];
+				pRes->v[2] = *(float*)&Vals[i + 3];
+				pRes->v[3] = *(float*)&Vals[i + 4];
+				ds11 = pRes->v[1];
+				ds22 = pRes->v[2];
+				ds12 = pRes->v[3];
+				//For proper RMS VM see Pitoiset e.a. [1]
+				//dvm = pow((ds11 * ds11 - ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				//Note the + where - would be but this is Thales method for
+				//GRMS VM note all values are +ve
+				dvm = pow((ds11 * ds11 + ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				pRes->v[4] = dvm;
+				pRes->v[5] = *(float*)&Vals[i + 5];
+				pRes->v[6] = *(float*)&Vals[i + 6];
+				pRes->v[7] = *(float*)&Vals[i + 7];
+				pRes->v[8] = *(float*)&Vals[i + 8];
+				ds11 = pRes->v[6];
+				ds22 = pRes->v[7];
+				ds12 = pRes->v[8];
+				dvmMax = dvm;
+				dvm = pow((ds11 * ds11 + ds11 * ds22 + ds22 * ds22 + 3 * ds12 * ds12), 0.5);
+				pRes->v[9] = dvm;
+				if (dvm > dvmMax)
+					dvmMax = dvm;
+				pRes->v[10] = dvmMax;
+				ResultsSets[iNoRes]->Add(pRes);
+			}
+		}
+		iNoRes++;
+	}
+}
+
+
+
+void ME_Object::AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq)
+{
+	int i;
+	double ds11;
+	double ds22;
+	double ds12;
+	double dvmMax;
+	double dvm;
+	if (iCnt > 5)
+	{
+		ResultsSets[iNoRes] = new ResSet();
+		ResultsSets[iNoRes]->sFile = inName;
+		ResultsSets[iNoRes]->sTitle = sTitle;
+		ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+		ResultsSets[iNoRes]->ACODE = Vals[0];
+		ResultsSets[iNoRes]->TCODE = Vals[1];
+		ResultsSets[iNoRes]->TYPE = Vals[2];
+		ResultsSets[iNoRes]->LC = Vals[3];
+		ResultsSets[iNoRes]->WID = Vals[6];
+		ResultsSets[iNoRes]->FCODE = Vals[7];
+		ResultsSets[iNoRes]->SCODE = Vals[8];
+		CString sEL;
+		char s30[30];
+		BOOL isGood = FALSE;
+		//FCODE = 2  Real/imaginary
+		//FCODE = 3  Magnitude/phase
+		if (Vals[2] == 33)
+		{
+			isGood = TRUE;
+			if (Vals[0] / 10 == 5)  //It's a frequency results
+			{
+				sprintf_s(s30, "%g %s", dFreq, "Hz STRAIN CQUAD4");
+				sEL = s30;
+			}
+			else
+			{
+				sEL = "STRAIN GRMS CQUAD4";
+			}
+		}
+
+		if ((iCnt > 10) && (isGood))
+		{
+			ResultsSets[iNoRes]->sName = sEL;
+			ResultsSets[iNoRes]->iNoV = 14;
+			ResultsSets[iNoRes]->lab[0] = "Z1 = Fibre distance";
+			ResultsSets[iNoRes]->lab[1] = "Re Normal X at Z1";
+			ResultsSets[iNoRes]->lab[2] = "Im Normal X at Z1";
+			ResultsSets[iNoRes]->lab[3] = "Re Normal Y at Z1";
+			ResultsSets[iNoRes]->lab[4] = "Im Normal Y at Z1";
+			ResultsSets[iNoRes]->lab[5] = "Re Shear XY at Z1";
+			ResultsSets[iNoRes]->lab[6] = "Im Shear XY at Z1";
+			ResultsSets[iNoRes]->lab[7] = "Z2 = Fibre distance";
+			ResultsSets[iNoRes]->lab[8] = "Re Normal X at Z2";
+			ResultsSets[iNoRes]->lab[9] = "Im Normal X at Z2";
+			ResultsSets[iNoRes]->lab[10] = "Re Normal Y at Z2";
+			ResultsSets[iNoRes]->lab[11] = "Im Normal Y at Z2";
+			ResultsSets[iNoRes]->lab[12] = "Re Shear XY at Z2";
+			ResultsSets[iNoRes]->lab[13] = "Im Shear XY at Z2";
+			for (i = 10; i < iCnt; i += 15)
+			{
+				Res15* pRes = new Res15;
+				pRes->ID = Vals[i] / 10;
+				pRes->v[0] = *(float*)&Vals[i + 1];
+				pRes->v[1] = *(float*)&Vals[i + 2];
+				pRes->v[2] = *(float*)&Vals[i + 3];
+				pRes->v[3] = *(float*)&Vals[i + 4];
+				pRes->v[4] = *(float*)&Vals[i + 5];
+				pRes->v[5] = *(float*)&Vals[i + 6];
+				pRes->v[6] = *(float*)&Vals[i + 7];
+				pRes->v[7] = *(float*)&Vals[i + 8];
+				pRes->v[8] = *(float*)&Vals[i + 9];
+				pRes->v[9] = *(float*)&Vals[i + 10];
+				pRes->v[10] = *(float*)&Vals[i + 11];
+				pRes->v[11] = *(float*)&Vals[i + 12];
+				pRes->v[12] = *(float*)&Vals[i + 13];
+				pRes->v[13] = *(float*)&Vals[i + 14];
+				ResultsSets[iNoRes]->Add(pRes);
+			}
+		}
+		iNoRes++;
+	}
+}
+
+void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName,double dF)
 {
 	int i;
 	char s30[30];
@@ -25704,6 +33928,7 @@ void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTit
 	//BuildNodeList();
 	C3dVector vT;
 	C3dVector vR;
+
 	ResultsSets[iNoRes] = new ResSet();
 	//***********************************************
 	ResultsSets[iNoRes]->sFile = inName;
@@ -25713,36 +33938,70 @@ void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTit
 	ResultsSets[iNoRes]->TCODE = Vals[1];
 	ResultsSets[iNoRes]->TYPE = Vals[2];
 	ResultsSets[iNoRes]->LC = Vals[3];
-	ModeNo = *(float*)& Vals[4];
-	ModeFreq = *(float*)&Vals[5];
-	ModeFreq = pow(ModeFreq, 0.5) / (3.14159265359 * 2);
-	ResultsSets[iNoRes]->i1 = ModeNo;
-	ResultsSets[iNoRes]->d1 = ModeNo;
+	ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	ResultsSets[iNoRes]->SCODE = Vals[8];
+	//ModeNo = *(float*)& Vals[4];
+	//ModeFreq = *(float*)&Vals[5];
+	//ModeFreq = pow(ModeFreq, 0.5) / (3.14159265359 * 2);
+	ResultsSets[iNoRes]->i1 = 0;
+	ResultsSets[iNoRes]->dFreq = dF;
 	ResultsSets[iNoRes]->WID = Vals[6];
 
-	if (iCnt > 7)
+	if (iCnt > 10)
 	{
-		sprintf_s(s30, "%s %g %s", "ACCELERATION", ModeNo, "Hz");
+		sprintf_s(s30, "%s %g %s", "ACCEL", dF, "Hz");
 		ResultsSets[iNoRes]->sName = s30;
 		ResultsSets[iNoRes]->iNoV = 13;
-		ResultsSets[iNoRes]->lab[0] = "Freq";
-		ResultsSets[iNoRes]->lab[1] = "TX";
-		ResultsSets[iNoRes]->lab[2] = "TY";
-		ResultsSets[iNoRes]->lab[3] = "TZ";
-		ResultsSets[iNoRes]->lab[4] = "RX";
-		ResultsSets[iNoRes]->lab[5] = "RY";
-		ResultsSets[iNoRes]->lab[6] = "RZ";
-		ResultsSets[iNoRes]->lab[7] = "(j) X";
-		ResultsSets[iNoRes]->lab[8] = "(j) Y";
-		ResultsSets[iNoRes]->lab[9] = "(j) Z";
-		ResultsSets[iNoRes]->lab[10] = "(j) RX";
-		ResultsSets[iNoRes]->lab[11] = "(j) RY";
-		ResultsSets[iNoRes]->lab[12] = "(j) RZ";
-		for (i = 7; i < iCnt; i += 14)
+		if (ResultsSets[iNoRes]->FCODE == 3)
+		{	 //MAG / PHASE
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "TX";
+			ResultsSets[iNoRes]->lab[2] = "TY";
+			ResultsSets[iNoRes]->lab[3] = "TZ";
+			ResultsSets[iNoRes]->lab[4] = "RX";
+			ResultsSets[iNoRes]->lab[5] = "RY";
+			ResultsSets[iNoRes]->lab[6] = "RZ";
+			ResultsSets[iNoRes]->lab[7] = "(Phi) X";
+			ResultsSets[iNoRes]->lab[8] = "(Phi) Y";
+			ResultsSets[iNoRes]->lab[9] = "(Phi) Z";
+			ResultsSets[iNoRes]->lab[10] = "(Phi) RX";
+			ResultsSets[iNoRes]->lab[11] = "(Phi) RY";
+			ResultsSets[iNoRes]->lab[12] = "(Phi) RZ";
+			//**********Define the Vector********************
+			ResDef* pVT = new ResDef();
+			pVT->sResType = "ACCEL TRANS MAG VEC";
+			pVT->iResType = 1;   //Vector Forec Magnitude Translation
+			pVT->iLoc = 0;       //Element
+			pVT->iComponents[0] = 1;
+			pVT->iComponents[1] = 2;
+			pVT->iComponents[2] = 3;
+			pVT->iComponents[3] = -1;
+			pVT->iCompNo = 4;
+			pVT->GenDefualtHeaders();
+			ResultsSets[iNoRes]->AddResDef(pVT);
+		}
+		else  //REAL - IMAGINARY
+		{
+			ResultsSets[iNoRes]->lab[0] = "Freq";
+			ResultsSets[iNoRes]->lab[1] = "TX";
+			ResultsSets[iNoRes]->lab[2] = "TY";
+			ResultsSets[iNoRes]->lab[3] = "TZ";
+			ResultsSets[iNoRes]->lab[4] = "RX";
+			ResultsSets[iNoRes]->lab[5] = "RY";
+			ResultsSets[iNoRes]->lab[6] = "RZ";
+			ResultsSets[iNoRes]->lab[7] = "(j) X";
+			ResultsSets[iNoRes]->lab[8] = "(j) Y";
+			ResultsSets[iNoRes]->lab[9] = "(j) Z";
+			ResultsSets[iNoRes]->lab[10] = "(j) RX";
+			ResultsSets[iNoRes]->lab[11] = "(j) RY";
+			ResultsSets[iNoRes]->lab[12] = "(j) RZ";
+		}
+		for (i = 10; i < iCnt; i += 14)
 		{
 			Res13* pRes = new Res13;
 			pRes->ID = Vals[i] / 10;
-			pRes->v[0] = ModeNo;
+			pRes->v[0] = dF;
 			pRes->v[1] = *(float*)&Vals[i + 2];
 			pRes->v[2] = *(float*)&Vals[i + 3];
 			pRes->v[3] = *(float*)&Vals[i + 4];
@@ -25763,6 +34022,136 @@ void ME_Object::AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTit
 	iNoRes++;
 }
 
+
+void ME_Object::AddOQMRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF)
+{
+	int i;
+	char s30[30];
+	float ModeNo;
+	float ModeFreq;
+	//BuildNodeList();
+	C3dVector vT;
+	C3dVector vR;
+
+	ResultsSets[iNoRes] = new ResSet();
+	//***********************************************
+	ResultsSets[iNoRes]->sFile = inName;
+	ResultsSets[iNoRes]->sTitle = sTitle;
+	ResultsSets[iNoRes]->sSubTitle = sSubTitle;
+	ResultsSets[iNoRes]->ACODE = Vals[0];
+	ResultsSets[iNoRes]->TCODE = Vals[1];
+	ResultsSets[iNoRes]->TYPE = Vals[2];
+	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	ResultsSets[iNoRes]->SCODE = Vals[8];
+	//ModeNo = *(float*)& Vals[4];
+	//ModeFreq = *(float*)&Vals[5];
+	//ModeFreq = pow(ModeFreq, 0.5) / (3.14159265359 * 2);
+	ResultsSets[iNoRes]->i1 = 0;
+	ResultsSets[iNoRes]->dFreq = dF;
+	ResultsSets[iNoRes]->WID = Vals[6];
+
+	if (iCnt > 10)
+	{
+		if (ResultsSets[iNoRes]->ACODE / 10 == 5)	  //Frequency
+		{
+			sprintf_s(s30, "%s %g %s", "MPCF", dF, "Hz");
+			ResultsSets[iNoRes]->sName = s30;
+			ResultsSets[iNoRes]->iNoV = 13;
+			if (ResultsSets[iNoRes]->FCODE == 3)
+			{	 //MAG / PHASE
+				ResultsSets[iNoRes]->lab[0] = "Freq";
+				ResultsSets[iNoRes]->lab[1] = "TX";
+				ResultsSets[iNoRes]->lab[2] = "TY";
+				ResultsSets[iNoRes]->lab[3] = "TZ";
+				ResultsSets[iNoRes]->lab[4] = "RX";
+				ResultsSets[iNoRes]->lab[5] = "RY";
+				ResultsSets[iNoRes]->lab[6] = "RZ";
+				ResultsSets[iNoRes]->lab[7] = "(Phi) X";
+				ResultsSets[iNoRes]->lab[8] = "(Phi) Y";
+				ResultsSets[iNoRes]->lab[9] = "(Phi) Z";
+				ResultsSets[iNoRes]->lab[10] = "(Phi) RX";
+				ResultsSets[iNoRes]->lab[11] = "(Phi) RY";
+				ResultsSets[iNoRes]->lab[12] = "(Phi) RZ";
+				//**********Define the Vector********************
+				ResDef* pVT = new ResDef();
+				pVT->sResType = "MPC FORCE TRANS MAG VEC";
+				pVT->iResType = 1;   //Vector Forec Magnitude Translation
+				pVT->iLoc = 0;       //Node
+				pVT->iComponents[0] = 1;
+				pVT->iComponents[1] = 2;
+				pVT->iComponents[2] = 3;
+				pVT->iComponents[3] = -1;
+				pVT->iCompNo = 4;
+				pVT->GenDefualtHeaders();
+				ResultsSets[iNoRes]->AddResDef(pVT);
+			}
+			else  //REAL - IMAGINARY
+			{
+				ResultsSets[iNoRes]->lab[0] = "Freq";
+				ResultsSets[iNoRes]->lab[1] = "TX";
+				ResultsSets[iNoRes]->lab[2] = "TY";
+				ResultsSets[iNoRes]->lab[3] = "TZ";
+				ResultsSets[iNoRes]->lab[4] = "RX";
+				ResultsSets[iNoRes]->lab[5] = "RY";
+				ResultsSets[iNoRes]->lab[6] = "RZ";
+				ResultsSets[iNoRes]->lab[7] = "(j) X";
+				ResultsSets[iNoRes]->lab[8] = "(j) Y";
+				ResultsSets[iNoRes]->lab[9] = "(j) Z";
+				ResultsSets[iNoRes]->lab[10] = "(j) RX";
+				ResultsSets[iNoRes]->lab[11] = "(j) RY";
+				ResultsSets[iNoRes]->lab[12] = "(j) RZ";
+			}
+			for (i = 10; i < iCnt; i += 14)
+			{
+				Res13* pRes = new Res13;
+				pRes->ID = Vals[i] / 10;
+				pRes->v[0] = dF;
+				pRes->v[1] = *(float*)&Vals[i + 2];
+				pRes->v[2] = *(float*)&Vals[i + 3];
+				pRes->v[3] = *(float*)&Vals[i + 4];
+				pRes->v[4] = *(float*)&Vals[i + 5];
+				pRes->v[5] = *(float*)&Vals[i + 6];
+				pRes->v[6] = *(float*)&Vals[i + 7];
+				pRes->v[7] = *(float*)&Vals[i + 8];
+				pRes->v[8] = *(float*)&Vals[i + 9];
+				pRes->v[9] = *(float*)&Vals[i + 10];
+				pRes->v[10] = *(float*)&Vals[i + 11];
+				pRes->v[11] = *(float*)&Vals[i + 12];
+				pRes->v[12] = *(float*)&Vals[i + 13];
+				ResultsSets[iNoRes]->Add(pRes);
+			}
+		}
+		else if (ResultsSets[iNoRes]->ACODE / 10 == 1)	  //Static
+		{
+			sprintf_s(s30, "%s", "MPCF");
+			ResultsSets[iNoRes]->sName = s30;
+			ResultsSets[iNoRes]->iNoV = 6;
+			ResultsSets[iNoRes]->lab[0] = "TX";
+			ResultsSets[iNoRes]->lab[1] = "TY";
+			ResultsSets[iNoRes]->lab[2] = "TZ";
+			ResultsSets[iNoRes]->lab[3] = "RX";
+			ResultsSets[iNoRes]->lab[4] = "RY";
+			ResultsSets[iNoRes]->lab[5] = "RZ";
+			for (i = 10; i < iCnt; i += 8)
+			{
+				Res6* pRes = new Res6;
+				pRes->ID = Vals[i] / 10;
+				pRes->v[0] = *(float*)&Vals[i + 2];
+				pRes->v[1] = *(float*)&Vals[i + 3];
+				pRes->v[2] = *(float*)&Vals[i + 4];
+				pRes->v[3] = *(float*)&Vals[i + 5];
+				pRes->v[4] = *(float*)&Vals[i + 6];
+				pRes->v[5] = *(float*)&Vals[i + 7];
+				ResultsSets[iNoRes]->Add(pRes);
+			}
+		}
+	}
+	//DeleteNodeList();
+	iNoRes++;
+}
+
 void ME_Object::AddOUGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName)
 {
 	int i;
@@ -25772,7 +34161,7 @@ void ME_Object::AddOUGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitl
 	BuildNodeList();
 	C3dVector vT;
 	C3dVector vR;
-	Pt_Object* pND;
+	Node* pND;
 	int iRID;
 	ResultsSets[iNoRes] = new ResSet();
 	//**********Define the Vector********************
@@ -25806,6 +34195,9 @@ void ME_Object::AddOUGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitl
 	ResultsSets[iNoRes]->TCODE = Vals[1];
 	ResultsSets[iNoRes]->TYPE = Vals[2];
 	ResultsSets[iNoRes]->LC = Vals[3];
+	ResultsSets[iNoRes]->WID = Vals[6];
+	ResultsSets[iNoRes]->FCODE = Vals[7];
+	ResultsSets[iNoRes]->SCODE = Vals[8];
 	ModeNo = Vals[4];
 	ModeFreq = *(float*)&Vals[5];
 	ModeFreq = pow(ModeFreq, 0.5) / (3.14159265359 * 2);
@@ -25814,7 +34206,7 @@ void ME_Object::AddOUGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitl
 	ResultsSets[iNoRes]->WID = Vals[6];
 
 
-	if (iCnt > 7)
+	if (iCnt > 10)
 	{
 		if (ResultsSets[iNoRes]->ACODE == 22)  //Modes
 			sprintf_s(s30, "DISP MODE %g", ResultsSets[iNoRes]->d1);
@@ -25828,12 +34220,12 @@ void ME_Object::AddOUGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitl
 		ResultsSets[iNoRes]->lab[3] = "RX";
 		ResultsSets[iNoRes]->lab[4] = "RY";
 		ResultsSets[iNoRes]->lab[5] = "RZ";
-		for (i = 7; i < iCnt; i += 8)
+		for (i = 10; i < iCnt; i += 8)
 		{
 			Res6* pRes = new Res6;
 			pRes->ID = Vals[i] / 10;
 			if (pRes->ID < 99999999)
-				pND = (Pt_Object*)TempList->Objs[pRes->ID];
+				pND = (Node*)TempList->Objs[pRes->ID];
 			else
 				pND = GetNode(pRes->ID);
 			iRID = 0;
@@ -25990,9 +34382,9 @@ if ((iCurResSet>-1) && (CResSet!=NULL))
 
 //*************************************************************
 //  LIST RESPONSE DATA FOR FREQUENCY ANALYSIS
-//  List repose for loadcase LC
+//  List respose for loadcase LC
 //  and for node or element iEnt
-void ME_Object::ResListRespData(int iLC, int iEnt)
+void ME_Object::ResListRespData(int iEnt)
 {
 	int i;
 	int j;
@@ -26001,10 +34393,14 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 	Res* pR;
 	CString sDL;
 	BOOL bFirst = TRUE;
-	outtext1("RESONSE LISTING:-");
+	outtext1("RESPONSE LISTING:-");
+	int iTCode = -1;
+	int iLC2 = -1;
+	iTCode = ResultsSets[iCurResSet]->TCODE;
+	iLC2 = ResultsSets[iCurResSet]->LC;
 	for (i = 0; i < iNoRes; i++)
 	{
-		if (ResultsSets[i]->LC == iLC)
+		if ((ResultsSets[i]->LC == iLC2) && (iTCode == ResultsSets[i]->TCODE))
 		{
 			pRS = ResultsSets[i];
 			if (pRS->ACODE / 10 == 5) //Frequncy data
@@ -26013,9 +34409,179 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 				{
 					outtext1(pRS->sTitle);
 					outtext1(pRS->sSubTitle);
-					sprintf_s(buff, "%s %i", "LC:", pRS->LC);
-					sDL = buff;
-					outtext1(sDL);
+					sprintf_s(buff, "%s%i	%s%i", "LC", pRS->LC,  "ID", iEnt);
+					outtext1(buff);
+					//sDL = pRS->ToStringHead();
+					sprintf_s(buff, "%s	%s", pRS->lab[0], pRS->lab[iResVal]);
+					outtext1(buff);
+					bFirst = FALSE;
+				}
+
+				pR = pRS->Head;
+				for (j = 0; j < pRS->iCnt; j++)
+				{
+					if (pR->ID == iEnt)
+					{
+						//sDL = pRS->ToStringDL(pR);
+						sprintf_s(buff, "%g	%g", *pR->GetAddress(0), *pR->GetAddress(iResVal));
+						outtext1(buff);
+						break;
+					}
+					pR = pR->next;
+				}
+			}
+		}
+	}
+}
+
+
+//*************************************************************
+//  Label nodes and elements where response data can be plotted
+//*************************************************************
+void ME_Object::ResLabRespItems()
+{
+	int i;
+	int j;
+	char buff[200];
+	ResSet* pRS = NULL;
+	Res* pR = NULL;
+	int iTCode = -1;
+	int iLC = -1;
+	Node* oND = NULL;
+	E_Object* oEl = NULL;
+	NEList* LCGp = new NEList();
+	NEList* oIDS = new NEList();
+	LCGp->iNo = 0;
+	for (i = 0; i < iNoRes; i++)
+	{
+		iLC = ResultsSets[i]->LC;
+		iTCode = ResultsSets[i]->TCODE;
+		//TCODE 1039 Node MPC
+		if ((iTCode == 1039)	&& (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC,1);
+			sprintf_s(buff, "%s %i %s", "CHECKING LC", iLC ,"MPC FORCE FOR RESPONSE NODES");
+			outtext1(buff); 
+			pRS = ResultsSets[i];
+			pR = pRS->Head;
+			for (j = 0; j < pRS->iCnt; j++)
+			{
+				if (!oIDS->IsIn(pR->ID))
+					oIDS->Add(pR->ID, 1);
+				pR = pR->next;
+			}
+		}
+	}
+
+	LCGp->iNo = 0;
+	for (i = 0; i < iNoRes; i++)
+	{
+		iLC = ResultsSets[i]->LC;
+		iTCode = ResultsSets[i]->TCODE;
+		//TCODE 1039 Node MPC
+		if ((iTCode == 1011) && (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC, 1);
+			sprintf_s(buff, "%s %i %s", "CHECKING LC", iLC, "ACCEL FOR RESPONSE NODES");
+			outtext1(buff);
+			pRS = ResultsSets[i];
+			pR = pRS->Head;
+			for (j = 0; j < pRS->iCnt; j++)
+			{
+				if (!oIDS->IsIn(pR->ID))
+					oIDS->Add(pR->ID, 1);
+				pR = pR->next;
+			}
+		}
+
+	}
+	//Print node where response data has been found,
+	outtext1("Available Response Nodes:-");
+	for (i = 0; i < oIDS->iNo; i++)
+	{
+		if (oIDS->iNo < 50)
+		{
+			sprintf_s(buff, "NODE	%i", oIDS->ids[i]);
+			outtext1(buff);
+		}
+		oND = this->GetNode(oIDS->ids[i]);
+		if (oND != NULL)
+			oND->bDrawLab = !oND->bDrawLab;
+	}
+
+
+	LCGp->iNo = 0;
+	oIDS->iNo = 0;
+	for (i = 0; i < iNoRes; i++)
+	{
+		iLC = ResultsSets[i]->LC;
+		iTCode = ResultsSets[i]->TCODE;
+		//TCODE 1039 Node MPC
+		if ((iTCode == 1004) && (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC, 1);
+			sprintf_s(buff, "%s %i %s", "CHECKING LC", iLC, "FORCES FOR RESPONSE ELEMENTS");
+			outtext1(buff);
+			pRS = ResultsSets[i];
+			pR = pRS->Head;
+			for (j = 0; j < pRS->iCnt; j++)
+			{
+				if (!oIDS->IsIn(pR->ID))
+					oIDS->Add(pR->ID, 1);
+				pR = pR->next;
+			}
+		}
+	}
+	outtext1("Available Response Elements:-");
+	for (i = 0; i < oIDS->iNo; i++)
+	{
+		if (oIDS->iNo < 50)
+		{
+			sprintf_s(buff, "ELEMENT	%i", oIDS->ids[i]);
+			outtext1(buff);
+		}
+		oEl = this->GetElement(oIDS->ids[i]);
+		if (oEl != NULL)
+			oEl->bDrawLab =!oEl->bDrawLab;
+	}
+
+
+	delete (LCGp);
+	delete (oIDS);
+
+}
+
+//*************************************************************
+//  LIST RESPONSE DATA FOR FREQUENCY ANALYSIS
+//  LC and Type to list are taken from the active LC
+//  For node or element iEnt
+void ME_Object::ResListRespDataFull(int iEnt)
+{
+	int i;
+	int j;
+	char buff[200];
+	ResSet* pRS;
+	Res* pR;
+	CString sDL;
+	BOOL bFirst = TRUE;
+	outtext1("RESPONSE LISTING:-");
+	int iTCode = -1;
+	int iLC2 = -1;
+	iTCode = ResultsSets[iCurResSet]->TCODE;
+	iLC2 = ResultsSets[iCurResSet]->LC;
+	for (i = 0; i < iNoRes; i++)
+	{
+		if ((ResultsSets[i]->LC == iLC2) && (iTCode == ResultsSets[i]->TCODE))
+		{
+			pRS = ResultsSets[i];
+			if (pRS->ACODE / 10 == 5) //Frequncy data
+			{
+				if (bFirst)
+				{
+					outtext1(pRS->sTitle);
+					outtext1(pRS->sSubTitle);
+					sprintf_s(buff, "%s	%i	%s	%i	", "LC", pRS->LC, "ID", iEnt);
+					outtext1(buff);
 					sDL = pRS->ToStringHead();
 					outtext1(sDL);
 					bFirst = FALSE;
@@ -26028,6 +34594,7 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 					{
 						sDL = pRS->ToStringDL(pR);
 						outtext1(sDL);
+						break;
 					}
 					pR = pR->next;
 				}
@@ -26035,7 +34602,6 @@ void ME_Object::ResListRespData(int iLC, int iEnt)
 		}
 	}
 }
-
 void ME_Object::SetDefScale(double dS)
 {
   dScale=dS;
@@ -28457,8 +37023,8 @@ Forward.SetColVec(2,vB);
 Forward.SetColVec(3,vZ);
 
 Mesh=pM;
-Pt_Object* pANd =Mesh->GetNode(1);
-Pt_Object* pBNd =Mesh->GetNode(2);
+Node* pANd =Mesh->GetNode(1);
+Node* pBNd =Mesh->GetNode(2);
 if ((pANd!=NULL) && (pBNd!=NULL))
 {
   vNA = pANd->GetCoords();
@@ -28577,7 +37143,7 @@ Mesh=pM;
 TMat.Translate2(inPt->Pt_Point->x,inPt->Pt_Point->y,inPt->Pt_Point->z);
 Mesh->Transform(TMat);
 AttachTform(TMat);
-Pt_Object* pXNd =Mesh->GetNode(3);
+Node* pXNd =Mesh->GetNode(3);
 if (pXNd!=NULL)
 {
    C3dVector XPt;
@@ -28762,7 +37328,7 @@ if (vA.Mag()==0)
 }
 
 Mesh=pM;
-Pt_Object* pXNd1 =Mesh->GetNode(3);
+Node* pXNd1 =Mesh->GetNode(3);
 //Pt_Object* pXNd2 =Mesh->GetNode(4);
 C3dMatrix SaveTMat;
 SaveTMat=TMat;
@@ -29664,8 +38230,8 @@ C3dVector pCPt;
 C3dVector p1;
 C3dVector vDirO;
 C3dVector vDirN;
-Pt_Object* pCN1;
-Pt_Object* pCN2;
+Node* pCN1;
+Node* pCN2;
 C3dMatrix mUp = GetFirstYMap();
 NLine* pL;
 pL = (NLine*) pPath;
@@ -29844,9 +38410,9 @@ void Sweep::GenMesh(int iDim,PSHELL* pS,PBARL* pB)
 int i;
 int j;
 int k;
-Pt_Object* S1[500][100];
-Pt_Object* E1[2000];
-Pt_Object* pNd;
+Node* S1[500][100];
+Node* E1[MaxSelNodes];
+Node* pNd;
 C3dVector Nd;
 int iCnt1=0;
 int iNlab=1;
@@ -30168,8 +38734,8 @@ C3dVector pCPt;
 C3dVector p1;
 C3dVector vDirO;
 C3dVector vDirN;
-Pt_Object* pCN1;
-Pt_Object* pCN2;
+Node* pCN1;
+Node* pCN2;
 C3dMatrix mUp = GetFirstYMap();
 NLine* pL;
 pL = (NLine*) pPath;
@@ -30248,7 +38814,7 @@ if (dDot<0)
 Generate(mUp,dElLength,dFR);
 }
 
-BOOL isCorner(Pt_Object* P1,Pt_Object* P2,Pt_Object* P3,Pt_Object* P4)
+BOOL isCorner(Node* P1,Node* P2,Node* P3,Node* P4)
 {
 BOOL brc = FALSE;
 if ((P1->iColour==3) &&
@@ -30270,9 +38836,9 @@ void SweepF::GenMesh(int iDim,PSHELL* pS1,PSHELL* pS2
 int i;
 int j;
 int k;
-Pt_Object* S1[500][100];
-Pt_Object* E1[2000];
-Pt_Object* pNd;
+Node* S1[500][100];
+Node* E1[MaxSelNodes];
+Node* pNd;
 C3dVector Nd;
 int iCnt1=0;
 int iNlab=1;
@@ -30504,9 +39070,9 @@ void SweepFB::GenMesh(int iDim,PSHELL* pS1,PSHELL* pS2
 int i;
 int j;
 int k;
-Pt_Object* S1[500][100];
-Pt_Object* E1[2000];
-Pt_Object* pNd;
+Node* S1[500][100];
+Node* E1[MaxSelNodes];
+Node* pNd;
 C3dVector Nd;
 int iCnt1=0;
 int iNlab=1;
@@ -31249,6 +39815,7 @@ IMPLEMENT_DYNAMIC(Entity , CObject )
 
 Entity::Entity()
 {
+iFile = -1;
 sTitle="";
 iID = -1;
 iType= -1;
@@ -31275,7 +39842,7 @@ void Entity::List()
 void Entity::ListShort()
 {
   char S1[200];
-  sprintf_s(S1,"%s %i %s %i  %s","ID",iID,"TYPE",iType,this->sTitle);
+  sprintf_s(S1,"%s %i %s %i %s %i  %s", "FNO", iFile, "ID",iID,"TYPE",iType,this->sTitle);
   outtext1(_T(S1)); 
 }
 
@@ -31300,12 +39867,15 @@ void Entity::Serialize(CArchive& ar,int iV)
     ar<<iType;
     ar<<sTitle;
     ar<<iID;
+	ar << iFile;
   }
   else
   {
     ar>>iType;
     ar>>sTitle;
     ar>>iID;
+	if (iV < -62)
+		ar >> iFile;
   }
 }
 
@@ -31371,6 +39941,23 @@ void Property::ChangeMat(int thisMat,int inMID)
 
 // MAT
 IMPLEMENT_DYNAMIC(Material , CObject )
+Mat Material::DeeMEM()
+{
+	Mat Dee;
+	return(Dee);
+}
+
+Mat Material::DeeBM()
+{
+	Mat Dee;
+	return(Dee);
+}
+
+Mat Material::DeeSH()
+{
+	Mat Dee;
+	return(Dee);
+}
 
 void Material::Info()
 {
@@ -31420,16 +40007,12 @@ void PMASS::Serialize(CArchive& ar, int iV)
 {
   if (ar.IsStoring())
   {
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << dM;
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> dM;
   }
 }
@@ -31453,8 +40036,9 @@ void PMASS::List()
 
 int PMASS::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Point Mass (M)";
-  return(1);
+  sVar[0] = "File No";
+  sVar[1] = "Point Mass (M)";
+  return(2);
 }
 
 
@@ -31462,6 +40046,8 @@ int PMASS::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sVar[iNo] = "";
+  iNo++;
   sprintf_s(S1, "%g", dM);
   sVar[iNo] = S1;
   iNo++;
@@ -31470,7 +40056,7 @@ int PMASS::GetVarValues(CString sVar[])
 
 void PMASS::PutVarValues(int iNo, CString sVar[])
 {
-  dM = atof(sVar[0]);
+  dM = atof(sVar[1]);
 }
 
 IMPLEMENT_DYNAMIC(PSPRINGT , CObject)
@@ -31503,9 +40089,7 @@ void PSPRINGT::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+		Entity::Serialize(ar, iV);
     ar << dkx;
     ar << dky;
     ar << dkz;
@@ -31513,9 +40097,7 @@ void PSPRINGT::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+		Entity::Serialize(ar, iV);
     ar >> dkx;
     ar >> dky;
     ar >> dkz;
@@ -31551,11 +40133,12 @@ void PSPRINGT::List()
 
 int PSPRINGT::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Translational Stiffness in X (Kx)";
-  sVar[1] = "Translational Stiffness in Y (Ky)";
-  sVar[2] = "Translational Stiffness in Z (Kz)";
-  sVar[3] = "Conduction Coefficeint (kcoeff)";
-  return(4);
+  sVar[0] = "File No";
+  sVar[1] = "Translational Stiffness in X (Kx)";
+  sVar[2] = "Translational Stiffness in Y (Ky)";
+  sVar[3] = "Translational Stiffness in Z (Kz)";
+  sVar[4] = "Conduction Coefficeint (kcoeff)";
+  return(5);
 }
 
 
@@ -31563,6 +40146,9 @@ int PSPRINGT::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = "";
+  iNo++;
   sprintf_s(S1, "%g", dkx);
   sVar[iNo] = S1;
   iNo++;
@@ -31580,10 +40166,11 @@ int PSPRINGT::GetVarValues(CString sVar[])
 
 void PSPRINGT::PutVarValues(int iNo, CString sVar[])
 {
-  dkx = atof(sVar[0]);
-  dky = atof(sVar[1]);
-  dkz = atof(sVar[2]);
-  dkcoeff = atof(sVar[3]);
+  iFile = atoi(sVar[0]);
+  dkx = atof(sVar[1]);
+  dky = atof(sVar[2]);
+  dkz = atof(sVar[3]);
+  dkcoeff = atof(sVar[4]);
 }
 
 void PSPRINGT::ExportNAS(FILE* pFile)
@@ -31632,11 +40219,12 @@ void PSPRINGR::List()
 
 int PSPRINGR::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Rotational Stiffness in X (Rx)";
-  sVar[1] = "Rotational Stiffness in Y (Ry)";
-  sVar[2] = "Rotational Stiffness in Z (Rz)";
-  sVar[3] = "Conduction Coefficeint (kcoeff)";
-  return(4);
+  sVar[0] = "File No";
+  sVar[1] = "Rotational Stiffness in X (Rx)";
+  sVar[2] = "Rotational Stiffness in Y (Ry)";
+  sVar[3] = "Rotational Stiffness in Z (Rz)";
+  sVar[4] = "Conduction Coefficeint (kcoePBUSHff)";
+  return(5);
 }
 
 void PSPRINGR::ExportNAS(FILE* pFile)
@@ -31644,6 +40232,175 @@ void PSPRINGR::ExportNAS(FILE* pFile)
 	fprintf(pFile, "$%s\n", sTitle);
 	fprintf(pFile, "%8s%8i%8s%8s%8s%8s%8s%8s%8s\n", "PBUSH   ", iID, "       K","        ","       K","       K", e8(dkx), e8(dky), e8(dkz));
 }
+
+
+//***************************************************************************
+// P B U S H
+//***************************************************************************
+IMPLEMENT_DYNAMIC(PBUSH, CObject)
+
+PBUSH::PBUSH()
+{
+	sTitle = "";
+	iID = -1;
+	iType = 138;
+	sFlg = "K";
+	dK1 = 0.0;
+	dK2 = 0.0;
+	dK3 = 0.0;
+	dK4 = 0.0;
+	dK5 = 0.0;
+	dK6 = 0.0;
+	dkcoeff = 0;
+}
+
+PBUSH* PBUSH::Copy()
+{
+	PBUSH* pREt = new PBUSH();
+	pREt->iID = iID;
+	pREt->sTitle = sTitle;
+	pREt->iType = iType;
+	pREt->sFlg = sFlg;
+	pREt->dK1 = dK1;
+	pREt->dK2 = dK2;
+	pREt->dK3 = dK3;
+	pREt->dK4 = dK4;
+	pREt->dK5 = dK5;
+	pREt->dK6 = dK6;
+	return (pREt);
+}
+
+void PBUSH::Serialize(CArchive& ar, int iV)
+{
+	if (ar.IsStoring())
+	{
+		Entity::Serialize(ar, iV);
+		ar << sFlg;
+		ar << dK1;
+		ar << dK2;
+		ar << dK3;
+		ar << dK4;
+		ar << dK5;
+		ar << dK6;
+		ar << dkcoeff;
+	}
+	else
+	{
+		Entity::Serialize(ar, iV);
+		ar >> sFlg;
+		ar >> dK1;
+		ar >> dK2;
+		ar >> dK3;
+		ar >> dK4;
+		ar >> dK5;
+		ar >> dK6;
+		ar >> dkcoeff;
+	}
+}
+
+
+void PBUSH::List()
+{
+	char S1[200];
+	CString OutT;
+	outtext1("PROPERTY LISTING:-");
+	sprintf_s(S1, "%s %i %s %s", "PID", iID, "TYPE ", "CBUSH SPRING");
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %s", "TITLE : ", sTitle);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Kx    : ", dK1);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Ky    : ", dK2);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Kz    : ", dK3);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Krx    : ", dK4);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Kry    : ", dK5);
+	OutT = S1;
+	outtext1(OutT);
+	sprintf_s(S1, "%s %f", "Krz    : ", dK6);
+	OutT = S1;
+	outtext1(OutT);
+
+}
+
+int PBUSH::GetVarHeaders(CString sVar[])
+{
+	sVar[0] = "File No";
+	sVar[1] = "Flag";
+	sVar[2] = "K1";
+	sVar[3] = "K2";
+	sVar[4] = "K3";
+	sVar[5] = "K4";
+	sVar[6] = "K5";
+	sVar[7] = "K6";
+	sVar[8] = "Conduction Coefficeint (kcoePBUSHff)";
+	return(9);
+}
+
+
+int PBUSH::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
+	sVar[iNo] = sFlg;
+	iNo++;
+	sprintf_s(S1, "%g", dK1);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dK2);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dK3);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dK4);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dK5);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dK6);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dkcoeff);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void PBUSH::PutVarValues(int iNo, CString sVar[])
+{
+	iFile = atoi(sVar[0]);
+	sFlg = sVar[1];
+	dK1 = atof(sVar[2]);
+	dK2 = atof(sVar[3]);
+	dK3 = atof(sVar[4]);
+	dK4 = atof(sVar[5]);
+	dK5 = atof(sVar[6]);
+	dK6 = atof(sVar[7]);
+	dkcoeff = atof(sVar[8]);
+}
+
+void PBUSH::ExportNAS(FILE* pFile)
+{
+	fprintf(pFile, "$%s\n", sTitle);
+	fprintf(pFile, "%8s%8i%8s%8s%8s%8s%8s%8s%8s\n", "PBUSH   ", iID, sFlg, e8(dK1).GetString(), e8(dK2).GetString(), e8(dK3).GetString(), e8(dK4).GetString(), e8(dK5).GetString(), e8(dK6).GetString());
+}
+
+
+
+
 
 IMPLEMENT_DYNAMIC(PSOLID , CObject)
 
@@ -31664,9 +40421,7 @@ void PSOLID::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+		Entity::Serialize(ar, iV);
     ar << iMID;
     ar << iCORDM;
     ar << sIN;
@@ -31676,9 +40431,7 @@ void PSOLID::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+		Entity::Serialize(ar, iV);
     ar >> iMID;
     ar >> iCORDM;
     ar >> sIN;
@@ -31739,8 +40492,8 @@ return (iMID);
 
 void PSOLID::ExportNAS(FILE* pFile)
 {
-fprintf(pFile,"$%s\n",sTitle);
-fprintf(pFile,"%8s%8i%8i%8i%8s%8s%8s%8s\n","PSOLID  ",iID,iMID,iCORDM,sIN,sSTRESS,sISOP,sFCTN);
+fprintf(pFile,"$%s\n",sTitle.GetString());
+fprintf(pFile,"%8s%8i%8i%8i\n","PSOLID  ",iID,iMID,iCORDM);
 }
 
 PSOLID* PSOLID::Copy()
@@ -31760,8 +40513,9 @@ return (pREt);
 
 int PSOLID::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Material ID (MID)";
-  sVar[1] = "Material coord system (MCID) ";
+  sVar[0] = "File No";
+  sVar[1] = "Material ID (MID)";
+  sVar[2] = "Material coord system (MCID) ";
   return(3);
 }
 
@@ -31770,11 +40524,14 @@ int PSOLID::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
-  sprintf_s(S1, "%i", iMID);
+  sprintf_s(S1, "%i", iFile);
   sVar[0] = S1;
   iNo++;
-  sprintf_s(S1, "%i", iCORDM);
+  sprintf_s(S1, "%i", iMID);
   sVar[1] = S1;
+  iNo++;
+  sprintf_s(S1, "%i", iCORDM);
+  sVar[2] = S1;
   iNo++;
   return (iNo);
 }
@@ -31782,8 +40539,9 @@ int PSOLID::GetVarValues(CString sVar[])
 
 void PSOLID::PutVarValues(int iNo, CString sVar[])
 {
-  iMID = atoi(sVar[0]);
-  iCORDM = atoi(sVar[1]);
+  iFile = atoi(sVar[0]);
+  iMID = atoi(sVar[1]);
+  iCORDM = atoi(sVar[2]);
 }
 
 IMPLEMENT_DYNAMIC(PBAR , CObject)
@@ -31817,11 +40575,8 @@ void PBAR::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << iMID;
-
     ar << dA;
     ar << dI1;
     ar << dI2;
@@ -31842,11 +40597,8 @@ void PBAR::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> iMID;
-
     ar >> dA;
     ar >> dI1;
     ar >> dI2;
@@ -31880,13 +40632,14 @@ if (iMID==thisMat)
 
 int PBAR::GetVarHeaders(CString sVar[])
 {
-	sVar[0] = "Material ID (MID)";
-	sVar[1] = "Area (A)";
-	sVar[2] = "Second Moment of Inertia (I1 (Izz))";
-	sVar[3] = "Second Moment of Inertia (I2 (Iyy))";
-	sVar[4] = "Torsional Constant (J)";
-	sVar[5] = "Non Strut Mass";
-	return(6);
+	sVar[0] = "File No";
+	sVar[1] = "Material ID (MID)";
+	sVar[2] = "Area (A)";
+	sVar[3] = "Second Moment of Inertia (I1 (Izz))";
+	sVar[4] = "Second Moment of Inertia (I2 (Iyy))";
+	sVar[5] = "Torsional Constant (J)";
+	sVar[6] = "Non Strut Mass";
+	return(7);
 }
 
 
@@ -31894,35 +40647,37 @@ int PBAR::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sVar[iNo] = "";
+	iNo++;
 	sprintf_s(S1, "%i", iMID);
-	sVar[0] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dA);
-	sVar[1] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dI1);
-	sVar[2] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dI2);
-	sVar[3] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dJ);
-	sVar[4] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	sprintf_s(S1, "%g", dNSM);
-	sVar[5] = S1;
+	sVar[iNo] = S1;
 	iNo++;
 	return (iNo);
 }
 
 void PBAR::PutVarValues(int iNo, CString sVar[])
 {
-	iMID = atoi(sVar[0]);
-	dA = atof(sVar[1]);
-	dI1 = atof(sVar[2]);
-	dI2 = atof(sVar[3]);
-	dJ = atof(sVar[4]);
-	dNSM = atof(sVar[5]);
+	iMID = atoi(sVar[1]);
+	dA = atof(sVar[2]);
+	dI1 = atof(sVar[3]);
+	dI2 = atof(sVar[4]);
+	dJ = atof(sVar[5]);
+	dNSM = atof(sVar[6]);
 	CreateSec();
 }
 
@@ -32064,9 +40819,7 @@ void PBEAM::Serialize(CArchive& ar,int iV)
   int i;
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << iMID;
     ar << iNo;
     for (i=0;i<iNo;i++)
@@ -32108,9 +40861,7 @@ void PBEAM::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> iMID;
     ar >> iNo;
     for (i=0;i<iNo;i++)
@@ -32299,6 +41050,8 @@ A=0;
 Izz=0;
 Iyy=0;
 J=0;
+ybar=0;
+zbar=0;
 }
 
 int PBARL::GetVarHeaders(CString sVar[])
@@ -32306,6 +41059,8 @@ int PBARL::GetVarHeaders(CString sVar[])
 	int iNo = 0;
 	int i;
 	char S1[8] = "";
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "Material ID (MID)";
 	iNo++;
 	sVar[iNo] = "Section";
@@ -32328,6 +41083,9 @@ int PBARL::GetVarValues(CString sVar[])
 	int iNo = 0;
 	int i;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%i", iMID);
 	sVar[iNo] = S1;
 	iNo++;
@@ -32348,8 +41106,9 @@ int PBARL::GetVarValues(CString sVar[])
 
 void PBARL::PutVarValues(int iNo, CString sVar[])
 {
-	int iC = 0;
+	int iC = 1;
 	int i;
+	iFile = atoi(sVar[0]);
 	iMID = atoi(sVar[iC]);
 	iC++;
 	iC++;
@@ -32370,9 +41129,7 @@ void PBARL::Serialize(CArchive& ar,int iV)
   int i;
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << iMID;
     ar << sGROUP;
     ar << sSecType;
@@ -32386,9 +41143,7 @@ void PBARL::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> iMID;
     ar >> sGROUP;
     ar >> sSecType;
@@ -32420,14 +41175,18 @@ void PBARL::List()
   outtext1(_T(S1));
   sprintf_s(S1,"%s %i","MAT1  : ",iMID);
   outtext1(_T(S1)); 
-  sprintf_s(S1,"%s %f","A     : ",A);
+  sprintf_s(S1,"%s %g","A     : ",A);
   outtext1(_T(S1)); 
-  sprintf_s(S1,"%s %f","Izz   : ",Izz);
+  sprintf_s(S1, "%s %g", "Iyy   : ", Iyy);
+  outtext1(_T(S1));
+  sprintf_s(S1,"%s %g","Izz   : ",Izz);
   outtext1(_T(S1)); 
-  sprintf_s(S1,"%s %f","Iyy   : ",Iyy);
+  sprintf_s(S1,"%s %g","J     : ",J);
   outtext1(_T(S1)); 
-  sprintf_s(S1,"%s %f","J     : ",J);
-  outtext1(_T(S1)); 
+  sprintf_s(S1, "%s %f", "yBar     : ", ybar);
+  outtext1(_T(S1));
+  sprintf_s(S1, "%s %f", "zBar     : ", zbar);
+  outtext1(_T(S1));
   sprintf_s(S1,"%s %f","NSM   : ",dNSM);
   outtext1(_T(S1)); 
   sprintf_s(S1,"%s %i","IDIMS : ",iNoDims);
@@ -32435,17 +41194,21 @@ void PBARL::List()
   int i;
   for (i=0;i<iNoDims;i++)
   {
-    sprintf_s(S1,"DIM: %i : %f""IDIMS : ",i,dDIMs[i]);
+    sprintf_s(S1,"DIM: %i : %f",i,dDIMs[i]);
     outtext1(_T(S1)); 
   }
 }
 
 void PBARL::CreateSec()
 {
-
+this->CalcProps();
 if (sSecType.Find("BOX")>-1)
 {
   DspSec.CreateBox(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3]);
+}
+if (sSecType.Find("L ") > -1)
+{
+	DspSec.CreateL(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3],ybar,zbar);
 }
 else if (sSecType.Find("BAR")>-1)
 {
@@ -32459,11 +41222,19 @@ else if (sSecType.Find("TUBE")>-1)
 {
   DspSec.CreateTube(dDIMs[0],dDIMs[1]);
 }
-else if (sSecType.Find("I  ")>-1)
+else if (sSecType.Find("T2") > -1)
 {
-  DspSec.CreateI(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3],dDIMs[4],dDIMs[5]);
+	DspSec.CreateT2(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3], ybar);
 }
-this->CalcProps();
+else if (sSecType.Find("CHAN2") > -1)
+{
+	DspSec.CreateCHAN2(dDIMs[0], dDIMs[1], dDIMs[2], dDIMs[3], ybar);
+}
+else if (sSecType.Find("I ")>-1)
+{
+  DspSec.CreateI2(dDIMs[0],dDIMs[1],dDIMs[2],dDIMs[3],dDIMs[4],dDIMs[5],ybar);
+}
+
 }
 
 int PBARL::GetMat()
@@ -32614,10 +41385,97 @@ else if (sSecType.Find("BOX")!=-1)
   double Ho=dDIMs[1];
   double Wi=Wo-2*dDIMs[2];
   double Hi=Ho-2*dDIMs[3];
+  double wt = dDIMs[2];
+  double ht = dDIMs[3];
   A=Wo*Ho-Wi*Hi;
   Iyy=Ho*Wo*Wo*Wo/12-Hi*Wi*Wi*Wi/12;
   Izz=Wo*Ho*Ho*Ho/12-Wi*Hi*Hi*Hi/12;
-  J=Izz+Iyy;
+  J=2*wt*ht*(Wo-wt)* (Wo - wt)*(Ho-ht)* (Ho - ht);
+  J /= (Wo * wt + Ho * ht - wt * wt - ht * ht);
+}
+else if (sSecType.Find("T2") != -1)
+{
+	double h = dDIMs[1];
+	double b = dDIMs[0];
+	double tw =  dDIMs[3];
+	double tf =  dDIMs[2];
+	double Ayc = 0;
+	double yc = 0;
+	double Iyo = 0;
+	A = b*tf+(h-tf)*tw;
+	Ayc = tw * h * h * 0.5 + (b - tw) * tf * tf * 0.5;
+    yc = Ayc / A;
+	ybar = yc;
+	Iyo = tw * h * h * h / 3 + (b - tw)*tf * tf * tf / 3;
+	Izz = Iyo - A * yc * yc;
+	Iyy = (h - tf) * tw * tw * tw / 12 + tf * b * b * b / 12;
+	double dd;
+	dd = h - tf / 2;
+
+	J = (b * tf * tf * tf + dd * tw * tw * tw) / 3;
+}
+else if (sSecType.Find("CHAN2") != -1)
+{
+	double h = dDIMs[2];
+	double w = dDIMs[3];
+	double wt = dDIMs[1];
+	double ft = dDIMs[0];
+	double AI = 0; //First moment of area
+	double c = 0;
+
+	A = w * h - (w - 2 * ft) * (h - wt);
+	AI = h * ft * h + (w - 2 * ft) * wt * wt / 2;
+	ybar = AI / A;
+	Iyy = h * w * w * w / 12 - (h - wt) * (w - 2 * ft) * (w - 2 * ft) * (w - 2 * ft) / 12;
+	Izz = ft * h * h * h / 6 + 2 * h * ft * (h / 2 - ybar) * (h / 2 - ybar);
+	c = w - 2*ft;
+	Izz += c * wt * wt * wt / 12 + c * wt * (ybar - wt / 2) * (ybar - wt / 2);
+	double bb;
+	double dd;
+	//https://www.projectengineer.net/what-is-the-torsion-constant/
+	bb = h - wt / 2;
+	dd = w - ft;
+	J = (2 * bb * ft * ft * ft + dd * wt * w * wt) / 3;
+}
+else if (sSecType.Find("I ") != -1)
+{
+	double h = dDIMs[0];
+	double wb = dDIMs[1];;
+	double wt = dDIMs[2];;
+	double tw = dDIMs[3];;
+	double tbf = dDIMs[4];;
+	double ttf = dDIMs[5];;
+	double fh;
+	double AY;
+	fh = h - tbf - ttf;
+	A = wb * tbf + wt * ttf + fh * tw;
+	AY = wb * tbf * tbf / 2 + wt * ttf * (h - ttf / 2) + fh * tw * (fh / 2 + tbf);
+	ybar = AY / A;
+	Iyy = tbf * wb * wb * wb / 12 + ttf * wt * wt * wt / 12 + fh * tw * tw * tw / 12;
+	Izz = wb * tbf * tbf * tbf / 12 + wb * tbf * (ybar - tbf / 2) * (ybar - tbf / 2);
+	Izz += wt * ttf * ttf * ttf / 12 + wt * ttf * (h - ttf / 2 - ybar) * (h - ttf / 2 - ybar);
+	Izz += tw * fh * fh * fh / 12 + tw * fh * (fh / 2 + tbf - ybar) * (fh / 2 + tbf - ybar);
+	double dd;
+	dd = h - (ttf + tbf) / 0.5;
+	J = (wt * ttf * ttf * ttf + wb * tbf * tbf * tbf + dd * tw * tw * tw) / 3;
+}
+else if (sSecType.Find("L ") != -1)
+{
+  double w = dDIMs[0];
+  double h = dDIMs[1];;
+  double ht = dDIMs[2];;
+  double wt = dDIMs[3];;
+  A = w * ht + (h - ht) * wt;
+  ybar = w * ht * ht / 2 + (h - ht) * wt * ((h - ht) / 2 + ht);
+  ybar /= A;
+  zbar = h * wt * wt / 2 + (w - wt) * ht * ((w - wt) / 2 + wt);
+  zbar /= A;
+  Iyy = wt * h * h * h / 12 + wt * h * (h / 2 - ybar) * (h / 2 - ybar);
+  Iyy += (w - wt) * ht * ht * ht / 12 + (w - wt) * ht * (ybar - ht / 2) * (ybar - ht / 2);
+
+  Izz = ht * w * w * w / 12 + ht * w * (w / 2 - zbar) * (w / 2 - zbar);
+  Izz += (h - ht) * wt * wt * wt / 12 + (h - ht) * wt * (zbar - wt / 2) * (zbar - wt / 2);
+  J = (w * w * w * ht + (h - ht) * (h - ht) * (h - ht) * wt) / 3;
 }
 else
 {
@@ -32645,9 +41503,7 @@ void PROD::Serialize(CArchive& ar,int iV)
 
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+    Entity::Serialize(ar, iV);
     ar << iMID;
     ar << sGROUP;
     ar << sSecType;
@@ -32657,9 +41513,7 @@ void PROD::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> iMID;
     ar >> sGROUP;
     ar >> sSecType;
@@ -32777,10 +41631,11 @@ fprintf(pFile,"%8s%8i%8i%8s%8s\n","PROD    ",iID,iMID,e8(A),e8(J));
 
 int PROD::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Material ID (MID)";
-  sVar[1] = "Secton area (A)";
-  sVar[2] = "Torsional constant (J)";
-  return(3);
+  sVar[0] = "File No";
+  sVar[1] = "Material ID (MID)";
+  sVar[2] = "Secton area (A)";
+  sVar[3] = "Torsional constant (J)";
+  return(4);
 }
 
 
@@ -32788,6 +41643,9 @@ int PROD::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = S1;
+  iNo++;
   sprintf_s(S1, "%i", iMID);
   sVar[iNo] = S1;
   iNo++;
@@ -32802,9 +41660,10 @@ int PROD::GetVarValues(CString sVar[])
 
 void PROD::PutVarValues(int iNo, CString sVar[])
 {
-  iMID = atoi(sVar[0]);
-  A = atof(sVar[1]);
-  J = atof(sVar[2]);
+  iFile = atoi(sVar[0]);
+  iMID = atoi(sVar[1]);
+  A = atof(sVar[2]);
+  J = atof(sVar[3]);
   CreateSec();
 }
 
@@ -32816,9 +41675,7 @@ void PSHELL::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
-    ar<< iType;
-    ar<< sTitle;
-    ar<< iID;
+	Entity::Serialize(ar, iV);
     ar<< iMID1;
     ar<< dT;
     ar<< iMID2;
@@ -32832,9 +41689,7 @@ void PSHELL::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar>>iType;
-    ar>>sTitle;
-    ar>>iID;
+	Entity::Serialize(ar, iV);
     ar>> iMID1;
     ar>> dT;
     ar>> iMID2;
@@ -33025,17 +41880,18 @@ PSHELL::PSHELL()
 
 int PSHELL::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Material ID 1 (MID)";
-  sVar[1] = "Thickness (T)";
-  sVar[2] = "Material ID 2 (MID2)";
-  sVar[3] = "Bending stiffness parameter (12IT3)";
-  sVar[4] = "Material transverse shear (MID3)";
-  sVar[5] = "Transverse shear ratio  (TS/T)";
-  sVar[6] = "Non structural mass  (NSM)";
-  sVar[7] = "Fibre dist for stresses (Z1)";
-  sVar[8] = "Fibre dist for stresses (Z2)";
-  sVar[9] = "Material embrane-bending coupling (MID4)";
-  return(10);
+  sVar[0] = "File No";
+  sVar[1] = "Material ID 1 (MID)";
+  sVar[2] = "Thickness (T)";
+  sVar[3] = "Material ID 2 (MID2)";
+  sVar[4] = "Bending stiffness parameter (12IT3)";
+  sVar[5] = "Material transverse shear (MID3)";
+  sVar[6] = "Transverse shear ratio  (TS/T)";
+  sVar[7] = "Non structural mass  (NSM)";
+  sVar[8] = "Fibre dist for stresses (Z1)";
+  sVar[9] = "Fibre dist for stresses (Z2)";
+  sVar[10] = "Material membrane-bending coupling (MID4)";
+  return(11);
 }
 
 
@@ -33043,35 +41899,38 @@ int PSHELL::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = S1;
+  iNo++;
   sprintf_s(S1, "%i", iMID1);
-  sVar[0] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dT);
-  sVar[1] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMID2);
-  sVar[2] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", d12IT3);
-  sVar[3] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMID3);
-  sVar[4] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dTST);
-  sVar[5] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dNSM);
-  sVar[6] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dZ1);
-  sVar[7] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dZ2);
-  sVar[8] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMID4);
-  sVar[9] = S1;
+  sVar[iNo] = S1;
   iNo++;
   return (iNo);
 }
@@ -33079,16 +41938,17 @@ int PSHELL::GetVarValues(CString sVar[])
 
 void PSHELL::PutVarValues(int iNo, CString sVar[])
 {
-iMID1  = atoi(sVar[0]);
-dT     = atof(sVar[1]);
-iMID2  = atoi(sVar[2]);
-d12IT3 = atof(sVar[3]);
-iMID3  = atoi(sVar[4]);
-dTST   = atof(sVar[5]);
-dNSM   = atof(sVar[6]);
-dZ1    = atof(sVar[7]);
-dZ2    = atof(sVar[8]);
-iMID4  = atoi(sVar[9]);
+iFile = atoi(sVar[0]);
+iMID1  = atoi(sVar[1]);
+dT     = atof(sVar[2]);
+iMID2  = atoi(sVar[3]);
+d12IT3 = atof(sVar[4]);
+iMID3  = atoi(sVar[5]);
+dTST   = atof(sVar[6]);
+dNSM   = atof(sVar[7]);
+dZ1    = atof(sVar[8]);
+dZ2    = atof(sVar[9]);
+iMID4  = atoi(sVar[10]);
 }
 
 //MAt1
@@ -33161,15 +42021,16 @@ void MAT1::Info()
 
 int MAT1::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Young Modulus (E)";
-  sVar[1] = "Shear Modulus (G)";
-  sVar[2] = "Poisions Ratio )NU)";
-  sVar[3] = "Density (RHO)";
-  sVar[4] = "Coeff Thermal Expansion (CTE)";
-  sVar[5] = "Reference Temperatue (TREF)";
-  sVar[6] = "Material Coordinate Sys (MCID)";
-  sVar[7] = "Thermal Conductivity (k)";
-  return(8);
+  sVar[0] = "File No";
+  sVar[1] = "Young Modulus (E)";
+  sVar[2] = "Shear Modulus (G)";
+  sVar[3] = "Poisions Ratio )NU)";
+  sVar[4] = "Density (RHO)";
+  sVar[5] = "Coeff Thermal Expansion (CTE)";
+  sVar[6] = "Reference Temperatue (TREF)";
+  sVar[7] = "Material Coordinate Sys (MCID)";
+  sVar[8] = "Thermal Conductivity (k)";
+  return(9);
 }
 
 
@@ -33177,29 +42038,32 @@ int MAT1::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = S1;
+  iNo++;
   sprintf_s(S1, "%g", dE);
-  sVar[0] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dG);
-  sVar[1] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dNU);
-  sVar[2] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dRHO);
-  sVar[3] = S1;
+  sVar[iNo] = S1;
   iNo++; 
   sprintf_s(S1, "%g", dA);
-  sVar[4] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dTREF);
-  sVar[5] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%i", iMCSID);
-  sVar[6] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dk);
-  sVar[7] = S1;
+  sVar[iNo] = S1;
   iNo++;
   return (iNo);
 }
@@ -33207,24 +42071,80 @@ int MAT1::GetVarValues(CString sVar[])
 
 void MAT1::PutVarValues(int iNo, CString sVar[])
 {
-  dE = atof(sVar[0]);
-  dG = atof(sVar[1]);
-  dNU = atof(sVar[2]);
-  dRHO = atof(sVar[3]);
-  dA = atof(sVar[4]);
-  dTREF = atof(sVar[5]);
-  iMCSID = atoi(sVar[6]);
-  dk = atof(sVar[7]);
+  iFile = atoi(sVar[0]);
+  dE = atof(sVar[1]);
+  dG = atof(sVar[2]);
+  dNU = atof(sVar[3]);
+  dRHO = atof(sVar[4]);
+  dA = atof(sVar[5]);
+  dTREF = atof(sVar[6]);
+  iMCSID = atoi(sVar[7]);
+  dk = atof(sVar[8]);
 }
 
+Mat MAT1::DeeMEM()
+{
+	double C, v2, vv,G;
+	int i;
+	Mat dee(3, 3);
+	if (dG > 0)  //G has been specified
+		G = dG;
+	else
+		G = dE / (2 * (1 + dNU));
+	C = dE / (1 - dNU * dNU);
+	*dee.mn(1, 1) = C;
+	*dee.mn(2, 2) = C;
+	*dee.mn(3, 3) = G; // 0.5 * (1 - dNU) * C; //this should be G not sure is correct??
+	*dee.mn(1, 2) = dNU * C;
+	*dee.mn(2, 1) = dNU * C;
+
+	return (dee);
+}
+
+//SHELL_D matrix for bending coeffients for Dee Matrix
+Mat MAT1::DeeBM()
+{
+	Mat EBM(3, 3);
+	double G = 0;
+	double DEN1 = 0;
+	double E0 = 0;
+	if (dG > 0)
+	  G = dG;
+	else
+	  G = dE / (2 * (1 + dNU));
+	DEN1 = 1 - dNU * dNU;
+	if (abs(DEN1) < 0.01)
+		outtext1("ERROR: Material Property Error 1-v*v very small.");
+	EBM.MakeZero();
+	E0 = dE / DEN1;
+	*EBM.mn(1, 1) = E0;
+	*EBM.mn(2, 2) = *EBM.mn(1, 1);
+	*EBM.mn(3, 3) = G;
+	*EBM.mn(1, 2) = E0 * dNU;
+	*EBM.mn(2, 1) = *EBM.mn(1, 2);
+	return (EBM);
+}
+
+Mat MAT1::DeeSH()
+{
+	Mat ESH(2, 2);
+	double G = 0;
+	if (dG > 0)
+		G = dG;
+	else
+		G = dE / (2 * (1 + dNU));
+	ESH.MakeZero();
+	*ESH.mn(1, 1) = G;
+	*ESH.mn(2, 2) = G;
+	return (ESH);
+}
 
 void MAT1::Serialize(CArchive& ar,int iV)
 {
+
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << dE;
     ar << dG;
     ar << dNU;
@@ -33240,9 +42160,7 @@ void MAT1::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> dE;
     ar >> dG;
     ar >> dNU;
@@ -33261,7 +42179,7 @@ void MAT1::Serialize(CArchive& ar,int iV)
 
 void MAT1::ExportNAS(FILE* pFile)
 {
-fprintf(pFile,"$%s\n",sTitle);
+fprintf(pFile,"$%s\n",sTitle.GetString());
 CString sG = "        ";
 CString sV = "        ";
 CString CTE;
@@ -33282,7 +42200,7 @@ MAT1::MAT1()
 {
 sTitle="";
 iID = -1;
-iType = 1;
+iType = 7;
 dE=210e9;
 dG=0;
 dNU=0.29;
@@ -33339,9 +42257,7 @@ void MAT8::Serialize(CArchive& ar,int iV)
 {
 	if (ar.IsStoring())
 	{
-    ar << iType;
-    ar << sTitle;
-    ar << iID;
+	Entity::Serialize(ar, iV);
     ar << dE1;
     ar << dE2;
     ar << dNU12;
@@ -33366,9 +42282,7 @@ void MAT8::Serialize(CArchive& ar,int iV)
   }
   else
   {
-    ar >> iType;
-    ar >> sTitle;
-    ar >> iID;
+	Entity::Serialize(ar, iV);
     ar >> dE1;
     ar >> dE2;
     ar >> dNU12;
@@ -33395,7 +42309,8 @@ void MAT8::Serialize(CArchive& ar,int iV)
 
 void MAT8::ExportNAS(FILE* pFile)
 {
-fprintf(pFile,"%s",ToString());
+fprintf(pFile, "$%s\n", sTitle.GetString());
+fprintf(pFile,"%s",ToString().GetString());
 //fprintf(pFile,"%8s%8i%8s%8s%8s%8s%8s%8s%8s\n","MAT8    ",iID,e8(dE1),e8(dE2),e8(dNU12),e8(dG12),e8(dG1Z),e8(dG2Z),e8(dRHO));
 //fprintf(pFile,"%8s%8s%8s%8s%8s%8s%8s%8s%8s\n","        ",e8(dA1),e8(dA2),e8(dTREF),e8(dXt),e8(dXc),e8(dYt),e8(dYc),e8(dS));
 //fprintf(pFile,"%8s%8s%8s\n","        ",e8(dGE),e8(F12),e8(STRN));
@@ -33405,54 +42320,54 @@ CString MAT8::ToString()
 {
 char S[200]="";
 CString src="";
-sprintf_s(S,"%8s%8i%8s%8s%8s%8s%8s%8s%8s\n","MAT8    ",iID,e8(dE1),e8(dE2),e8(dNU12),e8(dG12),e8(dG1Z),e8(dG2Z),e8(dRHO));
+sprintf_s(S,"%8s%8i%8s%8s%8s%8s%8s%8s%8s\n","MAT8    ",iID, e8(dE1).GetString(),e8(dE2).GetString(),e8(dNU12).GetString(),e8(dG12).GetString(),e8(dG1Z).GetString(),e8(dG2Z).GetString(),e8(dRHO).GetString());
 src=S;
-sprintf_s(S,"        %8s%8s",e8(dA1),e8(dA2));
+sprintf_s(S,"        %8s%8s", e8(dA1).GetString(),e8(dA2).GetString());
 src+=S;
 if (dTREF==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(dTREF));
+   sprintf_s(S,"%8s", e8(dTREF).GetString());
 src+=S;
 if (dXt==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(dXt));
+   sprintf_s(S,"%8s", e8(dXt).GetString());
 src+=S;
 if (dXc==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(dXc));
+   sprintf_s(S,"%8s", e8(dXc).GetString());
 src+=S;
 if (dYt==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(dYt));
+   sprintf_s(S,"%8s", e8(dYt).GetString());
 src+=S;
 if (dYc==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(dYc));
+   sprintf_s(S,"%8s", e8(dYc).GetString());
 src+=S;
 if (dS==0)
    sprintf_s(S,"%8s\n","        ");
 else
-   sprintf_s(S,"%8s\n",e8(dS));
+   sprintf_s(S,"%8s\n", e8(dS).GetString());
 src+=S;
 if (dGE==0)
    sprintf_s(S,"        %8s","        ");
 else
-   sprintf_s(S,"        %8s",e8(dGE));
+   sprintf_s(S,"        %8s", e8(dGE).GetString());
 src+=S;
 if (F12==0)
    sprintf_s(S,"%8s","        ");
 else
-   sprintf_s(S,"%8s",e8(F12));
+   sprintf_s(S,"%8s", e8(F12).GetString());
 src+=S;
 if (STRN==0)
    sprintf_s(S,"%8s\n","        ");
 else
-   sprintf_s(S,"%8s\n",e8(STRN));
+   sprintf_s(S,"%8s\n", e8(STRN).GetString());
 src+=S;
 return (src);
 }
@@ -33488,26 +42403,27 @@ STRN = 0;
 
 int MAT8::GetVarHeaders(CString sVar[])
 {
-  sVar[0] = "Young Modulus longitudinal (E1)";
-  sVar[1] = "Young Modulus lateral (E2)";
-  sVar[2] = "Poisions ratio (NU12)";
-  sVar[3] = "In-plane shear modulus(G12)";
-  sVar[4] = "Transverse shear modulus 1-Z plane.(G1Z)";
-  sVar[5] = "Transverse shear modulus 2-Z plane.(G2Z)";
-  sVar[6] = "Density (RHO)";
-  sVar[7] = "Coeff thermal expansion 1 Dir (A1)";
-  sVar[8] = "Coeff thermal expansion 2 Dir (A2)";
-  sVar[9] = "Reference Temperatue (TREF)";
-  sVar[10] = "Allow tensile stress 1 Dir (dXt)";
-  sVar[11] = "Allow compressive stress 1 Dir (dXc)";
-  sVar[12] = "Allow tensile stress 2 Dir (dYt)";
-  sVar[13] = "Allow compressive stress 2 Dir (dYc)";
-  sVar[14] = "Allow stress/strain in-plane shear (S)";
-  sVar[15] = "Structural damping coefficient (GE)";
-  sVar[16] = "Tsai-Wu interactive term (F12)";
-  sVar[17] = "Xt,Xc,Yt,Yc are STRN if 1 (STRN)";
+  sVar[0] = "File No";
+  sVar[1] = "Young Modulus longitudinal (E1)";
+  sVar[2] = "Young Modulus lateral (E2)";
+  sVar[3] = "Poisions ratio (NU12)";
+  sVar[4] = "In-plane shear modulus(G12)";
+  sVar[5] = "Transverse shear modulus 1-Z plane.(G1Z)";
+  sVar[6] = "Transverse shear modulus 2-Z plane.(G2Z)";
+  sVar[7] = "Density (RHO)";
+  sVar[8] = "Coeff thermal expansion 1 Dir (A1)";
+  sVar[9] = "Coeff thermal expansion 2 Dir (A2)";
+  sVar[10] = "Reference Temperatue (TREF)";
+  sVar[11] = "Allow tensile stress 1 Dir (dXt)";
+  sVar[12] = "Allow compressive stress 1 Dir (dXc)";
+  sVar[13] = "Allow tensile stress 2 Dir (dYt)";
+  sVar[14] = "Allow compressive stress 2 Dir (dYc)";
+  sVar[15] = "Allow stress/strain in-plane shear (S)";
+  sVar[16] = "Structural damping coefficient (GE)";
+  sVar[17] = "Tsai-Wu interactive term (F12)";
+  sVar[18] = "Xt,Xc,Yt,Yc are STRN if 1 (STRN)";
   //sVar[7] = "Thermal Conductivity (k)";
-  return(18);
+  return(19);
 }
 
 
@@ -33515,59 +42431,65 @@ int MAT8::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = S1;
+  iNo++;
   sprintf_s(S1, "%g", dE1);
-  sVar[0] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dE2);
-  sVar[1] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dNU12);
-  sVar[2] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dG12);
-  sVar[3] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dG1Z);
-  sVar[4] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dG2Z);
-  sVar[5] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dRHO);
-  sVar[6] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dA1);
-  sVar[7] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dA2);
-  sVar[8] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dTREF);
-  sVar[9] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dXt);
-  sVar[10] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dXc);
-  sVar[11] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dYt);
-  sVar[12] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dYc);
-  sVar[13] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dS);
-  sVar[14] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", dGE);
-  sVar[15] = S1;
+  sVar[iNo] = S1;
   iNo++;
   sprintf_s(S1, "%g", F12);
-  sVar[16] = S1;
+  sVar[iNo] = S1;
   iNo++;
-  sprintf_s(S1, "%i", STRN);
-  sVar[17] = S1;
+  if (STRN==0)
+      sprintf_s(S1, "%s", "        ");
+  else
+	  sprintf_s(S1, "%g", STRN);
+  sVar[iNo] = S1;
   iNo++;
   return (iNo);
 }
@@ -33575,26 +42497,27 @@ int MAT8::GetVarValues(CString sVar[])
 
 void MAT8::PutVarValues(int iNo, CString sVar[])
 {
-  dE1 = atof(sVar[0]);
-  dE2 = atof(sVar[1]);
-  dNU12 = atof(sVar[2]);
-  dG12 = atof(sVar[3]);
-  dG1Z = atof(sVar[4]);
-  dG2Z = atof(sVar[5]);
-  dRHO = atof(sVar[6]);
+  iFile = atoi(sVar[0]);
+  dE1 = atof(sVar[1]);
+  dE2 = atof(sVar[2]);
+  dNU12 = atof(sVar[3]);
+  dG12 = atof(sVar[4]);
+  dG1Z = atof(sVar[5]);
+  dG2Z = atof(sVar[6]);
+  dRHO = atof(sVar[7]);
 
-  dA1 = atof(sVar[7]);
-  dA2 = atof(sVar[8]);
-  dTREF = atof(sVar[9]);
-  dXt = atof(sVar[10]);
-  dXc = atof(sVar[11]);
-  dYt = atof(sVar[12]);
-  dYc = atof(sVar[13]);
+  dA1 = atof(sVar[8]);
+  dA2 = atof(sVar[9]);
+  dTREF = atof(sVar[10]);
+  dXt = atof(sVar[11]);
+  dXc = atof(sVar[12]);
+  dYt = atof(sVar[13]);
+  dYc = atof(sVar[14]);
 
-  dS = atof(sVar[14]);
-  dGE = atof(sVar[15]);
-  F12 = atof(sVar[16]);
-  STRN = atoi(sVar[17]);
+  dS = atof(sVar[15]);
+  dGE = atof(sVar[16]);
+  F12 = atof(sVar[17]);
+  STRN = atof(sVar[18]);
 }
 
 //*************************************************************************
@@ -33622,9 +42545,7 @@ void PCOMPG::Serialize(CArchive& ar, int iV)
 	int i;
 	if (ar.IsStoring())
 	{
-		ar << sTitle;
-		ar << iID;
-		ar << iType;
+		Entity::Serialize(ar, iV);
 		ar << dZ0;
 		ar << dNSM;
 		ar << dSB;
@@ -33644,9 +42565,7 @@ void PCOMPG::Serialize(CArchive& ar, int iV)
 	}
 	else
 	{
-		ar >> sTitle;
-		ar >> iID;
-		ar >> iType;
+		Entity::Serialize(ar, iV);
 		ar >> dZ0;
 		ar >> dNSM;
 		ar >> dSB;
@@ -33684,11 +42603,26 @@ void PCOMPG::AddLayer(int inPLYID, int inMID, double inT, double inThe, BOOL inS
 	}
 }
 
+double PCOMPG::GetThk()
+{
+	int i;
+	double dRet = 0;
+	for (i = 0; i < iNoLays; i++)
+	{
+		dRet += T[i];
+	}
+	if (bLAM == TRUE)
+		dRet *= 2;
+	return (dRet);
+}
+
 int PCOMPG::GetVarHeaders(CString sVar[])
 {
 	int iNo = 0;
 	int i;
 	char S1[80] = "";
+	sVar[iNo] = "File No";
+	iNo++;
 	sVar[iNo] = "Dist to bottom surf (Z0)";
 	iNo++;
 	sVar[iNo] = "Non structural mass (NSM)";
@@ -33705,6 +42639,8 @@ int PCOMPG::GetVarHeaders(CString sVar[])
 	iNo++;
 	sVar[iNo] = "No Off Layers ";
 	iNo++;
+	sVar[iNo] = "Total Thickness ";
+	iNo++;
 	for (i = 0; i < iNoLays; i++)
 	{
 		sprintf_s(S1, "Layer %i", i + 1);
@@ -33719,6 +42655,9 @@ int PCOMPG::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
+	sprintf_s(S1, "%i", iFile);
+	sVar[iNo] = S1;
+	iNo++;
 	sprintf_s(S1, "%g", dZ0);
 	sVar[iNo] = S1;
 	iNo++;
@@ -33740,7 +42679,10 @@ int PCOMPG::GetVarValues(CString sVar[])
 	sprintf_s(S1, "%i", bLAM);
 	sVar[iNo] = S1;
 	iNo++;
-	sprintf_s(S1, "%i", iNoLays - 1);
+	sprintf_s(S1, "%i", iNoLays);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", GetThk());
 	sVar[iNo] = S1;
 	iNo++;
 	int i;
@@ -33756,7 +42698,63 @@ int PCOMPG::GetVarValues(CString sVar[])
 
 void PCOMPG::PutVarValues(int iNo, CString sVar[])
 {
+	int i;
+	int iLay;
+	int iMID;
+	double dThk;
+	double dTheta;
+	int iOut;
+	CString sFT;
+	CString sSYM;
+	iFile = atoi(sVar[0]);
+	dZ0 = atof(sVar[1]);
+	dNSM = atof(sVar[2]);
+	dSB = atof(sVar[3]);
+	sFT = ExtractSubString2(1, sVar[4]);
+	FT = 0;
+	if (sFT == "HILL")
+		FT = 1;
+	else if (sFT == "HOFF")
+		FT = 2;
+	else if (sFT == "TSAI")
+		FT = 3;
+	else if (sFT == "STRESS")
+		FT = 4;
+	else if (sFT == "STRN")
+		FT = 5;
+	else if (sFT == "LARCO2")
+		FT = 6;
+	else if (sFT == "PUCK")
+		FT = 7;
+	else if (sFT == "MCT")
+		FT = 8;
+	dRefT = atof(sVar[5]);
+	dGE = atof(sVar[6]);
+	sSYM = ExtractSubString2(1, sVar[7]);
 
+	if (sSYM == "SYM")
+		bLAM = TRUE;
+	else
+		bLAM = FALSE;
+	iNoLays = atoi(sVar[8]);
+	int iP = 0;
+	for (i = 10; i < 10 + iNoLays; i++)
+	{
+		iLay = atoi(ExtractSubString2(1, sVar[i]));
+		iMID = atoi(ExtractSubString2(2, sVar[i]));
+		dThk = atof(ExtractSubString2(3, sVar[i]));
+		dTheta = atof(ExtractSubString2(4, sVar[i]));
+		iOut = atoi(ExtractSubString2(5, sVar[i]));
+		GPLYID[iP] = iLay;
+		MID[iP] = iMID;
+		T[iP] = dThk;
+		Theta[iP] = dTheta;
+		if (iOut == 0)
+			sOut[iP] = FALSE;
+		else
+			sOut[iP] = TRUE;
+		iP++;
+	}
 }
 
 
@@ -33769,9 +42767,7 @@ void PCOMP::Serialize(CArchive& ar,int iV)
 int i;
 	if (ar.IsStoring())
 	{
-    ar<<sTitle;
-    ar<<iID;
-    ar<<iType;
+	Entity::Serialize(ar, iV);
     ar<<dZ0;
     ar<<dNSM;
     ar<<dSB;
@@ -33790,9 +42786,7 @@ int i;
   }
   else
   {
-    ar>>sTitle;
-    ar>>iID;
-    ar>>iType;
+	Entity::Serialize(ar, iV);
     ar>>dZ0;
     ar>>dNSM;
     ar>>dSB;
@@ -33896,6 +42890,8 @@ CString PCOMP::ToString()
 	else
 		sSB = "        ";
 	CString sFT = "        ";
+	if (FT == 0)
+		sFT = "        ";
 	if (FT == 1)
 		sFT = "    HILL";
 	else if (FT == 2)
@@ -33915,7 +42911,7 @@ CString PCOMP::ToString()
 	CString sLAM = "        ";
 	if (bLAM)
 		sLAM = "SYM     ";
-	sprintf_s(S, "%8s%8i%8s%8s%8s%8s%8s%8s%8s\n", "PCOMP   ", iID, e8(dZ0), e8(dNSM), sSB, sFT,e8(dRefT),e8(dGE),sLAM);
+	sprintf_s(S, "%8s%8i%8s%8s%8s%8s%8s%8s%8s\n", "PCOMP   ", iID, e8(dZ0).GetString(), e8(dNSM).GetString(), sSB.GetString(), sFT.GetString(),e8(dRefT).GetString(),e8(dGE),sLAM.GetString());
 	src = S;
 	int iLcnt = 0;
 	for (i = 0; i < iNoLays; i++)
@@ -33927,7 +42923,7 @@ CString PCOMP::ToString()
 			sO = "     YES";
 		if (iLcnt == 0)
 		{
-			sprintf_s(S, "%8i%8s%8s%8s", MID[i], e8(T[i]), e8(Theta[i]), sO);
+			sprintf_s(S, "%8i%8s%8s%8s", MID[i], e8(T[i]).GetString(), e8(Theta[i]).GetString(), sO);
 			src += S;
 			iLcnt = 1;
 		}
@@ -33945,8 +42941,8 @@ CString PCOMP::ToString()
 
 void PCOMP::ExportNAS(FILE* pFile)
 {
-	fprintf(pFile, "$%s\n", sTitle);
-	fprintf(pFile, "%s", ToString());
+	fprintf(pFile, "$%s\n" , sTitle.GetString());
+	fprintf(pFile, "%s",ToString().GetString());
 }
 
 PCOMP* PCOMP::Copy()
@@ -33975,6 +42971,7 @@ for (i=0;i<iNoLays;i++)
 return (pREt);
 }
 
+//Add a layer to the pcomp stack
 void PCOMP::AddLayer(int inMID,double inT,double inThe,BOOL inSo)
 {
 if (iNoLays<MAX_LAYERS)
@@ -33984,6 +42981,7 @@ if (iNoLays<MAX_LAYERS)
    Theta[iNoLays]=inThe;
    sOut[iNoLays]=inSo;
    iNoLays++;
+   dZ0 = -0.5*GetThk();
 }
 else
 {
@@ -34001,7 +42999,7 @@ iType= 2;
 dZ0=-0.5;
 dNSM=0;
 dSB=0;
-FT=4;
+FT=0;
 dRefT=0;
 dGE=0;
 bLAM=FALSE;
@@ -34013,6 +43011,8 @@ int PCOMP::GetVarHeaders(CString sVar[])
   int iNo=0;
   int i;
   char S1[80] = "";
+  sVar[iNo] = "File No";
+  iNo++;
   sVar[iNo] = "Dist to bottom surf (Z0)";
   iNo++;
   sVar[iNo] = "Non structural mass (NSM)";
@@ -34029,6 +43029,8 @@ int PCOMP::GetVarHeaders(CString sVar[])
   iNo++;
   sVar[iNo] = "No Off Layers ";
   iNo++;
+  sVar[iNo] = "Total Thickness ";
+  iNo++;
   for (i = 0; i<iNoLays; i++)
   {
     sprintf_s(S1, "Layer %i",i+1);
@@ -34043,6 +43045,9 @@ int PCOMP::GetVarValues(CString sVar[])
 {
   int iNo = 0;
   char S1[80] = "";
+  sprintf_s(S1, "%i", iFile);
+  sVar[iNo] = S1;
+  iNo++;
   sprintf_s(S1, "%g", dZ0);
   sVar[iNo] = S1;
   iNo++;
@@ -34052,8 +43057,24 @@ int PCOMP::GetVarValues(CString sVar[])
   sprintf_s(S1, "%g", dSB);
   sVar[iNo] = S1;
   iNo++;
-  sprintf_s(S1, "%i", FT);
-  sVar[iNo] = S1;
+  if (FT == 0)
+	  sVar[iNo] = "";
+  if (FT == 1)
+	  sVar[iNo] = "HILL";
+  else if (FT == 2)
+	  sVar[iNo] = "HOFF";
+  else if (FT == 3)
+	  sVar[iNo] = "TSAI";
+  else if (FT == 4)
+	  sVar[iNo] = "STRESS";
+  else if (FT == 5)
+	  sVar[iNo] = "STRN";
+  else if (FT == 6)
+	  sVar[iNo] = "LARCO2";
+  else if (FT == 7)
+	  sVar[iNo] = "PUCK";
+  else if (FT == 8)
+	  sVar[iNo] = "MCT";
   iNo++;
   sprintf_s(S1, "%g", dRefT);
   sVar[iNo] = S1;
@@ -34061,10 +43082,16 @@ int PCOMP::GetVarValues(CString sVar[])
   sprintf_s(S1, "%g", dGE);
   sVar[iNo] = S1;
   iNo++;
-  sprintf_s(S1, "%i", bLAM);
+  if (bLAM)
+    sprintf_s(S1, "%s", "SYM");
+  else
+	sprintf_s(S1, "%s", "");
   sVar[iNo] = S1;
   iNo++;
-  sprintf_s(S1, "%i", iNoLays-1);
+  sprintf_s(S1, "%i", iNoLays);
+  sVar[iNo] = S1;
+  iNo++;
+  sprintf_s(S1, "%g", GetThk());
   sVar[iNo] = S1;
   iNo++;
   int i;
@@ -34080,7 +43107,61 @@ int PCOMP::GetVarValues(CString sVar[])
 
 void PCOMP::PutVarValues(int iNo, CString sVar[])
 {
+	int i;
+	int iMID;
+	double dThk;
+	double dTheta;
+	int iOut;
+	CString sFT;
+	CString sSYM;
+    iFile = atoi(sVar[0]);
+	dZ0 = atof(sVar[1]);
+	dNSM = atof(sVar[2]);
+	dSB = atof(sVar[3]);
+	sFT = ExtractSubString2(1, sVar[4]);
+	FT = 0;
+	if (sFT == "HILL")
+		FT = 1;
+	else if (sFT == "HOFF")
+		FT = 2;
+	else if (sFT == "TSAI")
+		FT = 3;
+	else if (sFT == "STRESS")
+		FT = 4;
+	else if (sFT == "STRN")
+		FT = 5;
+	else if (sFT == "LARCO2")
+		FT = 6;
+	else if (sFT == "PUCK")
+		FT = 7;
+	else if (sFT == "MCT")
+		FT = 8;
+	dRefT = atof(sVar[5]);
+	dGE = atof(sVar[6]);
+	sSYM = ExtractSubString2(1, sVar[7]);
 
+	if (sSYM == "SYM")
+		bLAM=TRUE;
+	else
+		bLAM = FALSE;
+	iNoLays= atoi(sVar[8]);
+	int iP = 0;
+	for (i = 10; i < 10+ iNoLays; i++)
+	{
+		iMID = atoi(ExtractSubString2(1, sVar[i]));
+		dThk = atof(ExtractSubString2(2, sVar[i]));
+		dTheta = atof(ExtractSubString2(3, sVar[i]));
+		iOut = atoi(ExtractSubString2(4, sVar[i]));
+		MID[iP] = iMID;
+		T[iP] = dThk;
+		Theta[iP] = dTheta;
+		if (iOut == 0)
+			sOut[iP] = FALSE;
+		else
+			sOut[iP] = TRUE;
+		iP++;
+	}
+	//dZ0 = -0.5 * GetThk();
 }
 
 
@@ -34099,7 +43180,7 @@ iLabel=pInNode->iLabel;
 iColour=4;
 pParent=Parrent;
 pObj= pInNode;
-Pt_Object* pNode=(Pt_Object*) pInNode;
+Node* pNode=(Node*) pInNode;
 SetID=inSetID;
 F=inF;
 Point[0].x=pNode->Pt_Point->x;
@@ -34229,7 +43310,7 @@ void Moment::OglDrawW(int iDspFlgs, double dS1, double dS2)
 void Moment::ExportNAS(FILE* pFile)
 {
 
-fprintf(pFile,"%8s%8s%8i%8s%8s%8s%8s%8s\n","MOMENT  ","       1",pObj->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
+fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8s%8s\n","MOMENT  ",SetID,pObj->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
 }
 
 CString Moment::GetName()
@@ -34399,8 +43480,21 @@ void Pressure::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 
 void Pressure::ExportNAS(FILE* pFile)
 {
+int i;
+E_Object* pE;
+if (pObj != NULL)
+{
+	pE = (E_Object*) pObj;
+	if (pE->iNoNodes == 3)
+	{
+		fprintf(pFile, "%8s%8i%8s%8i%8i%8i\n", "PLOAD   ", SetID,e8(F.x), pE->GetNode(0)->iLabel, pE->GetNode(1)->iLabel, pE->GetNode(2)->iLabel);
+	}
+	else if (pE->iNoNodes == 4)
+	{
+		fprintf(pFile, "%8s%8i%8s%8i%8i%8i%8i\n", "PLOAD   ", SetID, e8(F.x), pE->GetNode(0)->iLabel, pE->GetNode(1)->iLabel, pE->GetNode(2)->iLabel, pE->GetNode(3)->iLabel);
+	}
+}
 
-//fprintf(pFile,"%8s%8s%8i%8s%8s%8s%8s%8s\n","MOMENT  ","       1",pNode->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
 }
 
 CString Pressure::GetName()
@@ -34423,7 +43517,6 @@ int Pressure::GetVarValues(CString sVar[])
 {
 	int iNo = 0;
 	char S1[80] = "";
-
 	sprintf_s(S1, "%g", F.x);
 	sVar[iNo] = S1;
 	iNo++;
@@ -34433,9 +43526,12 @@ int Pressure::GetVarValues(CString sVar[])
 
 void Pressure::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 {
+	double dPo,dP;
 
 	ME_Object* pMe = (ME_Object*)this->pParent;
-	F.x = atof(sVar[0]);
+	dP = atof(sVar[0]);
+	F.Normalize();
+	F.x = dP;
 }
 
 //*********************************************************************************
@@ -34463,22 +43559,22 @@ dV=0;
 Temperature::~Temperature()
 {
 SetID=-1;
-pObj=NULL;
+pObj=nullptr;
 }
 
-void Temperature::Create(G_Object* pInE,
-				                 G_Object* Parrent,
-				                 double inV,
-				                 int inSetID)
+void Temperature::Create(G_Object* pInN,
+				         G_Object* Parrent,
+				         double inV,
+				         int inSetID)
 {
 Drawn=0;
 Selectable=1; 
 Visable=1;
 iObjType=325;
-iLabel=pInE->iLabel;
+iLabel=pInN->iLabel;
 iColour=4;
 pParent=Parrent;
-pObj= pInE;
+pObj= pInN;
 SetID=inSetID;
 dV=inV;
 if (pObj!=NULL)
@@ -34524,14 +43620,17 @@ void Temperature::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 	}
 	else
 	{
-	  G_Object::Serialize(ar,iV);
-    ar>>SetID;
-    ar>>dV;
-	  DSP_Point.Serialize(ar,iV);
-    Point.Serialize(ar,iV);
-    ar>>iE;
-    pObj = MESH->GetElement(iE);
-	  pParent=MESH;
+	   G_Object::Serialize(ar,iV);
+       ar>>SetID;
+       ar>>dV;
+	   DSP_Point.Serialize(ar,iV);
+       Point.Serialize(ar,iV);
+       ar>>iE;
+	   if (iV <= -73)  //have moved to temps on node 
+		 pObj = MESH->GetNode(iE);
+	   else
+         pObj = MESH->GetElement(iE);
+	   pParent=MESH;
 	}
 }
 
@@ -34544,7 +43643,7 @@ void Temperature::ExportUNV(FILE* pFile)
 void Temperature::ExportNAS(FILE* pFile)
 {
 
-//fprintf(pFile,"%8s%8s%8i%8s%8s%8s%8s%8s\n","FORCE   ","       1",pObj->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
+fprintf(pFile,"%8s%8i%8i%8s\n","TEMP    ", SetID,pObj->iLabel,e8(dV));
 }
 
 
@@ -34598,6 +43697,7 @@ void Temperature::Info()
 {
   char S1[80];
   CString OutT;
+
   G_Object::Info();
   sprintf_s(S1,"%s%i%s%i%s%f","SETID ",iObjType,"; NODE ",pObj->iLabel," Val; ",dV);
   OutT+=S1;
@@ -35202,7 +44302,7 @@ void Force::ExportUNV(FILE* pFile)
 void Force::ExportNAS(FILE* pFile)
 {
 
-fprintf(pFile,"%8s%8s%8i%8s%8s%8s%8s%8s\n","FORCE   ","       1",pObj->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
+fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8s%8s\n","FORCE   ", SetID,pObj->iLabel,"       0","     1.0",e8(F.x),e8(F.y),e8(F.z));
 }
 
 
@@ -35219,7 +44319,7 @@ return (vT);
 void Force::SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran)
 {
 G_Object::SetToScr(pModMat, pScrTran);
-Pt_Object* pNode = (Pt_Object*) pObj;
+Node* pNode = (Node*) pObj;
 Point[0].x=pNode->Pt_Point->x;
 Point[0].y=pNode->Pt_Point->y;
 Point[0].z=pNode->Pt_Point->z;
@@ -35370,10 +44470,8 @@ void Force::Info()
 {
   char S1[80];
   CString OutT;
-  sprintf_s(S1,"%s%i%s%i%s%i","Type ",iObjType,"; Label ",pObj->iLabel," Col; ",iColour);
-  OutT+=S1;
+  G_Object::Info();
   outtext1("FORCE VECTOR");
-  outtext1(OutT); 
   sprintf_s(S1,"%s%8.5f,%8.5f,%8.5f","FORCE: ",F.x,F.y,F.z);
   OutT=S1;
   outtext1(OutT); 
@@ -35426,6 +44524,257 @@ void Force::PutVarValues(PropTable* PT,int iNo, CString sVar[])
 	F.z = atof(sVar[2]);
 }
 
+IMPLEMENT_DYNAMIC(TEMPD, CObject)
+
+void TEMPD::Create(C3dVector vC, G_Object* Parrent, int inSetID, double inDT)
+{
+	Drawn = 0;
+	Selectable = 0;
+	Visable = 0;
+	iObjType = 331;
+	iColour = 4;
+	iLabel = -1;
+	pParent = Parrent;
+	pObj = nullptr;
+	SetID = inSetID;
+	dTempD = inDT;
+	Point = vC;
+}
+
+void TEMPD::Serialize(CArchive& ar, int iV, ME_Object* MESH)
+
+{
+	int iNd;
+	if (ar.IsStoring())
+	{
+		G_Object::Serialize(ar, iV);
+		ar << SetID;
+		ar << dTempD;
+		ar << Point.x;
+		ar << Point.y;
+		ar << Point.z;
+	}
+	else
+	{
+		G_Object::Serialize(ar, iV);
+		ar >> SetID;
+		ar >> dTempD;
+		ar >> Point.x;
+		ar >> Point.y;
+		ar >> Point.z;
+		pObj = nullptr;
+		pParent = MESH;
+	}
+}
+
+
+void TEMPD::ExportNAS(FILE* pFile)
+{
+fprintf(pFile, "%8s%8i%8s\n", "TEMPD   ", SetID, e8(dTempD));
+}
+
+void TEMPD::OglDraw(int iDspFlgs, double dS1, double dS2)
+{
+	OglDrawW(iDspFlgs, dS1, dS2);
+}
+
+void TEMPD::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+
+	dS1 *= 5;
+	if ((iDspFlgs & DSP_BC) > 0)
+	{
+		Selectable = 1;
+		glColor3fv(cols[iColour]);
+		glLineWidth(10.0);
+		glBegin(GL_LINES);
+		glVertex3f((float)Point.x - 0.2 * dS1, (float)Point.y - 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x + 0.2 * dS1, (float)Point.y - 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x + 0.2 * dS1, (float)Point.y - 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x - 0.2 * dS1, (float)Point.y - 0.2 * dS1, (float)Point.z);
+		glEnd();
+		glLineWidth(2.0);
+		char sLab[20];
+		sprintf_s(sLab, "TEMPD %3.0f", dTempD);
+		OglString(iDspFlgs, Point.x, Point.y, Point.z, &sLab[0]);
+	}
+	else
+	{
+		Selectable = 0;
+	}
+}
+
+C3dVector TEMPD::Get_Centroid()
+{
+	return (Point);
+}
+
+int TEMPD::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo++] = "DEF TEMP";
+	return iNo;
+}
+
+
+int TEMPD::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+
+	sprintf_s(S1, "%g", dTempD);
+	sVar[iNo++] = S1;
+	return (iNo);
+}
+
+void TEMPD::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int i = 0;
+	dTempD = atof(sVar[i++]);
+}
+
+IMPLEMENT_DYNAMIC(GRAV, CObject)
+
+void GRAV::Create(C3dVector vC, G_Object* Parrent, int inSID, int inCID, double indScl, C3dVector invV)
+{
+	Drawn = 0;
+	Selectable = 0;
+	Visable = 0;
+	iObjType = 332;
+	iLabel = -1;
+	iColour = 66;
+	pParent = Parrent;  //parent is the set obj
+	pObj = nullptr;
+	SetID = inSID;
+	iCID = inCID;
+	dScl = indScl;
+	vV = invV;
+	Point = vC;
+}
+
+void GRAV::Serialize(CArchive& ar, int iV, ME_Object* MESH)
+
+{
+	int iNd;
+	if (ar.IsStoring())
+	{
+		G_Object::Serialize(ar, iV);
+		ar << SetID;
+		ar << iCID;
+		ar << dScl;
+		ar << vV.x;
+		ar << vV.y;
+		ar << vV.z;
+		ar << Point.x;
+		ar << Point.y;
+		ar << Point.z;
+	}
+	else
+	{
+		G_Object::Serialize(ar, iV);
+		ar >> SetID;
+		ar >> iCID;
+		ar >> dScl;
+		ar >> vV.x;
+		ar >> vV.y;
+		ar >> vV.z;
+		ar >> Point.x;
+		ar >> Point.y;
+		ar >> Point.z;
+		pObj = nullptr;
+		pParent = MESH;
+	}
+}
+
+
+void GRAV::ExportNAS(FILE* pFile)
+{
+	fprintf(pFile, "%8s%8i%8i%8s%8s%8s%8s\n", "GRAV    ", SetID,iCID, e8(dScl),e8(vV.x), e8(vV.y), e8(vV.z));
+}
+
+void GRAV::OglDraw(int iDspFlgs, double dS1, double dS2)
+{
+	OglDrawW(iDspFlgs, dS1, dS2);
+}
+
+void GRAV::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	dS1 *= 5;
+	if ((iDspFlgs & DSP_BC) > 0)
+	{
+		Selectable = 1;
+		glColor3fv(cols[iColour]);
+		glLineWidth(10.0);
+		glBegin(GL_LINES);
+		glVertex3f((float)Point.x - 0.15 * dS1, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x + 0.15 * dS1, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x + 0.15 * dS1, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x, (float)Point.y - 0.5 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x, (float)Point.y - 0.5 * dS1, (float)Point.z);
+		glVertex3f((float)Point.x - 0.15 * dS1, (float)Point.y + 0.2 * dS1, (float)Point.z);
+		glEnd();
+		glLineWidth(2.0);
+		char sLab[20];
+		sprintf_s(sLab,"GRAV %3.0f",vV.Mag()*dScl);
+		OglString(iDspFlgs,Point.x,Point.y,Point.z,&sLab[0]);
+	}
+	else
+	{
+		Selectable = 0;
+	}
+}
+
+C3dVector GRAV::Get_Centroid()
+{
+	return (Point);
+}
+
+int GRAV::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo++] = "CID";
+	sVar[iNo++] = "ScaleF";
+	sVar[iNo++] = "X";
+	sVar[iNo++] = "Y";
+	sVar[iNo++] = "Z";
+	return iNo;
+}
+
+
+int GRAV::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", iCID);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", dScl);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", vV.x);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", vV.y);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", vV.z);
+	sVar[iNo++] = S1;
+	return (iNo);
+}
+
+void GRAV::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int i = 0;
+	iCID = atoi(sVar[i++]);
+	dScl = atof(sVar[i++]);
+	vV.x = atof(sVar[i++]);
+	vV.y = atof(sVar[i++]);
+	vV.z = atof(sVar[i++]);
+}
+
+
+
+
+
+
 IMPLEMENT_DYNAMIC( Restraint, CObject )
 
 void Restraint::Create(G_Object* pInNode,
@@ -35463,7 +44812,7 @@ void Restraint::Serialize(CArchive& ar,int iV,ME_Object* MESH)
 	{
 	  G_Object::Serialize(ar,iV);
 	  ar<<SetID;
-    ar << pObj->iLabel;
+      ar<<pObj->iLabel;
 	  ar<<REST[0];
 	  ar<<REST[1];
 	  ar<<REST[2];
@@ -35477,7 +44826,7 @@ void Restraint::Serialize(CArchive& ar,int iV,ME_Object* MESH)
       ar>>SetID;
       ar>>iNd;
       pObj = MESH->GetNode(iNd);
-      Pt_Object* pN = (Pt_Object*) pObj;
+      Node* pN = (Node*) pObj;
       Point=pN->GetCoords();
 	  ar>>REST[0];
 	  ar>>REST[1];
@@ -35510,7 +44859,7 @@ vCent=Get_Centroid();
 char S1[7];
 sprintf_s(S1,"%s",GetDofStr());
 
-fprintf(pFile,"%8s%8s%8i%8s%8s\n","SPC     ","       1",pObj->iLabel,GetDofStr(),"     0.0");
+fprintf(pFile,"%8s%8i%8i%8s%8s\n","SPC     ",SetID,pObj->iLabel,GetDofStr(),"     0.0");
 
 }
 
@@ -35523,7 +44872,7 @@ return (Point);
 void Restraint::SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran)
 {
 G_Object::SetToScr(pModMat, pScrTran);
-Pt_Object* pNode = (Pt_Object*) pObj;
+Node* pNode = (Node*) pObj;
 Point.x=pNode->Pt_Point->x;
 Point.y=pNode->Pt_Point->y;
 Point.z=pNode->Pt_Point->z;
@@ -35643,6 +44992,7 @@ void Restraint::Info()
 {
   char S1[80];
   CString OutT;
+  G_Object::Info();
   sprintf_s(S1,"%s%i%s%i%s%i","Type ",iObjType,"; Label ",pObj->iLabel," Col; ",iColour);
   OutT+=S1;
   outtext1("RESTRAINT");
@@ -36079,10 +45429,96 @@ void ResultsVec::Info()
 	outtext1(S1);
 }
 
+IMPLEMENT_DYNAMIC(Graph, CObject)
 
+Graph::Graph()
+{
+	fx.clear();
+	fy.clear();
+}
 
+Graph::~Graph()
+{
+	fx.clear();
+	fy.clear();
+}
 
+float Graph::GetMaxfx()
+{
+	int i;
+	float frc;
+	frc = 0.0;
 
+	for (i = 0; i < fx.size(); i++)
+	{
+		if (fx[i] > frc)
+			frc = fx[i];
+	}
+	return (frc);
+}
+
+float Graph::GetMinfx()
+{
+	int i;
+	float frc;
+	frc = 0.0;
+	for (i = 0; i < fx.size(); i++)
+	{
+		if (fx[i] < frc)
+			frc = fx[i];
+	}
+	return (frc);
+}
+
+float Graph::GetMaxfy()
+{
+	int i;
+	float frc;
+	frc = 0.0;
+	for (i = 0; i < fy.size(); i++)
+	{
+		if (fy[i] > frc)
+			frc = fy[i];
+	}
+	return (frc);
+}
+
+float Graph::GetMinfy()
+{
+	int i;
+	float frc;
+	frc = 0.0;
+	for (i = 0; i < fy.size(); i++)
+	{
+		if (fy[i] < frc)
+			frc = fy[i];
+	}
+	return (frc);
+}
+
+void Graph::genMaxMin()
+{
+	GmaxX = GetMaxfx();
+	GminX = GetMinfx();
+	GmaxY = GetMaxfy();
+	GminY = GetMinfy();
+}
+
+void Graph::List()
+{
+	int i;
+	char buff[200];
+	outtext1(sTitle);
+	outtext1(sSubTitle);
+	sprintf_s(buff, "%s_%s_%s", sResType, sEntID, sVar);
+	outtext1(buff);
+	for (i = 0; i < fx.size(); i++)
+	{
+		sprintf_s(buff, "%g	%g", fx[i],fy[i]);
+		outtext1(buff);
+	}
+
+}
 
 IMPLEMENT_DYNAMIC( CoordSys, CObject )
 void CoordSys::Create(C3dVector Orig,C3dMatrix RMat,int inRID,int inTp, int iLab, int iC,G_Object* Parrent)
@@ -36126,10 +45562,18 @@ return (cSys);
 
 void CoordSys::ExportNAS(FILE* pFile)
 {
+ME_Object* ME = (ME_Object *) this->pParent;
 C3dVector pB;
 C3dVector pC;
+C3dVector pO;
+C3dMatrix RMat;
+C3dMatrix RMatDEF;
 CString sType;
 CString sRID; 
+CoordSys* pSys;
+RMat = mOrientMat;
+RMatDEF.MakeUnit();
+pO = Origin;
 if (CysType==3)
 {
   sType="CORD2S  ";
@@ -36142,20 +45586,42 @@ else
 {
   sType="CORD2R  ";
 }
-pB.x	= mOrientMat.m_02;
-pB.y  = mOrientMat.m_12;
-pB.z  = mOrientMat.m_22;
-pC.x	= mOrientMat.m_00;
-pC.y  = mOrientMat.m_10;
-pC.z  = mOrientMat.m_20;
-pB+=Origin;
-pC+=Origin;
-if (RID = -1)
+if (RID == -1)
 {
 	RID = 0;
 }
-fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8s%8s%8s\n",sType,iLabel, RID,e8(Origin.x),e8(Origin.y),e8(Origin.z),e8(pB.x),e8(pB.y),e8(pB.z));
-fprintf(pFile,"%8s%8s%8s%8s\n","        ",e8(pC.x),e8(pC.y),e8(pC.z));
+else
+{
+	if (ME != NULL)
+	{
+		pSys = ME->GetSys(RID);
+		if (pSys != NULL)
+		{
+			RMatDEF = pSys->mOrientMat;
+			RMatDEF.Transpose();
+			//RMat = RMat* RMatDEF;
+			pO -= pSys->Origin;
+			pO = RMatDEF * pO;
+		}
+		else
+		{
+			outtext1("ERROR: Co-ordinate System not found. ");
+		}
+	}
+}
+pB.x = RMat.m_02;
+pB.y = RMat.m_12;
+pB.z = RMat.m_22;
+pC.x = RMat.m_00;
+pC.y = RMat.m_10;
+pC.z = RMat.m_20;
+pB = RMatDEF * pB;
+pC = RMatDEF * pC;
+pB+= pO;
+pC+= pO;
+
+fprintf(pFile,"%8s%8i%8i%8s%8s%8s%8s%8s%8s\n",sType.GetString(),iLabel, RID,e8(pO.x).GetString(),e8(pO.y).GetString(),e8(pO.z).GetString(),e8(pB.x).GetString(),e8(pB.y).GetString(),e8(pB.z).GetString());
+fprintf(pFile,"%8s%8s%8s%8s\n","        ",e8(pC.x).GetString(),e8(pC.y).GetString(),e8(pC.z).GetString());
 }
 
 CString CoordSys::ToString()
@@ -36201,6 +45667,7 @@ void CoordSys::Info()
 {
   char S1[200];
   CString OutT;
+  G_Object::Info();
   //G_Object::Info();
   sprintf_s(S1,"%i,%8.5f,%8.5f,%8.5f,,%8.5f,%8.5f,%8.5f,%8.5f,%8.5f,%8.5f,%8.5f,%8.5f,%8.5f",
             iLabel,Origin.x,Origin.y,Origin.z,
@@ -36211,12 +45678,56 @@ void CoordSys::Info()
   outtext1(OutT); 
 }
 
+CString CoordSys::GetName()
+{
+	return ("Coordinate System");
+}
 
+int CoordSys::GetVarHeaders(CString sVar[])
+{
+
+	sVar[0] = "Coord System Type";
+	sVar[1] = "Definition Coord System";
+	return(3);
+}
+
+
+int CoordSys::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%i", CysType);
+	sVar[0] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", RID);
+	sVar[1] = S1;
+	iNo++;
+	return (iNo);
+}
+
+
+void CoordSys::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	CysType = atoi(sVar[0]);
+	RID = atoi(sVar[1]);
+}
 
 C3dVector CoordSys::Get_Centroid() 
 {
-
-return (Origin);
+	C3dVector O;
+	O = Origin;
+	//int iRID = 0;
+	//ME_Object* ME;
+	//iRID = this->RID;
+	//ME = (ME_Object*)pParent;
+	//if ((ME != NULL) && (iRID > 0))
+	//{
+	//	do
+	//	{
+	//		iRID = ME->NodeToGlobal(O, iRID);
+	//	} while (iRID > 0);
+	//}
+return (O);
 }
 
 void CoordSys::Translate (C3dVector vIn)
@@ -36258,7 +45769,7 @@ void CoordSys::OglDrawW(int iDspFlgs,double dS1,double dS2)
 C3dVector X;
 C3dVector Y;
 C3dVector Z;
-
+C3dVector O;
 
 if ((iDspFlgs & DSP_COORD)>0)
 {
@@ -36283,18 +45794,34 @@ if ((iDspFlgs & DSP_COORD)>0)
 	X+=Origin;
 	Y+=Origin;
 	Z+=Origin;
+	O = Origin;
+	//int iRID=0;
+	//int iN = 0;
+	//ME_Object* ME;
+	//iRID = this->RID;
+	//ME = (ME_Object*)pParent;
+	//if ((ME != NULL) && (iRID>0))
+	//{
+	//	do
+	//	{
+	//		iN = ME->NodeToGlobal(O, iRID);
+			//iN = ME->NodeToGlobal(X, iRID);
+	//		iN = ME->NodeToGlobal(Y, iRID);
+	//		iRID = ME->NodeToGlobal(Z, iRID);
+	//	} while (iRID > 0);
+	//}
 
 	glColor3fv(cols[GetCol()]);
 	glBegin(GL_LINES);
 
 
-	glVertex3f((float) Origin.x,(float) Origin.y,(float) Origin.z);
+	glVertex3f((float) O.x,(float) O.y,(float)O.z);
 	glVertex3f((float) X.x,(float) X.y,(float) X.z);
 
-	glVertex3f((float) Origin.x,(float) Origin.y,(float) Origin.z);
+	glVertex3f((float)O.x,(float)O.y,(float)O.z);
 	glVertex3f((float) Y.x,(float) Y.y,(float) Y.z);
 
-	glVertex3f((float) Origin.x,(float) Origin.y,(float) Origin.z);
+	glVertex3f((float)O.x,(float)O.y,(float)O.z);
 	glVertex3f((float) Z.x,(float) Z.y,(float) Z.z);
 	glEnd();
 
@@ -36334,12 +45861,12 @@ if ((iDspFlgs & DSP_COORD)>0)
 	  glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPZ);
 	}
 	char sLab[20];
-	C3dVector vCent;
-	vCent=Get_Centroid();
+	//C3dVector vCent;
+	//vCent=Get_Centroid();
 	if (bDrawLab==TRUE)
 	{
 		sprintf_s(sLab,"Cys%i",iLabel);
-		OglString(iDspFlgs,vCent.x,vCent.y,vCent.z,&sLab[0]);
+		OglString(iDspFlgs, O.x, O.y, O.z,&sLab[0]);
 	}
 }
 else
@@ -36354,9 +45881,2966 @@ void CoordSys::OglDraw(int iDspFlgs,double dS1,double dS2)
 OglDrawW(iDspFlgs,dS1,dS2);
 }
 
+
+//*****************************************************************
+// BlowsR 14/07/2020
+// Text Object added
+// linked list of symbols
+//*****************************************************************
+
+
+Symbol* GetSymbol(int iLab)
+{
+	Symbol* pRet = NULL;
+	int i;
+	if (iNoSymbols > 0)
+	{
+		for (i = 0; i < iNoSymbols; i++)
+		{
+			if (pSymTable[i]->iLabel == iLab)
+			{
+				pRet = pSymTable[i];
+				break;
+			}
+		}
+	}
+
+	return (pRet);
+}
+
+IMPLEMENT_DYNAMIC(Text, CObject)
+
+Text::Text()
+{
+	pParent = nullptr;
+	pSyms = nullptr;
+	C3dVector inP;
+	inP.Set(0, 0, 0);
+	Drawn = 0;
+	Selectable = 1;
+	Visable = 1;
+	iObjType = 6;
+	iLabel = -1;
+	iColour = 100;
+	pSyms = new cLinkedList();
+	sText = "";
+	if (inPt != NULL)
+	{
+		delete(inPt);
+	}
+	inPt = new CvPt_Object;
+	inPt->Create(inP, 0, -1, 0, 0, 1, this);
+	vNorm.Set(0,0,1);
+}
+
+Text::Text(C3dVector vInPt, C3dVector vN, C3dVector vTDir, int iLab,CString sT, double dH, G_Object* Parrent)
+{
+
+	pParent = Parrent;
+	pSyms = nullptr;
+	Drawn = 0;
+	Selectable = 1;
+	Visable = 1;
+	iObjType = 6;
+	iLabel = iLab;
+	iColour = 100;
+	sText = "";
+	dTextHeight=dH;
+	sText=sT;
+	vInsPt = vInPt;
+	vNorm=vN;
+	vDir = vTDir;
+	BuildText();
+}
+
+Text::~Text()
+{
+	if (inPt != nullptr)
+		delete (inPt);
+	if (pSyms != nullptr)
+		pSyms->DeleteAll();
+}
+
+double Text::GetLength()
+{
+	double drc = 0;
+	int iL = 0;
+
+	iL = sText.GetLength();
+	drc = iL * dAveW* dTextHeight / dAveH;
+	return(drc);
+}
+
+void Text::BuildText()
+{
+	double dScl = 0;
+	int i = 0;
+	int iL = 0;
+	int iC = 0;
+	C3dVector vM;
+	C3dMatrix RMat;
+	C3dMatrix TMat;
+	if (inPt != nullptr)
+		delete(inPt);
+	inPt = new CvPt_Object;
+	//C3dVector inP; inP.Set(0, 0, 0);
+	inPt->Create(vInsPt, 0, -1, 0, 0, 20, this);
+	if (pSyms == nullptr)
+		pSyms = new cLinkedList();
+	pSyms->DeleteAll();
+	//Text scaling
+	if (dTextHeight <= 0)
+		dScl = 1;
+	else
+		dScl = dTextHeight / dAveH;
+    //Build the text from the symbols table
+	vM.Set(0, 0, 0);
+	Symbol* pSym = nullptr;
+	Symbol* pSymN = nullptr;
+	iL = sText.GetLength();
+	for (i = 0; i < iL; i++)
+	{
+		iC = sText[i];
+		pSym = GetSymbol(iC);
+		if (pSym != NULL)
+		{
+			pSymN = (Symbol*)pSym->Copy(NULL);
+			pSymN->Translate(vM);
+			pSymN->pParent = this;
+			pSymN->iColour = this->iColour;
+			this->pSyms->Add(pSymN);
+			vM.x += pSym->w + 0.25 * dAveW;
+		}
+	}
+	//Scale
+	RMat.MakeUnit();
+	RMat.Scale(dScl);
+	dLen = vM.x;
+	dLen *= dScl;
+	Symbol* pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Transform(RMat);
+		pS = (Symbol*)pS->next;
+	}
+	//Orientate
+
+
+	C3dVector vX, vY, vZ;
+	vX = vDir; vX.Normalize();
+	vZ = vNorm; vZ.Normalize();
+	vY = vZ.Cross(vX); vY.Normalize();
+	RMat.MakeUnit();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Transform(RMat);
+		pS = (Symbol*)pS->next;
+	}
+
+	//Move to Insertion point
+	TMat.Translate(vInsPt.x, vInsPt.y, vInsPt.z);
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Transform(TMat);
+		pS = (Symbol*)pS->next;
+	}
+
+}
+
+
+void Text::OglDraw(int iDspFlgs, double dS1, double dS2)
+{
+	OglDrawW(iDspFlgs, dS1, dS2);
+}
+
+void Text::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	char sLab[20];
+	C3dVector vC;
+	Symbol* pS = NULL;
+	if ((iDspFlgs & DSP_CURVES) > 0)
+	{
+		Selectable = 1;
+		pS = (Symbol*)pSyms->Head;
+		while (pS != NULL)
+		{
+			pS->Selectable = 1;
+			pS = (Symbol*)pS->next;
+		}
+		glColor3fv(cols[GetCol()]);
+		inPt->OglDrawW(iDspFlgs, dS1, dS2);
+		pSyms->OglDrawW(iDspFlgs, dS1, dS2);
+
+		if (bDrawLab == TRUE)
+		{
+			vC = this->Get_Centroid();
+			sprintf_s(sLab, "Txt%i", iLabel);
+			OglString(iDspFlgs, (float)vC.x, (float)vC.y, (float)vC.z, &sLab[0]);
+		}
+	}
+	else
+	{
+		Selectable = 0;
+		pS = (Symbol*)pSyms->Head;
+		while (pS != NULL)
+		{
+			pS->Selectable = 0;
+			pS = (Symbol*)pS->next;
+		}
+	}
+}
+
+G_ObjectD Text::SelDist(CPoint InPT, Filter FIL)
+{
+	G_ObjectD Ret;
+	G_ObjectD dist;
+	Ret.pObj = NULL;
+	Ret.Dist = 1e36;;
+	Symbol* pS = NULL;
+	pS = (Symbol*) pSyms->Head;
+	//  IF POINTS ARE SELECTABLE
+	if (FIL.isFilter(0))
+	{
+			dist = inPt->SelDist(InPT, FIL);
+			if (dist.Dist <= Ret.Dist)
+			{
+					Ret.Dist = dist.Dist;
+					Ret.pObj = inPt;
+			}
+	}
+	if (FIL.isFilter(6))
+	{
+		while (pS != NULL)
+		{
+			dist = pS->SelDist(InPT, FIL);
+			if (dist.Dist < Ret.Dist)
+			{
+				Ret.Dist = dist.Dist;
+				Ret.pObj = this;
+			}
+			pS = (Symbol*)pS->next;
+		}
+	}
+	return(Ret);
+}
+
+void Text::S_Box(CPoint P1, CPoint P2, ObjList* pSel)
+{
+	G_Object::S_Box(P1, P2, pSel);
+}
+
+
+void Text::SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran)
+{
+	Symbol* pS = NULL;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->SetToScr(pModMat, pScrTran);
+		pS = (Symbol*) pS->next;
+	}
+	inPt->SetToScr(pModMat, pScrTran);
+
+	C3dVector vC;
+	vC = Get_Centroid();
+	vC.SetToScr(pModMat, pScrTran);
+	SelPt = vC;
+}
+
+void Text::HighLight(CDC* pDC)
+{
+
+	Symbol* pS = NULL;
+	pS = (Symbol*) pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->HighLight(pDC);
+		pS = (Symbol*) pS->next;
+	}
+}
+
+void Text::Transform(C3dMatrix TMat)
+{
+
+
+	//vInsPt = inPt->Pt_Point;;
+	C3dMatrix TMat2;
+	TMat2 = TMat;
+	TMat2.ClearTranslations();
+	vInsPt = TMat * vInsPt;
+	inPt->Pt_Point->x = vInsPt.x;
+	inPt->Pt_Point->y = vInsPt.y;
+	inPt->Pt_Point->z = vInsPt.z;
+
+	vDir = TMat2 * vDir;
+	vNorm = TMat2 * vNorm;
+	Symbol* pS = (Symbol*) pSyms->Head;
+	pS = (Symbol*)pSyms->Head;
+	//BuildText();
+
+	while (pS != NULL)
+	{
+		pS->Transform(TMat);
+		pS = (Symbol*)pS->next;
+	}
+}
+
+void Text::Translate(C3dVector vIn)
+{
+
+	vInsPt += vIn;
+	inPt->Pt_Point->x = vInsPt.x;
+	inPt->Pt_Point->y = vInsPt.y;
+	inPt->Pt_Point->z = vInsPt.z;
+	//BuildText();
+	Symbol* pS = nullptr;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Translate(vIn);
+		pS = (Symbol*)pS->next;
+	}
+}
+
+void Text::Move(C3dVector vM)
+{
+	Symbol* pS = NULL;
+	pS = (Symbol*)pSyms->Head;
+	while (pS != NULL)
+	{
+		pS->Move(vM);
+		pS = (Symbol*)pS->next;
+	}
+}
+
+void Text::Serialize(CArchive& ar, int iV)
+{
+	C3dVector v1;
+	C3dVector v2;
+	int i;
+	int iNo;
+	Link* pCL;
+	Symbol* pSym = NULL;
+	if (ar.IsStoring())
+	{
+		G_Object::Serialize(ar, iV);
+		inPt->Serialize(ar, iV);				 //Insertion Point
+		vInsPt.Serialize(ar, iV);
+		vDir.Serialize(ar, iV);
+		vNorm.Serialize(ar, iV); 			//Normal
+		ar << dLen;
+		ar<<dTextHeight;					//Text Height
+		ar<<sText;
+		ar<<pSyms->iCnt;	 
+		pSym = (Symbol*) pSyms->Head;
+		while (pSym!=NULL)
+		{
+			pSym->Serialize(ar, iV);
+			pSym = (Symbol*) pSym->next;
+		}
+	}
+	else
+	{
+		G_Object::Serialize(ar, iV);
+		inPt->Serialize(ar, iV);				 //Insertion Point
+		if (iV < -69)
+		{
+			vInsPt.Serialize(ar, iV);            //Insertion point
+			vDir.Serialize(ar, iV);              //Text Direcyopn
+		}
+		vNorm.Serialize(ar, iV); 			//Normal
+		if (iV<=-70)
+		  ar >> dLen;
+		ar >> dTextHeight;					//Text Height
+		ar >> sText;
+		ar >> iNo;
+		pSym = (Symbol*)pSyms->Head;
+		for (i=0;i<iNo;i++)
+		{
+			pSym = new Symbol();
+			pSym->pParent = this;
+			pSym->Serialize(ar, iV);
+			pSyms->Add(pSym);
+		}
+	}
+}
+
+C3dVector Text::Get_Centroid()
+{
+	C3dVector vC;
+	vC.Set(inPt->Pt_Point->x, inPt->Pt_Point->y, inPt->Pt_Point->z);
+	return(vC);
+}
+
+
+G_Object* Text::Copy(G_Object* Parrent)
+{
+	Symbol* pS = NULL;
+	Text* cText = new Text();
+	cText->Drawn = Drawn;
+	cText->Selectable = Selectable;
+	cText->Visable = Visable;
+	cText->iColour = iColour;
+	cText->iObjType = iObjType;
+	cText->iLabel = iLabel;
+	cText->pParent = Parrent;
+	//Specifics
+	cText->vNorm = vNorm;	
+	cText->vDir = vDir;
+	cText->vInsPt = vInsPt;
+	cText->dTextHeight = dTextHeight;
+	cText->sText = sText;
+	cText->BuildText();
+
+	//pS = (Symbol*) pSyms->Head;
+	//while (pS != NULL)
+	//{
+	//	cText->pSyms->Add(pS->Copy(cText));
+	//	pS = (Symbol*) pS->next;
+	//}
+	
+	return(cText);
+}
+
+CString Text::GetName()
+{
+	return ("Text");
+}
+
+int Text::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = "Text";
+	iNo++;
+	sVar[iNo] = "Height";
+	iNo++;
+	sVar[iNo] = "Insertion Pt";
+	iNo++;
+	sVar[iNo] = "Text Direction";
+	iNo++;
+	sVar[iNo] = "Text Normal";
+	iNo++;
+	return(iNo);
+}
+
+
+int Text::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	//sprintf_s(S1, "%s", PID);
+	sVar[iNo] = sText;
+	iNo++;
+	sprintf_s(S1, "%g", dTextHeight);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g,%g,%g", vInsPt.x, vInsPt.y, vInsPt.z);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g,%g,%g", vDir.x, vDir.y, vDir.z);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g,%g,%g", vNorm.x, vNorm.y, vNorm.z);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void Text::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int i = 0;
+	int index = 0;
+	CString line;
+	CString field;
+	CArray<CString, CString> v;
+	sText = sVar[0];
+	dTextHeight = atof(sVar[1]);
+	line = _T(sVar[2]);
+	index = 0;
+	while (AfxExtractSubString(field, line, index, _T(',')) ||
+		   AfxExtractSubString(field, line, index, _T(' ')))
+	{
+		v.Add(field);
+		++index;
+	}
+	if (index == 3)
+	{
+			vInsPt.x = atof(v[0]);
+			vInsPt.y = atof(v[1]);
+			vInsPt.z = atof(v[2]);
+	}
+	line = _T(sVar[3]);
+	index = 0;
+	v.RemoveAll();
+	while (AfxExtractSubString(field, line, index, _T(',')) ||
+		AfxExtractSubString(field, line, index, _T(' ')))
+	{
+		v.Add(field);
+		++index;
+	}
+	if (index == 3)
+	{
+		vDir.x = atof(v[0]);
+		vDir.y = atof(v[1]);
+		vDir.z = atof(v[2]);
+	}
+	line = _T(sVar[4]);
+	index = 0;
+	v.RemoveAll();
+	while (AfxExtractSubString(field, line, index, _T(',')) ||
+		AfxExtractSubString(field, line, index, _T(' ')))
+	{
+		v.Add(field);
+		++index;
+	}
+	if (index == 3)
+	{
+		vNorm.x = atof(v[0]);
+		vNorm.y = atof(v[1]);
+		vNorm.z = atof(v[2]);
+	}
+
+	BuildText();
+}
+
+void Text::Info()
+{
+	char S1[200];
+	G_Object::Info();
+	sprintf_s(S1, "Text:- %s ", sText);
+	outtext1(S1);
+}
+
+void Text::ExportDXF(FILE* pFile)
+{
+  Symbol* pS;
+  pS = (Symbol*)pSyms->Head;
+  while (pS != NULL)
+  {
+	pS->ExportDXF(pFile);
+	pS = (Symbol*)pS->next;
+  }
+}
+
+
+//*****************************************************************
+// BlowsR 27/11/2023
+// Aligned Dimension
+//*****************************************************************
+IMPLEMENT_DYNAMIC(DIM, CObject)
+
+DIM::DIM()
+{
+	//0 N/A 
+//1 Aligned Linear
+//2 H/V Linear
+//3 Dia
+//4 Rad
+	iObjType = 10;
+	iType = 0;
+	iLabel = -1;
+	iColour = 100;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	iDimOpt = 0;
+}
+
+DIM::DIM(C3dVector vPt1,
+	C3dVector vPt2,
+	C3dVector vInsPt,
+	C3dVector vO,
+	C3dVector vN,
+	C3dVector vD,
+	double dDScl,
+	int iLab)
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 H/V Linear
+	//3 Dia
+	//4 Rad
+	iObjType = 10;       //Type Dimension
+	iType = 0;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 124;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	iDimOpt = 0;
+	vDInsPt = vInsPt;				//Ins Point
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+DIM::~DIM()
+{
+	Clean();
+}
+
+void  DIM::Clean()
+{
+	if (pInsPt != nullptr)
+	{
+		delete (pInsPt);
+		pInsPt = nullptr;
+	}
+}
+
+void  DIM::Build()
+{
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+}
+
+void DIM::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+
+}
+
+G_ObjectD DIM::SelDist(CPoint InPT, Filter FIL)
+{
+	CPoint cPt;
+	G_ObjectD Ret;
+	if (pInsPt != nullptr)
+	{
+		Ret = pInsPt->SelDist(InPT, FIL);
+		Ret.pObj = this;
+	}
+	else
+	{
+		Ret.Dist = 100000000000000.0;;
+		Ret.pObj = this;
+	}
+	return (Ret);
+}
+
+
+void DIM::S_Box(CPoint P1, CPoint P2, ObjList* pSel)
+{
+	if (pInsPt != nullptr)
+	{
+		if ((pInsPt->DSP_Point->x > P1.x) &&
+			(pInsPt->DSP_Point->x < P2.x) &&
+			(pInsPt->DSP_Point->y > P1.y) &&
+			(pInsPt->DSP_Point->y < P2.y))
+		{
+			pSel->Add(this);
+		}
+	}
+}
+
+void DIM::SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran)
+{
+	if (pInsPt != nullptr)
+	{
+		pInsPt->SetToScr(pModMat, pScrTran);
+	}
+}
+
+void DIM::HighLight(CDC* pDC)
+{
+	if (pInsPt != nullptr)
+	{
+		pInsPt->HighLight(pDC);
+	}
+}
+
+void DIM::Serialize(CArchive& ar, int iV)
+{
+	if (ar.IsStoring())
+	{
+		// TODO: add storing code here
+		G_Object::Serialize(ar, iV);
+		ar << dDIM;
+		ar << dDimScl;
+		ar << dDrgScl;						//Drawing scale Height
+		ar << iDimOpt;
+		ar << vDAngVert.x;
+		ar << vDAngVert.y;
+		ar << vDAngVert.z;
+		ar << vDPt1.x;						//1st dim point
+		ar << vDPt1.y;
+		ar << vDPt1.z;
+		ar << vDPt2.x;						//2nd dim point or null
+		ar << vDPt2.y;
+		ar << vDPt2.z;
+		ar << vDInsPt.x;					//Ins Point
+		ar << vDInsPt.y;
+		ar << vDInsPt.z;
+		ar << vOrig.x;						//Origin
+		ar << vOrig.y;
+		ar << vOrig.z;
+		ar << vNorm.x;					//Normal to dim
+		ar << vNorm.y;
+		ar << vNorm.z;
+		ar << vDir.x;					//WP Direction of dim
+		ar << vDir.y;
+		ar << vDir.z;
+		ar << sTextPre;
+		ar << sText;						//The text on the dim
+		ar << sTextPost;
+		ar << bTextOverRide;
+	}
+	else
+	{
+		G_Object::Serialize(ar, iV);
+		ar >> dDIM;
+		ar >> dDimScl;
+		ar >> dDrgScl;						//Drawing scale Height
+		ar >> iDimOpt;
+		ar >> vDAngVert.x;
+		ar >> vDAngVert.y;
+		ar >> vDAngVert.z;
+		ar >> vDPt1.x;						//1st dim point
+		ar >> vDPt1.y;
+		ar >> vDPt1.z;
+		ar >> vDPt2.x;						//2nd dim point or null
+		ar >> vDPt2.y;
+		ar >> vDPt2.z;
+		ar >> vDInsPt.x;					//Ins Point
+		ar >> vDInsPt.y;
+		ar >> vDInsPt.z;
+		ar >> vOrig.x;						//Origin
+		ar >> vOrig.y;
+		ar >> vOrig.z;
+		ar >> vNorm.x;					//Normal to dim
+		ar >> vNorm.y;
+		ar >> vNorm.z;
+		ar >> vDir.x;					//WP Direction of dim
+		ar >> vDir.y;
+		ar >> vDir.z;
+		ar >> sTextPre;
+		ar >> sText;						//The text on the dim
+		ar >> sTextPost;						//The text on the dim
+		ar >> bTextOverRide;
+		Build();
+	}
+}
+
+int DIM::GetVarHeaders(CString sVar[])
+{
+	sVar[0] = "Dim Text Prefix";
+	sVar[1] = "Dim Text";
+	sVar[2] = "Dim Text Postfix";
+	sVar[3] = "Dim Size";
+	sVar[4] = "Drawing Scale";
+	sVar[5] = "Text Override (0 to Reset)";
+	sVar[6] = "Dimension Option (0 to Defualt)";
+	//iDimOpt
+	return(7);
+}
+
+
+int DIM::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%s", sTextPre);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%s", sText);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%s", sTextPost);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dDimScl);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dDrgScl);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", bTextOverRide);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%i", iDimOpt);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void DIM::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	sTextPre = sVar[0];
+	if (sVar[1] != sText) 
+	{
+		sText = sVar[1];
+		bTextOverRide = TRUE;
+	}
+	else
+	{
+		bTextOverRide = atoi(sVar[5]);
+	}
+	sTextPost = sVar[2];
+	dDimScl = atof(sVar[3]);
+	dDrgScl = atof(sVar[4]);
+	iDimOpt = atoi(sVar[6]);
+	Clean();
+	Build();
+}
+
+void DIM::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	vDInsPt = inPt;
+}
+
+void DIM::ExportDXF(FILE* pFile)
+{
+
+}
+
+//*****************************************************************
+// BlowsR 27/11/2023
+// Aligned Dimension
+//*****************************************************************
+IMPLEMENT_DYNAMIC(DIMA, CObject)
+
+DIMA::DIMA()
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	iObjType = 10;
+	iType = 1;
+	iLabel = -1;
+	iColour = 162;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPtV = nullptr;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
+	dDimScl = 1;
+	dDrgScl = 1;
+	vNorm.Set(0.0,0.0,1.0);                  //Normal to dim
+	vDir.Set(1.0,0.0,0.0);                   //Direction of dim
+
+}
+
+DIMA::DIMA(C3dVector vPt1,
+	       C3dVector vPt2,
+	       C3dVector vInsPt,
+	       C3dVector vO,
+	       C3dVector vN,
+	       C3dVector vD,
+	       double dDScl,
+	       int iLab)
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	iObjType = 10;       //Type Dimension
+	iType = 1;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 4;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPtV = nullptr;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	vDInsPt= vInsPt;					//Ins Point
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+DIMA::~DIMA()
+{
+	Clean();
+}
+
+void  DIMA::Clean()
+{
+	if (pPtV != nullptr)
+	{
+		delete (pPtV);
+		pPtV = nullptr;
+	}
+	if (pPt1 != nullptr)
+	{
+		delete (pPt1);
+		pPt1 = nullptr;
+	}
+	if (pPt2 != nullptr)
+	{
+		delete (pPt2);
+		pPt2 = nullptr;
+	}
+	if (pInsPt != nullptr)
+	{
+		delete (pInsPt);
+		pInsPt = nullptr;
+	}
+	if (pLeader1 != nullptr)
+	{
+		delete (pLeader1);
+		pLeader1 = nullptr;
+	}
+	if (pLeader2 != nullptr)
+	{
+		delete (pLeader2);
+		pLeader2 = nullptr;
+	}
+	if (pDimLine1 != nullptr)
+	{
+		delete (pDimLine1);
+		pDimLine1 = nullptr;
+	}
+	if (pDimLine2 != nullptr)
+	{
+		delete (pDimLine2);
+		pDimLine2 = nullptr;
+	}
+	if (pText != nullptr)
+	{
+		delete (pText);
+		pText = nullptr;
+	}
+}
+
+void  DIMA::Build()
+{
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+	dDIM = vPP1.Dist(vPP2);
+	dDist = dDIM / dDrgScl;
+	char buff[200];
+	if (!bTextOverRide)
+	{
+		sprintf_s(buff, "%.*f",gDIM_PREC, dDist);
+		sText = buff;
+	}
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX = vPP2 - vPP1; vDX.Normalize();
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Leader Line
+	pLeader1 = new NLine();
+	pLeader1->Create(vPP1, vDInsPt, -1, this);
+	pLeader1->iColour = iColour;
+	pLeader1->iLnThk = 2;
+	pLeader2 = new NLine();
+	pLeader2->Create(vPP2, vDInsPt, -1, this);
+	pLeader2->iColour = iColour;
+	pLeader2->iLnThk = 2;
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine2 = pL;
+	//Text insertion point - need to lift off the dim line slightly
+	CString sT;
+	sT = sTextPre + sText + sTextPost;
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl,this);
+	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
+}
+
+
+
+
+void DIMA::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	if (pPt1!=nullptr)
+	  pPt1->OglDrawW(iDspFlgs,dS1,dS2);
+	if (pPt2 != nullptr)
+	  pPt2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pInsPt != nullptr)
+	  pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pLeader1 != nullptr)
+	  pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pLeader2 != nullptr)
+	  pLeader2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pDimLine1 != nullptr)
+	  pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pDimLine2 != nullptr)
+	  pDimLine2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pText != nullptr)
+	  pText->OglDrawW(iDspFlgs, dS1, dS2);
+
+	glColor3fv(cols[iColour]);
+	//Dim attachment points
+	glPointSize(5);
+	glBegin(GL_POINTS);
+	  glVertex3f(vPP1.x, vPP1.y, vPP1.z);
+	  glVertex3f(vPP2.x, vPP2.y, vPP2.z);
+	glEnd();
+	//Filled Arrow Heads
+
+	glBegin(GL_POLYGON);
+	  glVertex3f(vPP1D.x, vPP1D.y, vPP1D.z);
+	  glVertex3f(vPP1A1.x, vPP1A1.y, vPP1A1.z);
+	  glVertex3f(vPP1A2.x, vPP1A2.y, vPP1A2.z);
+	glEnd();
+	glBegin(GL_POLYGON);
+	  glVertex3f(vPP2D.x, vPP2D.y, vPP2D.z);
+	  glVertex3f(vPP2A1.x, vPP2A1.y, vPP2A1.z);
+	  glVertex3f(vPP2A2.x, vPP2A2.y, vPP2A2.z);
+	glEnd();
+}
+
+void DIMA::Colour(int iCol)
+{
+	this->iColour = iCol;
+	if (pPtV != nullptr)
+	  pPtV->iColour = iCol;
+	if (pPt1!=nullptr)
+	  pPt1->iColour = iCol;
+	if (pPt2 != nullptr)
+	  pPt2->iColour = iCol;
+	if (pInsPt != nullptr)
+	  pInsPt->iColour=iCol;
+	if (pLeader1 != nullptr)
+	  pLeader1->iColour = iCol;
+	if (pLeader2 != nullptr)
+	  pLeader2->iColour = iCol;
+	if (pDimLine1 != nullptr)
+	  pDimLine1->iColour = iCol;
+	if (pDimLine2 != nullptr)
+	  pDimLine2->iColour = iCol;
+	if (pText != nullptr)
+	  pText->iColour = iCol;
+
+}
+
+void DIMA::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	vDInsPt = inPt;
+	C3dVector vP1toIns , vT, vOff, vLOff;
+	double dExtY = 0;
+	vP1toIns = inPt;
+	vP1toIns -= vPP1;
+	dExtY = vP1toIns.Dot(vDY);
+	vPP1D = vPP1;
+	vPP1D += vDY * dExtY;
+	vPP2D = vPP2;
+	vPP2D += vDY * dExtY;
+	vOff = vDY * dDimScl * 0.25;    //Text Offset
+	vLOff = (vPP1D - vPP1);
+	vLOff.Normalize();
+	vLOff *= dDimScl * 0.5;         //Leader offset
+	pInsPt->SetTo(inPt);
+	// THE LEADERS
+	pLeader1->cPts[0]->SetTo(vPP1+ vLOff);
+	pLeader2->cPts[0]->SetTo(vPP2 + vLOff);
+	pLeader1->cPts[1]->SetTo(vPP1D + vLOff);
+	pLeader2->cPts[1]->SetTo(vPP2D + vLOff);
+
+	//THE DIMENSION LINES
+	//need to see if lines are in or out and calc end points
+	//and arrow heads
+	C3dVector vDimDir1; 
+	C3dVector vInPtDir1;
+	C3dVector vDimDir2;
+	C3dVector vInPtDir2;
+	C3dVector vDimDir;
+	C3dVector vExt;
+	C3dVector vYPOff;
+	double dDotOut1;
+	double dDotOut2;
+	double dDLen1;
+	double dDLen2;
+	//check to see if insersion point is outside on vPP1D side
+	vDimDir1 = (vPP2D - vPP1D);
+	vDimDir1.Normalize();
+	vInPtDir1 = (inPt - vPP1D);
+	dDLen1 = vInPtDir1.Mag();
+	vInPtDir1.Normalize();
+	dDotOut1 = vDimDir1.Dot(vInPtDir1);
+	//check to see if insersion point is outside on vPP2D side
+	vDimDir2 = (vPP1D - vPP2D);
+	vDimDir2.Normalize();
+	vInPtDir2 = (inPt - vPP2D);
+	dDLen2 = vInPtDir2.Mag();
+	vInPtDir2.Normalize();
+	dDotOut2 = vDimDir2.Dot(vInPtDir2);
+	if (dDotOut1 < 0)
+	{
+		vExt = vDimDir1; vExt *= dDLen1;
+		vT = vPP1D; vT -= vExt;
+		pDimLine1->cPts[0]->SetTo(vPP1D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vDimDir1; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D - vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D - vT;
+
+		vExt *= 0.5;
+		vT = vPP2D; vT += vExt;
+		pDimLine2->cPts[0]->SetTo(vPP2D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP2D
+		vDimDir = vDimDir1; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D + vT;
+	}
+	else if (dDotOut2 < 0)
+	{
+		//Also need to add length of text
+		dDLen2 += pText->GetLength();
+		vExt = vDimDir2; vExt *= dDLen2;
+		vT = vPP2D; vT -= vExt;
+		pDimLine1->cPts[0]->SetTo(vPP2D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vDimDir2; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D + vT;
+
+		vExt *= 0.5;
+		vT = vPP1D; vT += vExt;
+		pDimLine2->cPts[0]->SetTo(vPP1D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP2D
+		vDimDir = vDimDir2; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D - vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D - vT;
+	}
+	else //insertion point is between leaders
+	{
+		vT = vPP2D; vT += vPP1D; vT *= 0.5;
+		pDimLine1->cPts[0]->SetTo(vPP1D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		pDimLine2->cPts[0]->SetTo(vPP2D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vPP2D - vPP1D; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D + vT;
+		//Arrow points vPP2D
+		vDimDir = vPP1D - vPP2D; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D + vT;
+	}
+
+	//THE TEXT
+	C3dVector vTxtTrans;
+	vTxtTrans = inPt;
+	vTxtTrans += vOff;
+	vTxtTrans-=	pText->vInsPt;
+	pText->Translate(vTxtTrans);
+}
+
+
+void DIMA::ExportDXF(FILE* pFile)
+{
+	C3dVector v1;
+	v1.Set(1, 1, 1);
+	NLine* ll = new NLine();
+	ModLayNo(iFile);
+	ll->Create(v1, v1, -1, nullptr);
+	if (pPtV != NULL)
+	  pPtV->ExportDXF(pFile);      //1st dim point
+	if (pPt1!=NULL)
+	  pPt1->ExportDXF(pFile);      //1st dim point
+	if (pPt2 != NULL)
+	  pPt2->ExportDXF(pFile);      //2nd dim point or null
+	if (pLeader1 != NULL)
+	  pLeader1->ExportDXF(pFile);
+	if (pLeader2 != NULL)
+	  pLeader2->ExportDXF(pFile);
+	if (pDimLine1 != NULL)
+	{
+		pDimLine1->ExportDXF(pFile);  //one halve of dim line
+		//glVertex3f(vPP1D.x, vPP1D.y, vPP1D.z);
+		//glVertex3f(vPP1A1.x, vPP1A1.y, vPP1A1.z);
+		//glVertex3f(vPP1A2.x, vPP1A2.y, vPP1A2.z);
+		ll->cPts[0]->SetTo(vPP1D);
+		ll->cPts[1]->SetTo(vPP1A1);
+		ll->iFile = this->iFile;
+		ll->ExportDXF(pFile);
+		ll->cPts[0]->SetTo(vPP1A1);
+		ll->cPts[1]->SetTo(vPP1A2);
+		ll->iFile = this->iFile;
+		ll->ExportDXF(pFile);
+		ll->cPts[0]->SetTo(vPP1A2);
+		ll->cPts[1]->SetTo(vPP1D);
+		ll->iFile = this->iFile;
+		ll->ExportDXF(pFile);
+		if (iType == 6) //Second arror head for Ang DIM
+		{
+			ll->cPts[0]->SetTo(vPP2D);
+			ll->cPts[1]->SetTo(vPP2A1);
+			ll->iFile = this->iFile;
+			ll->ExportDXF(pFile);
+			ll->cPts[0]->SetTo(vPP2A1);
+			ll->cPts[1]->SetTo(vPP2A2);
+			ll->iFile = this->iFile;
+			ll->ExportDXF(pFile);
+			ll->cPts[0]->SetTo(vPP2A2);
+			ll->cPts[1]->SetTo(vPP2D);
+			ll->iFile = this->iFile;
+			ll->ExportDXF(pFile);
+		}
+	}
+	if (pDimLine2 != NULL)
+	{
+		pDimLine2->ExportDXF(pFile);  //other halve
+		ll->cPts[0]->SetTo(vPP2D);
+		ll->cPts[1]->SetTo(vPP2A1);
+		ll->iFile = this->iFile;
+		ll->ExportDXF(pFile);
+		ll->cPts[0]->SetTo(vPP2A1);
+		ll->cPts[1]->SetTo(vPP2A2);
+		ll->iFile = this->iFile;
+		ll->ExportDXF(pFile);
+		ll->cPts[0]->SetTo(vPP2A2);
+		ll->cPts[1]->SetTo(vPP2D);
+		ll->iFile = this->iFile;
+		ll->ExportDXF(pFile);
+	}
+	if (pText != NULL)
+	  pText->ExportDXF(pFile);
+	delete (ll);
+}
+
+void DIMA::ModLayNo(int iLay)
+{
+	this->iFile = iLay;
+	if (pPtV != NULL)
+		pPtV->ModLayNo(iLay);      //1st dim point
+	if (pPt1 != NULL)
+		pPt1->ModLayNo(iLay);      //1st dim point
+	if (pPt2 != NULL)
+		pPt2->ModLayNo(iLay);      //2nd dim point or null
+	if (pLeader1 != NULL)
+		pLeader1->ModLayNo(iLay);
+	if (pLeader2 != NULL)
+		pLeader2->ModLayNo(iLay);
+	if (pDimLine1 != NULL)
+		pDimLine1->ModLayNo(iLay);  //one halve of dim line
+	if (pDimLine2 != NULL)
+		pDimLine2->ModLayNo(iLay);  //other halve
+	if (pText != NULL)
+		pText->ModLayNo(iLay);
+}
+
+
+IMPLEMENT_DYNAMIC(DIMANG, CObject)
+
+DIMANG::DIMANG()
+{
+	//*****************************************************************
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iObjType = 10;
+	iType = 6;
+	iLabel = -1;
+	iColour = 162;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPt1 = nullptr;				//1st dim point
+	pPt2 = nullptr;				//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;		//one halve of dim line
+	pDimLine2 = nullptr;		//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;			//Ins Point
+	dDimScl = 1;
+	dDrgScl = 1;
+	vNorm.Set(0.0, 0.0, 1.0);                  //Normal to dim
+	vDir.Set(1.0, 0.0, 0.0);                   //Direction of dim
+
+}
+
+DIMANG::DIMANG(C3dVector vVPt,
+	           C3dVector vPt1,
+	           C3dVector vPt2,
+	           C3dVector vInsPt,
+	           C3dVector vO,
+	           C3dVector vN,
+	           C3dVector vD,
+	           double dDScl,
+	           int iLab)
+{
+	//*****************************************************************
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iObjType = 10;       //Type Dimension
+	iType = 6;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 4;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPtV = nullptr;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;	
+	pInsPt = nullptr;				//Ins Point
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	vDInsPt = vInsPt;				//Ins Point
+	vDAngVert = vVPt;
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+void  DIMANG::Build()
+{  
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPPV = vDAngVert;
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
+	vPPV -= vOrig;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPPV = RMat * vPPV;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPPV.z = 0;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPPV = RMat * vPPV;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPPV += vOrig;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+	vPP1D = vPP1;
+	vPP2D = vPP2;
+	//Need to calc angle
+	C3dVector v1, v2;
+	double dA;
+	double dR;
+	
+	v1 = vPP1 - vPPV;
+	dR = v1.Mag();
+	v1.Normalize();
+	v2 = vPP2 - vPPV; v2.Normalize();
+	dA = v1.AngSigned(v2, vNorm);
+	dDIM = dA;
+	dDist = dDIM ;
+	char buff[200];
+	if (!bTextOverRide)
+	{
+		char newCharacter = 1;  // Assuming the character 8960 is a TCHAR
+		sprintf_s(buff, "%.*f", gDIM_PREC, dDist);
+		sText = buff;
+		sText += newCharacter;
+	}
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX = vPP1 - vPP2; vDX.Normalize();
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+    //The picked points
+	pPtV = new CvPt_Object();
+	pPtV->Create(vDAngVert, 1, -1, 0, 0, 11, nullptr);
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Leader Line
+	pLeader1 = new NLine();
+	pLeader1->Create(vPP1, vPP1D, -1, this);
+	pLeader1->iColour = iColour;
+	pLeader1->iLnThk = 2;
+	//Second Learder
+	pLeader2 = new NLine();
+	pLeader2->Create(vPP2, vPP2D, -1, this);
+	pLeader2->iColour = iColour;
+	//pLeader2->iLnThk = 2;
+	NCircle* pC;
+	pC = new NCircle();
+	pC->Create2(vNorm, vPPV, v1, dR,-1, this);
+	pC->iColour = iColour;
+	pDimLine1 = pC;
+	//used as leader
+	pC = new NCircle();
+	pC->Create2(vNorm, vPPV, v1, dR, -1, this);
+	pC->iColour = iColour;
+	pC->we = 0;
+	pDimLine2 = pC;
+	//Circle end point
+	double we;
+	//this is a fix as MinWPt was not finding the correct point
+	C3dVector fA;
+	fA = vPP2 - vPPV;
+	fA.Normalize();
+	fA *= dR;
+	fA += vPPV;
+	//end of fix below fA was vPP2
+	we = pDimLine1->MinWPt(fA);
+	pDimLine1->we = we;
+	//pL = new NLine();
+	//pL->Create(vPP1, vPP2, -1, this);
+	//pL->iColour = iColour;
+	//pDimLine2 = pL;
+	//Text insertion point - need to lift off the dim line slightly
+	CString sT;
+	sT = sTextPre + sText + sTextPost;
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl, this);
+	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
+}
+
+void DIMANG::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	double w;
+	C3dVector vTxtMid, vTxtDir, vTxtOff;
+	double txtLen;
+	vDInsPt = inPt;
+	pInsPt->Pt_Point->Set(vDInsPt.x, vDInsPt.y, vDInsPt.z);
+
+	//update dime circle
+	pDimLine1->DragUpdate(vDInsPt, mWP);
+	w = pDimLine1->MinWPt(vDInsPt);
+	//pDimLine2 is used a leader if neaded
+	pDimLine2->ws = 0.0;
+	pDimLine2->we = 0.0;
+	if (w > pDimLine1->we)
+	{
+		if (w > 0.5)
+		{
+			pDimLine2->ws = w;
+			pDimLine2->we = 1.0;
+		}
+		else
+		{
+			pDimLine2->ws = 0;
+			pDimLine2->we = w;
+		}
+	}
+	pDimLine2->DragUpdate(inPt, mWP);
+	//find new text dir
+	
+	vTxtDir = pDimLine1->GetDir(w);
+	vTxtDir *= -1;
+	//find leader end points and update leaders
+	vPP1D = pDimLine1->GetPt(pDimLine1->ws);
+	vPP2D = pDimLine1->GetPt(pDimLine1->we);
+	//Leader offsets
+	C3dVector vLOff1, vLOff2;
+	vLOff1 = vPP1D - vPP1; vLOff1.Normalize();
+	vLOff1 *= dDimScl * 0.5;
+	pLeader1->cPts[0]->SetTo(vPP1 + vLOff1);
+	pLeader1->cPts[1]->SetTo(vPP1D+ vLOff1);
+	vLOff2 = vPP2D - vPP2; vLOff2.Normalize();
+	vLOff2 *= dDimScl * 0.5;
+	pLeader2->cPts[0]->SetTo(vPP2 + vLOff2);
+	pLeader2->cPts[1]->SetTo(vPP2D + vLOff2);
+
+	//THE TEXT
+	vTxtMid = vTxtDir;
+	vTxtMid.Normalize();
+	txtLen = pText->dLen;
+	vTxtMid *= 0.5 * txtLen;
+	vTxtOff = vDInsPt - vPPV;
+	vTxtOff.Normalize();
+	vTxtOff *= dDimScl * 0.25;
+
+	C3dVector vTxtTrans;
+	vTxtTrans = vDInsPt;
+	vTxtTrans -= pText->vInsPt;
+	vTxtTrans -= vTxtMid;
+	vTxtTrans += vTxtOff;
+	pText->vDir = vTxtDir;
+	pText->Translate(vTxtTrans);
+	pText->BuildText();
+	//The Arrow Points
+	C3dVector vDimDir,vT;
+	vDimDir = pDimLine1->GetDir(0); vDimDir.Normalize();
+	vLOff1.Normalize();
+	vDimDir *= 1.5;
+	vLOff1 *= 0.4;
+	vT = vDimDir + vLOff1; vT *= dDimScl;
+    vPP1A1 = vPP1D + vT;
+    vT = vDimDir - vLOff1; vT *= dDimScl;
+    vPP1A2 = vPP1D + vT;
+	//Second Arrow
+	vDimDir = pDimLine1->GetDir(pDimLine1->we); vDimDir.Normalize();
+	vLOff2.Normalize();
+	vDimDir *= -1.5;
+	vLOff2 *= 0.4;
+	vT = vDimDir + vLOff2; vT *= dDimScl;
+	vPP2A1 = vPP2D + vT;
+	vT = vDimDir - vLOff2; vT *= dDimScl;
+	vPP2A2 = vPP2D + vT;
+}
+
+void DIMANG::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	if (pPtV != nullptr)
+		pPtV->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pPt1 != nullptr)
+		pPt1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pPt2 != nullptr)
+		pPt2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pInsPt != nullptr)
+	  pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pText != nullptr)
+	  pText->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pDimLine1 != nullptr)
+	  pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pDimLine2 != nullptr)  //Used as leader
+		pDimLine2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pLeader1 != nullptr)
+	  pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (pLeader2 != nullptr)
+		pLeader2->OglDrawW(iDspFlgs, dS1, dS2);
+	//Filled Arrow Heads
+	glBegin(GL_POLYGON);
+	  glVertex3f(vPP1D.x, vPP1D.y, vPP1D.z);
+	  glVertex3f(vPP1A1.x, vPP1A1.y, vPP1A1.z);
+	  glVertex3f(vPP1A2.x, vPP1A2.y, vPP1A2.z);
+	glEnd();
+	glBegin(GL_POLYGON);
+	  glVertex3f(vPP2D.x, vPP2D.y, vPP2D.z);
+	  glVertex3f(vPP2A1.x, vPP2A1.y, vPP2A1.z);
+	  glVertex3f(vPP2A2.x, vPP2A2.y, vPP2A2.z);
+	glEnd();
+
+	glPointSize(5);
+	glBegin(GL_POINTS);
+	  glVertex3f(vPP1.x, vPP1.y, vPP1.z);
+	  glVertex3f(vPP2.x, vPP2.y, vPP2.z);
+	  glVertex3f(vPPV.x, vPPV.y, vPPV.z);
+	glEnd();
+}
+
+
+
+
+
+//Horizontal / Vertical dimension
+
+IMPLEMENT_DYNAMIC(DIMH, CObject)
+
+DIMH::DIMH()
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+}
+
+DIMH::DIMH(C3dVector vPt1,
+	C3dVector vPt2,
+	C3dVector vInsPt,
+	C3dVector vO,
+	C3dVector vN,
+	C3dVector vD,
+	double dDScl,
+	int iLab)
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	iObjType = 10;       //Type Dimension
+	iType = 2;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 4;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	vDInsPt = vInsPt;					//Ins Point
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+void  DIMH::Build()
+{
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX = vX;
+	//vDX.Set(1, 0, 0); //Horizontal
+	C3dVector vDDD;
+	vDDD = vPP2D - vPP1D;
+	dDIM = abs(vDDD.Dot(vDX));
+	dDist = dDIM / dDrgScl;
+
+	//dDist = vPP1D.Dist(vPP2D) / dDrgScl;
+	char buff[200];
+	if (!bTextOverRide)
+	{
+		sprintf_s(buff, "%.*f", gDIM_PREC, dDist);
+		sText = buff;
+	}
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Leader Line
+	pLeader1 = new NLine();
+	pLeader1->Create(vPP1, vDInsPt, -1, this);
+	pLeader1->iColour = iColour;
+	pLeader1->iLnThk = 2;
+	pLeader2 = new NLine();
+	pLeader2->Create(vPP2, vDInsPt, -1, this);
+	pLeader2->iColour = iColour;
+	pLeader2->iLnThk = 2;
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine2 = pL;
+	//Text insertion point - need to lift off the dim line slightly
+	CString sT;
+	sT = sTextPre + sText + sTextPost;
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl,this);
+	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
+}
+
+void DIMH::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	vDInsPt = inPt;
+	C3dVector vP1toIns, vP2toIns, vT, vOff, vLOff;
+	double dExtY = 0;
+	vP1toIns = inPt;
+	vP1toIns -= vPP1;
+	dExtY = vP1toIns.Dot(vDY);
+	vPP1D = vPP1;
+	vPP1D += vDY * dExtY;
+	vPP2D = vPP2;
+
+	vP2toIns = inPt;
+	vP2toIns -= vPP2;
+	dExtY = vP2toIns.Dot(vDY);
+	vPP2D = vPP2;
+	vPP2D += vDY * dExtY;
+
+	vOff = vDY * dDimScl * 0.25;    //Text Offset
+	vLOff = (vPP1D - vPP1);
+	vLOff.Normalize();
+	vLOff *= dDimScl * 0.5;         //Leader offset
+	pInsPt->SetTo(inPt);
+	// THE LEADERS
+	pLeader1->cPts[0]->SetTo(vPP1 + vLOff);
+	pLeader2->cPts[0]->SetTo(vPP2 + vLOff);
+	pLeader1->cPts[1]->SetTo(vPP1D + vLOff);
+	pLeader2->cPts[1]->SetTo(vPP2D + vLOff);
+
+	//THE DIMENSION LINES
+	//need to see if lines are in or out and calc end points
+	//and arrow heads
+	C3dVector vDimDir1;
+	C3dVector vInPtDir1;
+	C3dVector vDimDir2;
+	C3dVector vInPtDir2;
+	C3dVector vDimDir;
+	C3dVector vExt;
+	C3dVector vYPOff;
+	double dDotOut1;
+	double dDotOut2;
+	double dDLen1;
+	double dDLen2;
+	//check to see if insersion point is outside on vPP1D side
+	vDimDir1 = (vPP2D - vPP1D);
+	vDimDir1.Normalize();
+	vInPtDir1 = (inPt - vPP1D);
+	dDLen1 = vInPtDir1.Mag();
+	vInPtDir1.Normalize();
+	dDotOut1 = vDimDir1.Dot(vInPtDir1);
+	//check to see if insersion point is outside on vPP2D side
+	vDimDir2 = (vPP1D - vPP2D);
+	vDimDir2.Normalize();
+	vInPtDir2 = (inPt - vPP2D);
+	dDLen2 = vInPtDir2.Mag();
+	vInPtDir2.Normalize();
+	dDotOut2 = vDimDir2.Dot(vInPtDir2);
+	if (dDotOut1 < 0)
+	{
+		vExt = vDimDir1; vExt *= dDLen1;
+		vT = vPP1D; vT -= vExt;
+		pDimLine1->cPts[0]->SetTo(vPP1D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vDimDir1; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D - vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D - vT;
+
+		vExt *= 0.5;
+		vT = vPP2D; vT += vExt;
+		pDimLine2->cPts[0]->SetTo(vPP2D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP2D
+		vDimDir = vDimDir1; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D + vT;
+	}
+	else if (dDotOut2 < 0)
+	{
+		//Also need to add length of text
+		dDLen2 += pText->GetLength();
+		vExt = vDimDir2; vExt *= dDLen2;
+		vT = vPP2D; vT -= vExt;
+		pDimLine1->cPts[0]->SetTo(vPP2D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vDimDir2; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D + vT;
+
+		vExt *= 0.5;
+		vT = vPP1D; vT += vExt;
+		pDimLine2->cPts[0]->SetTo(vPP1D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP2D
+		vDimDir = vDimDir2; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D - vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D - vT;
+	}
+	else //insertion point is between leaders
+	{
+		vT = vPP2D; vT += vPP1D; vT *= 0.5;
+		pDimLine1->cPts[0]->SetTo(vPP1D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		pDimLine2->cPts[0]->SetTo(vPP2D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vPP2D - vPP1D; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D + vT;
+		//Arrow points vPP2D
+		vDimDir = vPP1D - vPP2D; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D + vT;
+	}
+
+	//THE TEXT
+	C3dVector vTxtTrans;
+	vTxtTrans = inPt;
+	vTxtTrans += vOff;
+	vTxtTrans -= pText->vInsPt;
+	pText->Translate(vTxtTrans);
+}
+
+IMPLEMENT_DYNAMIC(DIMV, CObject)
+
+DIMV::DIMV()
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	iType = 3;
+}
+
+DIMV::DIMV(C3dVector vPt1,
+	C3dVector vPt2,
+	C3dVector vInsPt,
+	C3dVector vO,
+	C3dVector vN,
+	C3dVector vD,
+	double dDScl,
+	int iLab)
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	iObjType = 10;       //Type Dimension
+	iType = 3;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 4;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	vDInsPt = vInsPt;					//Ins Point
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+void  DIMV::Build()
+{
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX = vY;
+	//vDX.Set(0, 1, 0); //Vertical
+	C3dVector vDDD;
+	vDDD = vPP2D - vPP1D;
+	dDIM = abs(vDDD.Dot(vDX));
+	dDist = dDIM / dDrgScl;
+	//dDist = vPP1D.Dist(vPP2D) / dDrgScl;
+	char buff[200];
+	if (!bTextOverRide)
+	{
+		sprintf_s(buff, "%.*f", gDIM_PREC, dDist);
+		sText = buff;
+	}
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Leader Line
+	pLeader1 = new NLine();
+	pLeader1->Create(vPP1, vDInsPt, -1, this);
+	pLeader1->iColour = iColour;
+	pLeader1->iLnThk = 2;
+	pLeader2 = new NLine();
+	pLeader2->Create(vPP2, vDInsPt, -1, this);
+	pLeader2->iColour = iColour;
+	pLeader2->iLnThk = 2;
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
+	pL = new NLine();
+	pL->Create(vPP1, vPP2, -1, this);
+	pL->iColour = iColour;
+	pDimLine2 = pL;
+	//Text insertion point - need to lift off the dim line slightly
+	CString sT;
+	sT = sTextPre + sText + sTextPost;
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl,this);
+	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
+}
+
+void DIMV::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	vDInsPt = inPt;
+	C3dVector vP1toIns, vP2toIns, vT, vOff, vLOff;
+	double dExtY = 0;
+	vP1toIns = inPt;
+	vP1toIns -= vPP1;
+	dExtY = vP1toIns.Dot(vDY);
+	vPP1D = vPP1;
+	vPP1D += vDY * dExtY;
+	vP2toIns = inPt;
+	vP2toIns -= vPP2;
+	dExtY = vP2toIns.Dot(vDY);
+	vPP2D = vPP2;
+	vPP2D += vDY * dExtY;
+	//vPP2D.x = vPP1D.x;  //The only change from horizontal
+	vOff = vDY * dDimScl * 0.25;    //Text Offset
+	vLOff = (vPP1D - vPP1);
+	vLOff.Normalize();
+	vLOff *= dDimScl * 0.5;         //Leader offset
+	pInsPt->SetTo(inPt);
+	// THE LEADERS
+	pLeader1->cPts[0]->SetTo(vPP1 + vLOff);
+	pLeader2->cPts[0]->SetTo(vPP2 + vLOff);
+	pLeader1->cPts[1]->SetTo(vPP1D + vLOff);
+	pLeader2->cPts[1]->SetTo(vPP2D + vLOff);
+
+	//THE DIMENSION LINES
+	//need to see if lines are in or out and calc end points
+	//and arrow heads
+	C3dVector vDimDir1;
+	C3dVector vInPtDir1;
+	C3dVector vDimDir2;
+	C3dVector vInPtDir2;
+	C3dVector vDimDir;
+	C3dVector vExt;
+	C3dVector vYPOff;
+	double dDotOut1;
+	double dDotOut2;
+	double dDLen1;
+	double dDLen2;
+	//check to see if insersion point is outside on vPP1D side
+	vDimDir1 = (vPP2D - vPP1D);
+	vDimDir1.Normalize();
+	vInPtDir1 = (inPt - vPP1D);
+	dDLen1 = vInPtDir1.Mag();
+	vInPtDir1.Normalize();
+	dDotOut1 = vDimDir1.Dot(vInPtDir1);
+	//check to see if insersion point is outside on vPP2D side
+	vDimDir2 = (vPP1D - vPP2D);
+	vDimDir2.Normalize();
+	vInPtDir2 = (inPt - vPP2D);
+	dDLen2 = vInPtDir2.Mag();
+	vInPtDir2.Normalize();
+	dDotOut2 = vDimDir2.Dot(vInPtDir2);
+	if (dDotOut1 < 0)
+	{
+		vExt = vDimDir1; vExt *= dDLen1;
+		vT = vPP1D; vT -= vExt;
+		pDimLine1->cPts[0]->SetTo(vPP1D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vDimDir1; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D - vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D - vT;
+
+		vExt *= 0.5;
+		vT = vPP2D; vT += vExt;
+		pDimLine2->cPts[0]->SetTo(vPP2D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP2D
+		vDimDir = vDimDir1; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D + vT;
+	}
+	else if (dDotOut2 < 0)
+	{
+		//Also need to add length of text
+		dDLen2 += pText->GetLength();
+		vExt = vDimDir2; vExt *= dDLen2;
+		vT = vPP2D; vT -= vExt;
+		pDimLine1->cPts[0]->SetTo(vPP2D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vDimDir2; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D + vT;
+
+		vExt *= 0.5;
+		vT = vPP1D; vT += vExt;
+		pDimLine2->cPts[0]->SetTo(vPP1D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP2D
+		vDimDir = vDimDir2; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D - vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D - vT;
+	}
+	else //insertion point is between leaders
+	{
+		vT = vPP2D; vT += vPP1D; vT *= 0.5;
+		pDimLine1->cPts[0]->SetTo(vPP1D);
+		pDimLine1->cPts[1]->SetTo(vT);
+		pDimLine2->cPts[0]->SetTo(vPP2D);
+		pDimLine2->cPts[1]->SetTo(vT);
+		//Arrow points vPP1D
+		vDimDir = vPP2D - vPP1D; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP1A1 = vPP1D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP1A2 = vPP1D + vT;
+		//Arrow points vPP2D
+		vDimDir = vPP1D - vPP2D; vDimDir.Normalize(); //
+		vDimDir *= 1.5;
+		vYPOff = vDY;
+		vYPOff *= 0.4;
+		vT = vDimDir + vYPOff; vT *= dDimScl;
+		vPP2A1 = vPP2D + vT;
+		vT = vDimDir - vYPOff; vT *= dDimScl;
+		vPP2A2 = vPP2D + vT;
+	}
+
+	//THE TEXT
+	C3dVector vTxtTrans;
+	vTxtTrans = inPt;
+	vTxtTrans += vOff;
+	vTxtTrans -= pText->vInsPt;
+	pText->Translate(vTxtTrans);
+}
+
+IMPLEMENT_DYNAMIC(DIML, CObject)
+
+DIML::DIML()
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iType = 7;
+}
+
+DIML::DIML(CString sLText,
+	       C3dVector vPt1,
+	       C3dVector vPt2,
+	       C3dVector vInsPt,
+	       C3dVector vO,
+	       C3dVector vN,
+	       C3dVector vD,
+	       double dDScl,
+	       int iLab)
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iObjType = 10;       //Type Dimension
+	iType = 7;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 4;
+	sTextPre = "";
+	sText = sLText;
+	sTextPost = "";;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	vDInsPt = vInsPt;					//Ins Point
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+void  DIML::Build()
+{
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX.Set(1, 0, 0); //Horizontal
+
+	char buff[200];
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Leader Line
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vDInsPt, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
+	pLeader1 = new NLine();
+	pLeader1->Create(vDInsPt, vDInsPt, -1, this);
+	pLeader1->iColour = iColour;
+	pLeader1->iLnThk = 2;
+	//Text insertion point - need to lift off the dim line slightly
+	CString sT;
+	sT = sTextPre + sText + sTextPost;
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl,this);
+	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
+}
+
+void DIML::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	vDInsPt = inPt;
+	C3dVector vP1toIns, vT, vOff, vLOff;
+	vOff = vDY * dDimScl * 0.25;    //Text Offset
+	vLOff = (vPP1D - vPP1);
+	vLOff.Normalize();
+	vLOff *= dDimScl * 0.5;         //Leader offset
+
+	pInsPt->SetTo(inPt);
+	// THE LEADERS
+	pDimLine1->cPts[0]->SetTo(vPP1);
+	pDimLine1->cPts[1]->SetTo(vDInsPt);
+	pLeader1->cPts[0]->SetTo(vDInsPt);
+	vT = vDInsPt;
+	vT.x+= pText->GetLength();;
+	pLeader1->cPts[1]->SetTo(vT);
+	//dDLen2 += pText->GetLength();
+	//THE TEXT
+	C3dVector vTxtTrans;
+	vTxtTrans = inPt;
+	vTxtTrans += vOff;
+	vTxtTrans -= pText->vInsPt;
+	pText->Translate(vTxtTrans);
+
+	C3dVector vDimDir, vYPOff, vDArr;
+	//Arrow points vPP1D
+	vDimDir = vDInsPt - vPP1D; vDimDir.Normalize(); //
+	vDArr = vDimDir.Cross(vNorm); vDArr.Normalize();
+	vDimDir *= 1.5;
+	vYPOff = vDArr; 
+	vYPOff *= 0.4;
+	vT = vDimDir + vYPOff; vT *= dDimScl;
+	vPP1A1 = vPP1D + vT;
+	vT = vDimDir - vYPOff; vT *= dDimScl;
+	vPP1A2 = vPP1D + vT;
+
+}
+
+void DIML::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	pPt1->OglDrawW(iDspFlgs,dS1,dS2);
+	//pPt2->OglDrawW(iDspFlgs, dS1, dS2);
+	pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
+	pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
+	pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
+	pText->OglDrawW(iDspFlgs, dS1, dS2);
+
+	glColor3fv(cols[iColour]);
+	//Dim attachment points
+	glPointSize(5);
+	glBegin(GL_POINTS);
+	glVertex3f(vPP1.x, vPP1.y, vPP1.z);
+	glVertex3f(vPP2.x, vPP2.y, vPP2.z);
+	glEnd();
+	//Filled Arrow Heads
+	//Dim attachment points
+	glPointSize(5);
+	glBegin(GL_POINTS);
+	  glVertex3f(vPP1.x, vPP1.y, vPP1.z);
+	glEnd();
+	//Filled Arrow Heads
+	glBegin(GL_POLYGON);
+	glVertex3f(vPP1D.x, vPP1D.y, vPP1D.z);
+	glVertex3f(vPP1A1.x, vPP1A1.y, vPP1A1.z);
+	glVertex3f(vPP1A2.x, vPP1A2.y, vPP1A2.z);
+	glEnd();
+
+}
+
+
+void DIML::Colour(int iCol)
+{
+	this->iColour = iCol;
+	pInsPt->iColour = iCol;
+	pDimLine1->iColour = iCol;
+	pLeader1->iColour = iCol;
+	pText->iColour = iCol;
+
+}
+
+
+IMPLEMENT_DYNAMIC(DIMR, CObject)
+
+DIMR::DIMR()
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iType = 4;
+}
+
+DIMR::DIMR(double dRad,
+	C3dVector vPt1,
+	C3dVector vPt2,
+	C3dVector vInsPt,
+	C3dVector vO,
+	C3dVector vN,
+	C3dVector vD,
+	double dDScl,
+	int iLab)
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iObjType = 10;       //Type Dimension
+	iType = 4;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 4;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
+	dDIM = dRad;
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	iDimOpt = 0;
+	vDInsPt = vInsPt;					//Ins Point
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+void  DIMR::Build()
+{
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX = vX; //Horizontal
+
+	dDist = dDIM / dDrgScl;
+	//dDist = vPP1D.Dist(vPP2D) / dDrgScl;
+	char buff[200];
+	if (!bTextOverRide)
+	{
+		sprintf_s(buff, "%.*f", gDIM_PREC, dDist);
+		sText = buff;
+	}
+
+
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Leader Line
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vDInsPt, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
+	pLeader1 = new NLine();
+	pLeader1->Create(vPP1, vDInsPt, -1, this);
+	pLeader1->iColour = iColour;
+	pLeader1->iLnThk = 2;
+	//Text insertion point - need to lift off the dim line slightly
+	CString sT;
+	sT = sTextPre + sText + sTextPost;
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl,this);
+	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
+}
+
+void DIMR::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	BOOL bOutSide = TRUE;
+	vDInsPt = inPt;
+	C3dVector vP1toIns, vT, vOff, vLOff,vTD, vTD2, vDArr;
+	//vPP1, vDInsPt
+	vP1toIns = vDInsPt - vPP1;
+	double ddddd = vP1toIns.Mag();
+	if (vP1toIns.Mag() > dDIM)
+		bOutSide = TRUE;
+	else
+		bOutSide = FALSE;
+	vP1toIns.Normalize();
+	vTD = vP1toIns;
+	vDArr = vTD.Cross(vNorm); vDArr.Normalize();
+	vOff = -vDArr * dDimScl * 0.25;    //Text Offset
+	vTD2 = vP1toIns;
+	vP1toIns *= dDIM; //point on circu
+	vP1toIns += vPP1;
+	pInsPt->SetTo(inPt);
+	// THE LEADERS	pDimLine1->cPts[0]->SetTo(vPP1);
+	vPP1D = vP1toIns;
+	pDimLine1->cPts[0]->SetTo(vP1toIns);
+	vTD2 *= pText->GetLength();
+	if (bOutSide)
+	{
+		pLeader1->cPts[1]->SetTo(vDInsPt);
+		pDimLine1->cPts[1]->SetTo(vDInsPt + vTD2);
+	}
+	else
+	{
+		pLeader1->cPts[1]->SetTo(vPP1);
+		pDimLine1->cPts[1]->SetTo(vPP1);
+	}
+	//THE TEXT
+	C3dVector vRevText;
+	C3dVector vTxtTrans;
+	vRevText = vTD;
+	vTxtTrans = inPt;
+	if (vRevText.Dot(vDX) < 0)
+	{
+		vRevText *= -1;
+		vTxtTrans += vTD2;
+		vTxtTrans -= vOff;
+	}
+	else
+	{
+		vTxtTrans += vOff;
+	}
+	
+	vTxtTrans -= pText->vInsPt;
+	pText->Translate(vTxtTrans);
+	pText->vDir = vRevText;
+	pText->BuildText();
+
+	//**************************************************
+    //Arrow points vPP1D
+	C3dVector vDimDir, vYPOff;
+	vDimDir = vTD;
+	if (!bOutSide)
+		vDimDir *= -1;
+	
+	vDimDir *= 1.5;
+	vYPOff = vDArr;
+	vYPOff *= 0.4;
+	vT = vDimDir + vYPOff; vT *= dDimScl;
+	vPP1A1 = vP1toIns + vT;
+	vT = vDimDir - vYPOff; vT *= dDimScl;
+	vPP1A2 = vP1toIns + vT;
+
+}
+
+void DIMR::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	//pPt1->OglDrawW(iDspFlgs, dS1, dS2);
+	//pPt2->OglDrawW(iDspFlgs, dS1, dS2);
+	pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
+	pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
+	if (iDimOpt==0)
+	  pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
+	pText->OglDrawW(iDspFlgs, dS1, dS2);
+	glColor3fv(cols[iColour]);
+	//glPointSize(5);
+	//glBegin(GL_POINTS);
+	//glVertex3f(vPP1.x, vPP1.y, vPP1.z);
+	//glEnd();
+	//Filled Arrow Heads
+	glBegin(GL_POLYGON);
+	glVertex3f(vPP1D.x, vPP1D.y, vPP1D.z);
+	glVertex3f(vPP1A1.x, vPP1A1.y, vPP1A1.z);
+	glVertex3f(vPP1A2.x, vPP1A2.y, vPP1A2.z);
+	glEnd();
+
+}
+
+
+void DIMR::Colour(int iCol)
+{
+	this->iColour = iCol;
+	pInsPt->iColour = iCol;
+	pDimLine1->iColour = iCol;
+	pLeader1->iColour = iCol;
+	pText->iColour = iCol;
+
+}
+
+IMPLEMENT_DYNAMIC(DIMD, CObject)
+
+DIMD::DIMD()
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iType = 5;
+}
+
+DIMD::DIMD(double dRad,
+	C3dVector vPt1,
+	C3dVector vPt2,
+	C3dVector vInsPt,
+	C3dVector vO,
+	C3dVector vN,
+	C3dVector vD,
+	double dDScl,
+	int iLab)
+{
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+	iObjType = 10;       //Type Dimension
+	iType = 5;			 //Aligned dimension
+	iLabel = iLab;
+	iColour = 4;
+	sTextPre = "";
+	sText = "";
+	sTextPost = "";;
+	pPt1 = nullptr;					//1st dim point
+	pPt2 = nullptr;					//2nd dim point or null
+	pLeader1 = nullptr;
+	pLeader2 = nullptr;
+	pDimLine1 = nullptr;			//one halve of dim line
+	pDimLine2 = nullptr;			//other halve
+	Text* pText = nullptr;
+	pInsPt = nullptr;				//Ins Point
+	dDIM = dRad;
+	dDrgScl = 1;
+	dDimScl = dDScl;
+	iDimOpt = 0;
+	vDInsPt = vInsPt;					//Ins Point
+	vDPt1 = vPt1;					//1st dim point
+	vDPt2 = vPt2;					//2nd dim point or null
+	vOrig = vO;
+	vNorm = vN;
+	vDir = vD;
+	Build();
+}
+
+void  DIMD::Build()
+{
+	//Transform all to DIM plain (for this is workplane)
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vDir;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	vY.Normalize();
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	RMat.Transpose();
+	vPP1 = vDPt1;
+	vPP2 = vDPt2;
+	vPP1 -= vOrig;
+	vPP2 -= vOrig;
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1.z = 0;
+	vPP2.z = 0;
+	RMat.Transpose();
+	vPP1 = RMat * vPP1;
+	vPP2 = RMat * vPP2;
+	vPP1 += vOrig;
+	vPP2 += vOrig;
+
+	vPP1D = vPP1;
+	vPP2D = vPP2;;
+	vDX = vX; //Horizontal
+
+	dDist = 2*dDIM / dDrgScl;
+	//dDist = vPP1D.Dist(vPP2D) / dDrgScl;
+	char buff[200];
+	if (!bTextOverRide)
+	{
+		sprintf_s(buff, "%.*f", gDIM_PREC, dDist);
+		sText = buff;
+		char newCharacter = 0;  // Assuming the character 8960 is a TCHAR
+		sText.Insert(0, newCharacter);
+	}
+
+
+	vDY = vNorm.Cross(vDX); vDY.Normalize();
+	pPt1 = new CvPt_Object();
+	pPt1->Create(vDPt1, 1, -1, 0, 0, 11, nullptr);
+	pPt2 = new CvPt_Object();
+	pPt2->Create(vDPt2, 1, -1, 0, 0, 11, nullptr);
+	pInsPt = new CvPt_Object();
+	pInsPt->Create(vDInsPt, 1, -1, 0, 0, 11, nullptr);
+	//First Dim Line
+	NLine* pL;
+	pL = new NLine();
+	pL->Create(vPP1, vDInsPt, -1, this);
+	pL->iColour = iColour;
+	pDimLine1 = pL;
+	//Second Dim Line
+	pL = new NLine();
+	pL->Create(vPP1, vPP1, -1, this);
+	pL->iColour = iColour;
+	pDimLine2 = pL;
+	//Circle crossing leader line
+	pLeader1 = new NLine();
+	pLeader1->Create(vPP1, vDInsPt, -1, this);
+	pLeader1->iColour = iColour;
+	pLeader1->iLnThk = 2;
+	//Text insertion point - need to lift off the dim line slightly
+	CString sT;
+	sT = sTextPre + sText + sTextPost;
+	pText = new Text(vDInsPt, vNorm, vDX, -1, sT, dDimScl,this);
+	pText->iColour = iColour;
+	C3dMatrix mWP;
+	//The call to DragUpdate should probably be called build
+	DragUpdate(vDInsPt, mWP);
+}
+
+void DIMD::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	BOOL bOutSide = TRUE;
+	vDInsPt = inPt;
+	C3dVector vP1toIns, vP1toIns2, vT, vOff, vLOff, vTD, vTD2, vDArr;
+	//vPP1, vDInsPt
+	vP1toIns = vDInsPt - vPP1;
+	double ddddd = vP1toIns.Mag();
+	if (vP1toIns.Mag() > dDIM)
+		bOutSide = TRUE;
+	else
+		bOutSide = FALSE;
+	vP1toIns.Normalize();
+	vP1toIns2 = vP1toIns; 
+	vTD = vP1toIns;
+	vDArr = vTD.Cross(vNorm); vDArr.Normalize();
+	vOff = -vDArr * dDimScl * 0.25;    //Text Offset
+	vTD2 = vP1toIns;
+	vP1toIns *= dDIM; //point on circu
+	vP1toIns += vPP1;
+	vP1toIns2 *= -dDIM;
+	vP1toIns2 += vPP1;
+	pInsPt->SetTo(inPt);
+	// THE LEADERS	pDimLine1->cPts[0]->SetTo(vPP1);
+	vPP1D = vP1toIns;
+	vPP2D = vP1toIns2;
+	pDimLine1->cPts[0]->SetTo(vPP1D);
+	pDimLine2->cPts[0]->SetTo(vPP2D);
+	pLeader1->cPts[0]->SetTo(vPP1D);
+	vTD2 *= pText->GetLength();
+	if (bOutSide)
+	{
+		pLeader1->cPts[1]->SetTo(vPP2D);
+		pDimLine1->cPts[1]->SetTo(vDInsPt + vTD2);
+		pDimLine2->cPts[1]->SetTo(vPP2D - vTD2);
+	}
+	else
+	{
+		pLeader1->cPts[0]->SetTo(vPP1);
+		pLeader1->cPts[1]->SetTo(vPP1);
+		pDimLine1->cPts[1]->SetTo(vPP1);
+		pDimLine2->cPts[1]->SetTo(vPP1);
+	}
+	//THE TEXT
+	C3dVector vRevText;
+	C3dVector vTxtTrans;
+	vRevText = vTD;
+	vTxtTrans = inPt;
+	if (vRevText.Dot(vDX) < 0)
+	{
+		vRevText *= -1;
+		vTxtTrans += vTD2;
+		vTxtTrans -= vOff;
+	}
+	else
+	{
+		vTxtTrans += vOff;
+	}
+
+	vTxtTrans -= pText->vInsPt;
+	pText->Translate(vTxtTrans);
+	pText->vDir = vRevText;
+	pText->BuildText();
+
+	//**************************************************
+	//Arrow points vPP1D
+	C3dVector vDimDir, vYPOff;
+	vDimDir = vTD;
+	if (!bOutSide)
+		vDimDir *= -1;
+
+	vDimDir *= 1.5;
+	vYPOff = vDArr;
+	vYPOff *= 0.4;
+	vT = vDimDir + vYPOff; vT *= dDimScl;
+	vPP1A1 = vPP1D + vT;
+	vPP2A1 = vPP2D - vT;
+	vT = vDimDir - vYPOff; vT *= dDimScl;
+	vPP1A2 = vPP1D + vT;
+	vPP2A2 = vPP2D - vT;
+
+
+
+}
+
+void DIMD::OglDrawW(int iDspFlgs, double dS1, double dS2)
+{
+	//pPt1->OglDrawW(iDspFlgs, dS1, dS2);
+	//pPt2->OglDrawW(iDspFlgs, dS1, dS2);
+	pInsPt->OglDrawW(iDspFlgs, dS1, dS2);
+	pDimLine1->OglDrawW(iDspFlgs, dS1, dS2);
+	pDimLine2->OglDrawW(iDspFlgs, dS1, dS2);
+	if (iDimOpt == 0)
+	  pLeader1->OglDrawW(iDspFlgs, dS1, dS2);
+	pText->OglDrawW(iDspFlgs, dS1, dS2);
+
+	glColor3fv(cols[iColour]);
+	//glPointSize(5);
+	//glBegin(GL_POINTS);
+	//glVertex3f(vPP1.x, vPP1.y, vPP1.z);
+	//glEnd();
+	//Filled Arrow Heads
+	glBegin(GL_POLYGON);
+	glVertex3f(vPP1D.x, vPP1D.y, vPP1D.z);
+	glVertex3f(vPP1A1.x, vPP1A1.y, vPP1A1.z);
+	glVertex3f(vPP1A2.x, vPP1A2.y, vPP1A2.z);
+	glEnd();
+
+	glBegin(GL_POLYGON);
+	glVertex3f(vPP2D.x, vPP2D.y, vPP2D.z);
+	glVertex3f(vPP2A1.x, vPP2A1.y, vPP2A1.z);
+	glVertex3f(vPP2A2.x, vPP2A2.y, vPP2A2.z);
+	glEnd();
+
+}
+
+
+void DIMD::Colour(int iCol)
+{
+	this->iColour = iCol;
+	pInsPt->iColour = iCol;
+	pDimLine1->iColour = iCol;
+	pLeader1->iColour = iCol;
+	pText->iColour = iCol;
+
+}
 //26/09/2016
 //symbol class used for compounds of lines
 // fonts, hatches etc
+
 IMPLEMENT_DYNAMIC(Symbol , CObject )
 
 
@@ -36368,10 +48852,10 @@ Visable  = 1;
 iObjType = 5;
 iLabel = -1;
 iColour = 2;
-
+pParent = NULL;
 pL=NULL;
-
-inPt=NULL;
+vCent = NULL;         //Centroid
+inPt = NULL;
 iSegs=0;
 }
 
@@ -36431,10 +48915,13 @@ if ((iDspFlgs & DSP_CURVES)>0)
 {
   Selectable=1;
   Link* pCL;
-  glColor3fv(cols[iColour]);
+  if (this->pParent!=NULL)
+	  glColor3fv(cols[pParent->iColour]);
+  else
+      glColor3fv(cols[iColour]);
   C3dVector vPt;
   C3dVector vPt2;
-  glLineWidth(4);
+  glLineWidth(gTXT_SIZE);
   glBegin(GL_LINES);
   pCL=pL;
     while (pCL!=NULL)
@@ -36444,7 +48931,6 @@ if ((iDspFlgs & DSP_CURVES)>0)
 	  pCL=pCL->pNext;
     }
   glEnd();
-  glLineWidth(2.0);
   glDisable(GL_LINE_STIPPLE);
   C3dVector vCent=Get_Centroid();
   if (bDrawLab==TRUE)
@@ -36483,8 +48969,8 @@ void Symbol::CalculateMetrics()
 {
 //Calculate dimensions of symbol
 Link* pCL=pL;
-double dMinX;double dMinY;
-double dMaxX;double dMaxY;
+double dMinX = 0;double dMinY = 0;
+double dMaxX = 0;double dMaxY = 0;
 vCent=new CvPt_Object();
 
 w=0;
@@ -36519,12 +49005,20 @@ if (pCL!=NULL)
 }
 w=dMaxX-dMinX;
 h=dMaxY-dMinY;
-vCent->Pt_Point->x=(w)/2+dMinX;
-vCent->Pt_Point->y=(h)/2+dMinY;
+vCent->Pt_Point->x=(w)/2;
+vCent->Pt_Point->y=(h)/2;
 vCent->Pt_Point->z=0;
-   //CvPt_Object* vCent;         //Centroid
-   //double w;                   //symbol width
-   //double h;                   //symbol height
+//Bring to Origin
+inPt->Pt_Point->Set(0, 0, 0);
+pCL = pL;
+  while (pCL != NULL)
+  {
+	  pCL->p1->Pt_Point->x -= dMinX;
+	  pCL->p2->Pt_Point->x -= dMinX;
+	  //pCL->p1->Pt_Point->y -= dMinY;
+	  //pCL->p2->Pt_Point->y -= dMinY;
+	  pCL = pCL->pNext;
+  }
 
 }
 
@@ -36627,6 +49121,115 @@ C3dVector Symbol::Get_Centroid()
 {
   return (GetCoords());
 }
+
+void Symbol::ExportDXF(FILE* pFile)
+{
+	int iLay = 0;
+	if (this->pParent != nullptr)
+		iLay = this->pParent->iFile;
+	if (iLay < 0)
+		iLay = 0;
+
+	Link* pCL = pL;
+	while (pCL != NULL)
+	{
+		pCL->ExportDXF(pFile, iLay);
+		pCL = pCL->pNext;
+	}
+}
+
+
+//*****************************************************************************************
+// SYMBOLS FUNCTIONS
+// 14/07/2020
+//*****************************************************************************************
+void Symbol::Translate(C3dVector vIn)
+{
+	Link* pCL = pL;
+	vCent->Move(vIn);
+	inPt->Move(vIn);
+	pCL = pL;
+	while (pCL != NULL)
+	{
+		pCL->p1->Move(vIn);
+		pCL->p2->Move(vIn);
+		pCL = pCL->pNext;
+	}
+}
+
+void Symbol::Transform(C3dMatrix TMat)
+{
+	Link* pCL = pL;
+	vCent->Transform(TMat);
+	inPt->Transform(TMat);
+	pCL = pL;
+	while (pCL != NULL)
+	{
+		pCL->p1->Transform(TMat);
+		pCL->p2->Transform(TMat);
+		pCL = pCL->pNext;
+	}
+}
+
+
+void Symbol::Move(C3dVector vM)
+{
+
+	Link* pCL = pL;
+	vCent->Move(vM);
+	inPt->Move(vM);
+	pCL = pL;
+	while (pCL != NULL)
+	{
+		pCL->p1->Move(vM);
+		pCL->p2->Move(vM);
+		pCL = pCL->pNext;
+	}
+}
+
+void Symbol::Serialize(CArchive& ar, int iV)
+{
+	C3dVector v1;
+	C3dVector v2;
+	int i;
+	int iNo;
+	Link* pCL;
+	if (ar.IsStoring())
+	{
+		G_Object::Serialize(ar, iV);
+		inPt->Serialize(ar, iV);
+		vCent->Serialize(ar, iV);;
+		ar<<w;                   
+		ar<<h;                   
+		ar<<iSegs;
+		pCL = pL;
+		for (i = 0; i < iSegs; i++)
+		{
+			pCL->p1->Pt_Point->Serialize(ar, iV);
+			pCL->p2->Pt_Point->Serialize(ar, iV);
+			pCL = pCL->pNext;
+		}
+	}
+	else
+	{
+		G_Object::Serialize(ar, iV);
+		inPt = new CvPt_Object();
+		vCent = new CvPt_Object();
+		inPt->Serialize(ar, iV);
+		vCent->Serialize(ar, iV);;
+		ar >> w;
+		ar >> h;
+		ar >> iNo;
+		for (i = 0; i < iNo; i++)
+		{
+			v1.Serialize(ar, iV);
+			v2.Serialize(ar, iV);
+			addSeg(v1, v2);
+		}
+	}
+}
+
+
 
 //*****************************************************************************************
 // START OF BREP OBJECT DATA STRUCTURE USES
@@ -36937,7 +49540,7 @@ void Shell::RelTo(G_Object* pThis, ObjList* pList, int iType)
 	}
 	else if (pThis->iObjType == 7) //
 	{
-		pThis->iObjType == 7;
+		pThis->iObjType = 7;
 	}
 
 }
@@ -38374,7 +50977,7 @@ void CvPt_Object::Info()
 {
   char S1[80];
   G_Object::Info();
-  sprintf_s(S1,"LAB: %i X: %f Y: %f Z: %f W: %f",iLabel,Pt_Point->x,Pt_Point->y,Pt_Point->z,w);
+  sprintf_s(S1,"LAB: %i X: %f Y: %f Z: %f W: %f LAYER: %i",iLabel,Pt_Point->x,Pt_Point->y,Pt_Point->z,w,iFile);
   outtext1(_T(S1));
   
 }
@@ -38481,7 +51084,7 @@ if ((iDspFlgs & DSP_POINTS) > 0)
 {
   Selectable=1;
   glColor3fv(cols[GetCol()]);
-  glPointSize(6.0f);
+  glPointSize(gPT_SIZE);
   glBegin(GL_POINTS);
   glVertex3f((float) Pt_Point->x,(float) Pt_Point->y,(float) Pt_Point->z);
   glEnd();
@@ -38554,11 +51157,7 @@ Pt_Point->x *=d;
 }
 
 
-void CvPt_Object::HighLight(CDC* pDC)
-{
-pDC->Ellipse((int) DSP_Point->x+5,(int) DSP_Point->y+5,(int) DSP_Point->x-5,(int) DSP_Point->y-5);
 
-}
 
 
 
@@ -38582,6 +51181,79 @@ Pt_Point->x = cInVect.x;
 Pt_Point->y = cInVect.y;
 Pt_Point->z = cInVect.z;
 }
+
+void CvPt_Object::ExportDXF(FILE* pFile)
+{
+	//fprintf(pFile, "%8i", pVertex[0]->iLabel);
+	int iL;
+	iL = iFile;
+	if (iL < 0)
+		iL = 0;
+	// Writing point entity
+	fprintf(pFile, "POINT\n");					// write the LINE entity
+	fprintf(pFile, "8\n");						// write a line with value 8
+	fprintf(pFile, "%i\n",iL);					// write the layer number
+	fprintf(pFile, "10\n");						// write a line with value 10
+	fprintf(pFile, "%g\n", Pt_Point->x);	    // write the x-coordinate of the point
+	fprintf(pFile, "20\n");						// write a line with value 20
+	fprintf(pFile, "%g\n", Pt_Point->y);		// write the y-coordinate of the point
+	fprintf(pFile, "0\n");
+}
+
+
+
+CString CvPt_Object::GetName()
+{
+	return ("Point");
+}
+
+int CvPt_Object::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo] = "X";
+	iNo++;
+	sVar[iNo] = "Y";
+	iNo++;
+	sVar[iNo] = "Z";
+	iNo++;
+	sVar[iNo] = "Wt";
+	iNo++;
+
+	return(iNo);
+}
+
+
+int CvPt_Object::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+	sprintf_s(S1, "%g", Pt_Point->x);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", Pt_Point->y);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", Pt_Point->z);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", w);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void CvPt_Object::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+
+	Pt_Point->x = atof(sVar[0]);
+	Pt_Point->y = atof(sVar[1]);
+	Pt_Point->z = atof(sVar[2]);
+	w = atof(sVar[3]);
+}
+
+
+
+
 
 
 IMPLEMENT_DYNAMIC( CvPt_ObjectW , CObject )
@@ -38629,6 +51301,8 @@ if (pS!=NULL)
 return (R);
 }
 
+
+
 IMPLEMENT_DYNAMIC(NCurve, CObject)
 
 NCurve ::~NCurve ()
@@ -38666,7 +51340,7 @@ iType = 1;
 Drawn = 0;
 Selectable  = 1; 
 Visable  = 1;
-iColour = 3;
+iColour = 152;
 iLabel = -1;
 iObjType = 7;
 iNoCPts=0;
@@ -38691,7 +51365,7 @@ Drawn = 0;
 iType = 1;
 Selectable  = 1; 
 Visable  = 1;
-iColour = 3;
+iColour = 152;
 iLabel = iLab;
 iObjType = 7;
 iLnThk = 4;
@@ -38706,6 +51380,11 @@ pS=NULL;
 pE=NULL;
 iInc = -1;
 dLSize = 1;
+
+}
+
+void NCurve::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
 
 }
 
@@ -38730,7 +51409,7 @@ char S1[80];
 sprintf_s(S1, "%s", "CURVE OBJECT");
 outtext1(S1);
 G_Object::Info();
-sprintf_s(S1, "%s%i", "Curve Type : ", iType);
+sprintf_s(S1, "Curve Type: %i LAYER:: %i", iType, iFile);
 outtext1(S1);
 sprintf_s(S1, "%s%i", "Curve Mesh Increment : ", iInc);
 outtext1(S1);
@@ -38755,7 +51434,7 @@ outtext1(sO);
 
 C3dVector NCurve::Get_Centroid()
 {
-return (GetPt(0.5));
+return (GetPt((ws+we)/2));
 }
 
 void NCurve::Serialize(CArchive& ar,int iV)
@@ -38840,7 +51519,8 @@ cPoly->we = we;
 cPoly->iInc = iInc;
 cPoly->dLSize = dLSize;
 cPoly->pParent=Parrent;
-
+cPoly->iLnThk = iLnThk;
+cPoly->iLnType = iLnType;
 for (i=0;i<iNoCPts;i++)
 {
   cPoly->cPts[i]=new CvPt_Object();
@@ -38896,7 +51576,7 @@ for (i=0;i<iNoK;i++)
 }
 }
 
-int NCurve::knotInsertion(double u, int r, Vec <C4dVector> & ncP,Vec <double> & ncU)
+int NCurve::knotInsertion(double u, int r,  int& kk, Vec <C4dVector> & ncP,Vec <double> & ncU)
 {
   // Compute k and s      u = [ u_k , u_k+1)  with u_k having multiplicity s
   int k=0,s=0 ;
@@ -38983,7 +51663,7 @@ int NCurve::knotInsertion(double u, int r, Vec <C4dVector> & ncP,Vec <double> & 
   P.DeleteAll();
   U.DeleteAll();
   R.DeleteAll();
-
+  kk = k;
   return r; 
 }
 
@@ -39666,9 +52346,12 @@ do
   }
   i++;
 }
-while  ((dWStp>0.00001)&&(i<100));
+while  ((dWStp>dTol) &&(i<100));
 vRet=GetPt(dW);
-
+//char S1[200];
+//CString OutT;
+//sprintf_s(S1, "MIN PT INT: ,%i %f", i, dWStp);
+//outtext1(S1);
 return (vRet);
 }
 
@@ -39813,6 +52496,154 @@ void NCurve::EndPtChk01(NSurf* pSurf,
 				pSfE->y = 0;
 		}
 	}
+}
+
+CString NCurve::GetName()
+{
+	return ("NCurve");
+}
+
+BOOL NCurve::IsClosed()
+{
+	BOOL bRet = FALSE;
+	double dDist = 0;
+	C3dVector vS;
+	C3dVector vE;
+	vS = GetPt(ws);
+	vE = GetPt(we);
+	dDist = vS.Dist(vE);
+	if (dDist < dTol)
+		bRet = TRUE;
+	return (bRet);
+}
+
+int NCurve::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+
+	sVar[iNo] = "KNOT Vector";
+	iNo++;
+	sVar[iNo] = "U Start";
+	iNo++;
+	sVar[iNo] = "U End";
+	iNo++;
+	return(iNo);
+}
+
+
+int NCurve::GetVarValues(CString sVar[])
+{
+	int i;
+	int iNo = 0;
+	char S1[80] = "";
+	CString sKnots = "";
+	for (i = 0; i < iNoCPts+p; i++)
+	{
+		sprintf_s(S1, "%g,", knots[i]);
+		sKnots += S1;
+	}
+	sprintf_s(S1, "%g", knots[iNoCPts + p]);
+	sKnots += S1;
+	//CString str = str(3.1);
+	sVar[iNo] = sKnots;
+	iNo++;
+	sprintf_s(S1, "%g", ws);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", we);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void NCurve::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int i=0;
+	int index = 0;
+	CString line = _T(sVar[0]);
+	CString field;
+	CArray<CString, CString> v;
+
+	while (AfxExtractSubString(field, line, index, _T(',')))
+	{
+		v.Add(field);
+		++index;
+	}
+	if (index == iNoCPts + p + 1)
+	{
+		for (i = 0; i < iNoCPts + p + 1;i++)
+		{
+			knots[i] = atof(v[i]);
+		}
+	}
+	double uS, uE;
+	uS= atof(sVar[1]);
+	uE= atof(sVar[2]);
+	if ((uS>=0.0) && (uS <= 1.0) && (uS<uE))
+	  ws = uS;
+	if ((uE >= 0.0) && (uE <= 1.0) && (uE > uS))
+	  we = uE;
+
+}
+
+
+void NCurve::ExportDXF(FILE* pFile)
+{
+
+	// Write the spline
+	int iL;
+	int i;
+	iL = iFile;
+	if (iL < 0)
+		iL = 0;
+
+//value 70 are bitwise flags defining the spline
+//1 = Closed spline
+//2 = Periodic spline
+//4 = Rational spline
+//8 = Planar
+//16 = Linear (planar bit is also set)
+//32.... 256 - knot param.
+//32 = chord
+//64 = sqrt. chord
+//128 = uniform
+//256 = custom
+//512 =  CV frame visibility
+//1024 = if present, the spline is defined by fit points. Otherwise, by control vertices.
+	fprintf(pFile, "SPLINE\n");
+	fprintf(pFile, "4\n");
+	fprintf(pFile, "%i\n", iL); //Layer number
+	fprintf(pFile, "70\n");
+	fprintf(pFile, "36\n"); //rational b spline
+	fprintf(pFile, "71\n");
+	fprintf(pFile, "%i\n", p); //write the degree of the NURBS spline
+	fprintf(pFile, "72\n");
+	fprintf(pFile, "%i\n", iNoCPts+p+1); //no of knots
+	fprintf(pFile, "73\n");
+	fprintf(pFile, "%i\n", iNoCPts); //no of control point
+	//Write the knots
+	for (int i = 0; i < iNoCPts+p+1; ++i)
+	{
+		fprintf(pFile, "40\n");						// write a line with value 10
+		fprintf(pFile, "%g\n", knots[i]);
+	}
+	// Write the control points for the spline
+	for (int i = 0; i < iNoCPts; ++i) 
+	{
+		fprintf(pFile, "10\n");						// write a line with value 10
+		fprintf(pFile, "%g\n", cPts[i]->Pt_Point->x);			// write the x-coordinate of the control point
+		fprintf(pFile, "20\n");						// write a line with value 20
+		fprintf(pFile, "%g\n", cPts[i]->Pt_Point->y);	// write the y-coordinate of the control point
+		fprintf(pFile, "30\n");						// write a line with value 30
+		fprintf(pFile, "%g\n", cPts[i]->Pt_Point->z);	// write the z-coordinate of the control point
+		fprintf(pFile, "41\n");
+		fprintf(pFile, "%g\n", cPts[i]->w);
+	}
+
+	// Write the spline properties
+	fprintf(pFile, "0\n"); // write a line with value 0
+
+
 }
 
 
@@ -40119,79 +52950,79 @@ for (i = 0; i < iNoCPts; i++)
 glEnd();
 }
 
-void NCurve::OglDrawW(int iDspFlgs,double dS1,double dS2)
-{
-char sLab[80];
-if ((iDspFlgs & DSP_CURVES)>0)
-{
-Selectable=1;
-int i;
-glColor3fv(cols[iColour]);
-if (DrawCPts==TRUE)
-{
-  OglDrawCtrlPts();
-}
-C3dVector vPt;
-C3dVector vPt2;
-double dw=0;
-double dSpan;
-double dInc=0.02;
-int iNo;
-
-dSpan = we-ws;
-if (p>0)
-{
-  double dt;
-  dt= dSpan/dInc;
-  iNo = (int) dt;
-}
-//else
-//{
-//  iNo = 2;
-//  dInc = dSpan;
-//}
-  
-vPt=GetPt(ws);
-dw=ws;
-glLineWidth(iLnThk);
-// for dotted
-if (iLnType==2)
-{
-  glEnable(GL_LINE_STIPPLE);
-  glLineStipple(1,0x0101);
-}
-else if (iLnType==3)
-{
-  glEnable(GL_LINE_STIPPLE);
-  glLineStipple(1,0x00FF);
-}
-//
-glBegin(GL_LINES);
-for (i = 0; i < iNo; i++)
-{
-  dw=dw+dInc;
-  if (dw>1.0){dw=1;}
-  vPt2=GetPt(dw);
-  glVertex3f((float) vPt.x,(float) vPt.y,(float) vPt.z);
-  glVertex3f((float) vPt2.x,(float) vPt2.y,(float) vPt2.z);
-  vPt=vPt2;
-}
-glEnd();
-glLineWidth(2.0);
-glDisable(GL_LINE_STIPPLE);
-  C3dVector vCent;
-  vCent=Get_Centroid();
-  if (bDrawLab==TRUE)
+void NCurve::OglDrawW(int iDspFlgs, double dS1, double dS2) {
+	char sLab[80];
+	int i = 0;
+	double dt;
+	if ((iDspFlgs & DSP_CURVES) > 0) 
 	{
-	  sprintf_s(sLab,"C%i",iLabel);
-	  OglString(iDspFlgs,vCent.x,vCent.y,vCent.z,&sLab[0]);
+		Selectable = 1;
+		glColor3fv(cols[iColour]);
+		if (DrawCPts || gDSP_CPTS) 
+		{
+			OglDrawCtrlPts();
+		}
+		if (gDSP_CIRS) //put a s at start of circle helps woth trimming
+		{
+			sprintf_s(sLab, " S");
+			OglString(iDspFlgs, cPts[0]->Pt_Point->x, cPts[0]->Pt_Point->y, cPts[0]->Pt_Point->z, &sLab[0]);
+		}
+		glColor3fv(cols[iColour]);
+		C3dVector vPt;
+		C3dVector vPt2;
+		double dw = 0;
+		double dSpan;
+		double dInc = 0.005;
+		int iNo;
+		dSpan = we - ws;
+		if (p > 0) 
+		{
+			dt = dSpan / dInc;
+			iNo = static_cast<int>(dt);
+			dt = dSpan / iNo;
+		}
+		vPt = GetPt(ws);
+		dw = ws;
+		glLineWidth(iLnThk);
+		// for dotted
+		if (iLnType == 2) 
+		{
+			glEnable(GL_LINE_STIPPLE);
+			glLineStipple(1, 0x0101);
+		}
+		else if (iLnType == 3) 
+		{
+			glEnable(GL_LINE_STIPPLE);
+			glLineStipple(1, 0x00FF);
+		}
+		glBegin(GL_LINES);
+		for (i = 0; i < iNo; i++) 
+		{
+			dw += dt;
+			if (dw > 1.0) 
+			{
+				dw = 1;
+			}
+			vPt2 = GetPt(dw);
+			glVertex3f((float)vPt.x, (float)vPt.y, (float)vPt.z);
+			glVertex3f((float)vPt2.x, (float)vPt2.y, (float)vPt2.z);
+			vPt = vPt2;
+		}
+		glEnd();
+		glLineWidth(2.0);
+		glDisable(GL_LINE_STIPPLE);
+		C3dVector vCent;
+		vCent = Get_Centroid();
+		if (bDrawLab == TRUE) {
+			sprintf_s(sLab, "C%i", iLabel);
+			OglString(iDspFlgs, vCent.x, vCent.y, vCent.z, &sLab[0]);
+		}
+	}
+	else {
+		Selectable = 0;
 	}
 }
-else
-{
-  Selectable=0;
-}
-}
+
 
 double NCurve::CorrectW(double w)
 {
@@ -40277,7 +53108,7 @@ void NCurve::HighLight(CDC* pDC)
 {
 double dw=0;
 double dSpan;
-double dInc=0.02;
+double dInc=0.01;
 C3dVector vPt;
 int iNo;
 int i;
@@ -40286,15 +53117,16 @@ dSpan = we-ws;
 double dt;
 dt=dSpan/dInc;
 iNo = (int) dt;
+dt = dSpan / iNo;
 dw=ws;
 vPt=GetPt(dw);
-Pt_Object* ThePoint = new Pt_Object;
+Node* ThePoint = new Node;
 ThePoint->Create(vPt,1,0,0,11,0,0,NULL);
 ThePoint->SetToScr(pModZ,pScrZ);
 pDC->MoveTo((int) ThePoint->DSP_Point->x,(int)ThePoint->DSP_Point->y);
-for (i=0;i<iNo-1;i++)
+for (i=0;i<iNo;i++)
 {
-  dw=dw+dInc;
+  dw=dw+ dt;
   vPt=GetPt(dw);
   ThePoint->Pt_Point->x = vPt.x; 
   ThePoint->Pt_Point->y = vPt.y;
@@ -40376,7 +53208,7 @@ if (!bIsPt)
   if (FIL.isFilter(13) ||
       FIL.isFilter(7))
    {
-      Pt_Object* ThePoint = new (Pt_Object);
+      Node* ThePoint = new (Node);
       ThePoint->Create(vPt, 0, 0, 0, 11, 0, 0, NULL);
       //First pass selection
       dSpan = we - ws;
@@ -40457,7 +53289,7 @@ void NCurve::S_Box(CPoint P1, CPoint P2, ObjList* pSel)
 {
 	int i;
 	
-	if (DrawCPts == TRUE)
+	if (DrawCPts || gDSP_CPTS)
 	{
 		for (i = 0; i < iNoCPts; i++)
 		{
@@ -40674,7 +53506,7 @@ double dt;
 int iNo;
 if (pParent!=NULL)
 {
-if (DrawCPts==TRUE)
+if (DrawCPts || gDSP_CPTS)
 {
   
   OglDrawCtrlPts();
@@ -40903,7 +53735,7 @@ C3dVector vPt;
 int iNo;
 int i;
 double dt;
-Pt_Object* ThePoint = new Pt_Object;
+Node* ThePoint = new Node;
 if (pParent!=NULL)
 {
   NSurf* pS= (NSurf*) pParent;
@@ -41076,7 +53908,7 @@ NCircle::NCircle()
 	Drawn = 0;
 	Selectable = 1;
 	Visable = 1;
-	iColour = 3;
+	iColour = 152;
 	iLabel = -1;
 	iLnThk = 4;
 	iLnType = 1;
@@ -41088,18 +53920,22 @@ NCircle::NCircle()
 
 void NCircle::Create(C3dVector vN,C3dVector vC,double dRad,int iLab,G_Object* Parrent)
 {
+
+
 iType = 3;
 ws=0;
 we=1;
 Drawn = 0;
 Selectable  = 1; 
 Visable  = 1;
-iColour = 3;
+iColour = 152;
 iLabel = iLab;
 iLnThk=4;
 iLnType=1;
 iObjType = 7;
 dRadius = dRad;
+if (dRadius == 0)
+  dRadius = 0.00001;
 pParent=Parrent;
 iNoCPts=0;
 p=2;
@@ -41152,13 +53988,14 @@ knots[11]=1.0;
 C3dMatrix RMat;
 RMat=RMat.CalcTran(vN);
 C3dMatrix TMat;
+RMat.Translate(vC.x, vC.y, vC.z);
 this->Transform(RMat);
-TMat.Translate(vC.x,vC.y,vC.z);
-this->Transform(TMat);
+//TMat.Translate(vC.x,vC.y,vC.z);
+//this->Transform(TMat);
 vCent.Set(vC.x,vC.y,vC.z);
 }
 
-void NCircle::Create2(C3dVector vN,C3dVector vC,C3dVector vR,double dRad,int iLab,G_Object* Parrent)
+void NCircle::Create2(C3dVector vN,C3dVector vC,C3dVector vRD,double dRad,int iLab,G_Object* Parrent)
 {
 iType = 3;
 ws=0;
@@ -41166,7 +54003,7 @@ we=1;
 Drawn = 0;
 Selectable  = 1; 
 Visable  = 1;
-iColour = 3;
+iColour = 152;
 iLabel = iLab;
 iLnThk=4;
 iLnType=1;
@@ -41179,68 +54016,104 @@ ws=0.0;
 we=1.0;
 vNorm=vN;
 vCent=vC;
-
-
-C3dVector vPt;
-
-double r2 = 0.70710678118654752440084436210485;
-
-vPt.x = dRadius; vPt.y = 0; vPt.z = 0;
-AddVert(vPt, 1);
-vPt.x = dRadius; vPt.y = dRadius; vPt.z = 0;
-AddVert(vPt, r2);
-vPt.x = 0; vPt.y = dRadius; vPt.z = 0;
-AddVert(vPt, 1);
-vPt.x = -dRadius; vPt.y = dRadius; vPt.z = 0;
-AddVert(vPt, r2);
-vPt.x = -dRadius; vPt.y = 0; vPt.z = 0;
-AddVert(vPt, 1);
-vPt.x = -dRadius; vPt.y = -dRadius; vPt.z = 0;
-AddVert(vPt, r2);
-vPt.x = 0; vPt.y = -dRadius; vPt.z = 0;
-AddVert(vPt, 1);
-vPt.x = dRadius; vPt.y = -dRadius; vPt.z = 0;
-AddVert(vPt, r2);
-vPt.x = dRadius; vPt.y = 0; vPt.z = 0;
-AddVert(vPt, 1);
-
-knots[0]=0;
-knots[1]=0;
-knots[2]=0;
-
-knots[3]=0.25;
-knots[4]=0.25;
-
-knots[5]=0.5;
-knots[6]=0.5;
-
-knots[7]=0.75;
-knots[8]=0.75;
-
-knots[9]=1.0;
-knots[10]=1.0;
-knots[11]=1.0;
-
-C3dMatrix RMat;
-RMat.MakeUnit();
-C3dVector vX;
-C3dVector vY;
-C3dVector vZ;
-vZ=vN;
-vX=vR;
-vZ.Normalize();
-vX.Normalize();
-vY=vZ.Cross(vX);
-RMat.SetColVec(1,vX);
-RMat.SetColVec(2,vY);
-RMat.SetColVec(3,vZ);
-C3dMatrix TMat;
-this->Transform(RMat);
-TMat.Translate(vC.x,vC.y,vC.z);
-this->Transform(TMat);
-vNorm=vN;
-vCent=vC;
+vR = vRD;
+Build();
 }
+
+void NCircle::Build()
+{
+	Clean();
+	C3dVector vPt;
+	//C3dVector vC;
+	//vC = vCent;
+	double r2 = 0.70710678118654752440084436210485;
+	vPt.x = dRadius; vPt.y = 0; vPt.z = 0;
+	AddVert(vPt, 1);
+	vPt.x = dRadius; vPt.y = dRadius; vPt.z = 0;
+	AddVert(vPt, r2);
+	vPt.x = 0; vPt.y = dRadius; vPt.z = 0;
+	AddVert(vPt, 1);
+	vPt.x = -dRadius; vPt.y = dRadius; vPt.z = 0;
+	AddVert(vPt, r2);
+	vPt.x = -dRadius; vPt.y = 0; vPt.z = 0;
+	AddVert(vPt, 1);
+	vPt.x = -dRadius; vPt.y = -dRadius; vPt.z = 0;
+	AddVert(vPt, r2);
+	vPt.x = 0; vPt.y = -dRadius; vPt.z = 0;
+	AddVert(vPt, 1);
+	vPt.x = dRadius; vPt.y = -dRadius; vPt.z = 0;
+	AddVert(vPt, r2);
+	vPt.x = dRadius; vPt.y = 0; vPt.z = 0;
+	AddVert(vPt, 1);
+
+	knots[0] = 0;
+	knots[1] = 0;
+	knots[2] = 0;
+
+	knots[3] = 0.25;
+	knots[4] = 0.25;
+
+	knots[5] = 0.5;
+	knots[6] = 0.5;
+
+	knots[7] = 0.75;
+	knots[8] = 0.75;
+
+	knots[9] = 1.0;
+	knots[10] = 1.0;
+	knots[11] = 1.0;
+
+	C3dMatrix RMat;
+	RMat.MakeUnit();
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vZ;
+	vZ = vNorm;
+	vX = vR;
+	vZ.Normalize();
+	vX.Normalize();
+	vY = vZ.Cross(vX);
+	RMat.SetColVec(1, vX);
+	RMat.SetColVec(2, vY);
+	RMat.SetColVec(3, vZ);
+	C3dMatrix TMat;
+	RMat.Translate(vCent.x, vCent.y, vCent.z);
+	this->Transform(RMat);
+	//TMat.Translate(vC.x, vC.y, vC.z);
+	//this->Transform(TMat);
+}
+
+
+
+void NCircle::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	//double r2 = 0.70710678118654752440084436210485;
+	C3dVector a;
+	a = vCent;
+	a -= inPt;
+	dRadius = a.Mag();
+	Build();
+	//cPts[0]->Pt_Point->Set(dRadius, 0, 0);
+	//cPts[1]->Pt_Point->Set(dRadius,dRadius, 0);
+	//cPts[2]->Pt_Point->Set(0,dRadius,0);
+	/*cPts[3]->Pt_Point->Set(-dRadius,dRadius, 0);
+	cPts[4]->Pt_Point->Set(-dRadius,0,0);
+	cPts[5]->Pt_Point->Set(-dRadius,-dRadius,0);
+	cPts[6]->Pt_Point->Set(0,-dRadius,0);
+	cPts[7]->Pt_Point->Set(dRadius,-dRadius,0);
+	cPts[8]->Pt_Point->Set(dRadius,0,0);
+
+	C3dMatrix RMat;
+	RMat = RMat.CalcTran(vNorm);
+
+	C3dMatrix TMat;
+	this->NCurve::Transform(RMat);
+	TMat.Translate(vCent.x, vCent.y, vCent.z);
+	this->NCurve::Transform(TMat);*/
+}
+
+
+
 
 void NCircle::Serialize(CArchive& ar,int iV)
 {
@@ -41250,18 +54123,22 @@ if (ar.IsStoring())
 		// TODO: add storing code here
   vNorm.Serialize(ar,iV);
   vCent.Serialize(ar,iV);
+  vR.Serialize(ar, iV);
   ar<<dRadius;
 }
 else
 {
   vNorm.Serialize(ar,iV);
   vCent.Serialize(ar,iV);
+  if (iV<=-70)
+	vR.Serialize(ar, iV);
   ar>>dRadius;
 }
 }
 
 C3dVector NCircle::Get_Centroid()
 {
+
 return(vCent);
 }
 
@@ -41308,6 +54185,149 @@ dX=vA.Dot(vX);
 return(w);
 }
 
+void NCircle::RotateToUS(double U)
+{
+	double dRad, dA1, dA2;
+	double dSpan, dInc, dAng;
+	int i;
+	int iDiv;
+	C3dMatrix mT;
+	C3dVector vTmp;
+	C3dVector vCent;
+	C3dVector vCentN;
+	C3dVector vX;
+	C3dVector vY;
+	C3dVector vN;
+	C3dVector vS;
+	C3dVector vE;
+	C3dVector vNode;
+	//Calculate circle cys and radius
+	//calulating explicitly as circle may not have come from M3d
+	vTmp.x = 0.5 * (cPts[4]->Pt_Point->x - cPts[0]->Pt_Point->x);
+	vTmp.y = 0.5 * (cPts[4]->Pt_Point->y - cPts[0]->Pt_Point->y);
+	vTmp.z = 0.5 * (cPts[4]->Pt_Point->z - cPts[0]->Pt_Point->z);
+	dRad = vTmp.Mag();
+	vCent.x = vTmp.x + cPts[0]->Pt_Point->x;
+	vCent.y = vTmp.y + cPts[0]->Pt_Point->y;
+	vCent.z = vTmp.z + cPts[0]->Pt_Point->z;
+	vX.x = cPts[0]->Pt_Point->x - vCent.x;
+	vX.y = cPts[0]->Pt_Point->y - vCent.y;
+	vX.z = cPts[0]->Pt_Point->z - vCent.z;
+	vY.x = cPts[2]->Pt_Point->x - vCent.x;
+	vY.y = cPts[2]->Pt_Point->y - vCent.y;
+	vY.z = cPts[2]->Pt_Point->z - vCent.z;
+	vN = vX.Cross(vY);
+	vX.Normalize(); vY.Normalize(); vN.Normalize();
+	mT.MakeUnit();
+	mT.SetColVec(1, vX);
+	mT.SetColVec(2, vY);
+	mT.SetColVec(3, vN);
+	mT.Transpose();
+	vCentN.x = -vCent.x;
+	vCentN.y = -vCent.y;
+	vCentN.z = -vCent.z;
+
+	vS = GetPt(U);
+	vS -= vCent; vS.Normalize();
+	dA1 = vX.AngSigned(vS, vN);
+	C3dMatrix mRot;
+	mRot.Rotate(0, 0, dA1);
+
+	//Transform ctrl point to XY then rotate and transform back
+	vE = GetPt(we);
+	for (i = 0; i < iNoCPts; i++)
+	{
+		cPts[i]->Translate(vCentN);
+		cPts[i]->Transform(mT);
+		cPts[i]->Transform(mRot);
+	}
+	 //need to maintain this
+	mT.Transpose();
+	for (i = 0; i < iNoCPts; i++)
+	{
+		cPts[i]->Transform(mT);
+		cPts[i]->Translate(vCent);
+	}
+	ws = 0;
+	we = MinWPt(vE);
+	if (we <= 0)
+	{
+		we = 1;
+	}
+
+
+}
+
+void NCircle::ExportDXF(FILE* pFile)
+{
+	C3dVector vTmp;
+	double dRad;
+	vTmp.x = 0.5 * (cPts[4]->Pt_Point->x - cPts[0]->Pt_Point->x);
+	vTmp.y = 0.5 * (cPts[4]->Pt_Point->y - cPts[0]->Pt_Point->y);
+	vTmp.z = 0.5 * (cPts[4]->Pt_Point->z - cPts[0]->Pt_Point->z);
+	dRad = vTmp.Mag();
+	vCent.x = vTmp.x + cPts[0]->Pt_Point->x;
+	vCent.y = vTmp.y + cPts[0]->Pt_Point->y;
+	vCent.z = vTmp.z + cPts[0]->Pt_Point->z;
+	int iL;
+	iL = iFile;
+	if (iL < 0)
+		iL = 0;
+	double startAngle = 10;
+	double endAngle = 90;
+	double dTemp=0;
+	C3dVector vX, vS, vE , vN;
+	if ((ws == 0) && (we == 1))
+	{
+		fprintf(pFile, "CIRCLE\n");
+		fprintf(pFile, "8\n");
+		fprintf(pFile, "%i\n",iL);
+		fprintf(pFile, "10\n");
+		fprintf(pFile, "%g\n", vCent.x);
+		fprintf(pFile, "20\n");
+		fprintf(pFile, "%g\n", vCent.y);
+		fprintf(pFile, "40\n");
+		fprintf(pFile, "%g\n", dRad);
+		fprintf(pFile, "0\n");
+	}
+	else
+	{
+		//ARC Calc start ane end angle rel to x
+		vN.Set(0, 0, 1);
+		vX.Set(1, 0, 0);
+		vS = GetPt(ws);
+		vE = GetPt(we);
+		vS -= vCent; vS.Normalize();
+		vE -= vCent; vE.Normalize();
+		//The arc - curve goes always from dxf.start_angle to dxf.end_angle 
+		//in counter - clockwise orientation around the dxf.extrusion vector, 
+		//which is(0, 0, 1) by defaultand the usual case for 2D arcs
+
+		startAngle = vX.AngSigned(vS, vN);
+		endAngle = vX.AngSigned(vE, vN);
+		if (vNorm.Dot(vN) < 0)
+		{
+			dTemp = startAngle;
+			startAngle = endAngle;
+			endAngle = dTemp;
+		}
+		fprintf(pFile, "ARC\n");
+		fprintf(pFile, "8\n");
+		fprintf(pFile, "%i\n",iL);
+		fprintf(pFile, "10\n");
+		fprintf(pFile, "%g\n", vCent.x);
+		fprintf(pFile, "20\n");
+		fprintf(pFile, "%g\n", vCent.y);
+		fprintf(pFile, "40\n");
+		fprintf(pFile, "%g\n", dRad);
+		fprintf(pFile, "50\n");
+		fprintf(pFile, "%g\n", startAngle);
+		fprintf(pFile, "51\n");
+		fprintf(pFile, "%g\n", endAngle);
+		fprintf(pFile, "0\n");
+	}
+}
+
 
 void NCircle::Reverse()
 {
@@ -41349,6 +54369,8 @@ cPoly->p = p;
 cPoly->ws = ws;
 cPoly->we = we;
 cPoly->pParent=Parrent;
+cPoly->iLnThk = iLnThk;
+cPoly->iLnType = iLnType;
 cPoly->dRadius=dRadius;
 for (i=0;i<iNoCPts;i++)
 {
@@ -41374,11 +54396,27 @@ vCent+=vIn;
 void NCircle::Transform(C3dMatrix TMat)
 {
   NCurve::Transform(TMat);
-  vCent=TMat.Mult(vCent);
-  TMat.m_30=0;
-  TMat.m_31=0;
-  TMat.m_32=0;
-  vNorm=TMat.Mult(vNorm);
+  C3dVector vTmp;
+  double dRad;
+  vTmp.x = 0.5 * (cPts[4]->Pt_Point->x - cPts[0]->Pt_Point->x);
+  vTmp.y = 0.5 * (cPts[4]->Pt_Point->y - cPts[0]->Pt_Point->y);
+  vTmp.z = 0.5 * (cPts[4]->Pt_Point->z - cPts[0]->Pt_Point->z);
+  dRad = vTmp.Mag();
+  dRadius = dRad;
+  vCent.x = vTmp.x + cPts[0]->Pt_Point->x;
+  vCent.y = vTmp.y + cPts[0]->Pt_Point->y;
+  vCent.z = vTmp.z + cPts[0]->Pt_Point->z;
+  
+  vR.x = (cPts[0]->Pt_Point->x - cPts[4]->Pt_Point->x);
+  vR.y = (cPts[0]->Pt_Point->y - cPts[4]->Pt_Point->y);
+  vR.z = (cPts[0]->Pt_Point->z - cPts[4]->Pt_Point->z);
+  vR.Normalize();
+  vTmp.x = (cPts[2]->Pt_Point->x - vCent.x);
+  vTmp.y = (cPts[2]->Pt_Point->y - vCent.y);
+  vTmp.z = (cPts[2]->Pt_Point->z - vCent.z);
+  vTmp.Normalize();
+  vNorm = vR.Cross(vTmp);
+
 }
 
 
@@ -41388,7 +54426,7 @@ void NCircle::Info()
   sprintf_s(S1, "%s", "CIRCLE OBJECT");
   outtext1(S1);
   G_Object::Info();
-  sprintf_s(S1, "%s%i", "Curve Type : ", iType);
+  sprintf_s(S1, "Curve Type: %i LAYER:: %i", iType ,iFile);
   outtext1(S1);
   sprintf_s(S1,"%s%f","Radius : ",dRadius);
   outtext1(S1); 
@@ -41399,6 +54437,82 @@ void NCircle::Info()
   outtext1("    ****");
 }
 
+int NCircle::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+
+	sVar[iNo] = "KNOT Vector";
+	iNo++;
+	sVar[iNo] = "U Start";
+	iNo++;
+	sVar[iNo] = "U End";
+	iNo++;
+	sVar[iNo] = "Radius";
+	iNo++;
+	return(iNo);
+}
+
+
+int NCircle::GetVarValues(CString sVar[])
+{
+	int i;
+	int iNo = 0;
+	char S1[80] = "";
+	CString sKnots = "";
+	for (i = 0; i < iNoCPts + p; i++)
+	{
+		sprintf_s(S1, "%g,", knots[i]);
+		sKnots += S1;
+	}
+	sprintf_s(S1, "%g", knots[iNoCPts + p]);
+	sKnots += S1;
+	//CString str = str(3.1);
+	sVar[iNo] = sKnots;
+	iNo++;
+	sprintf_s(S1, "%g", ws);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", we);
+	sVar[iNo] = S1;
+	iNo++;
+	sprintf_s(S1, "%g", dRadius);
+	sVar[iNo] = S1;
+	iNo++;
+	return (iNo);
+}
+
+void NCircle::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int i = 0;
+	int index = 0;
+	CString line = _T(sVar[0]);
+	CString field;
+	CArray<CString, CString> v;
+
+	while (AfxExtractSubString(field, line, index, _T(',')))
+	{
+		v.Add(field);
+		++index;
+	}
+	if (index == iNoCPts + p + 1)
+	{
+		for (i = 0; i < iNoCPts + p + 1; i++)
+		{
+			knots[i] = atof(v[i]);
+		}
+	}
+	double uS, uE;
+	uS = atof(sVar[1]);
+	uE = atof(sVar[2]);
+	if ((uS >= 0.0) && (uS <= 1.0) && (uS < uE))
+		ws = uS;
+	if ((uE >= 0.0) && (uE <= 1.0) && (uE > uS))
+		we = uE;
+	dRadius = atof(sVar[3]);
+	Build();
+}
+
+
 
 IMPLEMENT_DYNAMIC(NLine, CObject)
 
@@ -41408,7 +54522,7 @@ NLine::NLine()
 	Drawn = 0;
 	Selectable = 1;
 	Visable = 1;
-	iColour = 3;
+	iColour = 152;
 	iLnThk = 4;
 	iLnType = 1;
 	iObjType = 7;
@@ -41425,7 +54539,7 @@ iType = 2;
 Drawn = 0;
 Selectable  = 1; 
 Visable  = 1;
-iColour = 3;
+iColour = 152;
 iLabel = iLab;
 iLnThk=4;
 iLnType=1;
@@ -41446,6 +54560,87 @@ knots[2]=1.0;
 knots[3]=1.0;
 }
 
+void NLine::DragUpdate(C3dVector inPt, C3dMatrix mWP)
+{
+	C3dVector vD2, vD, vN, vX, vDir;
+	double dR;
+	double dAng;
+	vX.Set(1, 0, 0);
+	vN.Set(0, 0, 1);
+	C3dVector p1;
+	C3dVector p2;
+	C3dVector vTrans;
+	C3dMatrix mInv;
+	vTrans.x = mWP.m_30;
+	vTrans.y = mWP.m_31;
+	vTrans.z = mWP.m_32;
+	mWP.m_30 = 0;
+	mWP.m_31 = 0;
+	mWP.m_32 = 0;
+	p1 = cPts[0]->Pt_Point;
+	p2 = inPt;
+
+	mInv = mWP.Inv();
+	if (gORTHO)
+	{
+		//Pt to workplane
+		p1 -= vTrans;
+		p1 = mInv * p1;
+		p2 -= vTrans;
+		p2 = mInv * p2;
+		p2.z = p1.z;
+		vD = p2 - p1;
+		vD2 = vD;
+		dR = vD.Mag();
+		vD.Normalize();
+		dAng = vX.AngSigned(vD, vN);
+		if ((dAng >= 345) && (dAng <= 15))
+			dAng = 0;
+		else if ((dAng >= 15) && (dAng <= 37.5))
+			dAng = 30;
+		else if ((dAng >= 37.5) && (dAng <= 52.5))
+			dAng = 45;
+		else if ((dAng >= 52.5) && (dAng <= 75))
+			dAng = 60;
+		else if ((dAng >= 75) && (dAng <= 105))
+			dAng = 90;
+		else if ((dAng >= 105) && (dAng <= 127.5))
+			dAng = 120;
+		else if ((dAng >= 127.5) && (dAng <= 142.5))
+			dAng = 135;
+		else if ((dAng >= 142.5) && (dAng <= 165))
+			dAng = 150;
+		else if ((dAng >= 165) && (dAng <= 195))
+			dAng = 180;
+		else if ((dAng >= 195) && (dAng <= 217.5))
+			dAng = 210;
+		else if ((dAng >= 217.5) && (dAng <= 232.5))
+			dAng = 225;
+		else if ((dAng >= 232.5) && (dAng <= 255))
+			dAng = 240;
+		else if ((dAng >= 255) && (dAng <= 285))
+			dAng = 270;
+		else if ((dAng >= 285) && (dAng <= 307.5))
+			dAng = 300;
+		else if ((dAng >= 307.5) && (dAng <= 322.5))
+			dAng = 315;
+		else if ((dAng >= 322.5) && (dAng <= 345))
+			dAng = 330;
+		else
+			dAng = 0;
+
+		vDir.x = cos(dAng * D2R);
+		vDir.y = sin(dAng * D2R);
+		vDir.z = p1.z;
+		dR = vDir.Dot(vD2);
+		p2.x = p1.x + dR * cos(dAng * D2R);
+		p2.y = p1.y + dR * sin(dAng * D2R);
+		p2.z = p1.z;
+		p2 = mWP * p2;
+		p2 += vTrans;
+	}
+	cPts[1]->Pt_Point->Set(p2.x, p2.y, p2.z);
+}
 
 
 
@@ -41457,7 +54652,7 @@ C3dVector vC;
 
 if ((iDspFlgs & DSP_CURVES)>0)
 {
-	if (DrawCPts == TRUE)
+	if (DrawCPts || gDSP_CPTS)
 	{
 		OglDrawCtrlPts();
 	}
@@ -41520,7 +54715,7 @@ dt=dSpan/dInc;
 iNo = (int) dt;
 dw=ws;
 vPt=GetPt(ws);
-Pt_Object* ThePoint = new Pt_Object;
+Node* ThePoint = new Node;
 ThePoint->Create(vPt,1,0,0,11,0,0,NULL);
 ThePoint->SetToScr(pModZ,pScrZ);
 pDC->MoveTo((int) ThePoint->DSP_Point->x,(int)ThePoint->DSP_Point->y);
@@ -41569,7 +54764,7 @@ char S1[80];
 sprintf_s(S1, "%s", "LINE OBJECT");
 outtext1(S1);
 G_Object::Info();
-sprintf_s(S1, "%s%i", "Curve Type : ", iType);
+sprintf_s(S1, "Curve Type: %i LAYER:: %i", iType, iFile);
 outtext1(S1);
 //Set like this temporaly for generating symbols table
 sprintf_s(S1,"Pt1: %f %f %f",cPts[0]->Pt_Point->x,cPts[0]->Pt_Point->y,cPts[0]->Pt_Point->z);
@@ -41577,6 +54772,30 @@ outtext1(S1);
 sprintf_s(S1,"Pt2: %f %f %f",cPts[1]->Pt_Point->x,cPts[1]->Pt_Point->y,cPts[1]->Pt_Point->z);
 outtext1(S1); 
 
+}
+
+void NLine::ExportDXF(FILE* pFile)
+{
+	//fprintf(pFile, "%8i", pVertex[0]->iLabel);
+	C3dVector vS, vE;
+	vS = GetPt(ws);
+	vE = GetPt(we);
+	int iL;
+	iL = iFile;
+	if (iL < 0)
+		iL = 0;
+	fprintf(pFile, "LINE\n");			// write the LINE entity
+	fprintf(pFile, "8\n");				// write a line with value 8
+	fprintf(pFile, "%i\n",iL);			// write the layer number
+	fprintf(pFile, "10\n");				// write a line with value 10
+	fprintf(pFile, "%g\n", vS.x);		// write the x-coordinate of the first point
+	fprintf(pFile, "20\n");				// write a line with value 20
+	fprintf(pFile, "%g\n", vS.y);		// write the y-coordinate of the first point
+	fprintf(pFile, "11\n");				// write a line with value 11
+	fprintf(pFile, "%g\n", vE.x);		// write the x-coordinate of the second point
+	fprintf(pFile, "21\n");				// write a line with value 21
+	fprintf(pFile, "%g\n", vE.y);		// write the y-coordinate of the second point
+	fprintf(pFile, "0\n");				// write a line with value 0
 }
 
 G_Object* NLine::Copy(G_Object* Parrent)
@@ -41595,7 +54814,8 @@ cPoly->p = p;
 cPoly->ws = ws;
 cPoly->we = we;
 cPoly->pParent=Parrent;
-
+cPoly->iLnThk = iLnThk;
+cPoly->iLnType = iLnType;
 for (i=0;i<iNoCPts;i++)
 {
   cPoly->cPts[i]=new CvPt_Object();
@@ -41675,6 +54895,8 @@ if (v1o.Dot(v2)<0)
 
 NLine* Ln2 = new NLine;
 Ln2->Create(p1+v1o,p2+v1o,1,NULL);
+Ln2->we = this->we;
+Ln2->ws = this->ws;
 return (Ln2);
 }
 
@@ -42434,7 +55656,7 @@ if ((iDspFlgs & DSP_SURFACES)>0)
 	glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, BMPZ);
   }
 
-  if (DrawCPts==TRUE)
+  if (DrawCPts || gDSP_CPTS)
   {
     for (i = 0; i < iNoCvs; i++)
     {
@@ -42686,7 +55908,7 @@ int j;
 //CALL SURFACE S_BOX METHOD
 G_Object::S_Box(P1,P2,pSel);
 
-if (DrawCPts == TRUE)
+if (DrawCPts || gDSP_CPTS)
 {
 	for (i = 0; i < iNoCvs; i++)
 	{
@@ -42741,7 +55963,7 @@ double MinDist=1e36;
 double Z = 0;
 const int NO_PTS=5;
 const int NO_PTS_RF = 50;
-Pt_Object* ThePoint = new (Pt_Object);
+Node* ThePoint = new (Node);
 ThePoint->Create(vPt,0,0,0,11,0,0,NULL);
 //check the surface
 this->GetBoundingUV(dUi,dVi,dSpanU,dSpanV);
@@ -42861,7 +56083,7 @@ if (iNoExtCvs==0)
 // Check the control points
 if (FIL.isFilter(0))
 {
-  if (DrawCPts==TRUE)
+  if (DrawCPts || gDSP_CPTS)
   {
     for (i = 0; i < iNoCvs; i++)
     {
@@ -42979,7 +56201,7 @@ G_ObjectD NSurf::SelDistFace(CPoint InPT, Filter FIL)
 	double Z = 0;
 	const int NO_PTS = 5;
 	const int NO_PTS_RF = 50;
-	Pt_Object* ThePoint = new (Pt_Object);
+	Node* ThePoint = new (Node);
 	ThePoint->Create(vPt, 0, 0, 0, 11, 0, 0, NULL);
 	//check the surface
 	this->GetBoundingUV(dUi, dVi, dSpanU, dSpanV);
@@ -44862,6 +58084,60 @@ AddInPt(+W,-H);
 AddInPt(-W,-H);
 }
 
+void BSec::CreateL(double W, double H, double Wthk, double Hthk , double yb, double zb)
+{
+	Clear();
+	AddOutPt(0, 0);
+	AddOutPt(0, H);
+	AddOutPt(Wthk,H);
+	AddOutPt(Wthk, Hthk);
+	AddOutPt(W, Hthk);
+	AddOutPt(W, 0);
+	AddOutPt(0, 0);
+	MoveY(yb);
+	MoveX(zb);
+}
+
+
+void BSec::CreateT2(double W, double H, double Wthk, double Hthk,double yb)
+{
+	Clear();
+	//For some reason the section is upside down need to check why
+	W /= 2;
+
+	AddOutPt(-W, 0);
+	AddOutPt(-W, Wthk);
+	AddOutPt(-Hthk/2,  Wthk);
+	AddOutPt(-Hthk / 2, H);
+	AddOutPt(Hthk / 2, H);
+	AddOutPt(Hthk / 2, Wthk);
+	AddOutPt(W, Wthk);
+	AddOutPt(W, 0);
+	AddOutPt(-W, 0);
+	MoveY(yb);
+}
+
+void BSec::CreateCHAN2(double d1, double d2, double d3, double d4, double yb)
+{
+	Clear();
+
+	double dW=d4;
+	double dH=d3;
+	double dWt=d1;
+	double dFt=d2;
+	dW /= 2;
+	AddOutPt(-dW, 0);
+	AddOutPt(-dW, dH);
+	AddOutPt(-dW+dWt, dH);
+	AddOutPt(-dW + dWt, dFt);
+	AddOutPt(dW - dWt, dFt);
+	AddOutPt(dW - dWt, dH);
+	AddOutPt(dW, dH);
+	AddOutPt(dW, 0);
+	AddOutPt(-dW, 0);
+	MoveY(yb);
+}
+
 void BSec::CreateBar(double W,double H)
 {
 Clear();
@@ -44874,25 +58150,31 @@ AddOutPt(+W,-H);
 AddOutPt(-W,-H);
 }
 
-void BSec::CreateI(double WH,double BW,double TW,double WT,double BWT,double TWT)
+void BSec::CreateI2(double d1,double d2,double d3,double d4,double d5,double d6,double yb)
 {
 Clear();
-WH/=2;
-BW/=2;
-TW/=2;
-AddOutPt(-BW,-WH);
-AddOutPt(+BW,-WH);
-AddOutPt(+BW,-WH+BWT);
-AddOutPt(+WT/2,-WH+BWT);
-AddOutPt(+WT/2, WH-TWT);
-AddOutPt(TW, WH-TWT);
-AddOutPt(TW, WH);
-AddOutPt(-TW, WH);
-AddOutPt(-TW, WH-TWT);
-AddOutPt(-WT/2, WH-TWT);
-AddOutPt(-WT/2, -WH+BWT);
-AddOutPt(-BW,-WH+BWT);
-AddOutPt(-BW,-WH);
+double dh = d1;
+double dw1 = d2;
+double dw2 = d3;
+double dwt = d4;
+double dft1 = d5;
+double dft2 = d6;
+dw1 /= 2;
+dw2 /= 2;
+AddOutPt(-dw1,0);
+AddOutPt(-dw1, dft1); 
+AddOutPt(-dwt/2, dft1);	
+AddOutPt(-dwt / 2, dh-dft2);
+AddOutPt(-dw2, dh - dft2);
+AddOutPt(-dw2, dh);
+AddOutPt(dw2, dh);
+AddOutPt(dw2, dh - dft2);
+AddOutPt(dwt / 2, dh - dft2);
+AddOutPt(dwt / 2, dft1);
+AddOutPt(dw1, dft1);
+AddOutPt(dw1, 0);
+AddOutPt(-dw1, 0);
+MoveY(yb);
 }
 
 
@@ -44993,7 +58275,7 @@ C3dVector p4;
 
 
 int j=0;
-if (((iDspFlgs & DSP_CONT)>0) || (bD=FALSE))
+if (((iDspFlgs & DSP_CONT)>0) || (bD==FALSE))
 {
   if (iLnCnt1 > 1)
   {
@@ -45083,6 +58365,7 @@ vOf=d0;
 vOf+=d1;
 vOf*=0.5;
 int j=0;
+glLineWidth(gBM_SIZE);
 if (iLnCnt1 > 1)
 {
   for (j=0;j<iLnCnt1-1;j++)
@@ -45129,6 +58412,33 @@ if (iLnCnt2<MAX_SECPTS)
 }
 }
 
+
+void BSec::MoveY(double yBar)
+{
+	int i;
+	for (i = 0; i < iLnCnt1; i++)
+	{
+		pLnLoop1[i].y -= yBar;
+	}
+	for (i=0;i<iLnCnt2;i++)
+	{
+		pLnLoop2[i].y -= yBar;
+	}
+}
+
+void BSec::MoveX(double zBar)
+{
+	int i;
+	for (i = 0; i < iLnCnt1; i++)
+	{
+		pLnLoop1[i].x -= zBar;
+	}
+	for (i = 0; i < iLnCnt2; i++)
+	{
+		pLnLoop2[i].x -= zBar;
+	}
+}
+
 IMPLEMENT_DYNAMIC(MatTable, CObject )
 
 Material* MatTable::GetItem(int iID)
@@ -45142,7 +58452,7 @@ return (pRet);
 
 void MatTable::Serialize(CArchive& ar,int iV)
 {
-  int i;
+    int i;
 	if (ar.IsStoring())
 	{
     ar << iNo;
@@ -45256,7 +58566,7 @@ void PropTable::Serialize(CArchive& ar,int iV)
   {
     int iE;
     ar >> iNo;
-	  for (i=0;i<iNo;i++)
+	for (i=0;i<iNo;i++)
     {
       ar>>iE;
       switch(iE) 
@@ -45291,6 +58601,9 @@ void PropTable::Serialize(CArchive& ar,int iV)
         case 137:
           pEnts[i] = new PSPRINGR;
           break;
+		case 138:
+			pEnts[i] = new PBUSH();
+			break;
         case 161:
           pEnts[i] = new PMASS;
           break;
@@ -45318,6 +58631,35 @@ Table::Table()
 {
   iNo=0;
 }
+
+Table::~Table()
+{
+	DeleteAll();
+}
+
+void Table::DeleteAll()
+{
+	int i;
+	for (i = 0; i < iNo; i++)
+		delete(pEnts[i]);
+	iNo = 0;
+}
+
+void Table::Delete(Entity* pO)
+{
+	int i;
+	for (i = 0; i < iNo; i++)
+	{
+		if (pEnts[i] == pO)
+		{
+			delete(pEnts[i]);
+			pEnts[i] = pEnts[iNo - 1];
+			iNo--;
+		}
+	}
+}
+
+
 
 void Table::AddItem(Entity* pIn)
 {
@@ -45376,12 +58718,13 @@ for (i=0;i<iNo;i++)
 return (pRet);
 }
 
-void Table::ExportNAS(FILE* pF)
+void Table::ExportNAS(FILE* pF, int iFileNo)
 {
 int i;
 for (i=0;i<iNo;i++)
 {
-   pEnts[i]->ExportNAS(pF);
+	if ((iFileNo == -1) || (pEnts[i]->iFile == iFileNo))
+      pEnts[i]->ExportNAS(pF);
 }
 }
 
@@ -45446,6 +58789,7 @@ CResSelDialog::CResSelDialog()
   iCurResSet=-1;
   iResVal=-1;
   iSecResID=-1;
+  bIsVec = FALSE;
 }
 
 void CResSelDialog::SetData(BOOL isVec, ResSet* pInRes[], int iInNoRes, int iInCurResSet, int iInResVal, int inSecResID)
@@ -45471,7 +58815,7 @@ if (iNoRes>0)
 {
   for (i=0;i<iNoRes;i++)
   {
-    sprintf_s(OutT,"%i: LC %i : %s",i,pRes[i]->LC,pRes[i]->sName);
+    sprintf_s(OutT,"%i: LC %i : %s",i,pRes[i]->LC,pRes[i]->sName.GetString());
     pResList->AddString(OutT);
   }
 }
@@ -45806,63 +59150,8 @@ do
 while (bExit==FALSE);
 }
 
-//******************************************************************
-// DELAUNAY MESH GENERATION 
-//****************************************************************** 
-
-Facest3::Facest3(C3dVector* v1,C3dVector* v2,C3dVector* v3)
-{
-pV[0]=v1;
-pV[1]=v2;
-pV[2]=v3;
- double x1=pV[0]->x;
- double y1=pV[0]->y;
- double x2=pV[1]->x;
- double y2=pV[1]->y;
- double x3=pV[2]->x;
- double y3=pV[2]->y;
- double a=(y2-y3)*(x2-x1)-(y2-y1)*(x2-x3);
- double a1=(x1+x2)*(x2-x1)+(y2-y1)*(y1+y2);
- double a2=(x2+x3)*(x2-x3)+(y2-y3)*(y2+y3);
- vC.x=(a1*(y2-y3)-a2*(y2-y1))/a/2;
- vC.y=(a2*(x2-x1)-a1*(x2-x3))/a/2;
- vC.z=0;
- CirR=vC.Dist(*pV[0]);
-
-}
-
-Trianguation::Trianguation()
-{
-  iNo=0;
-}
-
-void Trianguation::AddTriangle(C3dVector* v1,C3dVector* v2,C3dVector* v3)
-{
-Tri[iNo]=new Facest3(v1,v2,v3);
-}
 
 
-
-Delaunay2d::Delaunay2d()
-{
-  iNo=0;
-  AddPt(0,0,0);
-  AddPt(0,1,0);
-  AddPt(1,1,0);
-  AddPt(1,0,0);
-  //Initial triangluation covering whole
-  //parametric domain.
-  Tris.AddTriangle(&Nodes[0],&Nodes[1],&Nodes[2]);
-  Tris.AddTriangle(&Nodes[2],&Nodes[3],&Nodes[0]);
-}
-
-void Delaunay2d::AddPt(double x,double y,double z)
-{
-  Nodes[iNo].x=x;
-  Nodes[iNo].y=y;
-  Nodes[iNo].z=z;
-  iNo++;
-}
 
 
 
@@ -45926,6 +59215,8 @@ void CGroupDialog::OnBnClickedGroupdels()
 	iThisGp=pGroups->GetCurSel();
 	DeleteGP(iThisGp);
 }
+
+
 
 //Colour pick dialog
 CColourPickDialog::CColourPickDialog()
@@ -46273,9 +59564,11 @@ BOOL CSOLDialog::OnInitDialog()
   pT->ResetContent();
   pT->AddString("0: Lin Static");
   pT->AddString("1: SS Heat");
-  pT->AddString("2: Lancoz");
+  pT->AddString("2: Sparse");
   CEdit* pTol=(CEdit*) GetDlgItem(IDC_TOL_TXT);
-  pTol->SetWindowTextA("0.000000001");
+  CString str;
+  str.Format(_T("%g"), gDEF_SOL_TOL);
+  pTol->SetWindowTextA(str);
   Refresh();
 
 
@@ -46686,16 +59979,110 @@ CEntEditDialog::CEntEditDialog()
   pO = NULL;
   PT = NULL;
   m_iItemBeingEdited==1;
+  eEdit = NULL;
+  iNoLayers = 0;
+  hdcOld = wglGetCurrentDC();
+  hrcOld = wglGetCurrentContext();
+  hrc = NULL;
+  hdc = NULL;
+  vMat.MakeUnit();
+}
+
+CEntEditDialog::~CEntEditDialog()
+{
+	if (hrc != NULL)
+	{
+		wglMakeCurrent(NULL, NULL);
+		wglDeleteContext(hrc);
+	}
+
+	if (pDrg != NULL)
+		delete(pDrg);
+	wglMakeCurrent(hdcOld, hrcOld);
 }
 
 BOOL CEntEditDialog::OnInitDialog()
 {
+	int iW = 650;
+	int iH = 650;
+	int iBoff = 130;
+
   CDialog::OnInitDialog();
+  this->SetWindowText("Entity Editor");
   eEdit = (CEdit*) GetDlgItem(IDC_EDIT_FLOAT);
-  if (pEnt!=NULL)
-    Populate2();
+  CRect oSize;
+  CRect oSize2;
+  this->GetWindowRect(&oSize);
+  oSize.right = oSize.left + iW;
+  oSize.bottom = oSize.top + iH;
+  this->MoveWindow(oSize, 0);
+  oSize2.top = 100;
+  oSize2.left = 0;
+  oSize2.bottom = iH - iBoff;
+  oSize2.right = iW;
+  CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_LIST1);
+  if (oLB != NULL)
+	  oLB->MoveWindow(oSize2, 0);
+  CButton* cBtn = (CButton*)this->GetDlgItem(IDC_ENTLIST);
+  oSize2.top = iH- iBoff;
+  oSize2.left = 0;
+  oSize2.bottom = iH - iBoff+50;
+  oSize2.right = 100;
+  cBtn->MoveWindow(oSize2, 0);
+  cBtn = (CButton*)this->GetDlgItem(IDOK);
+  oSize2.top = iH - iBoff;
+  oSize2.left = 100;
+  oSize2.bottom = iH - iBoff + 50;
+  oSize2.right = 250;
+  cBtn->MoveWindow(oSize2, 0);
+  cBtn = (CButton*)this->GetDlgItem(IDCANCEL);
+  oSize2.top = iH - iBoff;
+  oSize2.left = 250;
+  oSize2.bottom = iH - iBoff + 50;
+  oSize2.right = 350;
+  cBtn->MoveWindow(oSize2, 0);
+
+  cBtn = (CButton*)this->GetDlgItem(IDCDELETE);
+  oSize2.top = iH - iBoff;
+  oSize2.left = iW-120;
+  oSize2.bottom = iH - iBoff + 50;
+  oSize2.right = iW-20;
+  cBtn->MoveWindow(oSize2, 0);
+  if (pEnt != NULL)
+  {
+	  cBtn->EnableWindow(TRUE);
+  }
+  else
+  {
+	  cBtn->EnableWindow(FALSE);
+  }
+
+  if (pEnt != NULL)
+  {
+	  Populate2();
+	  BOOL pG = FALSE;
+	  if ((pEnt->iType == 2) || (pEnt->iType == 222))
+	  {
+		  if (pEnt->iType == 222)
+			  pG = TRUE;
+		  oSize.right = oSize.left + iW+iW;
+		  oSize.bottom = oSize.top + iH;
+		  this->MoveWindow(oSize, 0);
+		  pDrg = new cWndOGL();
+		  pDrg->Create(_T("STATIC"), _T("Hi"), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
+			  CRect(iW, 0, iW+iW, iH), this, 1234);
+		  InitOGL();
+		  Build(pG);
+
+	  }
+	  
+  }
   if (pO != NULL)
-	Populate1();
+  {
+	  CEdit* pI = (CEdit*)GetDlgItem(IDC_ENTID);
+	  pI->EnableWindow(TRUE);
+	  Populate1();
+  }
   return TRUE;  // return TRUE unless you set the focus to a control
                 // EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -46767,9 +60154,242 @@ for (i = 0; i<iNo; i++)
   nItem = m_List.InsertItem(i, sVName[i]);
   m_List.SetItemText(nItem, 1, sVVals[i]);
 }
+if (pEnt->iType == 2)
+{
+	for (i = 0; i < 100; i++)
+	{
+		nItem = m_List.InsertItem(iNo, "");
+		iNo++;
+	}
+}
+}
+
+void CEntEditDialog::Build(BOOL isPCOMPG)
+{
+	int i;
+	double dTheta;
+	double dZ;
+	double dT;
+	double dS;
+	int iM;
+	if (isPCOMPG)
+	{
+		PCOMPG* pP = (PCOMPG*)pEnt;
+		vMat.Rotate(-90, 0, 5);
+		dS = 1.0 / pP->GetThk();
+		dZ = pP->dZ0;
+		dZ *= dS;
+		dTheta = pP->Theta[0];
+		iM = pP->MID[0];
+		dZ += 0.5 * dS * pP->T[0];
+		dT = dS * pP->T[0];
+		AddVisLayer(dTheta, dZ, dT, iM);
+		for (i = 1; i < pP->iNoLays; i++)
+		{
+			dTheta = pP->Theta[i];
+			iM = pP->MID[i];
+			dZ += 0.5 * dS * pP->T[i - 1];
+			dZ += 0.5 * dS * pP->T[i];
+			dT = dS * pP->T[i];
+			AddVisLayer(dTheta, dZ, dT, iM);
+		}
+	}
+	else
+	{
+		PCOMP* pP = (PCOMP*)pEnt;
+		vMat.Rotate(-90, 0, 5);
+		dS = 1.0 / pP->GetThk();
+		dZ = pP->dZ0;
+		dZ *= dS;
+		dTheta = pP->Theta[0];
+		iM = pP->MID[0];
+		dZ += 0.5 * dS * pP->T[0];
+		dT = dS * pP->T[0];
+		AddVisLayer(dTheta, dZ, dT, iM);
+		for (i = 1; i < pP->iNoLays; i++)
+		{
+			dTheta = pP->Theta[i];
+			iM = pP->MID[i];
+			dZ += 0.5 * dS * pP->T[i - 1];
+			dZ += 0.5 * dS * pP->T[i];
+			dT = dS * pP->T[i];
+			AddVisLayer(dTheta, dZ, dT, iM);
+		}
+	}
 
 }
 
+void CEntEditDialog::Build2(BOOL isPCOMPG)
+{
+	char S1[80];
+	CString sTemp = "";
+	int i=0;
+	double dTheta[100];
+	double dZ;
+	double dT[100];
+	double dS;
+	int iM[100];
+	int iC = 10;
+	int iLC = 0;
+	double dThk = 0;
+	//Reset layer to 0 and rebuild
+	iNoLayers = 0;
+	BOOL bExit = FALSE;
+	do
+	{
+		sTemp = m_List.GetItemText(iC, 1);
+		if (isPCOMPG)
+		{
+			iM[iLC] = atoi(ExtractSubString2(2, sTemp));
+			dT[iLC] = atof(ExtractSubString2(3, sTemp));
+			dTheta[iLC] = atof(ExtractSubString2(4, sTemp));
+		}
+		else
+		{
+			iM[iLC] = atoi(ExtractSubString2(1, sTemp));
+			dT[iLC] = atof(ExtractSubString2(2, sTemp));
+			dTheta[iLC] = atof(ExtractSubString2(3, sTemp));
+		}
+		if (iM[iLC] < 1)
+		{
+			bExit = TRUE;
+		}
+		else
+		{
+			iLC++;
+			iC++;
+		}
+	} while (!bExit);
+	//Caculate thickness
+	dThk = 0;
+	for (i = 0; i < iLC; i++)
+	{
+		dThk += dT[i];
+	}
+	sprintf_s(S1, "%i", iLC);
+	sTemp = S1;
+	m_List.SetItemText(8, 1, sTemp);
+	sprintf_s(S1, "%g", dThk);
+	sTemp = S1;
+	m_List.SetItemText(9, 1, sTemp);
+	sTemp = m_List.GetItemText(1, 1);
+	dZ = atof(sTemp);
+	//vMat.Rotate(-90, 0, 5);
+	dS = 1.0 / dThk;
+
+	dZ *= dS;
+	dZ += 0.5 * dS * dT[0];
+	AddVisLayer(dTheta[0], dZ, dS * dT[0], iM[0]);
+	for (i = 1; i < iLC; i++)
+	{
+	//	dTheta = pP->Theta[i];
+	//	iM = pP->MID[i];
+		dZ += 0.5 * dS * dT[i - 1];
+		dZ += 0.5 * dS * dT[i];
+	//	dT = dS * pP->T[i];
+		AddVisLayer(dTheta[i], dZ, dS * dT[i], iM[i]);
+	}
+
+}
+
+void CEntEditDialog::InitOGL()
+{
+	static PIXELFORMATDESCRIPTOR pfd =
+	{
+	  sizeof(PIXELFORMATDESCRIPTOR),  // size of this pfd
+	  1,                              // version number
+	  PFD_DRAW_TO_WINDOW |            // support window
+	  PFD_SUPPORT_OPENGL |          // support OpenGL
+	  PFD_DOUBLEBUFFER,             // double buffered
+	  PFD_TYPE_RGBA,                  // RGBA type
+	  24,                             // 24-bit color depth
+	  0, 0, 0, 0, 0, 0,               // color bits ignored
+	  0,                              // no alpha buffer
+	  0,                              // shift bit ignored
+	  0,                              // no accumulation buffer
+	  0, 0, 0, 0,                     // accum bits ignored
+	  32,                             // 32-bit z-buffer
+	  0,                              // no stencil buffer
+	  0,                              // no auxiliary buffer
+	  PFD_MAIN_PLANE,                 // main layer
+	  0,                              // reserved
+	  0, 0, 0                         // layer masks ignored
+	};
+
+	// Get device context only once.
+	hdc = pDrg->GetDC()->m_hDC;
+	// Pixel format.
+	m_nPixelFormat = ChoosePixelFormat(hdc, &pfd);
+	SetPixelFormat(hdc, m_nPixelFormat, &pfd);
+
+	// Create the OpenGL Rendering Context.
+	hrc = wglCreateContext(hdc);
+	wglMakeCurrent(hdc, hrc);
+
+
+
+	// Send draw request
+	//OnDraw(NULL);
+}
+
+void CEntEditDialog::OglDraw()
+{
+
+	glClearColor(255.0f, 255.0f, 255.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClearDepth(1.0f);
+	CRect cR;
+	pDrg->GetWindowRect(&cR);
+	int iW = cR.Width();
+	int iH = cR.Height();
+	glViewport(0, 0, iW, iH);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	OglMat mOGLmat = vMat.GetOglMat();
+	glMultMatrixf(mOGLmat.fMat);
+	//gluPerspective(35.0f, (float)cx / (float)cy, 0.01f, 2000.0f);
+	glMatrixMode(GL_MODELVIEW);
+	glPointSize(10.0f);
+	glColor3f((float)0.0, (float)0.0, (float)0.9);
+	glBegin(GL_POINTS);
+	glVertex3f(20.0, 30.0, 10.0);
+	glVertex3f(140.0, 30.0, 20.0);
+	glVertex3f(50.0, 50.0, 30.0);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.5, 0.0, 0.0);
+	glVertex3f(0.0, 0.5, 0.0);
+	glEnd();
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	char sLab[20];
+
+	int i;
+	for (i = 0; i < iNoLayers; i++)
+		Laminate[i].OglDraw();
+	sprintf_s(sLab, "%s", "Z");
+	OglString(1, 0.0, 0.0, 0.7, &sLab[0]);
+	glBegin(GL_LINES);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.0, 0.0, 0.7);
+	glEnd();
+	sprintf_s(sLab, "%s", "1");
+	OglString(1, 0.7, 0.0, 0.0, &sLab[0]);
+	glBegin(GL_LINES);
+	glVertex3f(0.0, 0.0, 0.0);
+	glVertex3f(0.7, 0.0, 0.0);
+	glEnd();
+
+	glFinish();
+	SwapBuffers(wglGetCurrentDC());
+}
+
+void CEntEditDialog::AddVisLayer(double dA, double dZ, double dT, int iM)
+{
+	Laminate[iNoLayers].SetAng(dA);
+	Laminate[iNoLayers].SetZ(dZ);
+	Laminate[iNoLayers].SetThk(dT);
+	Laminate[iNoLayers].SetMID(iM);
+	iNoLayers++;
+}
 
 
 BEGIN_MESSAGE_MAP(CEntEditDialog, CDialog)
@@ -46777,6 +60397,18 @@ ON_WM_LBUTTONDOWN()
 ON_BN_CLICKED(IDOK, &CEntEditDialog::OnBnClickedOk)
 ON_BN_CLICKED(IDC_ENTLIST, &CEntEditDialog::OnBnClickedEntlist)
 ON_NOTIFY(NM_DBLCLK, IDC_LIST1, &CEntEditDialog::OnDblclkList1)
+ON_WM_PAINT()
+ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST1, &CEntEditDialog::OnLvnItemchangedList1)
+//ON_NOTIFY(LVN_ENDLABELEDIT, IDC_LIST1, &CEntEditDialog::OnLvnEndlabeleditList1)
+ON_NOTIFY(LVN_ITEMCHANGING, IDC_LIST1, &CEntEditDialog::OnLvnItemchangingList1)
+//ON_NOTIFY(NM_RETURN, IDC_LIST1, &CEntEditDialog::OnNMReturnList1)
+//ON_NOTIFY(NM_RETURN, IDC_LIST1, &CEntEditDialog::OnNMReturnList1)
+//ON_NOTIFY(LVN_ODCACHEHINT, IDC_LIST1, &CEntEditDialog::OnLvnOdcachehintList1)
+//ON_NOTIFY(LVN_KEYDOWN, IDC_LIST1, &CEntEditDialog::OnLvnKeydownList1)
+ON_NOTIFY(NM_RETURN, IDC_LIST1, &CEntEditDialog::OnNMReturnList1)
+ON_WM_KEYDOWN()
+ON_BN_CLICKED(IDCDELETE, &CEntEditDialog::OnBnClickedCdelete)
+ON_BN_CLICKED(IDCANCEL, &CEntEditDialog::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 
@@ -46788,6 +60420,7 @@ void CEntEditDialog::OnEnChangeEditFloat()
   // with the ENM_CHANGE flag ORed into the mask.
 
   // TODO:  Add your control notification handler code here
+	
 }
 
 
@@ -46807,6 +60440,19 @@ BOOL CEntEditDialog::PreTranslateMessage(MSG* pMsg)
     eEdit->ShowWindow(SW_HIDE);
     m_List.SetItemText(m_iItemBeingEdited, 1, sNew);
     m_iItemBeingEdited=-1;
+	if (pEnt != NULL)
+	{
+		if (pEnt->iType == 2)
+		{
+			Build2(FALSE);
+			OglDraw();
+		}
+		else if (pEnt->iType == 222)
+		{
+			Build2(TRUE);
+			OglDraw();
+		}
+	}
     return TRUE;
   }
   else
@@ -46828,12 +60474,28 @@ void CEntEditDialog::OnBnClickedOk()
 {
   // TODO: Add your control notification handler code here
   int i;
-  CString sVVals[50];
+  CString sVVals[500];
+  CString sID;
   CEdit* pT = (CEdit*) GetDlgItem(IDC_PTITLE);
+  CEdit* pI = (CEdit*) GetDlgItem(IDC_ENTID);
   if ((pEnt!=NULL) || (pO!=NULL))
   {
-	if (pEnt != NULL)
-		pT->GetWindowTextA(pEnt->sTitle);
+
+	 if (pEnt != NULL)
+	 {
+		 pT->GetWindowTextA(pEnt->sTitle);
+		 pI->GetWindowTextA(sID);
+		 pEnt->iID = atoi(sID); //Need to check we can no id conflics
+	 }
+	 else if (pO != NULL)
+	 {
+		 if (pO->iObjType == 12) //Coordsys
+		 {
+			 pI->GetWindowTextA(sID);
+			 pO->iLabel = atoi(sID);
+		 }
+	 }
+
     for (i=0;i<iNo;i++)
     {
       sVVals[i] = m_List.GetItemText(i,1);
@@ -46845,7 +60507,7 @@ void CEntEditDialog::OnBnClickedOk()
 	if (pO != NULL)
 	  pO->PutVarValues(PT,iNo, sVVals);
   }
-  CDialog::OnOK();
+  //CDialog::OnOK();
 }
 
 
@@ -46920,6 +60582,8 @@ void CEntEditDialog::OnBnClickedMfclink2()
 Lamina::Lamina()
 {
   dZOFFS=0;
+  dThk = 0;
+  dMAng = 0;
   pVertex[0].Set(-0.7,-0.5,0);
   pVertex[1].Set(0.7, -0.5, 0);
   pVertex[2].Set(0.7, 0.5, 0);
@@ -46945,6 +60609,11 @@ void Lamina::SetThk(double dT)
   dThk = dT;
 }
 
+void Lamina::SetMID(int ID)
+{
+	iMID = ID;
+}
+
 void Lamina::SetAng(double dA)
 {
   dMAng=dA;
@@ -46953,21 +60622,68 @@ void Lamina::SetAng(double dA)
 void Lamina::OglDraw()
 {
   C3dMatrix R;
+  char s1[8];
   R.MakeUnit();
   R.Rotate(0, 0, dMAng);
   C3dVector vTmp;
+  C3dVector p1;
+  C3dVector p2;
+  C3dVector p3;
+  C3dVector p4;
   vTmp=R*pVertex[0];
+
   glColor3fv(cols[144]);
+  //glBegin(GL_POLYGON);
+  //  vTmp = R*pVertex[0];
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z ));
+  //  vTmp = R*pVertex[1];
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z ));
+  //  vTmp = R*pVertex[2];
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z ));
+  //  vTmp = R*pVertex[3];
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z ));
+  //glEnd();
+  p1.Set(-0.7, 0, dZOFFS - 0.5 * dThk);
+  p2.Set(0.7, 0, dZOFFS - 0.5 * dThk);
+  p3.Set(0.7, 0, dZOFFS + 0.5 * dThk);
+  p4.Set(-0.7, 0, dZOFFS + 0.5 * dThk);
+  p1 = R * p1;
+  p2 = R * p2;
+  p3 = R * p3;
+  p4 = R * p4;
+  glColor3fv(cols[4]);
   glBegin(GL_POLYGON);
-    vTmp = R*pVertex[0];
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
-    vTmp = R*pVertex[1];
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
-    vTmp = R*pVertex[2];
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
-    vTmp = R*pVertex[3];
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
+	glVertex3f((float)(p1.x), (float)(p1.y), (float)(p1.z));
+	glVertex3f((float)(p2.x), (float)(p2.y), (float)(p2.z));
+	glVertex3f((float)(p3.x), (float)(p3.y), (float)(p3.z));
+	glVertex3f((float)(p4.x), (float)(p4.y), (float)(p4.z));
   glEnd();
+  glColor3fv(cols[0]);
+  glLineWidth(gEL_SIZE);
+  glBegin(GL_LINES);
+    glVertex3f((float)(p1.x), (float)(p1.y), (float)(p1.z));
+    glVertex3f((float)(p2.x), (float)(p2.y), (float)(p2.z));
+
+	glVertex3f((float)(p2.x), (float)(p2.y), (float)(p2.z));
+	glVertex3f((float)(p3.x), (float)(p3.y), (float)(p3.z));
+
+	glVertex3f((float)(p3.x), (float)(p3.y), (float)(p3.z));
+	glVertex3f((float)(p4.x), (float)(p4.y), (float)(p4.z));
+
+	glVertex3f((float)(p4.x), (float)(p4.y), (float)(p4.z));
+	glVertex3f((float)(p1.x), (float)(p1.y), (float)(p1.z));
+  glEnd();
+  glLineWidth(2.0);
+
+  p1.Set(0.75, 0, dZOFFS);
+  //p1 = R * p1;
+  sprintf_s(s1, "%g", dMAng);
+  OglString(0, p1.x, p1.y, p1.z, &s1[0]);
+  p1.Set(-0.95, 0, dZOFFS);
+  //p1 = R * p1;
+  sprintf_s(s1, "%i", iMID);
+  OglString(0, p1.x, p1.y, p1.z, &s1[0]);
+
 
   //Draw fibres
   double dWid;
@@ -46982,17 +60698,17 @@ void Lamina::OglDraw()
   vE=pVertex[1];
   glColor3fv(cols[0]);
   
-  glBegin(GL_LINES);
-  for (iC =0; iC<iInc+1; iC++)
-  {
-    vTmp = R*vS;
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
-    vTmp = R*vE;   
-    glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z + dZOFFS));
-    vS.y += dWidInc;
-    vE.y += dWidInc;
-  }
-  glEnd();
+  //glBegin(GL_LINES);
+  //for (iC =0; iC<iInc+1; iC++)
+  //{
+  //  vTmp = R*vS;
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z));
+  //  vTmp = R*vE;   
+  //  glVertex3f((float)(vTmp.x), (float)(vTmp.y), (float)(vTmp.z));
+  //  vS.y += dWidInc;
+  //  vE.y += dWidInc;
+  //}
+  //glEnd();
 
 }
 
@@ -47012,10 +60728,12 @@ vMat.MakeUnit();
 }
 
 
-void CPcompEditor::AddVisLayer(double dA, double dZ)
+void CPcompEditor::AddVisLayer(double dA, double dZ,double dT,int iM)
 {
   Laminate[iNoLayers].SetAng(dA);
   Laminate[iNoLayers].SetZ(dZ);
+  Laminate[iNoLayers].SetThk(dT);
+  Laminate[iNoLayers].SetMID(iM);
   iNoLayers++;
 }
 
@@ -47054,16 +60772,54 @@ void CPcompEditor::OnBnClickedOk()
 BOOL CPcompEditor::OnInitDialog()
 {
   CDialog::OnInitDialog();
+  //SIZE DIALOG BOX TO FIT COLOURS
+  CRect oSize;
+  this->SetWindowText("Laminate Stack Viewer");
+  this->GetWindowRect(&oSize);
+  oSize.right = oSize.left + 500;
+  oSize.bottom = oSize.top + 600;
+  this->MoveWindow(oSize, 0);
 
   // TODO:  Add extra initialization here
   pDrg = new CWnd;
   pDrg->Create(_T("STATIC"), _T("Hi"), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
-        CRect(20, 20, 300, 300), this, 1234);
+        CRect(0, 0, 500, 500), this, 1234);
   InitOGL();
+  Build();
   return TRUE;  // return TRUE unless you set the focus to a control
                 // EXCEPTION: OCX Property Pages should return FALSE
 }
 
+
+void CPcompEditor::Build()
+{
+	int i;
+	double dTheta;
+	double dZ;
+	double dT;
+	double dS;
+	int iM;
+	PCOMP* pP = (PCOMP*)pEnt;
+	vMat.Rotate(-90, 0, 5);
+	dS = 1.0 / pP->GetThk();
+	dZ = pP->dZ0;
+	dZ *= dS;
+	dTheta = pP->Theta[0];
+	iM = pP->MID[0];
+	dZ += 0.5 * dS * pP->T[0];
+	dT = dS * pP->T[0];
+	AddVisLayer(dTheta, dZ, dT, iM);
+	for (i = 1; i < pP->iNoLays; i++)
+	{
+		dTheta = pP->Theta[i];
+		iM = pP->MID[i];
+		dZ += 0.5*dS * pP->T[i-1];
+		dZ += 0.5 * dS * pP->T[i];
+		dT = dS * pP->T[i];
+		AddVisLayer(dTheta, dZ, dT, iM);
+	}
+
+}
 
 void CPcompEditor::InitOGL()
 {
@@ -47159,19 +60915,7 @@ void CPcompEditor::OnBnClickedButton1()
 {
   // TODO: Add your control notification handler code here
   //OglDraw();
-  vMat.Rotate(-85,0,7.5);
-
-  AddVisLayer(0.0, -0.5);
-  AddVisLayer(45.0,-0.4);
-  AddVisLayer(90.0, -0.3);
-  AddVisLayer(45.0, -0.2);
-  AddVisLayer(0.0,  -0.1);
-  AddVisLayer(90.0, 0);
-  AddVisLayer(0.0, 0.1);
-  AddVisLayer(45.0, 0.2);
-  AddVisLayer(90.0, 0.3);
-  AddVisLayer(45.0, 0.4);
-  AddVisLayer(0.0, 0.5);
+	Build();
 }
 
 void CPcompEditor::OnPaint()
@@ -47180,77 +60924,1096 @@ void CPcompEditor::OnPaint()
   OglDraw();
 }
 
-//***************************************************
-// 2d Material Point Method State Variable
-// 06/03/2019
-//***************************************************
-MPMVar2d::MPMVar2d()
-{
-  Pid=-1;            //Particle ID
-  pNode = NULL;
-  BCellid=-1;        //Euler Cell ID
-  dMp = 1.0;         //Particle Mass
-  dVol = 1.0;        //Particle Volume
-  dvFp.Create(2, 2);
-  *dvFp.mn(1, 1) = 1.0;  //Deformation gradient
-  *dvFp.mn(1, 2) = 0.0;
-  *dvFp.mn(2, 1) = 0.0;
-  *dvFp.mn(2, 2) = 1.0;
-  ds.Create(3, 1);
-  *ds.mn(1, 1) = 0.0;   //Stress
-  *ds.mn(2, 1) = 0.0;   //Stress
-  *ds.mn(3, 1) = 0.0;   //Stress
-  deps.Create(3, 1);
-  *deps.mn(1, 1) = 0.0;   //Strain
-  *deps.mn(2, 1) = 0.0;   //Strain
-  *deps.mn(3, 1) = 0.0;   //Strain
-  dVp.Create(2, 1);
-  *dVp.mn(1, 1) = 0.0;   //Velocity
-  *dVp.mn(2, 1) = 0.0;   //Velocity
-}
 
-MPMVar2d::~MPMVar2d()
+
+
+
+
+
+
+void CEntEditDialog::OnPaint()
 {
-  dvFp.clear();       //Deformation gradient  
-  ds.clear();         //Stress
-  deps.clear();;       //Strain
-  dVp.clear();;        //Velocity
-  dXp.clear();;        //Position
+	
+	CPaintDC dc(this); // device context for painting
+					   // TODO: Add your message handler code here
+					   // Do not call CDialog::OnPaint() for painting messages
+	if (pDrg != NULL)
+	{
+		OglDraw();
+	}
+}
+BEGIN_MESSAGE_MAP(cWndOGL, CWnd)
+	ON_WM_PAINT()
+END_MESSAGE_MAP()
+
+
+void cWndOGL::OnPaint()
+{
+	//CPaintDC dc(this); // device context for painting
+					   // TODO: Add your message handler code here
+					   // Do not call CWnd::OnPaint() for painting messages
 }
 
 
-
-//***************************************************
-// 2d Material Point Euler Nodal Data
-// 06/03/2019
-//***************************************************
-Ndata::Ndata()
+void CEntEditDialog::OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult)
 {
-  nMass=0;
-  nMomentum.Create(2, 1);
-  nMomentum.MakeZero();
-  nIForce.Create(2, 1);
-  nIForce.MakeZero();
-  nEforce.Create(2, 1);
-  nEforce.MakeZero();
-}
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
 
-void Ndata::Reset()
-{
-  nMass = 0;
-  nMomentum.MakeZero();
-  nIForce.MakeZero();
-  nEforce.MakeZero();
 }
 
 
-Ndata::~Ndata()
+
+void CEntEditDialog::OnLvnItemchangingList1(NMHDR* pNMHDR, LRESULT* pResult)
 {
-  nMomentum.clear();
-  nIForce.clear();
-  nEforce.clear();
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+
 }
 
 
 
 
+
+//void CEntEditDialog::OnLvnOdcachehintList1(NMHDR* pNMHDR, LRESULT* pResult)
+//{
+//	LPNMLVCACHEHINT pCacheHint = reinterpret_cast<LPNMLVCACHEHINT>(pNMHDR);
+//	// TODO: Add your control notification handler code here
+//	*pResult = 0;
+//}
+
+
+//void CEntEditDialog::OnLvnKeydownList1(NMHDR* pNMHDR, LRESULT* pResult)
+//{
+//	LPNMLVKEYDOWN pLVKeyDow = reinterpret_cast<LPNMLVKEYDOWN>(pNMHDR);
+//	// TODO: Add your control notification handler code here
+//	*pResult = 0;
+//}
+
+
+void CEntEditDialog::OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	// TODO: Add your control notification handler code here
+	*pResult = 0;
+}
+
+
+void CEntEditDialog::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	// TODO: Add your message handler code here and/or call default
+
+	CDialog::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+
+void CEntEditDialog::OnBnClickedCdelete()
+{
+	// TODO: Add your control notification handler code here
+	bDel = TRUE;
+	CDialog::OnCancel();
+}
+
+
+void CEntEditDialog::OnBnClickedCancel()
+{
+	// TODO: Add your control notification handler code here
+	CDialog::OnCancel();
+}
+
+//****************************************************************
+// RESPONSE GRAPH DIALOG
+ //****************************************************************
+BEGIN_MESSAGE_MAP(CGraphDialog, CDialog)
+	ON_BN_CLICKED(IDOK, &CGraphDialog::OnBnClickedOk)
+	ON_WM_PAINT()
+	ON_LBN_SELCHANGE(IDC_RESPVEC, &CGraphDialog::OnLbnSelchangeRespvec)
+	ON_BN_CLICKED(IDC_PLOT, &CGraphDialog::OnBnClickedPlot)
+//	ON_WM_MBUTTONDOWN()
+ON_WM_LBUTTONUP()
+ON_BN_CLICKED(IDCANCEL, &CGraphDialog::OnBnClickedCancel)
+ON_BN_CLICKED(IDC_CLEAR, &CGraphDialog::OnBnClickedClear)
+ON_LBN_SELCHANGE(IDC_PLOTS, &CGraphDialog::OnLbnSelchangePlots)
+ON_BN_CLICKED(IDC_COLOUR, &CGraphDialog::OnBnClickedColour)
+ON_BN_CLICKED(IDC_LIST, &CGraphDialog::OnBnClickedList)
+ON_BN_CLICKED(IDC_REDRAW, &CGraphDialog::OnBnClickedRedraw)
+ON_BN_CLICKED(IDC_LOG, &CGraphDialog::OnBnClickedLog)
+END_MESSAGE_MAP()
+
+CGraphDialog::CGraphDialog()
+	: CDialog(CGraphDialog::IDD, NULL)
+{
+	iNo = 0;
+	pME = NULL;
+	vMat.MakeUnit();
+	int i;
+	for (i = 0; i < MAX_GRAPHS; i++)
+		pGs[i] = NULL;
+
+}
+
+CGraphDialog::~CGraphDialog()
+{
+	int i;
+	for (i=0;i<iNo;i++)
+	if (pGs[i] != NULL)
+		delete (pGs[i]);
+}
+
+int CGraphDialog::GetColourID()
+{
+	int irc;
+	CColourPickDialog Dlg;
+	int i;
+	for (i = 0; i < 167; i++)
+	{
+		float R = cols[i][0];
+		float G = cols[i][1];
+		float B = cols[i][2];
+		int iR = R * 255;
+		int iG = G * 255;
+		int iB = B * 255;
+		Dlg.AddCol(iR, iG, iB);
+	}
+	Dlg.DoModal();
+	irc = Dlg.iSel;
+	return(irc);
+}
+
+void CGraphDialog::SetPen(CDC* pDC,int iC,int iS)
+{
+	float R = cols[iC][0];
+	float G = cols[iC][1];
+	float B = cols[iC][2];
+	int iR = R * 255;
+	int iG = G * 255;
+	int iB = B * 255;
+	pDC->SelectStockObject(NULL_BRUSH);
+	Pen = new CPen(PS_SOLID, iS, RGB(iR, iG, iB));
+	oldPen = pDC->SelectObject(Pen);
+}
+
+void CGraphDialog::SetTextCol(HDC hdc, int iC)
+{
+	float R = cols[iC][0];
+	float G = cols[iC][1];
+	float B = cols[iC][2];
+	int iR = R * 255;
+	int iG = G * 255;
+	int iB = B * 255;
+	SetTextColor(hdc, RGB(iR, iG, iB));
+}
+
+void CGraphDialog::RestorePen(CDC* pDC)
+{  
+	pDC->SelectObject(oldPen);
+	int t = Pen->DeleteObject();
+}
+
+void CGraphDialog::ResetMaxMin()
+{
+	minX = 0;
+	maxX = 0;
+	minY = 0;
+	maxY = 0;
+}
+
+void CGraphDialog::DeleteAll()
+{
+	int i;
+	ResetMaxMin();
+	for (i = 0; i < iNo; i++)
+	{
+		if (pGs[i] != NULL)
+		{
+			delete(pGs[i]);
+			pGs[i] = NULL;
+		}
+	}
+	iNo = 0;
+}
+
+//Calculate nice axis divisions
+float CGraphDialog::AxisTickMarks(float fMaxV, int &itargetSteps)
+{
+	int magMsd;
+	float tempStep;
+	float mag;
+	float magPow;
+	int i;
+	// calculate an initial guess at step size
+	tempStep = fMaxV / itargetSteps;
+	// get the magnitude of the step size
+	mag = floor(log10(tempStep));
+	magPow = (float) pow(10, mag);
+	// calculate most significant digit of the new step size
+	magMsd = (int)(tempStep / magPow + 0.5);
+
+	// promote the MSD to either 1, 2, or 5
+	if (magMsd > 5)
+		magMsd = 10;
+	else if (magMsd > 2)
+		magMsd = 5;
+	else if (magMsd > 1)
+		magMsd = 2;
+	for (i = 0; i < 5; i++)
+	{
+		if (magMsd * magPow * itargetSteps < fMaxV)
+			itargetSteps++;
+		else
+			break;
+	}
+	return (magMsd * magPow);
+}
+
+void CGraphDialog::GDIDraw()
+{
+	BOOL bLOG = TRUE;
+	CButton* oRB = (CButton*)this->GetDlgItem(IDC_LOG);
+
+	if (oRB->GetCheck() == BST_CHECKED)
+		bLOG = TRUE;
+	else
+		bLOG = FALSE;
+	HFONT hFont, hTmp;
+	int i;
+	int j; 
+	int k;
+	int iNoTicksX=5;
+	int iNoTicksY=5;
+	int iLegOffX = 800;
+	int iLegOffY = 250;
+	float fDivX=0;
+	float fDivY=0;
+	char sLab[20];
+	BOOL bFirst = TRUE;
+	HDC hDC;
+	char buff[200];
+	CDC* pDC = pDrg->GetDC();
+	hDC = pDC->m_hDC;
+	float X;
+	float Y;
+	CRect cR;
+	fxoff = 80;
+	fyoff = 50;
+	fxspan = fW - fxoff - 50;
+	fyspan = fH - fyoff - 50;
+	Graph* pG = pGs[0];
+	float MaxRealY = 0;
+	//Calculate maximum axis value of all charts
+	minX = 0;
+	maxX = 0;
+	minY = 0;
+	maxY = 0;
+	for (j = 0; j < iNo; j++)
+	{
+		pG = pGs[j];
+		if (pG != NULL)
+		{
+			if (pG->GminX < minX)
+				minX = pG->GminX;
+			if (pG->GmaxX > maxX)
+				maxX = pG->GmaxX;
+			if (pG->GminY < minY)
+				maxY = pG->GmaxY;
+			if (pG->GmaxY > maxY)
+				maxY = pG->GmaxY;
+
+		}
+	}
+	fDivY = AxisTickMarks(maxY, iNoTicksY);
+	if (bLOG)
+	{
+		iNoTicksX = log10(maxX);
+		iNoTicksX = floor(iNoTicksX)+1;
+		fDivX = 1;
+	}
+	else
+	{
+		fDivX = AxisTickMarks(maxX, iNoTicksX);
+	}
+	if (fDivY * iNoTicksY > maxY)
+		maxY = fDivY * iNoTicksY;
+	if (bLOG)
+	{
+		maxX = iNoTicksX;
+	}
+	else
+	{
+		if (fDivX * iNoTicksX > maxX)
+			maxX = fDivX * iNoTicksX;
+	}
+	//Axis and titles
+	SetPen(pDC, 133, 3);
+	for (i = 0; i <= iNoTicksX; i++)
+	{
+		
+		X = fxoff + (fxspan) * (i* fDivX - minX) / (maxX - minX);
+		pDC->MoveTo(X, fH - (fyoff - 5));
+		pDC->LineTo(X, fH - (fyoff + fyspan));
+		if (bLOG)
+		  sprintf_s(sLab, "%g", pow(10,i * fDivX));
+		else
+		  sprintf_s(sLab, "%g", i * fDivX);
+		TextOut(hDC, X, fH - (fyoff-5), sLab, strlen(sLab));
+	}
+	for (i = 0; i <= iNoTicksY; i++)
+	{
+		Y = fyoff + (fyspan) * (i * fDivY - minY) / (maxY - minY);
+		pDC->MoveTo(fxoff - 5, fH - Y);
+		pDC->LineTo(fxoff + fxspan, fH - Y);
+		sprintf_s(sLab, "%g", i * fDivY);
+		TextOut(hDC, fxoff - 40, fH - Y, sLab, strlen(sLab));
+	}
+	RestorePen(pDC);
+	SetPen(pDC, 133, 1);
+	float fxLg = 0;
+	float fBase = 0;
+	if (bLOG)	//Minor log grid lines
+	{
+		for (i = 0; i <= iNoTicksX; i++)
+		{
+			fBase = pow(10, i);
+			for (k = 1; k < 10; k++)
+			{
+				fxLg = fBase * k;
+				X = fxoff + (fxspan)*log10(fxLg) / (maxX - minX);
+				pDC->MoveTo(X, fH - (fyoff - 5));
+				pDC->LineTo(X, fH - (fyoff + fyspan));
+			}
+		}
+	}
+	RestorePen(pDC);
+	CString sS;
+	CEdit* oEdit = (CEdit*)this->GetDlgItem(IDC_XTITLE);
+	oEdit->GetWindowTextA(sS);
+	TextOut(hDC, fW / 2, fH - 40, sS, strlen(sS));
+	oEdit = (CEdit*)this->GetDlgItem(IDC_YTITLE);
+	oEdit->GetWindowTextA(sS);
+	TextOut(hDC, 5, fH / 2, sS, strlen(sS));
+	oEdit = (CEdit*)this->GetDlgItem(IDC_TITLE);
+	oEdit->GetWindowTextA(sS);
+	hFont = CreateFont(30, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, 2, 0, "SYSTEM_FIXED_FONT");
+	hTmp = (HFONT)SelectObject(hDC, hFont);
+	  TextOut(hDC, fxoff, 10, sS, strlen(sS));
+	DeleteObject(SelectObject(hDC, hTmp));
+	//Draw All Charts
+	for (j = 0; j < iNo; j++)
+	{
+		bFirst = TRUE;
+		pG = pGs[j];
+		if (pG != NULL)
+		{
+			if (j==iActPlot)
+			  SetPen(pDC, pG->iCol,9);
+			else
+			  SetPen(pDC,pG->iCol,3);
+			//Lengend
+			SetTextCol(hDC, pG->iCol);
+			sprintf_s(buff, "%s %s %s", pG->sResType, pG->sEntID, pG->sVar);
+			TextOut(hDC, iLegOffX, fH - (iLegOffY+j*20), buff, strlen(buff));
+			for (i = 0; i < pG->fx.size(); i++)
+			{
+				if (bLOG)
+					X = fxoff + (fxspan)*log10(pG->fx[i] - minX) / (maxX - minX);
+				else
+					X = fxoff + (fxspan) * (pG->fx[i] - minX) / (maxX - minX);
+				Y = fyoff + (fyspan) * (pG->fy[i] - minY) / (maxY - minY);
+				if (bFirst)
+				{
+					pDC->MoveTo(X, fH - Y);
+					bFirst = FALSE;
+				}
+				else
+				{
+					pDC->LineTo(X, fH - Y);
+				}
+			}
+			RestorePen(pDC);
+		}
+	}
+
+	this->ReleaseDC(pDC);
+}
+
+
+void CGraphDialog::popResVec()
+{
+	int i;
+	int iLC;
+	int iTCode;
+	char buff[200];
+	NEList* LCGp = new NEList();
+	NEList* oIDS = new NEList();
+	CListBox* oLB;
+	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
+	LCGp->iNo = 0;
+	for (i = 0; i < pME->iNoRes; i++)
+	{
+		iLC = pME->ResultsSets[i]->LC;
+		iTCode = pME->ResultsSets[i]->TCODE;
+		//TCODE 1039 Node MPC
+		if ((iTCode == 1039) && (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC, 1);
+			sprintf_s(buff, "%i_%s_%i_%s", iTCode, "LC", iLC, "MPCF");
+			oLB->AddString(buff);
+			vTC.push_back(iTCode);
+			vLC.push_back(iLC);
+		}
+	}
+	LCGp->iNo = 0;
+	for (i = 0; i < pME->iNoRes; i++)
+	{
+		iLC = pME->ResultsSets[i]->LC;
+		iTCode = pME->ResultsSets[i]->TCODE;
+		//TCODE 1011 Accel
+		if ((iTCode == 1011) && (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC, 1);
+			sprintf_s(buff, "%i	%s %i %s", iTCode, "LC", iLC, "ACCEL");
+			oLB->AddString(buff);
+			vTC.push_back(iTCode);
+			vLC.push_back(iLC);
+		}
+	}
+
+	LCGp->iNo = 0;
+	for (i = 0; i < pME->iNoRes; i++)
+	{
+		iLC = pME->ResultsSets[i]->LC;
+		iTCode = pME->ResultsSets[i]->TCODE;
+		//TCODE 1004 El Force CBUSH
+		if ((iTCode == 1004) && (!LCGp->IsIn(iLC)))
+		{
+			LCGp->Add(iLC, 1);
+			sprintf_s(buff, "%i	%s %i %s", iTCode, "LC", iLC, "ELFORCE");
+			oLB->AddString(buff);
+			vTC.push_back(iTCode);
+			vLC.push_back(iLC);
+		}
+	}
+
+	delete(LCGp);
+	delete(oIDS);
+}
+
+void CGraphDialog::popEnt(int inTC, int inLC)
+{
+	int i;
+	int j;
+	int iLC;
+	int iTCode;
+	Res* pR = NULL;
+	char buff[200];
+	CListBox* oLB;
+	CListBox* oLBE;
+	vE.clear();
+	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
+	oLB->ResetContent();
+	oLBE = (CListBox*)this->GetDlgItem(IDC_ENT);
+	oLBE->ResetContent();
+	for (i = 0; i < pME->iNoRes; i++)
+	{
+		iLC = pME->ResultsSets[i]->LC;
+		iTCode = pME->ResultsSets[i]->TCODE;
+		//TCODE 1039 Node MPC
+		if ((iTCode == inTC) && (iLC = inLC))
+		{
+			pR = pME->ResultsSets[i]->Head;
+			for (j = 0; j < pME->ResultsSets[i]->iCnt; j++)
+			{
+				sprintf_s(buff, "%i",pR->ID);
+				oLBE->AddString(buff);
+				vE.push_back(pR->ID);
+				pR = pR->next;
+			}
+			oLBE->RedrawWindow();
+			oLBE->SetCurSel(0);
+			for (j = 0; j < pME->ResultsSets[i]->iNoV; j++)
+			{
+				oLB->AddString(pME->ResultsSets[i]->lab[j]);
+			}
+			oLB->RedrawWindow();
+			oLB->SetCurSel(0);
+			break;
+		}
+	}
+}
+
+BOOL CGraphDialog::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+	//SIZE DIALOG BOX TO FIT COLOURS
+	CRect cR;
+	CRect oSize;
+	CRect oSize2;
+	CRect oS;
+	CListBox* oLB;
+	vTC.clear();
+	vLC.clear();
+	this->SetWindowText("Graph");
+	this->GetWindowRect(&oSize);
+
+	oSize.right = oSize.left + 1500;
+	oSize.bottom = oSize.top + 900;
+	
+	this->MoveWindow(oSize, 0);
+	this->GetClientRect(oS);
+	// TODO:  Add extra initialization here
+	pDrg = new CWnd;
+	pDrg->Create(_T("STATIC"), _T(""), WS_CHILD | WS_VISIBLE | WS_THICKFRAME,
+		CRect(oS.left, oS.top, oS.right, oS.bottom-200), this, 1234);
+	pDrg->GetWindowRect(&cR);
+	fW = cR.Width();
+	fH = cR.Height();
+	//Size buttons and Listboxes
+	oSize2.top = oS.bottom - 190;;
+	oSize2.left = oS.left+10;
+	oSize2.bottom = oS.bottom-10;
+	oSize2.right = oS.left + 260;
+	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oLB->SetHorizontalExtent(300);
+	oSize2.top = oS.bottom - 190;;
+	oSize2.left = oS.left + 270;
+	oSize2.bottom = oS.bottom - 10;
+	oSize2.right = oS.left + 420;
+	oLB = (CListBox*)this->GetDlgItem(IDC_ENT);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oLB->SetHorizontalExtent(300);
+	oSize2.top = oS.bottom - 190;;
+	oSize2.left = oS.left + 430;
+	oSize2.bottom = oS.bottom - 10;
+	oSize2.right = oS.left + 580;
+	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oLB->SetHorizontalExtent(300);
+	oSize2.top = oS.bottom - 190;;
+	oSize2.left = oS.left + 590;
+	oSize2.bottom = oS.bottom - 10;
+	oSize2.right = oS.left + 940;
+	oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oLB->SetHorizontalExtent(500);
+	oSize2.top = oS.bottom - 190;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 160;
+	oSize2.right = oS.left + 1050;
+	oLB = (CListBox*)this->GetDlgItem(IDC_PLOT);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 160;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 130;
+	oSize2.right = oS.left + 1050;
+	oLB = (CListBox*)this->GetDlgItem(IDC_REDRAW);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 130;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 100;
+	oSize2.right = oS.left + 1050;
+	oLB = (CListBox*)this->GetDlgItem(IDC_COLOUR);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+
+	oSize2.top = oS.bottom - 100;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 70;
+	oSize2.right = oS.left + 1050;
+	oLB = (CListBox*)this->GetDlgItem(IDC_LIST);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom -70;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 40;
+	oSize2.right = oS.left + 1050;
+	oLB = (CListBox*)this->GetDlgItem(IDC_CLEAR);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 40;;
+	oSize2.left = oS.left + 950;
+	oSize2.bottom = oS.bottom - 10;
+	oSize2.right = oS.left + 1050;
+	oLB = (CListBox*)this->GetDlgItem(IDCANCEL);
+	if (oLB != NULL)
+		oLB->MoveWindow(oSize2, 0);
+	oSize2.top = oS.bottom - 190;
+	oSize2.left = oS.left + 1100;
+	oSize2.bottom = oS.bottom - 190+30;
+	oSize2.right = oS.left + 1490;
+	CEdit* oEdit  = (CEdit*)this->GetDlgItem(IDC_TITLE);
+	if (oEdit != NULL)
+	{
+		oEdit->MoveWindow(oSize2, 0);
+		oEdit->SetWindowTextA("Graph Title");
+	}
+	oSize2.top = oS.bottom - 190+40;
+	oSize2.left = oS.left + 1100;
+	oSize2.bottom = oS.bottom - 190+70;
+	oSize2.right = oS.left + 1490;
+	oEdit = (CEdit*)this->GetDlgItem(IDC_XTITLE);
+	if (oEdit != NULL)
+	{
+		oEdit->MoveWindow(oSize2, 0);
+		oEdit->SetWindowTextA("Freq (Hz)");
+	}
+	oSize2.top = oS.bottom - 190+80;
+	oSize2.left = oS.left + 1100;
+	oSize2.bottom = oS.bottom -190+110;
+	oSize2.right = oS.left + 1490;
+	oEdit = (CEdit*)this->GetDlgItem(IDC_YTITLE);
+	if (oEdit != NULL)
+	{
+		oEdit->MoveWindow(oSize2, 0);
+		oEdit->SetWindowTextA("Y Axis Title");
+	}
+	oSize2.top = oS.bottom - 190 + 120;
+	oSize2.left = oS.left + 1100;
+	oSize2.bottom = oS.bottom - 190 + 150;
+	oSize2.right = oS.left + 1490;
+	CButton*  oRB = (CButton*)this->GetDlgItem(IDC_LOG);
+	if (oRB != NULL)
+	{
+		oRB->MoveWindow(oSize2, 0);
+	}
+
+
+	popResVec();
+	return TRUE;  // return TRUE unless you set the focus to a control
+				  // EXCEPTION: OCX Property Pages should return FALSE
+}
+
+
+void CGraphDialog::OnBnClickedOk()
+{
+	// TODO: Add your control notification handler code here
+	CDialog::OnOK();
+}
+
+
+void CGraphDialog::OnPaint()
+{
+	CPaintDC dc(this);     // device context for painting
+	GDIDraw();			   // TODO: Add your message handler code here
+					       // Do not call CDialog::OnPaint() for painting messages
+}
+
+
+void CGraphDialog::OnLbnSelchangeRespvec()
+{
+	// TODO: Add your control notification handler code here
+	int iI;
+	int iTCode;
+	int iLC;
+
+	CListBox* oLB;
+	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
+	iI = oLB->GetCurSel();
+	iTCode= vTC.at(iI);
+	iLC = vLC.at(iI);;
+	popEnt(iTCode, iLC);
+}
+
+
+void CGraphDialog::OnBnClickedPlot()
+{
+	// TODO: Add your control notification handler code here
+	int iTC;
+	int iE;
+	int iLC;
+	int iI;
+	int iV;
+	CString sRT;
+	CString sID;
+	CString sVar;
+
+
+	CListBox* oLB;
+	BOOL bIsGood = TRUE;
+	oLB = (CListBox*)this->GetDlgItem(IDC_RESPVEC);
+	iI = oLB->GetCurSel();
+	oLB->GetText(iI, sRT);
+	if (iI >= 0)
+	{
+		iTC = vTC.at(iI);
+		iLC = vLC.at(iI);
+	}
+	else
+		bIsGood = FALSE;
+	oLB = (CListBox*)this->GetDlgItem(IDC_ENT);
+	iI = oLB->GetCurSel();
+	oLB->GetText(iI, sID);
+	if (iI >= 0)
+		iE = vE.at(iI);
+	else
+		bIsGood = FALSE;
+	oLB = (CListBox*)this->GetDlgItem(IDC_VAR);
+	iI = oLB->GetCurSel();
+	oLB->GetText(iI, sVar);
+	if (iI >= 0)
+		iV = iI;
+	else
+		bIsGood = FALSE;
+   	//if bIsGood we have TCODE,LC,ENT and Var to plot
+	if (bIsGood)
+		GenGraph(sRT, sID,sVar,iTC,iLC,iE,iV);
+}
+
+void CGraphDialog::GenGraph(CString sRT,CString sID,CString sVar,int iTC, int iLC, int iEnt, int iVar)
+{
+	char buff[200];
+	int i;
+	int j;
+	ResSet* pRS;
+	Res* pR;
+	BOOL bFirst = TRUE;
+
+	//Delete any previous graph data
+	Graph* pG;
+	pG = new Graph();
+	if (iNo < MAX_GRAPHS)
+	{
+		pGs[iNo] = pG;
+		iNo++;
+		pG->sResType = sRT;
+		pG->sEntID = sID;
+		pG->sVar = sVar;
+		CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+		sprintf_s(buff, "%s_%s_%s", sRT, sID, sVar);
+		oLB->AddString(buff);
+		for (i = 0; i < pME->iNoRes; i++)
+		{
+			if ((pME->ResultsSets[i]->LC == iLC) && (iTC == pME->ResultsSets[i]->TCODE))
+			{
+				pRS = pME->ResultsSets[i];
+				if (pRS->ACODE / 10 == 5) //Frequncy data
+				{
+					if (bFirst)
+					{
+						pG->sTitle = pRS->sTitle;
+						pG->sSubTitle = pRS->sSubTitle;;
+						bFirst = FALSE;
+					}
+					pR = pRS->Head;
+					for (j = 0; j < pRS->iCnt; j++)
+					{
+						if (pR->ID == iEnt)
+						{
+							//sDL = pRS->ToStringDL(pR);
+							pG->fx.push_back(*pR->GetAddress(0));
+							pG->fy.push_back(*pR->GetAddress(iVar));
+
+							//sprintf_s(buff, "%g	%g", *pR->GetAddress(0), *pR->GetAddress(iVar));
+							//outtext1(buff);
+							break;
+						}
+						pR = pR->next;
+					}
+				}
+			}
+		}
+		pG->genMaxMin();
+		//GDIDraw();
+		CRect rc;
+		pDrg->GetClientRect(&rc);
+		pDrg->InvalidateRect(rc, 1);	
+		UpdateWindow();
+		GDIDraw();
+	}
+}
+
+//void CGraphDialog::OnMButtonDown(UINT nFlags, CPoint point)
+//{
+//	// TODO: Add your message handler code here and/or call default
+//
+//	CDialog::OnMButtonDown(nFlags, point);
+//
+//}
+
+
+void CGraphDialog::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	// TODO: Add your message handler code here and/or call default
+	// find closest point to clicked location
+	int i;
+	float fdist;
+	float fdistMin;
+	int ind = -1;
+	float X;
+	float Y;
+    char s[20];
+	BOOL bLOG;
+	CButton* oRB = (CButton*)this->GetDlgItem(IDC_LOG);
+	if (oRB->GetCheck() == BST_CHECKED)
+		bLOG = TRUE;
+	else
+		bLOG = FALSE;
+	point.x -= 5;
+	Graph* pG = pGs[iActPlot];
+	if (pG != NULL)
+	{
+		CDC* pDC = this->GetDC();
+		X = fxoff + (fxspan) * (pG->fx[0] - minX) / (maxX - minX);
+		fdistMin = abs(X - point.x);
+		ind = 0;
+		for (i = 0; i < pG->fx.size(); i++)
+		{
+			if (bLOG)
+				X = fxoff + (fxspan)*log10(pG->fx[i] - minX) / (maxX - minX);
+			else
+				X = fxoff + (fxspan) * (pG->fx[i] - minX) / (maxX - minX);
+			fdist = abs(X - point.x);
+			if (fdist < fdistMin)
+			{
+				fdistMin = fdist;
+				ind = i;
+			}
+		}
+		if (bLOG)
+		  X = fxoff + (fxspan)*log10(pG->fx[ind] - minX) / (maxX - minX);
+		else
+		  X = fxoff + (fxspan) * (pG->fx[ind] - minX) / (maxX - minX);
+		Y = fyoff + (fyspan) * (pG->fy[ind] - minY) / (maxY - minY);
+		sprintf(s, "%g", pG->fy[ind]);
+		TextOut(pDC->m_hDC, X, fH - Y, s, strlen(s));
+		sprintf(s, "%g", pG->fx[ind]);
+		TextOut(pDC->m_hDC, X, fH - (Y+15), s, strlen(s));
+		this->ReleaseDC(pDC);
+	}
+
+
+	CDialog::OnLButtonUp(nFlags, point);
+}
+
+
+void CGraphDialog::OnBnClickedCancel()
+{
+	// TODO: Add your control notification handler code here
+	
+	CDialog::OnCancel();
+}
+
+
+void CGraphDialog::OnBnClickedClear()
+{
+	// TODO: Add your control notification handler code here
+	CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+	oLB->ResetContent();
+	CRect rc;
+	pDrg->GetClientRect(&rc);
+	pDrg->InvalidateRect(rc, 1);
+	UpdateWindow();
+	DeleteAll();
+}
+
+
+void CGraphDialog::OnLbnSelchangePlots()
+{
+	// TODO: Add your control notification handler code here
+	CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+	iActPlot = oLB->GetCurSel();
+	CRect rc;
+	pDrg->GetClientRect(&rc);
+	pDrg->InvalidateRect(rc, 1);
+	UpdateWindow();
+	GDIDraw();
+}
+
+
+void CGraphDialog::OnBnClickedColour()
+{
+	// TODO: Add your control notification handler code here
+	int iC = GetColourID();
+	CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+
+		//SetTextColor((HDC)wParam, RGB(255, 255, 255));
+	int iActPlot = oLB->GetCurSel();
+	if (iActPlot > -1)
+	{
+		if (pGs[iActPlot] != NULL)
+			pGs[iActPlot]->iCol = iC;
+	}
+	CRect rc;
+   pDrg->GetClientRect(&rc);
+   pDrg->InvalidateRect(rc, 1);
+   UpdateWindow();
+   GDIDraw();
+}
+
+
+void CGraphDialog::OnBnClickedList()
+{
+	// TODO: Add your control notification handler code here
+
+	CListBox* oLB = (CListBox*)this->GetDlgItem(IDC_PLOTS);
+	int iActPlot = oLB->GetCurSel();
+	if (iActPlot > -1)
+	{
+		if (pGs[iActPlot] != NULL)
+			pGs[iActPlot]->List();
+	}
+}
+
+
+void CGraphDialog::OnBnClickedRedraw()
+{
+	// TODO: Add your control notification handler code here
+
+	CRect rc;
+	pDrg->GetClientRect(&rc);
+	pDrg->InvalidateRect(rc, 1);
+	UpdateWindow();
+	GDIDraw();
+
+}
+
+
+void CGraphDialog::OnBnClickedLog()
+{
+	// TODO: Add your control notification handler code here
+	CRect rc;
+	pDrg->GetClientRect(&rc);
+	pDrg->InvalidateRect(rc, 1);
+	UpdateWindow();
+	GDIDraw();
+}
+
+
+// Create Shade Representation of object
+
+IMPLEMENT_DYNAMIC(G_ObjectDUM, CObject)
+
+CString G_ObjectDUM::GetName()
+{
+	return("Variables");
+}
+
+int G_ObjectDUM::GetVarHeaders(CString sVar[])
+{
+	int iNo = 0;
+	sVar[iNo++] = "gPT_SIZE";
+	sVar[iNo++] = "gND_SIZE";
+	sVar[iNo++] = "gLM_SIZE";
+	sVar[iNo++] = "gEL_SIZE";
+	sVar[iNo++] = "gED_SIZE";
+	sVar[iNo++] = "gFC_SIZE";
+	sVar[iNo++] = "gWP_SIZE";
+	sVar[iNo++] = "gBM_SIZE";
+	sVar[iNo++] = "gTXT_SIZE";
+	sVar[iNo++] = "gDIM_FILSZ";
+	sVar[iNo++] = "gDIM_OFFSZ";
+	sVar[iNo++] = "gTXT_HEIGHT";
+	sVar[iNo++] = "gDIM_RADSZ";
+	sVar[iNo++] = "gDIM_CVORD";
+	sVar[iNo++] = "gDIM_PREC Dimension Precision";
+	sVar[iNo++] = "gDIM_SIZE";
+	sVar[iNo++] = "gDRILL_KS";
+	sVar[iNo++] = "gRIGID_MULTIPLIER";
+	sVar[iNo++] = "gVSTIFF_KS, K for Restraints";
+	sVar[iNo++] = "gDEF_E Defualt Material E";
+	sVar[iNo++] = "gDEF_V Defualt Material v";
+	sVar[iNo++] = "gSTIFF_BDIA Stiff Beam Dia";
+	sVar[iNo++] = "gDEF_CTE Defualt Material CTE";
+	sVar[iNo++] = "gDEF_THERM_LNK Defualt Thermal Link Coef";
+	sVar[iNo++] = "gDEF_SOL_TOL Defualt Iterative Solver Tolerence";
+
+	return iNo;
+}
+
+
+int G_ObjectDUM::GetVarValues(CString sVar[])
+{
+	int iNo = 0;
+	char S1[80] = "";
+
+	sprintf_s(S1, "%g", gPT_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gND_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gLM_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gEL_SIZE);
+	sVar[iNo++] = S1;;
+	sprintf_s(S1, "%g", gED_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gFC_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gWP_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gBM_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gTXT_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDIM_FILSZ);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDIM_OFFSZ);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gTXT_HEIGHT);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDIM_RADSZ);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDIM_CVORD);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%i", gDIM_PREC);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDIM_SIZE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDRILL_KS);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gRIGID_MULTIPLIER);
+	sVar[iNo++] = S1;
+
+	sprintf_s(S1, "%g", gVSTIFF_KS);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDEF_E);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDEF_V);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gSTIFF_BDIA);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDEF_CTE);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDEF_THERM_LNK);
+	sVar[iNo++] = S1;
+	sprintf_s(S1, "%g", gDEF_SOL_TOL);
+	sVar[iNo++] = S1;
+	
+	return (iNo);
+}
+
+void G_ObjectDUM::PutVarValues(PropTable* PT, int iNo, CString sVar[])
+{
+	int iC = 0;
+	gPT_SIZE = atof(sVar[iC++]);
+	gND_SIZE = atof(sVar[iC++]);
+	gLM_SIZE = atof(sVar[iC++]);
+	gEL_SIZE = atof(sVar[iC++]);
+	gED_SIZE = atof(sVar[iC++]);
+	gFC_SIZE = atof(sVar[iC++]);
+	gWP_SIZE = atof(sVar[iC++]);
+	gBM_SIZE = atof(sVar[iC++]);
+	gTXT_SIZE = atof(sVar[iC++]);
+	gDIM_FILSZ = atof(sVar[iC++]);
+	gDIM_OFFSZ = atof(sVar[iC++]);
+	gTXT_HEIGHT = atof(sVar[iC++]);
+	gDIM_RADSZ = atof(sVar[iC++]);
+	gDIM_CVORD = atof(sVar[iC++]);
+	gDIM_PREC = atoi(sVar[iC++]);
+	gDIM_SIZE = atof(sVar[iC++]);
+	gDRILL_KS = atof(sVar[iC++]);
+	gRIGID_MULTIPLIER = atof(sVar[iC++]);
+	gVSTIFF_KS = atof(sVar[iC++]);
+	gDEF_E = atof(sVar[iC++]);
+	gDEF_V = atof(sVar[iC++]);
+	gSTIFF_BDIA = atof(sVar[iC++]);
+	gDEF_CTE = atof(sVar[iC++]);
+	gDEF_THERM_LNK = atof(sVar[iC++]);
+	gDEF_SOL_TOL = atof(sVar[iC++]);
+}

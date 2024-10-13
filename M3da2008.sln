@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.33801.447
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "M3da", "M3da\M3da.vcxproj", "{3C0FBCD4-D18C-4897-9780-88949A226BC6}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "M3d_Setup", "M3d_Setup\M3d_Setup.vdproj", "{F2A1DC08-8CF7-478A-AD57-8B260D996E61}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,8 +23,15 @@ Global
 		{3C0FBCD4-D18C-4897-9780-88949A226BC6}.Release|Win32.Build.0 = Release|Win32
 		{3C0FBCD4-D18C-4897-9780-88949A226BC6}.Release|x64.ActiveCfg = Release|x64
 		{3C0FBCD4-D18C-4897-9780-88949A226BC6}.Release|x64.Build.0 = Release|x64
+		{F2A1DC08-8CF7-478A-AD57-8B260D996E61}.Debug|Win32.ActiveCfg = Debug
+		{F2A1DC08-8CF7-478A-AD57-8B260D996E61}.Debug|x64.ActiveCfg = Debug
+		{F2A1DC08-8CF7-478A-AD57-8B260D996E61}.Release|Win32.ActiveCfg = Release
+		{F2A1DC08-8CF7-478A-AD57-8B260D996E61}.Release|x64.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4D279EF2-9C06-4187-84BA-924470EF0CA7}
 	EndGlobalSection
 EndGlobal

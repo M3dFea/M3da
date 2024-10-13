@@ -1,3 +1,4 @@
+
 #include "stdafx.h"
 
 
@@ -7,7 +8,15 @@
 #include "3dSupport.h"
 #include "afxwin.h"
 #include "afxcmn.h"
+#include <vector>
+#include<algorithm>
+
+using namespace std;
+
 #define DBL_MAX 1.7976931348623158e+308 /* max value */
+//Graphics size vars
+const int MAX_SYMBOLS = 10000;
+const int MaxSelNodes = 2000;
 //Arrow head definition
 const double AHead [7][3] =
 {{2.000000, 0.000000, 0.000000},
@@ -187,9 +196,13 @@ const float cols[167][3] ={{0.0f,0.0f,0.0f},
 {1.00f, 1.00f, 1.00f},    //165 White
 {0.6f, 0.6f, 0.6f}};      //166Grey
 
-const int MAX_RESSETS=5000;
+const int MAX_RESSETS=50000;
 class Part;
+class Graph;
+class GRAV;
 class ME_Object;
+class NLine;
+class NCurve;
 class G_Object;
 class G_ObjectD;
 class SecTable;
@@ -209,6 +222,7 @@ class ParPt;
 class SolSets;
 class CEntEditDialog;
 class Ndata;
+class Lamina;
 //DIPLAY FLAGS
 const int DSP_ALL = 0xFFFFFFF;
 const int DSP_LINE = 0x00000001;
@@ -600,6 +614,9 @@ int ACODE;
 int TCODE;
 int TYPE;
 int LC;
+int FCODE;			//format code
+int SCODE;			//stress code
+double dFreq;		//Freq
 int WID;
 int iCnt;
 int iNoV;
@@ -720,6 +737,7 @@ class Entity : public CObject
 DECLARE_DYNAMIC(Entity)
 public:
 CString sTitle;
+int iFile;
 int iID;
 int iType;
 Entity();
@@ -754,6 +772,9 @@ class Material : public Entity
 {
 DECLARE_DYNAMIC(Material)
 public:
+virtual Mat DeeMEM();
+virtual Mat DeeBM();
+virtual Mat DeeSH();
 virtual void Info();
 virtual double GetDensity();
 virtual double GetCTE();
@@ -807,18 +828,23 @@ int iLnCnt2;
 BSec();
 virtual ~BSec();
 void Create();
+void CreateBar(double W, double H);
 void CreateDefSec(double W,int iC);
 void CreateBox(double W,double H,double Wthk,double Hthk);
-void CreateBar(double W,double H);
+void CreateL(double W, double H, double Wthk, double Hthk, double yb, double zb);
 void CreateRod(double R);
 void CreateTube(double R,double r);
-void CreateI(double WH,double BW,double TW,double WT,double BWT,double TWT);
+void CreateT2(double W, double H, double Wthk, double Hthk,double yb);
+void CreateCHAN2(double d1, double d2, double d3, double d4, double yb);
+void CreateI2(double d1,double d2,double d3,double d4,double d5,double d6, double yb);
 void Clear();
 void Serialize(CArchive& ar,int iV);
 void OglDraw(int iDspFlgs,C3dMatrix TA,C3dMatrix TB,C3dVector d0,C3dVector d1,float C1,float C2,BOOL bD);
 void OglDrawW(int iDspFlgs,C3dMatrix TMat,C3dVector d0,C3dVector d1);
 void AddOutPt(double X1,double Y1);
 void AddInPt(double X1,double Y1);
+void MoveY(double yBar);
+void MoveX(double zBar);
 
 //BSec* Copy();
 
@@ -925,6 +951,8 @@ double A;
 double Izz;
 double Iyy;
 double J;
+double ybar;
+double zbar;
 CString sSecType;
 CString sGROUP;
 double dDIMs[8];
@@ -1024,6 +1052,28 @@ virtual void PutVarValues(int iNo, CString sVar[]);
 virtual void ExportNAS(FILE* pFile);
 };
 
+class PBUSH : public Property
+{
+	DECLARE_DYNAMIC(PBUSH)
+public:
+	CString sFlg = "K";
+	double dK1;
+	double dK2;
+	double dK3;
+	double dK4;
+	double dK5;
+	double dK6;
+	double dkcoeff;
+	PBUSH();
+	virtual void Serialize(CArchive& ar, int iV);
+	virtual PBUSH* Copy();
+	virtual void List();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(int iNo, CString sVar[]);
+	virtual void ExportNAS(FILE* pFile);
+};
+
 class PMASS : public Property
 {
   DECLARE_DYNAMIC(PMASS)
@@ -1066,6 +1116,10 @@ double dSC;
 double dSS;
 int iMCSID;
 MAT1();
+//************THESE ARE MOVED HERE FROM ME_Object*********
+virtual Mat DeeMEM();
+virtual Mat DeeBM();
+virtual Mat DeeSH();
 virtual void Info();
 virtual void Serialize(CArchive& ar,int iV);
 virtual void ExportNAS(FILE* pFile);
@@ -1173,7 +1227,7 @@ public:
 	//virtual PCOMP* Copy();
 	//virtual CString ToString();
 	//virtual void ExportNAS(FILE* pFile);
-	//virtual double GetThk();
+	virtual double GetThk();
 	//virtual void UpdateMats(NEList* newMats);
 	//virtual void ChangeMat(int thisMat, int inMID);
 	virtual int GetVarHeaders(CString sVar[]);
@@ -1189,8 +1243,10 @@ class Filter
 public:
 int Filt[100];
 int iType[100];
+int iSave[100];
 CString sType[100];
 int iNo;
+int iSaveNo;
 int iNoOfType;
 Filter();
 void SetAll();
@@ -1199,6 +1255,8 @@ BOOL isFilter(int iThisType);
 void SetFilter(int iThisType);
 void RemFilter(int iThisType);
 void Clear();
+void Save();
+void Restore();
 };
 
 class CSETSDialog : public CDialog
@@ -1327,23 +1385,64 @@ public:
   afx_msg void OnBnClickedButton2();
 };
 
+class Lamina
+{
+public:
+	double dMAng;
+	int iMID;
+	double dThk;
+	double dZOFFS;
+	C3dVector pVertex[4];
+	Lamina();
+	~Lamina();
+	void SetZ(double dZ);
+	void SetAng(double dA);
+	void SetThk(double dT);
+	void SetMID(int ID);
+	void OglDraw();
+};
+
+
+class cWndOGL : public CWnd
+{
+public:
+	DECLARE_MESSAGE_MAP()
+	afx_msg void OnPaint();
+};
 
 class CEntEditDialog : public CDialog
 {
 public:
+	Lamina Laminate[200];
+	
+	int iNoLayers = 0;
+	HDC hdc;
+	HGLRC hrc;
+	HDC hdcOld;
+	HGLRC hrcOld;
+	cWndOGL* pDrg = NULL;
+	C3dMatrix vMat;
+	int m_nPixelFormat = 0;
+	void InitOGL();
+	void AddVisLayer(double dA, double dZ, double dT, int iM);
+	void OglDraw();
+	void Build(BOOL isPCOMPG); //build the visual layers from the PCOMP
+	void Build2(BOOL isPCOMPG);//Build from table so paint can update when pcomp changes
   enum {IDD = IDD_ENTEDITOR};
   virtual void DoDataExchange(CDataExchange* pDX);
   CListCtrl m_List;
   CEdit Ed_Title;
   CEdit Ed_ID;
-  CEdit* eEdit;
+  CEdit* eEdit=NULL;
   int m_iItemBeingEdited;
-  int iNo;
-  int iNo2;
-  Entity* pEnt;
-  G_Object* pO;
-  PropTable* PT;
+  int iNo=0;
+  int iNo2=0;
+  BOOL bDel = FALSE;
+  Entity* pEnt=NULL;
+  G_Object* pO=NULL;
+  PropTable* PT=NULL;
   CEntEditDialog();
+  virtual ~CEntEditDialog();
   virtual BOOL OnInitDialog();
   void Populate1();
   void Populate2();
@@ -1355,23 +1454,22 @@ public:
   afx_msg void OnBnClickedEntlist();
   afx_msg void OnDblclkList1(NMHDR *pNMHDR, LRESULT *pResult);
   afx_msg void OnBnClickedMfclink2();
+  afx_msg void OnPaint();
+  afx_msg void OnLvnItemchangedList1(NMHDR* pNMHDR, LRESULT* pResult);
+//  afx_msg void OnLvnEndlabeleditList1(NMHDR* pNMHDR, LRESULT* pResult);
+  afx_msg void OnLvnItemchangingList1(NMHDR* pNMHDR, LRESULT* pResult);
+//  afx_msg void OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult);
+//  afx_msg void OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult);
+//  afx_msg void OnLvnOdcachehintList1(NMHDR* pNMHDR, LRESULT* pResult);
+//  afx_msg void OnLvnKeydownList1(NMHDR* pNMHDR, LRESULT* pResult);
+  afx_msg void OnNMReturnList1(NMHDR* pNMHDR, LRESULT* pResult);
+  afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+  afx_msg void OnBnClickedCdelete();
+  afx_msg void OnBnClickedCancel();
 };
 
 
-class Lamina
-{
-public:
-  double dMAng;
-  double dThk;
-  double dZOFFS;
-  C3dVector pVertex[4];
-  Lamina();
-  ~Lamina();
-  void SetZ(double dZ);
-  void SetAng(double dA);
-  void SetThk(double dT);
-  void OglDraw();
-};
+
 
 
 
@@ -1384,17 +1482,19 @@ public:
   virtual ~CPcompEditor();
   Entity* pEnt;
   Lamina Laminate[200];
-  void AddVisLayer(double dA, double dZ);
-  int iNoLayers;
+  
+  int iNoLayers=0;
   HDC hdc;
   HGLRC hrc;
   HDC hdcOld;
   HGLRC hrcOld;
-  CWnd* pDrg;
+  CWnd* pDrg = NULL;
   C3dMatrix vMat;
-  int m_nPixelFormat;
+  int m_nPixelFormat=0;
   void InitOGL();
   void OglDraw();
+  void AddVisLayer(double dA, double dZ, double dT, int iM);
+  void Build(); //build the visual layers from the PCOMP
   enum { IDD = IDD_PCOMPEDIT };
   virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
   DECLARE_MESSAGE_MAP()
@@ -1436,6 +1536,67 @@ public:
   afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
   afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
   afx_msg void OnBnClickedCancel();
+};
+
+const int MAX_GRAPHS = 100;
+class CGraphDialog : public CDialog
+{
+
+public:
+	CPen* Pen;
+	CPen* oldPen;
+	Graph* pGs[MAX_GRAPHS];
+	int iNo = 0;
+	int iActPlot = 0;
+	float fW = 500;
+	float fH = 500;
+	float fxoff = 80;
+	float fyoff = 50;
+	float fxspan = fW - fxoff - 50;
+	float fyspan = fH - fyoff - 50;
+	float minX=0;
+	float maxX=0;
+	float minY=0;
+	float maxY=0;
+	vector <int> vTC;
+	vector <int> vLC;
+	vector <int> vE;
+	enum { IDD = IDD_GRAPH };
+
+	ME_Object* pME=NULL;
+	CWnd* pDrg = NULL;
+	C3dMatrix vMat;
+	int m_nPixelFormat = 0;
+	CGraphDialog();
+	~CGraphDialog();
+	int GetColourID();
+	void SetPen(CDC* pDC,int iC,int iS);
+	void RestorePen(CDC* pDC);
+	void SetTextCol(HDC hdc, int iC);
+	void ResetMaxMin();
+	void DeleteAll();
+	void InitOGL();
+	void GDIDraw();
+	float AxisTickMarks(float fMaxV, int &itargetSteps);
+	void popResVec(); //populate available response data list box
+	void popEnt(int iTC,int iLC); //populate available response nore / element
+	virtual BOOL OnInitDialog();
+	void GenGraph(CString sRT, CString sID, CString sVar, int iTC, int iLC, int iEnt, int iVar);
+	DECLARE_MESSAGE_MAP()
+	afx_msg void OnBnClickedOk();
+	afx_msg void OnPaint();
+	afx_msg void OnLbnSelchangeList3();
+	afx_msg void OnLbnSelchangeRespvec();
+	afx_msg void OnBnClickedPlot();
+//	afx_msg void OnMButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnBnClickedCancel();
+	afx_msg void OnBnClickedClear();
+	afx_msg void OnLbnSelchangePlots();
+	afx_msg void OnBnClickedColour();
+	afx_msg void OnBnClickedList();
+	afx_msg void OnBnClickedRedraw();
+	afx_msg void OnBnClickedLog();
 };
 
 class CGroupDialog : public CDialog
@@ -1483,6 +1644,7 @@ public:
   G_Object* next;
   G_Object* before;
   C3dVector SelPt;
+  int iFile; //Include File No for FE - Layer No for lines
   int iObjType;
   int iType; //Secondary type specifier
   int iLabel;
@@ -1501,7 +1663,10 @@ public:
   G_Object();
   virtual ~G_Object();
   virtual void Create();
+  virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
   virtual void Info();
+  virtual void ModLayNo(int iLay);
+  virtual void Build();
   virtual CString ToString();
   virtual C3dVector MinPt(C3dVector inPt);
   virtual G_Object* Copy(G_Object* Parrent);
@@ -1530,9 +1695,22 @@ public:
   virtual double GetCharSize();
   virtual void GetBoundingBox(C3dVector& vll,C3dVector& vur);
   virtual CString GetName();
+  virtual void ExportDXF(FILE* pFile);
   virtual int GetVarHeaders(CString sVar[]);
   virtual int GetVarValues(CString sVar[]);
   virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
+};
+
+//Base Class of graphics objects
+class G_ObjectDUM : public G_Object
+{
+	DECLARE_DYNAMIC(G_ObjectDUM)
+
+public:
+	virtual CString GetName();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 class cLinkedList : public G_Object
@@ -1593,7 +1771,7 @@ double Z;
 G_Object* pObj;
 };
 
-const int MAX_GP_ITEMS = 500000;
+const int MAX_GP_ITEMS = 10000000;
 
 class ObjList
 {
@@ -1603,6 +1781,7 @@ int iNo;
 ObjList();
 ~ObjList();
 void Add(G_Object* inItem);
+void InsertAt(int iPos, G_Object* inItem);
 BOOL IsIn(G_Object* inItem);
 int IsIn2(G_Object* inItem);
 void AddEx(G_Object* inItem);
@@ -1658,6 +1837,7 @@ int iType[MAX_LITEMS];
 int iNo;
 NEList();
 int Get(int iD);
+BOOL IsIn(int iD);
 void Add(int iP,int iT);
 };
 
@@ -1677,7 +1857,7 @@ void Sort();
 class IgesP
 {
 public:
-CString P[1000000];
+CString P[10000000];
 int iNo;
 IgesP();
 void Add(CString inSt);
@@ -1724,6 +1904,7 @@ public:
 	virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 	virtual void SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran);
 	virtual void HighLight(CDC* pDC);
+	virtual void Serialize(CArchive& ar, int iV);
 	virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);  
 	virtual void Translate(C3dVector vIn);
     virtual void Transform(C3dMatrix TMat);
@@ -1753,14 +1934,32 @@ public:
   virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
 };
 
-
-class Pt_Object : public G_Object
+//**********************************************************************
+//Test class for the a bitmap background
+//**********************************************************************
+class BackGround : public G_Object
 {
-DECLARE_DYNAMIC(Pt_Object)
+	DECLARE_DYNAMIC(BackGround)
 
 public:
-   Pt_Object();
-   virtual ~Pt_Object();
+	double dS;
+	BackGround(double dWPSize);
+	virtual ~BackGround();
+	BMP* pTexture = nullptr;
+	void AttachTexture(BMP* pT);
+	virtual void Draw(CDC* pDC, int iDrawmode);
+	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+};
+
+
+class Node : public G_Object
+{
+DECLARE_DYNAMIC(Node)
+
+public:
+   Node();
+   virtual ~Node();
    C3dVector* Pt_Point;
    C3dVector* DSP_Point;
    int DefSys;
@@ -1769,6 +1968,7 @@ public:
    Res* pResV;
    Res* pResD;
    Ndata* pN;
+   double dTemp; //temporary value not saved
    virtual void Create(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut,G_Object* Parrent);
    virtual C3dVector MinPt(C3dVector inPt);
    virtual void Clear();
@@ -1819,7 +2019,6 @@ public:
    virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
    C3dVector GetCoords(); 
    virtual void SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran);
-   virtual void HighLight(CDC* pDC);
    //virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);
    virtual void SetTo(C3dVector cInVect);
    virtual void Transform(C3dMatrix TMAt);
@@ -1829,6 +2028,11 @@ public:
    virtual void Serialize(CArchive& ar,int iV);
    virtual C3dVector Get_Centroid();
    virtual void S_Box(CPoint P1,CPoint P2,ObjList* pSel);
+   virtual CString GetName();
+   virtual void ExportDXF(FILE* pFile);
+   virtual int GetVarHeaders(CString sVar[]);
+   virtual int GetVarValues(CString sVar[]);
+   virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 class CvPt_ObjectW : public CvPt_Object
@@ -1905,6 +2109,7 @@ public:
    virtual C3dVector GetPt(double dU);
    virtual C3dVector GetDir(double dU);
    virtual C3dVector Get_Centroid();
+
 };
 
 class Curve : public ContrPolyW
@@ -1915,6 +2120,10 @@ virtual void Draw(CDC* pDC,int iDrawmode);
 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 virtual void HighLight(CDC* pDC);
+virtual CString GetName();
+virtual int GetVarHeaders(CString sVar[]);
+virtual int GetVarValues(CString sVar[]);
+virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 //26/09/2016
@@ -1930,6 +2139,308 @@ Link();
 Link(double x1, double y1, double z1,
 	 double x2, double y2, double z2);
 ~Link();
+virtual void ExportDXF(FILE* pFile,int iLay);
+};
+
+
+
+class Text : public G_Object
+{
+DECLARE_DYNAMIC(Text)
+public:
+	double dLen = 0;
+	CvPt_Object* inPt = nullptr;			//Insertion Point
+	C3dVector vInsPt;						//Insertion Point
+	C3dVector vNorm;						//Normal
+	C3dVector vDir;							//X Direction of Text;
+	double dTextHeight;						//Text Height
+	cLinkedList* pSyms;						//Sybols list forming text
+	CString sText;
+	Text();
+	Text(C3dVector vInPt, C3dVector vN, C3dVector vTDir,int iLab, CString sT,double dH, G_Object* Parrent);
+	~Text();
+	virtual void BuildText();
+	virtual double GetLength();
+	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
+	virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
+	virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
+	virtual void HighLight(CDC* pDC);
+	virtual void Transform(C3dMatrix TMAt);
+	virtual void Translate(C3dVector vIn);
+	virtual void Move(C3dVector vM);
+	virtual void Serialize(CArchive& ar, int iV);
+	virtual C3dVector Get_Centroid();
+	virtual G_Object* Copy(G_Object* Parrent);
+	virtual CString GetName();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+	virtual void Info();
+	virtual void ExportDXF(FILE* pFile);
+
+};
+
+//Baseline DIm is aligned type 1
+class DIM : public G_Object
+{
+	DECLARE_DYNAMIC(DIM)
+public:
+	//The next need serialising
+	double dDimScl;
+	double dDrgScl;						//Drawing scale Height
+	double dDIM;
+	int iDimOpt = 0;
+	C3dVector vDAngVert;                 //vertex of the angle
+	C3dVector vDPt1;					//1st dim point
+	C3dVector vDPt2;					//2nd dim point or null
+	C3dVector vDInsPt;					//Ins Point
+	CvPt_Object* pInsPt = nullptr;    //Ins Point
+	C3dVector vOrig;					//Origin
+	C3dVector vNorm;					//Normal to dim
+	C3dVector vDir;						//WP Direction of dim
+	CString sTextPre;
+	CString sText;						//The text on the dim
+	CString sTextPost;
+	BOOL bTextOverRide = FALSE;
+	//*****************************************************************
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+
+	DIM();
+	DIM(C3dVector vPt1,
+		C3dVector vPt2,
+		C3dVector vInsPt,
+		C3dVector vO,
+		C3dVector vN,
+		C3dVector vD,
+		double dDScl,
+		int iLab);
+
+
+	~DIM();
+	virtual void Clean();
+	virtual void Build();
+	//virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
+	virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
+	virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
+	virtual void HighLight(CDC* pDC);
+	//virtual void Transform(C3dMatrix TMAt);
+	//virtual void Translate(C3dVector vIn);
+	//virtual void Move(C3dVector vM);
+	virtual void Serialize(CArchive& ar, int iV);
+	//virtual C3dVector Get_Centroid();
+	//virtual G_Object* Copy(G_Object* Parrent);
+	//virtual CString GetName();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+	virtual void ExportDXF(FILE* pFile);
+	//virtual void Info();
+};
+
+//Baseline DIm is aligned type 1
+class DIMA : public DIM
+{
+	DECLARE_DYNAMIC(DIMA)
+public:
+
+	//******************************************************************
+	double dDist = 0;
+
+	BOOL bArrowsIn = TRUE;				//arrow point in from leaders
+	C3dVector vDX;                      //x dir of dim
+	C3dVector vDY;                      //y dir of dim
+	C3dVector vPP1;                     //Projected pick points  
+	C3dVector vPP2;
+	C3dVector vPP1D;
+	C3dVector vPP1A1;					//Arrow point 1
+	C3dVector vPP1A2;					//Arrow point 2
+	C3dVector vPP2D;
+	C3dVector vPP2A1;					//Arrow point 1
+	C3dVector vPP2A2;					//Arrow point 2
+	//Angualar dim aditions the vertex point
+	C3dVector vPPV;                   //Angular vertex point WP
+	CvPt_Object* pPtV = nullptr;
+	//below are the projected points back to WP
+	//these are se;ectable
+	CvPt_Object* pPt1 = nullptr;      //1st dim point
+	CvPt_Object* pPt2 = nullptr;      //2nd dim point or null
+	NLine* pLeader1 = nullptr;
+	NLine* pLeader2 = nullptr;
+	NCurve* pDimLine1 = nullptr;  //one halve of dim line
+	NCurve* pDimLine2 = nullptr;  //other halve
+	Text* pText = nullptr;
+
+	//0 N/A 
+	//1 Aligned Linear
+	//2 Horizontal Linear
+	//3 Vertical Linear
+	//4 Rad
+	//5 Dia
+	//6 Ang
+	//7 Leader
+
+	DIMA();
+	DIMA(C3dVector vPt1,
+		 C3dVector vPt2,
+		 C3dVector vInsPt,
+		 C3dVector vO,
+		 C3dVector vN,
+		 C3dVector vD,
+		 double dDScl,
+		 int iLab);
+
+	~DIMA();
+	virtual void Clean();
+	virtual void Build();
+	//virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual void Colour(int iCol);
+	virtual void ExportDXF(FILE* pFile);
+	virtual void ModLayNo(int iLay);
+	//virtual G_ObjectD SelDist(CPoint InPT, Filter FIL);
+	//virtual void S_Box(CPoint P1, CPoint P2, ObjList* pSel);
+	//virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
+	//virtual void HighLight(CDC* pDC);
+	//virtual void Transform(C3dMatrix TMAt);
+	//virtual void Translate(C3dVector vIn);
+	//virtual void Move(C3dVector vM);
+	//virtual void Serialize(CArchive& ar, int iV);
+	//virtual C3dVector Get_Centroid();
+	//virtual G_Object* Copy(G_Object* Parrent);
+	//virtual CString GetName();
+	//virtual int GetVarHeaders(CString sVar[]);
+	//virtual int GetVarValues(CString sVar[]);
+	//virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+	//virtual void Info();
+};
+
+//Angular dimension - angle buy 3pts def
+// 
+// vVPt------------>vPt2
+//     -----    +Z)
+//          ------->vPt1
+class DIMANG : public DIMA
+{
+	DECLARE_DYNAMIC(DIMANG)
+
+	DIMANG();
+	DIMANG(C3dVector vVPt,
+		   C3dVector vPt1,
+		   C3dVector vPt2,
+		   C3dVector vInsPt,
+		   C3dVector vO,
+		   C3dVector vN,
+		   C3dVector vD,
+		   double dDScl,
+		   int iLab);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+};
+
+class DIMH : public DIMA
+{
+	DECLARE_DYNAMIC(DIMH)
+	DIMH();
+	DIMH(C3dVector vPt1,
+		  C3dVector vPt2,
+		  C3dVector vInsPt,
+		  C3dVector vO,
+		  C3dVector vN,
+		  C3dVector vD,
+		  double dDScl,
+		  int iLab);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+};
+
+
+
+class DIMV : public DIMA
+{
+	DECLARE_DYNAMIC(DIMV)
+	DIMV();
+	DIMV(C3dVector vPt1,
+		C3dVector vPt2,
+		C3dVector vInsPt,
+		C3dVector vO,
+		C3dVector vN,
+		C3dVector vD,
+		double dDScl,
+		int iLab);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+};
+
+class DIML : public DIMA
+{
+	DECLARE_DYNAMIC(DIML)
+	DIML();
+	DIML(CString sLText,
+		 C3dVector vPt1,
+		 C3dVector vPt2,
+		 C3dVector vInsPt,
+		 C3dVector vO,
+		 C3dVector vN,
+		 C3dVector vD,
+		 double dDScl,
+		 int iLab);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual void Colour(int iCol);
+};
+
+
+class DIMR : public DIMA
+{
+	DECLARE_DYNAMIC(DIMR)
+	DIMR();
+	DIMR(double dRad,
+		C3dVector vPt1,
+		C3dVector vPt2,
+		C3dVector vInsPt,
+		C3dVector vO,
+		C3dVector vN,
+		C3dVector vD,
+		double dDScl,
+		int iLab);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual void Colour(int iCol);
+};
+
+class DIMD : public DIMA
+{
+	DECLARE_DYNAMIC(DIMD)
+	DIMD();
+	DIMD(double dRad,
+		C3dVector vPt1,
+		C3dVector vPt2,
+		C3dVector vInsPt,
+		C3dVector vO,
+		C3dVector vN,
+		C3dVector vD,
+		double dDScl,
+		int iLab);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual void Build();
+	virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
+	virtual void Colour(int iCol);
 };
 
 //26/09/2016
@@ -1939,17 +2450,14 @@ class Symbol : public G_Object
 {
 DECLARE_DYNAMIC(Symbol)
 public:
-   Link* pL;
+   Link* pL = NULL;
    CvPt_Object* inPt;          //Insertion Point
    CvPt_Object* vCent;         //Centroid
-   double w;                   //symbol width
-   double h;                   //symbol height
-   int iSegs;
+   double w = 0;                   //symbol width
+   double h = 0;                   //symbol height
+   int iSegs = 0;
    Symbol();
-
-
    virtual ~Symbol();
-
    virtual void Create(int iLab,C3dVector inP,G_Object* Parrent);
    void addSeg(C3dVector pt1,C3dVector pt2);
    virtual C3dVector MinPt(C3dVector inPt);
@@ -1964,16 +2472,17 @@ public:
    virtual void HighLight(CDC* pDC);
    virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);  //use defualt gObject which uses getCentroid
    //virtual void SetTo(C3dVector cInVect);
-   //virtual void Transform(C3dMatrix TMAt);
-   //virtual void Translate(C3dVector vIn);
-   //virtual void Move(C3dVector vM);
-   //virtual void Serialize(CArchive& ar,int iV);
+   virtual void Transform(C3dMatrix TMAt);
+   virtual void Translate(C3dVector vIn);
+   virtual void Move(C3dVector vM);
+   virtual void Serialize(CArchive& ar,int iV);
    virtual C3dVector Get_Centroid();
+   virtual void ExportDXF(FILE* pFile);
    //virtual void S_Box(CPoint P1,CPoint P2,ObjList* pSel);
 };
 
-const int MAX_CVPTS = 300;
-const int MAX_CTPTS = 300;
+const int MAX_CVPTS = 1000;
+const int MAX_CTPTS = 1000;
 const int MAX_CVS = 200;
 const int MAX_LOOPCVS = 200;
 const int MAX_INT_LOOPS = 100;
@@ -2012,6 +2521,7 @@ public:
    BOOL DrawCPts;
    BOOL DrawNoCvs;
    virtual void Create(int iLab,G_Object* Parrent);
+   virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
    virtual void Clean();
    virtual void Info();
    virtual CString GetKnotString();
@@ -2049,7 +2559,7 @@ public:
    //Get all control points
    virtual void GetcPts(Vec <C3dVector> & Cpts);
    virtual void GetKnotVec(Vec<double>& U);
-   virtual int knotInsertion(double u, int r, Vec <C4dVector> & ncP,Vec <double> & ncU);
+   virtual int knotInsertion(double u, int r,  int &kk, Vec <C4dVector> & ncP,Vec <double> & ncU);
    virtual void refineKnotVector(Vec<double>& XVec,Vec <C4dVector> & P,Vec <double> & U);
    virtual double chordLengthParam(const Vec<C3dVector> & Q, Vec<double> &ub);
    virtual void knotAveraging(const Vec<double>& uk, int deg, Vec<double>& U);
@@ -2072,6 +2582,12 @@ public:
    virtual double getLen();
    virtual double CorrectW(double w);
    virtual void NullPointRef();
+   virtual CString GetName();
+   virtual BOOL IsClosed();
+   virtual int GetVarHeaders(CString sVar[]);
+   virtual int GetVarValues(CString sVar[]);
+   virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+   virtual void ExportDXF(FILE* pFile);
 };
 
 class NCurveOnSurf : public NCurve
@@ -2232,9 +2748,12 @@ public:
    double dRadius;
    C3dVector vNorm;
    C3dVector vCent;
+   C3dVector vR;
    NCircle();
    virtual void Create(C3dVector vN,C3dVector vC,double dRad,int iLab,G_Object* Parrent);
-   virtual void Create2(C3dVector vN,C3dVector vC,C3dVector vR,double dRad,int iLab,G_Object* Parrent);
+   virtual void Create2(C3dVector vN,C3dVector vC,C3dVector vRD,double dRad,int iLab,G_Object* Parrent);
+   virtual void Build();
+   virtual void DragUpdate(C3dVector inPt,C3dMatrix mWP);
    virtual void Serialize(CArchive& ar,int iV);
    virtual void Info();
    virtual G_Object* Copy(G_Object* Parrent);
@@ -2244,6 +2763,15 @@ public:
    virtual void Transform(C3dMatrix TMat);
    virtual void Reverse();
    virtual double CorrectW(double w);
+   //Rotate the circle definition (ctpoints) so point 0 aligns
+   //with U and set ws=0
+   //also update we to give same position
+   //USED FOR TRIM
+   void RotateToUS(double U);
+   virtual void ExportDXF(FILE* pFile);
+   virtual int GetVarHeaders(CString sVar[]);
+   virtual int GetVarValues(CString sVar[]);
+   virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 
@@ -2253,6 +2781,7 @@ DECLARE_DYNAMIC(NLine)
 public:
    NLine();
    virtual void Create(C3dVector vP1,C3dVector vP2,int iLab,G_Object* Parrent);
+   virtual void DragUpdate(C3dVector inPt, C3dMatrix mWP);
    virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
    virtual void HighLight(CDC* pDC);
    virtual C3dVector MinPt(C3dVector inPt);
@@ -2261,7 +2790,7 @@ public:
    virtual double MinDist(C3dVector inPt);
    virtual G_Object* Copy(G_Object* Parrent);
    virtual void Info();
-
+   virtual void ExportDXF(FILE* pFile);
 };
 
 class Surf_Ex1 : public G_Object
@@ -2471,26 +3000,34 @@ class Part : public G_Object
 //*****************************************************************************************
 
 
-class cFace : public G_Object
+class eFace : public G_Object
 {
 public:
 int NoVert;
-Pt_Object* pVertex[4];
-cFace();
-~cFace();
-BOOL isSame(cFace* inFace);
+Node* pVertex[4];
+eFace();
+~eFace();
+BOOL isSame(eFace* inFace);
+virtual C3dVector Get_Centroid();
+void RelTo(G_Object* pThis, ObjList* pList, int iType);
+virtual void Serialize(CArchive& ar, int iV);
 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 };
 
-class cLink : public G_Object
+class eEdge : public G_Object
 {
 public:
-Pt_Object* pVertex[2];
-cLink();
-~cLink();
-BOOL isSame(cLink* inLink);
-int isSameWithDir(cLink* inLink);
+Node* pVertex[2];
+eEdge();
+~eEdge();
+BOOL isSame(eEdge* inLink);
+void Info();
+void Reverse();
+int isSameWithDir(eEdge* inLink);
+void RelTo(G_Object* pThis, ObjList* pList, int iType);
+virtual void Serialize(CArchive& ar, int iV);
+virtual C3dVector Get_Centroid();
 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 };
@@ -2533,40 +3070,42 @@ public:
 	cLinkedList* fNodes;
 	c2dFront();
 	~c2dFront();
-	Pt_Object* isSegBet(int pL, int pH);
-	Pt_Object* GetNodeByGID(int iGID);
+	Node* isSegBet(int pL, int pH);
+	Node* GetNodeByGID(int iGID);
 	virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
 	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
 	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
 };
 
-class cLinkList : public G_Object
+class eEdgeList : public G_Object
 {
 public:
 int iNo;
-cLink* Head;
-cLink* pCur;
-cLinkList();
-~cLinkList();
-cLink* IsIn(cLink* inLink);
-void Add(cLink* inLink);
-void AddGp(int iN, cLink* inLink[]);
-void Remove(cLink* inLink);
+eEdge* Head;
+eEdge* pCur;
+eEdgeList();
+~eEdgeList();
+eEdge* IsIn(eEdge* inLink);
+void Add(eEdge* inLink);
+void AddIncOnly(eEdge* inLink);
+void AddGp(int iN, eEdge* inLink[]);
+void Remove(eEdge* inLink);
+void Purge();
 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 };
 
-class cFaceList : public G_Object
+class eFaceList : public G_Object
 {
 public:
 int iNo;
-cFace* Head;
-cFace* pCur;
-cFaceList();
-~cFaceList();
-cFace* IsIn(cFace* inFace);
-void Add(cFace* inFace);
-void Remove(cFace* inFace);
+eFace* Head;
+eFace* pCur;
+eFaceList();
+~eFaceList();
+eFace* IsIn(eFace* inFace);
+void Add(eFace* inFace);
+void Remove(eFace* inFace);
 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 };
@@ -2589,10 +3128,12 @@ public:
 G_Object* pObj;
 int SetID;
 virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
-virtual BOOL NodeIn(Pt_Object* pN);
+virtual BOOL NodeIn(Node* pN);
 virtual void ExportNAS(FILE* pFile);
 virtual void RelTo(G_Object* pThis,ObjList* pList,int iType);
 };
+
+
 
 class CoordSys : public G_Object
 {
@@ -2602,6 +3143,7 @@ C3dVector Origin;
 C3dVector DSP_Point;
 C3dMatrix mOrientMat;
 C3dMatrix DispMat;
+BOOL bG = FALSE; //flag to indicated the cys has beee set to global
 int CysType; // 1 rec,2 cyl,3sph
 int RID;
 double dScl;
@@ -2617,6 +3159,10 @@ virtual void Info ();
 virtual CString ToString ();
 virtual void ExportNAS(FILE* pFile);
 C3dMatrix GetTMat();
+virtual CString GetName();
+virtual int GetVarHeaders(CString sVar[]);
+virtual int GetVarValues(CString sVar[]);
+virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
 class E_Object : public G_Object
@@ -2632,39 +3178,53 @@ public:
      Res* pResV;
      Property* pPr;
      E_Object();
+
      virtual void Create(int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
      virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
      virtual G_Object* Copy(G_Object* Parrent);
      virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
-     virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
-	   virtual void ExportUNV(FILE* pFile);
+     virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
+	 virtual void ExportUNV(FILE* pFile);
      virtual void ExportNAS(FILE* pFile);
+	 virtual void OffsetsTransform(Mat& off, C3dVector vOff); //Offsets to global KE SYS
      virtual Mat Sample(int iNo);
-	   virtual Mat ShapeDer(Mat Points, int i);
-	   virtual Mat ShapeFun(Mat Points, int i);
-	   virtual Mat getCoords2d();
-	   virtual Mat getCoords3d();
-	   virtual Mat bmat(Mat& coord,
-                   Mat& deriv,
-				   int iD,
-				   int iDof);
+	 virtual Mat ShapeDer(Mat Points, int i);
+	 virtual Mat ShapeFun(Mat Points, int i);
+	 virtual Mat getCoords2d();
+	 virtual Mat getCoords3d();
+	 virtual Mat bmat(Mat& coord,
+                      Mat& deriv,
+				      int iD,
+				      int iDof);
 	 virtual Mat bmat2d(Mat& coord,
-                      Mat& deriv);
+                        Mat& deriv);
    virtual Mat GetElNodalMass(PropTable* PropsT,MatTable* MatT);
    virtual Mat GetThermalStrainMat3d(PropTable* PropsT,MatTable* MatT,double dT);
-   virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
+   virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
    virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
-	 virtual int MaxBW();
+   virtual int MaxBW();
    virtual Vec<int>GetSteerVec3d();
    virtual Vec<int>GetSteerVec1d();
-	 virtual BOOL NodeInEl(Pt_Object* pN);
-   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
+   virtual BOOL NodeInEl(Node* pN);
+   virtual void RepNodeInEl(Node* pThis,Node* pWith);
    virtual Mat KayMat(double K, int iD);
-	 virtual Mat DeeMat(double E, double v,int iD);
-	 virtual int noDof();
-	 virtual BOOL ChkNegJac();
-	 virtual int GetfaceList(cFace* Faces[6]);
-	 virtual int GetLinkList(cLink* Links[200]);
+   virtual Mat DeeMat(double E, double v,int iD);
+   virtual Mat DeeBM(double E, double v, int iD);
+   virtual Mat DeeSH(double E, double v, int iD);
+   virtual Mat BEE_BM_Recovery();
+   virtual Mat BEE_BB_Recovery();
+   virtual Mat BEE_TS_Recovery();
+   virtual int noDof();
+   //Transform nodal stiffness values from element local to global
+   virtual Mat KEToKGTransform();
+   virtual Mat KEToKGTransform2(C3dMatrix mEL);
+   virtual BOOL HasOffsets();
+   virtual void OffsetsToKG(PropTable* PropsT, Mat& off); //Offsets to global KE SYS
+   virtual void DispOffsets(PropTable* PropsT, Mat& disp);
+   virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
+   virtual BOOL ChkNegJac();
+   virtual int GetfaceList(eFace* Faces[6]);
+   virtual int GetLinkList(eEdge* Links[200]);
    virtual void Info();
    virtual G_Object* GetNode(int i);
    virtual C3dVector GetNodalCoords(int i);
@@ -2677,6 +3237,10 @@ public:
    virtual C3dVector GetFirstEdge();
    virtual double QualAspect();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetElCentriodVal();
+   virtual double GetPHI_SQ();
+   virtual void GetPinFlags(Vec<int>& PDOFS, int& iNoPINs);
+   virtual void PinFlgsToKE(Mat& KEL); //release DOF
 };
 
 
@@ -2687,12 +3251,13 @@ class E_Object38 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object38 )
 public:
+   E_Object38();
    ~E_Object38();
-   Pt_Object* pVertex[8];
+   Node* pVertex[8];
    virtual void Info();
-   virtual void Create(Pt_Object* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
+   virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Draw(CDC* pDC,int iDrawmode);
@@ -2702,8 +3267,8 @@ public:
    virtual C3dMatrix GetElSys();
    virtual void ExportUNV(FILE* pFile);
    virtual void ExportNAS(FILE* pFile);
-   virtual BOOL NodeInEl(Pt_Object* pN);
-   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
+   virtual BOOL NodeInEl(Node* pN);
+   virtual void RepNodeInEl(Node* pThis,Node* pWith);
    virtual Mat getCoords3d();
    virtual Mat Sample(int iNo);
    virtual Mat ShapeDer(Mat Points, int i);
@@ -2712,11 +3277,12 @@ public:
    virtual Vec<int>GetSteerVec1d();
    virtual int MaxBW();
    virtual int noDof();
-   virtual int GetfaceList(cFace* Faces[6]);
-   virtual int GetLinkList(cLink* Links[200]);
+   virtual int GetfaceList(eFace* Faces[6]);
+   virtual int GetLinkList(eEdge* Links[200]);
    virtual G_Object* GetNode(int i);
    virtual void Reverse();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetElCentriodVal();
    virtual CString GetName();
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
@@ -2728,11 +3294,12 @@ class E_Object36 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object36 )
 public:
+   E_Object36();
    ~E_Object36();
-   Pt_Object* pVertex[6];
-   virtual void Create(Pt_Object* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
+   Node* pVertex[6];
+   virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Draw(CDC* pDC,int iDrawmode);
@@ -2742,8 +3309,8 @@ public:
    virtual C3dMatrix GetElSys();
    virtual void ExportUNV(FILE* pFile);
    virtual void ExportNAS(FILE* pFile);
-   virtual BOOL NodeInEl(Pt_Object* pN);
-   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
+   virtual BOOL NodeInEl(Node* pN);
+   virtual void RepNodeInEl(Node* pThis,Node* pWith);
    virtual int noDof();
    virtual Mat ShapeFun(Mat Points, int i);
    virtual Mat ShapeDer(Mat Points, int i);
@@ -2752,16 +3319,20 @@ public:
    virtual  int MaxBW();
    virtual Vec<int> GetSteerVec3d();
    virtual Vec<int> GetSteerVec1d();
-   virtual int GetfaceList(cFace* Faces[6]);
-   virtual int GetLinkList(cLink* Links[200]);
+   virtual int GetfaceList(eFace* Faces[6]);
+   virtual int GetLinkList(eEdge* Links[200]);
    virtual G_Object* GetNode(int i);
    virtual void Reverse();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetElCentriodVal();
    virtual CString GetName();
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
    virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+   
 };
+
+
 
 class E_Object2 : public E_Object
 {
@@ -2769,16 +3340,16 @@ DECLARE_DYNAMIC(E_Object2)
 public:
   E_Object2();
   ~E_Object2();
-  Pt_Object* pVertex[2];
+  Node* pVertex[2];
   C3dVector vUp;
   int iCSYS;
   int iONID;
   int A;
   int B;
   int C;
-  virtual void Create(Pt_Object* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
+  virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
   virtual G_Object* Copy(G_Object* Parrent);
-  virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+  virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
   virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
   virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
   virtual void Draw(CDC* pDC,int iDrawmode);
@@ -2788,28 +3359,44 @@ public:
   void SetUpVec(C3dVector vIn);
   void SetSec(int iA,int iB,int iC);
   virtual void ExportUNV(FILE* pFile);
+  virtual CString ToString();
   virtual void ExportNAS(FILE* pFile);
   virtual void ExportUPVecs(FILE* pFile);
-  virtual BOOL NodeInEl(Pt_Object* pN);
-  virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
-  virtual int GetLinkList(cLink* Links[200]);
+  virtual BOOL NodeInEl(Node* pN);
+  virtual void RepNodeInEl(Node* pThis,Node* pWith);
+  virtual int GetLinkList(eEdge* Links[200]);
   virtual G_Object* GetNode(int i);
   virtual C3dMatrix GetElSys();
   virtual int noDof();
+  virtual int MaxBW();
+  virtual double getLen();
   virtual void Info();
   virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
-  virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
+  virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
   virtual Vec<int> GetSteerVec3d();
   virtual Vec<int> GetSteerVec1d();
   C3dMatrix GetSpringSys(CoordSys* pC);
   Mat GetSpringTMat(CoordSys* pCSYS);
   double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+  virtual double GetElCentriodVal();
   virtual CString GetName();
   virtual int GetVarHeaders(CString sVar[]);
   virtual int GetVarValues(CString sVar[]);
   virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
 };
 
+
+class E_Object2BUSH : public E_Object2
+{
+	DECLARE_DYNAMIC(E_Object2BUSH)
+	virtual int noDof();
+	virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
+	virtual Vec<int> GetSteerVec3d();
+};
+//THIS IS A ROD ELEMENT ONLY HAS AXIAL K
+//NOTE should also have Torsional K but is
+//currently missing
+//no offset and no pin flag
 class E_Object2R : public E_Object2
 {
 DECLARE_DYNAMIC(E_Object2R)
@@ -2822,12 +3409,12 @@ public:
   int iONID;
   int iDOFA;
   int iDOFB;
-
+  virtual void GetPinFlags(Vec<int> &PDOFS,int &iNoPINs);
   virtual void SetDOFStringA(CString sDOF);
   virtual void SetDOFStringB(CString sDOF);
-  virtual void Create(Pt_Object* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
+  virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
   virtual G_Object* Copy(G_Object* Parrent);
-  virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+  virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
   virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
   virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
   virtual void Draw(CDC* pDC,int iDrawmode);
@@ -2842,18 +3429,17 @@ public:
   virtual void ExportNAS(FILE* pFile);
   CString ToString();
   virtual void ExportUPVecs(FILE* pFile);
-  virtual BOOL NodeInEl(Pt_Object* pN);
-  virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
-  virtual int GetLinkList(cLink* Links[200]);
+  virtual BOOL NodeInEl(Node* pN);
+  virtual void RepNodeInEl(Node* pThis,Node* pWith);
+  virtual int GetLinkList(eEdge* Links[200]);
   virtual G_Object* GetNode(int i);
   C3dMatrix GetBeamTform();
   C3dMatrix GetBeamTformA();
   C3dMatrix GetBeamTformB();
   virtual void Transform(C3dMatrix TMat);
   virtual int noDof();
-  virtual int MaxBW();
   virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
-  virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
+  virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
   virtual Mat GetElNodalMass(PropTable* PropsT,MatTable* MatT);
   Mat GetThermalStrainMat3d(PropTable* PropsT,MatTable* MatT,double dT);
   virtual Vec<int> GetSteerVec3d();
@@ -2867,16 +3453,23 @@ class E_Object2B : public E_Object2R
 DECLARE_DYNAMIC(E_Object2B)
 public:
 E_Object2B();
+virtual CString ToString();
 virtual void ExportNAS(FILE* pFile);
 virtual int noDof();
+virtual BOOL HasOffsets();
+virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
 virtual Mat GetThermMat(PropTable* PropsT,MatTable* MatT);
-virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
 virtual Vec<int> GetSteerVec3d();
 virtual Vec<int> GetSteerVec1d();
+virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
 virtual G_Object* Copy(G_Object* Parrent);
-virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
 virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
 CString GetName();
+virtual int GetVarHeaders(CString sVar[]);
+virtual int GetVarValues(CString sVar[]);
+virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+void CalcDefStiffProps(double &ea, double& eiy, double& eiz, double& gj);
 };
 
 
@@ -2884,23 +3477,24 @@ class E_Object1 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object1 )
 public:
-   int iCID;
-   double dM;
-   double dX1;
-   double dX2;
-   double dX3;
-   double dI11;
-   double dI21;
-   double dI22;
-   double dI31;
-   double dI32;
-   double dI33;
+   int iCID=0;
+   CString sLab = "";
+   double dM = 0;
+   double dX1 = 0;
+   double dX2 = 0;
+   double dX3 = 0;
+   double dI11 = 0;
+   double dI21 = 0;
+   double dI22 = 0;
+   double dI31 = 0;
+   double dI32 = 0;
+   double dI33 = 0;
    E_Object1();
    ~E_Object1();
-   Pt_Object* pVertex;
-   virtual void Create(Pt_Object* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
+   Node* pVertex;
+   virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Draw(CDC* pDC,int iDrawmode);
@@ -2908,40 +3502,43 @@ public:
    virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
    virtual C3dVector Get_Centroid();
    virtual void ExportUNV(FILE* pFile);
-   virtual BOOL NodeInEl(Pt_Object* pN);
+   virtual BOOL NodeInEl(Node* pN);
    virtual G_Object* GetNode(int i);
+   virtual CString ToString();
    virtual void ExportNAS(FILE* pFile);
    virtual void Transform(C3dMatrix TMat);
-   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
+   virtual void RepNodeInEl(Node* pThis,Node* pWith);
    virtual Mat GetElNodalMass(PropTable* PropsT, MatTable* MatT);
    virtual Vec<int> GetSteerVec3d();
-   virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT);
+   virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL &bErr);
    virtual CString GetName();
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
    virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+   virtual void Info();
 };
 
 class E_Object3 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object3 )
 public:
-  
+   int iNoRemesh;	  //Added tempoary for tet mesh generation debugging 
    int iMCys;
    double MAng;
    double dZOFFS;
+   double PHI_SQ = 0;
    E_Object3();
    ~E_Object3();
-   Pt_Object* pVertex[3];
-   virtual void Create(Pt_Object* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);
+   Node* pVertex[3];
+   virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);  
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Draw(CDC* pDC,int iDrawmode);
    virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
    virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
-   virtual int GetfaceList(cFace* Faces[6]);
+   virtual int GetfaceList(eFace* Faces[6]);
    virtual C3dVector Get_Centroid();
    virtual void ExportUNV(FILE* pFile);
    virtual void ExportNAS(FILE* pFile);
@@ -2953,15 +3550,27 @@ public:
    Mat GetParticlePos();      //used for 2d MPM example
    Mat getCoords2d();
    Mat getCoords3d();
+   Mat getCoords_XEL();     //MIN3 formulation
    //Mat getCoords3d();
    virtual Vec<int> GetSteerVec3d();
    virtual Vec<int> GetSteerVec1d();
    int MaxBW();
-   virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT);
-   virtual BOOL NodeInEl(Pt_Object* pN);
-   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
+   
+   //BEE MATS Strain / Displacement
+   Mat TMEM1_BEE(int OPT);
+   Mat TPLT2_BEE_TS(int OPT, Vec<double>& XI);
+
+   virtual Mat BEE_BM_Recovery();
+   virtual Mat BEE_BB_Recovery();
+   virtual Mat BEE_TS_Recovery();
+   //MIN3 Membrane stiffness returns BIG_BM
+   Mat TMEM1_KE(int OPT, double AREA, double X2E, double X3E, double Y3E, Mat SHELL_A);
+   Mat TPLT2_KE(int OPT, double AREA, double X2E, double X3E, double Y3E, Mat SHELL_D, Mat SHELL_T);
+   virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
+   virtual BOOL NodeInEl(Node* pN);
+   virtual void RepNodeInEl(Node* pThis,Node* pWith);
    virtual int noDof();
-   virtual int GetLinkList(cLink* Links[200]);
+   virtual int GetLinkList(eEdge* Links[200]);
    virtual G_Object* GetNode(int i);
    virtual C3dVector Get_Normal();
    virtual void Info();
@@ -2974,6 +3583,7 @@ public:
    virtual void GetBoundingBox(C3dVector& vll,C3dVector& vur);
    virtual double QualAspect();
    virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   double GetElCentriodVal();
    //These were comented out not sure why
    //so we carefull
    void TranslateAVF(C3dVector vIn);
@@ -2983,17 +3593,21 @@ public:
    virtual int GetVarValues(CString sVar[]);
    virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
    double GetArea2d();
+   virtual Mat GetElNodalMass(PropTable* PropsT, MatTable* MatT);
+   virtual double GetPHI_SQ();
+   virtual BOOL HasOffsets();
+   virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
 };
 
 class E_CellS : public E_Object
 {
 DECLARE_DYNAMIC(E_CellS)
 public:
-Pt_Object* pVertex[5];
+Node* pVertex[5];
 ~E_CellS();
-virtual void Create(Pt_Object* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
+virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
 virtual G_Object* Copy(G_Object* Parrent);
-virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
 virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
 virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
 virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3001,70 +3615,91 @@ virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 virtual C3dVector Get_Centroid();
 virtual G_Object* GetNode(int i);
-virtual BOOL NodeInEl(Pt_Object* pN);
-virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
+virtual BOOL NodeInEl(Node* pN);
+virtual void RepNodeInEl(Node* pThis,Node* pWith);
 };
 
 class E_Object4 : public E_Object
 {
 DECLARE_DYNAMIC(E_Object4)
 public:
-     int iMCys;
-     double MAng;
-     double dZOFFS;
-     Pt_Object* pVertex[4];
-     ~E_Object4();
-	 virtual void Create(Pt_Object* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);	 
-     virtual G_Object* Copy(G_Object* Parrent);
-     virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
-     virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
-     virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
-     virtual void Draw(CDC* pDC,int iDrawmode);
-	 virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
-	 virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
+	int iMCys;
+	double MAng;
+	double dZOFFS;
+	double PHI_SQ = 0;
+	Node* pVertex[4];
+	E_Object4();
+	~E_Object4();
+	virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int inMCys, double inMAng, G_Object* Parrent, Property* inPr);	 
+	virtual G_Object* Copy(G_Object* Parrent);
+	virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
+	virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
+	virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
+	virtual void Draw(CDC* pDC,int iDrawmode);
+	virtual void OglDraw(int iDspFlgs,double dS1,double dS2);
+	virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
 	 //virtual void SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran);
 	 //virtual void HighLight(CDC* pDC);
 	 //virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);
-	 virtual C3dVector Get_Centroid();
-	 virtual void ExportUNV(FILE* pFile);
-   virtual void ExportNAS(FILE* pFile);
-	 virtual Mat Sample(int iNo);
-	 virtual Mat ShapeDer(Mat Points, int i);
-	 virtual Mat ShapeFun(Mat Points, int i);
-	 virtual Mat getCoords2d();
-   virtual Mat getCoords3d();
-	 virtual Mat bmatAxi(double& radius,
+	virtual C3dVector Get_Centroid();
+	virtual void ExportUNV(FILE* pFile);
+	virtual void ExportNAS(FILE* pFile);
+	virtual Mat Sample(int iNo);
+	virtual Mat ShapeDer(Mat Points, int i);
+	virtual Mat ShapeFun(Mat Points, int i);
+	virtual Mat getCoords2d();
+	virtual Mat getCoords3d();
+	virtual Mat bmatAxi(double& radius,
                          Mat& coord,
                          Mat& deriv,
                          Mat& fun);
-	 virtual int MaxBW();
-   virtual Mat E_Object4::GetStiffMat(PropTable* PropsT,MatTable* MatT);
-   virtual Mat E_Object4::GetStiffMat_Ex(PropTable* PropsT, MatTable* MatT);
-   Mat E_Object4::GetB_1pt(double &det);
-   virtual Vec<int>GetSteerVec3d();
-   virtual Vec<int> GetSteerVec3d_E();
-   virtual Vec<int>GetSteerVec1d();
-   virtual BOOL NodeInEl(Pt_Object* pN);
-   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
-	 virtual int noDof();
-	 virtual int GetfaceList(cFace* Faces[6]);
-	 virtual int GetLinkList(cLink* Links[200]);
-   virtual G_Object* GetNode(int i);
-   virtual C3dVector Get_Normal();
-   virtual void Info();
-   virtual CString ToString();
-   virtual void Reverse();
-   virtual C3dMatrix GetElSys();
-   virtual C3dMatrix GetElSys_Ex(Vec<int> &Steer, Vec<double> &Disp);
-   virtual C3dVector GetTestPt();
-   virtual C3dVector GetFirstEdge();
-   virtual double QualAspect();
-   virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
-   virtual CString GetName();
-   virtual int GetVarHeaders(CString sVar[]);
-   virtual int GetVarValues(CString sVar[]);
-   virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
-   double GetArea2d();
+	virtual int MaxBW();
+	Mat getCoords_XEL();
+	//MIN4 Membrane stiffness 
+	//UBROUTINE QMEM1 ( OPT, IORD, RED_INT_SHEAR, AREA, XSD, YSD, BIG_BM )
+	Mat QMEM1_KE(int OPT, double AREA, Vec<double> X2E, Vec<double>  X3E, Mat SHELL_A);
+	Mat QPLT2_KE(int OPT, double AREA, Vec<double> XSD, Vec<double>  YSD, Mat SHELL_D, Mat SHELL_T);
+	Mat QPLT2_BEE_TS(Mat PSH, Mat DPSHX, Mat DNXSHX, Mat DNYSHX);
+	Mat QPLT2_BEE_DD(Mat deriv); //Bending
+	Mat WARP_BMEAN(double& dWarped);
+	virtual Mat BEE_BM_Recovery();
+	virtual Mat BEE_BB_Recovery();
+	virtual Mat BEE_TS_Recovery();
+	//Constrained shape frunctions
+	void MIN4_SHPF(double SSI, double SSJ, Vec<double> XSD, Vec<double> YSD,
+		           Vec<double> &NXSH, Vec<double> &NYSH, Mat &DNXSHG, Mat &DNYSHG);
+	virtual Mat GetStiffMat(PropTable* PropsT,MatTable* MatT, BOOL bOpt, BOOL &bErr);
+	virtual Mat GetStiffMat_Ex(PropTable* PropsT, MatTable* MatT);
+	Mat GetB_1pt(double &det);
+	virtual Vec<int>GetSteerVec3d();
+	virtual Vec<int> GetSteerVec3d_E();
+	virtual Vec<int>GetSteerVec1d();
+	virtual BOOL NodeInEl(Node* pN);
+	virtual void RepNodeInEl(Node* pThis,Node* pWith);
+	virtual int noDof();
+	virtual int GetfaceList(eFace* Faces[6]);
+	virtual int GetLinkList(eEdge* Links[200]);
+	virtual G_Object* GetNode(int i);
+	virtual C3dVector Get_Normal();
+	virtual void Info();
+	virtual CString ToString();
+	virtual void Reverse();
+	virtual C3dMatrix GetElSys();
+	virtual C3dMatrix GetElSys_Ex(Vec<int> &Steer, Vec<double> &Disp);
+	virtual C3dVector GetTestPt();
+	virtual C3dVector GetFirstEdge();
+	virtual double QualAspect();
+	virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+	virtual double GetElCentriodVal();
+	virtual CString GetName();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
+	double GetArea2d();
+	virtual Mat GetElNodalMass(PropTable* PropsT, MatTable* MatT);
+	virtual double GetPHI_SQ();
+	virtual BOOL HasOffsets();
+	virtual BOOL GetOffset(PropTable* PropsT, int iNode, C3dVector& vOff);
 };
 
 
@@ -3072,11 +3707,12 @@ class E_Object34 : public E_Object
 {
 DECLARE_DYNAMIC( E_Object34 )
 public:
+   E_Object34();
    ~E_Object34();
-   Pt_Object* pVertex[4];
-   virtual void Create(Pt_Object* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
+   Node* pVertex[4];
+   virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);   
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Info();
@@ -3090,8 +3726,8 @@ public:
    virtual C3dMatrix GetElSys();
    virtual void ExportUNV(FILE* pFile);
    virtual void ExportNAS(FILE* pFile);
-   virtual BOOL NodeInEl(Pt_Object* pN);
-   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
+   virtual BOOL NodeInEl(Node* pN);
+   virtual void RepNodeInEl(Node* pThis,Node* pWith);
    virtual Mat getCoords3d();
    virtual Mat Sample(int iNo);
    virtual Mat ShapeDer(Mat Points, int i);
@@ -3100,8 +3736,8 @@ public:
    virtual Vec<int>GetSteerVec1d();
    virtual int MaxBW();
    virtual int noDof();
-   virtual int GetfaceList(cFace* Faces[6]);
-   virtual int GetLinkList(cLink* Links[200]);
+   virtual int GetfaceList(eFace* Faces[6]);
+   virtual int GetLinkList(eEdge* Links[200]);
    virtual G_Object* GetNode(int i);
    virtual C3dVector GetNodalCoords(int i);
    virtual void Reverse();
@@ -3112,7 +3748,8 @@ public:
    double area(int n1, int n2, int n3);
    double longEdge();
    double TetCollapse();
-   double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetCentriodVal(int iDof, Vec<int> &Steer, Vec<double> &Disp);
+   virtual double GetElCentriodVal();
    virtual CString GetName();
    virtual int GetVarHeaders(CString sVar[]);
    virtual int GetVarValues(CString sVar[]);
@@ -3120,20 +3757,74 @@ public:
 };
 
 
+class E_Object310 : public E_Object
+{
+	DECLARE_DYNAMIC(E_Object310)
+public:
+	E_Object310();
+	~E_Object310();
+	Node* pVertex[10];
+	virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
+	virtual G_Object* Copy(G_Object* Parrent);
+	virtual G_Object* Copy2(G_Object* Parrent, Node* pInVertex[MaxSelNodes], int inPID, int inMID, int inPIDunv);
+	virtual G_Object* CopyAppend(int iSInd, ME_Object* Target, ME_Object* Source);
+	virtual void Serialize(CArchive& ar, int iV, ME_Object* MESH);
+	virtual void Info();
+	virtual void Draw(CDC* pDC, int iDrawmode);
+	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	//virtual void SetToScr(C3dMatrix* pModMat,C3dMatrix* pScrTran);
+	//virtual void HighLight(CDC* pDC);
+	//virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);
+	virtual C3dVector Get_Centroid();
+	virtual C3dMatrix GetElSys();
+	virtual void ExportUNV(FILE* pFile);
+	virtual void ExportNAS(FILE* pFile);
 
+	virtual BOOL NodeInEl(Node* pN);
+	virtual void RepNodeInEl(Node* pThis, Node* pWith);
+	virtual Mat getCoords3d();
+	virtual Mat Sample(int iNo);
+	virtual Mat ShapeDer(Mat Points, int i);
+	virtual Mat ShapeFun(Mat Points, int i);
+	virtual Vec<int> GetSteerVec3d();
+	virtual Vec<int>GetSteerVec1d();
+	virtual int MaxBW();
+	virtual int noDof();
+	virtual int GetfaceList(eFace* Faces[6]);
+	virtual int GetLinkList(eEdge* Links[200]);
+	virtual G_Object* GetNode(int i);
+	virtual C3dVector GetNodalCoords(int i);
+	virtual void Reverse();
+	virtual double GetCharSize();
+	double GetTETHeight(C3dVector vFCent);
+	virtual void GetBoundingBox(C3dVector& vll, C3dVector& vur);
+	double height(int n1, int n2, int n3, int p);
+	double area(int n1, int n2, int n3);
+	double longEdge();
+	double TetCollapse();
+	virtual double GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp);
+	virtual double GetElCentriodVal();
+	virtual CString GetName();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+};
 
+//RBE2 Element
 class E_ObjectR : public E_Object
 {
 DECLARE_DYNAMIC( E_ObjectR)
 public:
-   Pt_Object* pVertex[200];
-
+   Node* pVertex[MaxSelNodes];
+   Vec<double> dTemps; //Thermal strains
    int iDOF;
    double dALPHA;
    E_ObjectR();
-   virtual void Create(Pt_Object* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
+   ~E_ObjectR();
+   virtual void Create(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, G_Object* Parrent, Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void Draw(CDC* pDC,int iDrawmode);
@@ -3141,13 +3832,32 @@ public:
    virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
    virtual C3dVector Get_Centroid();
    virtual void ExportUNV(FILE* pFile);
+   virtual CString ToString();
    virtual void ExportNAS(FILE* pFile);
-   virtual BOOL NodeInEl(Pt_Object* pN);
-   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
-   int GetLinkList(cLink* Links[200]);
+   virtual BOOL NodeInEl(Node* pN);
+   virtual void RepNodeInEl(Node* pThis,Node* pWith);
+   int GetLinkList(eEdge* Links[200]);
    virtual G_Object* GetNode(int i);
    virtual void SetDOFString(CString sDOF);
    virtual void Info();
+   virtual CString GetName();
+   virtual int GetVarHeaders(CString sVar[]);
+   virtual int GetVarValues(CString sVar[]);
+   virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+   //24/02/2024 PSEUDO RBE2 REPRESENTED WITH STIFF BARS
+   virtual int noDof();
+   virtual int MaxBW();
+   virtual Vec<int> GetSteerVec1d();
+   virtual Vec<int> GetSteerVec3d();
+   virtual Mat GetThermMat(PropTable* PropsT, MatTable* MatT);
+   virtual Mat GetStiffMat(PropTable* PropsT, MatTable* MatT, BOOL bOpt, BOOL& bErr);
+   virtual Mat GetThermalStrainMat3d(PropTable* PropsT, MatTable* MatT, double dT);
+   virtual double GetCentriodVal(int iDof, Vec<int>& Steer, Vec<double>& Disp);
+   virtual double GetElCentriodVal();
+   virtual CString GetDofRelString();
+   virtual void GetPinFlags(Vec<int>& PDOFS, int& iNoPINs);
+
+
 };
 
 
@@ -3155,16 +3865,16 @@ class E_ObjectR2 : public E_ObjectR
 {
 DECLARE_DYNAMIC(E_ObjectR2)
 public:
-   Pt_Object* pVertex[2];
+   Node* pVertex[2];
   double dALPHA;
   int iCNA;
   int iCNB;
   int iCMA;
   int iCMB;
    E_ObjectR2();
-   virtual void Create(Pt_Object* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
+   virtual void Create(Node* pInVertex[100], int iLab,int iCol,int iType,int iPID,int iMat,int iNo,G_Object* Parrent,Property* inPr);
    virtual G_Object* Copy(G_Object* Parrent);
-   virtual G_Object* Copy2(G_Object* Parrent,Pt_Object* pInVertex[200],int inPID,int inMID,int inPIDunv);
+   virtual G_Object* Copy2(G_Object* Parrent,Node* pInVertex[MaxSelNodes],int inPID,int inMID,int inPIDunv);
    virtual G_Object* CopyAppend(int iSInd,ME_Object* Target,ME_Object* Source);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
    virtual void ExportUNV(FILE* pFile);
@@ -3178,13 +3888,13 @@ public:
    virtual void OglDrawW(int iDspFlgs,double dS1,double dS2);
    virtual void Draw(CDC* pDC,int iDrawmode);
    virtual C3dVector Get_Centroid();
-   virtual BOOL NodeInEl(Pt_Object* pN);
-   virtual void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
+   virtual BOOL NodeInEl(Node* pN);
+   virtual void RepNodeInEl(Node* pThis,Node* pWith);
 };
 
 const int MAX_MATS=1000000;
-const int MAX_ENTS=1000000;
-const int MAX_FESIZE=1000000;
+const int MAX_ENTS=5000000;
+const int MAX_FESIZE=5000000;
 
 
 class Table : public CObject
@@ -3192,14 +3902,17 @@ class Table : public CObject
 DECLARE_DYNAMIC(Table)
 public:
 Table();
+~Table();
 Entity* pEnts[MAX_ENTS];
 int iNo;
+virtual void DeleteAll();
+void Delete(Entity* pO);
 virtual void AddItem(Entity* pIn);
 virtual Entity* GetItem(int iID);
 virtual int NextID();
 virtual void ListAll();
 virtual void Serialize(CArchive& ar,int iV);
-virtual void ExportNAS(FILE* pF);
+virtual void ExportNAS(FILE* pF, int iFileNo);
 virtual BOOL Exists(int iPID);
 };
 
@@ -3295,10 +4008,16 @@ class ME_Object : public G_Object
 {
 DECLARE_DYNAMIC(ME_Object)
 public:
+
    ME_Object();
    ~ME_Object();
-   cFaceList* FcList;
-   cLinkList* LkList;
+   //Include Nastran files try out 15/04/2023
+   int iFileNo = -1;
+   CString sFiles[200];
+   eFaceList* FcList;
+   eEdgeList* LkList;
+   CvPt_Object BBox[8]; //bounding box
+   int iIntID; //Internal ID
    int iNdNo;				  //No of Nodes
    int iElNo;//No of Elems	
    int iBCLDs;
@@ -3306,6 +4025,9 @@ public:
    int iNodeLab;
    int iElementLab;
    int iCYSLab;
+   int iNodeMinLab;
+   int iElementMinLab;
+   int iCYSMinLab;
    double dScale;
    double dScaleVec;
    double dResFactor; //Factor for animation
@@ -3323,6 +4045,7 @@ public:
    int iNoBCs;
    int iCurTSet;
    int iNoTSets;
+   void LabGaps(int iGap);
    cLinkedList* LCS[MAX_SETS];
    cLinkedListB* BCS[MAX_SETS];
    cLinkedListT* TSETS[MAX_SETS];
@@ -3384,30 +4107,33 @@ public:
    CString sName;
    C3dMatrix TransMat;
    CoordSys* pSys[MAX_FESIZE];     //Cys
-   Pt_Object* pNodes[MAX_FESIZE];  //Nodes
+   Node* pNodes[MAX_FESIZE];  //Nodes
    E_Object* pElems[MAX_FESIZE];   //Elements
    BCLD* pBCLDs[MAX_FESIZE];
+   void IncludeToGroup(int iF, ObjGp* Group);
+   void CoordToGlocal();
    void UpdatePropRef(PropTable* pT);
    ME_Object* GetMesh();    //GetPtr to this
-
+   E_Object* GetShellFromNodes(int n1, int n2, int n3);
    int NodeToGlobal(C3dVector &vRet,int iDef);
+   void GlobalToLocal(C3dVector& vRet, int iDef);
    C3dVector CartToCylCYS(CoordSys* pCy, C3dVector pP);
-   int VecToGlobal(Pt_Object* pN,C3dVector &vRet,int iDef);
-   Pt_Object* AddNode(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut);
-   E_Object* AddEl2(int pVnode[200], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C,int iMatCys,double dMatAng);
-   Pt_Object* GetNode(int iRLab); 
+   int VecToGlobal(Node* pN,C3dVector &vRet,int iDef);
+   Node* AddNode(C3dVector InPt, int iLab,int i2,int i3, int iC,int iDef,int iOut);
+   E_Object* AddEl2(int pVnode[MaxSelNodes], int iLab,int iCol,int iType,int iPID,int iMat, int iNoNodes,int A,int B,int C,int iMatCys,double dMatAng);
+   Node* GetNode(int iRLab); 
    E_Object* GetElement(int iRLab);
 
    virtual G_Object* GetObj(int iType,int iLab);
    //Elplicitly add an element directly
    void AddElEx(E_Object* pEl);
-   E_Object* AddEl(Pt_Object* pInVertex[200], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int iA, int iB, int iC, BOOL AddDisp, int iMatCys, double dMatAng);
+   E_Object* AddEl(Node* pInVertex[MaxSelNodes], int iLab, int iCol, int iType, int iPID, int iMat, int iNo, int iA, int iB, int iC, BOOL AddDisp, int iMatCys, double dMatAng);
    BOOL CanDeleteEl(E_Object* pEl);
    BOOL DeleteEl(E_Object* pEl);
    BOOL DeleteCys(CoordSys* pS);
    BOOL DeleteBC(BCLD* pS);
-   BOOL DeleteNd(Pt_Object* pN);
-   C3dMatrix GetNodalSys(Pt_Object* pN);
+   BOOL DeleteNd(Node* pN);
+   C3dMatrix GetNodalSys(Node* pN);
    virtual void Create(CString inName,G_Object* Parrent,int iLab);
    virtual void Info();
    void BuildNodeList();
@@ -3427,21 +4153,28 @@ public:
    virtual G_ObjectD SelDist(CPoint InPT,Filter FIL);
    void Append(ME_Object* pMexh,int iNInc,int iEInc);
    void ExportUNV(FILE* pFile,SecTable* pS);
-   void ExportNAS(FILE* pFile,SecTable* pS);
+   void ExportSTL(CString sFileName);
+   void ImportSTL(CString sFileName);
+   void ExportNASExec(FILE* pFile, SecTable* pS);
+   void ExportNASCase101(FILE* pFile, SecTable* pS);
+   void ExportNAS_SETS(FILE* pFile, SecTable* pS, int iFileNo);
+   void ExportNAS(FILE* pFile,SecTable* pS,int iFileNo);
    void ExportRes(FILE* pFile);
    void ExportSec(FILE* pFile,int id,CString Name, double w,double h,double t);
    virtual C3dVector Get_Centroid();
    int GetMeshYExt();
    int GetNoNode(int iType);
-   G_Object* AddFluxQ(Pt_Object* pInNode,double inT,int inSetID);
-   G_Object* AddTemperatureBC(Pt_Object* pInNode,double inT,int inSetID);
+   G_Object* AddFluxQ(Node* pInNode,double inT,int inSetID);
+   G_Object* AddTemperatureBC(Node* pInNode,double inT,int inSetID);
    G_Object* AddAccel(E_Object* pInE,C3dVector vA,int inSetID);
    G_Object* AddRotAccel(E_Object* pE, C3dVector vAxisD, C3dVector vAxisC, double dw, int inSetID);
-   G_Object* AddTemperature(E_Object* pInE,double inT,int inSetID);
-   G_Object* AddForce(Pt_Object* pInNode,C3dVector inF,int inSetID);
-   G_Object* AddMoment(Pt_Object* pInNode,C3dVector inF,int inSetID);
+   G_Object* AddTemperature(Node* pN,double inT,int inSetID);
+   G_Object* AddTempD(double inT, int inSetID);
+   G_Object* AddGRAV(int inSetID, int iCID, double dScl, C3dVector vV);
+   G_Object* AddForce(Node* pInNode,C3dVector inF,int inSetID);
+   G_Object* AddMoment(Node* pInNode,C3dVector inF,int inSetID);
    G_Object* AddPressure(E_Object* pInE,C3dVector inF,int inSetID);
-   G_Object* AddRestraint(Pt_Object* pInNode,							  BOOL xon,
+   G_Object* AddRestraint(Node* pInNode,							  BOOL xon,
 								  BOOL yon,
 								  BOOL zon,
 								  BOOL rxon,
@@ -3459,16 +4192,24 @@ int LocalResCount();
 void LocalRes(int neq,Vec<int> &Steer,Vec<double> &KMA);
 void GenLocalResraints(Mat *KM,Vec<int> *G, int &iELCnt);
 void LocalResIter(Restraint* pR,Vec<int> &SteerT,Mat &KMAT,Vec<int> &SteerB,Mat &KMAB);
-Vec<double> GetForceVec(cLinkedList* pLC,int neq);
+void GetForceVec(cLinkedList* pLC,int neq, Vec<double>& FVec);
 Vec <double> GetTempVec(cLinkedList* pTS,int neq);
 void ReportQResultant(Vec<double> &QVec);
 void ReportFResultant(Vec<double> &FVec);
 void GetPressureLoads(cLinkedList* pLC,int neq,Vec<double> &FVec);
 void BuildForceVector(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,cLinkedList* pTC,int neq,Vec<double> &FVec);
 void GetAccelLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pLC,int neq,Vec<double> &FVec);
+
+void GetGRAVLoads(PropTable* PropsT, MatTable* MatT, GRAV* pGrav, int neq, Vec<double>& FVec);
+
+
 void GetRotAccelLoads(PropTable* PropsT, MatTable* MatT, cLinkedList* pLC, int neq, Vec<double> &FVec);
 void GetThermalLoads(PropTable* PropsT,MatTable* MatT,cLinkedList* pTC,int neq,Vec<double> &FVec);
-void ZeroThermalStrains();
+BOOL TSEThasTEMPD(cLinkedList* pTC, double& defT);
+GRAV* LSEThasGRAV(cLinkedList* pLC);
+cLinkedList* TSetNodaltoElement(cLinkedList* pTC_Nodal, double defT);
+void ZeroThermalStrains(double dVal);
+void SetDefNodeTemp(double dVal);
 void Test(PropTable* PropsT,MatTable* MatT);
 void PrintTime(CString cS);
 void ZeroDOF();
@@ -3483,40 +4224,49 @@ void banred(Vec<double> &bk,int neq);
 void bacsub(Vec<double> &bk, Vec<double> &Loads);
 void RadiationLoss(Vec<int> &Steer, Vec<double> &T, Vec<double> &Q);
 double GetDisp(int iDof,Vec<int> &Steer,Vec<double> &Disp);
+Mat GetNodalDispVec(E_Object* pE, Vec<int>& Steer, Vec<double>& Disp);
 void Displacements(int iLC, CString sSol, CString sStep, Vec<int> &Steer,Vec<double> &Disp);
 void Temperatures(int iLC,CString sSol,CString sStep,Vec<int> &Steer,Vec<double> &Disp);
 void TempBCSet(int iLC, CString sSol, CString sStep, Vec<int> &Steer, Vec<double> &Disp);
 void TranslationalSpringForces(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
-void StressesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
+void ForcesRod(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp);
+void ForcesBUSH(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp);
+void ForcesBeam(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
+ResSet* Create2dForceResSet(CString sTitle, int iLC, CString sStep, CString sSol);
 ResSet* Create2dStressResSet(CString sTitle, int iLC, CString sStep, CString sSol);
 ResSet* Create2dStrainResSet(CString sTitle, int iLC, CString sStep, CString sSol);
 void Add2dStressRes(ResSet* pSSet, int ID, Mat Res, Mat ResZ1, Mat ResZ2);
 void Stresses2d(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
+void RecoverShell(int iLC, CString sSol, CString sStep, PropTable* PropsT, MatTable* MatT, Vec<int>& Steer, Vec<double>& Disp);
 void Stresses3d(int iLC, CString sSol, CString sStep, PropTable* PropsT,MatTable* MatT,Vec<int> &Steer,Vec<double> &Disp);
-BOOL NodeInEl(Pt_Object* pN);
+BOOL NodeInEl(Node* pN);
 BOOL ElemInBCSet(E_Object* pN);
-BOOL NodeInBCSet(Pt_Object* pN);
-int  MaxDof(Pt_Object* pN);
+BOOL NodeInBCSet(Node* pN);
+int  MaxDof(Node* pN);
 BOOL bDrawN;
 BOOL bDrawCYS;
 void BuildLinkList();
-BOOL isFaceDeletable(cFace* inFace);
-BOOL isLinkDeletable(cLink* inLink);
+BOOL isFaceDeletable(eFace* inFace);
+BOOL isLinkDeletable(eEdge* inLink);
 virtual void S_Box(CPoint P1,CPoint P2,ObjList* pSel);
 virtual void S_Sel(int iT,ObjList* pSel);
 CoordSys* AddSys(C3dVector Orig,C3dMatrix RMat,int iRID,int iTp, int iLab, int iC);
 CoordSys* GetSys(int iLab);
 void CNodesMerge(double dTol);
-void RepNodeInEl(Pt_Object* pThis,Pt_Object* pWith);
+void RepNodeInEl(Node* pThis,Node* pWith);
 ObjList* CNodesMerge2(double dTol,BOOL UpLab,BOOL bDel);
-Pt_Object* GetClosestNode(Pt_Object* pIn,double* dMinDist);
-Pt_Object* GetClosestNode2(C3dVector pIn, double &dMinDist);
+Node* GetClosestNode(Node* pIn,double* dMinDist);
+Node* GetClosestNode2(C3dVector pIn, double &dMinDist);
 void GetClosestNodes(C3dVector pTrg,ObjList* pRes,double dTol);
-int GetNodeInd(Pt_Object* pThisNode);
+int GetNodeInd(Node* pThisNode);
 void ExportGroups(FILE* pFile);	 
 ResSet* GetResultsSet(int iSet);
 void NullResults();
 void DeleteAllResults();
+void ResEnvMin(CString sSeq[], int iNo);
+void ResEnvMax(CString sSeq[], int iNo);
+void ResSetDivInTo(CString sSeq, double dS);
+void ResSetScale(CString sSeq, double dS);
 void PostElResScalar(ResSet* pRes,int iVar,int iOpt,float &fMax,float &fMin);
 void PostElResDef(ResSet* pRes,int iVar,float &fMax,float &fMin);
 void DeleteResVectors();
@@ -3525,11 +4275,18 @@ void SetColourBar(float fMax,float fMin);
 void BuildDeromedVecs();
 void DeleteDeromedVecs();
 void AddOUGRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
-void AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
+void AddOAG1Res(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
+void AddOQMRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
 void AddOEFRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
+void AddOEFResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);  
 void AddOES1Res(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
+void AddOES1ResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
 void AddOSTRRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
+void AddOSTRResF(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dF);
 void AddOESNRes(int Vals[],int iCnt,CString sTitle,CString sSubTitle,CString inName);
+void AddOESResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
+void AddOSTRResR(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
+void AddOSTRFCPXRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName, double dFreq);
 void AddONRGRes(int Vals[], int iCnt, CString sTitle, CString sSubTitle, CString inName);
 void ListResSets();
 void ListVecSets();
@@ -3539,12 +4296,20 @@ void SetDefScale(double dS);
 void SetDefScaleVec(double dS);
 void SetCurrentResSet(int iRS,int iRV,int iOPT);
 void WriteResHead(int iDspFlgs,float dW,float dH);
-void ResListRespData(int iLC, int iEnt);
+void ResListRespData(int iEnt);
+void ResLabRespItems();
+void ResListRespDataFull(int iEnt);
 C3dVector EigenVector3d(int iEID, C3dVector rX, C3dVector rY, C3dVector rZ, double lambda);
 C3dVector EigenVector2d(int iEID, C3dVector rX, C3dVector rY, double lambda);
 void CalcPrinStress(double XX,double YY,double ZZ,
                     double XY,double YZ,double XZ,
                     double &P1,double &P2,double &P3);
+virtual void GetBoundingBox(C3dVector& vll, C3dVector& vur);
+virtual CString GetName();
+virtual int GetVarHeaders(CString sVar[]);
+virtual int GetVarValues(CString sVar[]);
+virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+
 };
 
 
@@ -3976,10 +4741,10 @@ public:
    C3dVector DSP_Point;
    C3dVector Point;
 
-   virtual void Create(G_Object* pInE,
-	                     G_Object* Parrent,
-					             double inV,
-					             int inSetID);
+   virtual void Create(G_Object* pInN,
+	                   G_Object* Parrent,
+					   double inV,
+					   int inSetID);
 
    virtual void SetToScr(C3dMatrix* pModMat, C3dMatrix* pScrTran);
    virtual void Serialize(CArchive& ar,int iV,ME_Object* MESH);
@@ -4107,6 +4872,44 @@ virtual int GetVarValues(CString sVar[]);
 virtual void PutVarValues(PropTable* PT,int iNo, CString sVar[]);
 };
 
+//Borh TEMPD and GRAV nastran cards fall out sid the way 
+//m3d is designed so have to make them work
+class TEMPD : public BCLD
+{
+	DECLARE_DYNAMIC(TEMPD)
+	C3dVector Point;
+	double dTempD;				//defualt temperature
+	virtual void Create(C3dVector vC, G_Object* Parrent, int SetID, double dTIn);
+	virtual void Serialize(CArchive& ar, int iV, ME_Object* MESH);
+	virtual void ExportNAS(FILE* pFile);
+	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual C3dVector Get_Centroid();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+};
+
+class GRAV : public BCLD
+{
+	DECLARE_DYNAMIC(GRAV)
+	C3dVector Point;
+	int iCID;
+	double dScl;
+	C3dVector vV;
+
+	virtual void Create(C3dVector vC,G_Object* Parrent, int inSID, int inCID, double indScl, C3dVector invV);
+	virtual void Serialize(CArchive& ar, int iV, ME_Object* MESH);
+	virtual void ExportNAS(FILE* pFile);
+	virtual void OglDraw(int iDspFlgs, double dS1, double dS2);
+	virtual void OglDrawW(int iDspFlgs, double dS1, double dS2);
+	virtual C3dVector Get_Centroid();
+	virtual int GetVarHeaders(CString sVar[]);
+	virtual int GetVarValues(CString sVar[]);
+	virtual void PutVarValues(PropTable* PT, int iNo, CString sVar[]);
+};
+
+
 
 class Restraint : public BCLD
 {
@@ -4146,12 +4949,20 @@ public:
 };
 
 
+
+
+
+
+
+
 // Results Vector Display Object
 class ResultsVec : public G_Object
 {
 	DECLARE_DYNAMIC(ResultsVec)
 public:
+
 	int iType; //
+	vector<int> vector_name;
 	C3dVector DSP_Point;
 	C3dVector Point;
 	C3dVector Vector;
@@ -4168,21 +4979,36 @@ public:
 	//virtual void HighLight(CDC* pDC);
 };
 
-
-
-
-//************************************************************************
-//   D E L A U N A Y  TRIANGULATION
-//************************************************************************
-class Facest3
+// Graph Object
+// first class to use vector objevt
+class Graph : public CObject
 {
+	DECLARE_DYNAMIC(Graph)
 public:
-C3dVector* pV[3];
-C3dVector vC;
-double CirR;
-
-Facest3(C3dVector* v1,C3dVector* v2,C3dVector* v3);
+	int iCol=0;
+	CString	sTitle;
+	CString	sSubTitle;
+	CString sResType;
+	CString sEntID;
+	CString	sVar;
+	float GminX;
+	float GmaxX;
+	float GminY;
+	float GmaxY;
+	vector <float> fx;
+	vector <float> fy;
+	Graph();
+	~Graph();
+	float GetMaxfx();
+	float GetMinfx();
+	float GetMaxfy();
+	float GetMinfy();
+	void genMaxMin();
+	void List();
 };
+
+
+
 
 //Class for storing nastran fields
 const int MAX_FIELDS=5000;
@@ -4200,58 +5026,4 @@ BOOL AddLn(CString sStr);
 void Read(FILE* pFile,CString& sLine,CString& sLineN);
 };
 
-const int MAX_TRI=1000;
 
-class Trianguation
-{
-public:
-Facest3* Tri[MAX_TRI];
-int iNo;
-Trianguation();
-void AddTriangle(C3dVector* v1,C3dVector* v2,C3dVector* v3);
-};
-
-class Delaunay2d
-{
-Trianguation Tris;
-C3dVector Nodes[MAX_TRI];
-int iNo;
-Delaunay2d();
-void AddPt(double x,double y,double z);
-};
-
-
-//***************************************************
-// 2d Material Point Method State Variable
-// 06/03/2019
-//***************************************************
-class MPMVar2d
-{
-public:
-  MPMVar2d();
-  ~MPMVar2d();
-  int Pid;           //Particle ID
-  Pt_Object* pNode;
-  int Eid;           //Base element ID
-  int BCellid;       //Back groud grid ID (Euler Cell ID)
-  double dMp;        //Particle Mass
-  double dVol;       //Particle Volume
-  double dVol0;       //Particle Volume
-  Mat dvFp;          //Deformation gradient  
-  Mat ds;            //Stress
-  Mat deps;          //Strain
-  Mat dVp;           //Velocity
-  Mat dXp;           //Position
-};
-
-class Ndata
-{
-public:
-  Ndata();
-  ~Ndata();
-  double nMass;
-  void Reset();
-  Mat nMomentum;
-  Mat nIForce;
-  Mat nEforce;
-};
