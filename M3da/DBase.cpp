@@ -17704,17 +17704,17 @@ void NASReadSPC(NasCard& oC,
 	pN = pM->GetNode(iND);
 	if ((pN != nullptr) && (pBCSET != nullptr))
 	{
-		if (sDOF.Find("1", 0))
+		if (sDOF.Find("1", 0) != -1)
 			xon = TRUE;
-		if (sDOF.Find("2", 0))
+		if (sDOF.Find("2", 0) != -1)
 			yon = TRUE;
-		if (sDOF.Find("3", 0))
+		if (sDOF.Find("3", 0) != -1)
 			zon = TRUE;
-		if (sDOF.Find("4", 0))
+		if (sDOF.Find("4", 0) != -1)
 			rxon = TRUE;
-		if (sDOF.Find("5", 0))
+		if (sDOF.Find("5", 0) != -1)
 			ryon = TRUE;
-		if (sDOF.Find("6", 0))
+		if (sDOF.Find("6", 0) != -1)
 			rzon = TRUE;
 		G_Object* cAddedR = pM->AddRestraint(pN, xon, yon, zon, rxon, ryon, rzon, iID);
 
