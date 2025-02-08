@@ -279,6 +279,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
  Edit2=&m_Input.Edit2;
  Edit3=&m_Input.Edit3;
 
+ m_Input.EnableDocking(CBRS_ALIGN_ANY);
  DockPane(&m_Input);
 
  m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
