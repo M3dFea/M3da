@@ -308,7 +308,7 @@ DBase::~DBase()
 	DB_ObjectCount = 0;
 	if (pDragObj != nullptr)
 	   delete (pDragObj);
-	AfxOleUnlockApp();
+	//AfxOleUnlockApp();
 }
 
 
