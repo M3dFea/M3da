@@ -3,11 +3,11 @@
 /* this ALWAYS GENERATED file contains the definitions for the interfaces */
 
 
- /* File created by MIDL compiler version 8.01.0622 */
+ /* File created by MIDL compiler version 8.01.0628 */
 /* at Tue Jan 19 03:14:07 2038
  */
 /* Compiler settings for M3da.idl:
-    Oicf, W1, Zp8, env=Win64 (32b run), target_arch=AMD64 8.01.0622 
+    Oicf, W1, Zp8, env=Win64 (32b run), target_arch=AMD64 8.01.0628 
     protocol : all , ms_ext, c_ext, robust
     error checks: allocation ref bounds_check enum stub_data 
     VC __declspec() decoration level: 
@@ -36,6 +36,14 @@
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1020)
 #pragma once
+#endif
+
+#ifndef DECLSPEC_XFGVIRT
+#if defined(_CONTROL_FLOW_GUARD_XFG)
+#define DECLSPEC_XFGVIRT(base, func) __declspec(xfg_virtual(base, func))
+#else
+#define DECLSPEC_XFGVIRT(base, func)
+#endif
 #endif
 
 /* Forward Declarations */ 
@@ -115,28 +123,34 @@ EXTERN_C const IID DIID_IM3da;
     {
         BEGIN_INTERFACE
         
+        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
         HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
             IM3da * This,
             /* [in] */ REFIID riid,
             /* [annotation][iid_is][out] */ 
             _COM_Outptr_  void **ppvObject);
         
+        DECLSPEC_XFGVIRT(IUnknown, AddRef)
         ULONG ( STDMETHODCALLTYPE *AddRef )( 
             IM3da * This);
         
+        DECLSPEC_XFGVIRT(IUnknown, Release)
         ULONG ( STDMETHODCALLTYPE *Release )( 
             IM3da * This);
         
+        DECLSPEC_XFGVIRT(IDispatch, GetTypeInfoCount)
         HRESULT ( STDMETHODCALLTYPE *GetTypeInfoCount )( 
             IM3da * This,
             /* [out] */ UINT *pctinfo);
         
+        DECLSPEC_XFGVIRT(IDispatch, GetTypeInfo)
         HRESULT ( STDMETHODCALLTYPE *GetTypeInfo )( 
             IM3da * This,
             /* [in] */ UINT iTInfo,
             /* [in] */ LCID lcid,
             /* [out] */ ITypeInfo **ppTInfo);
         
+        DECLSPEC_XFGVIRT(IDispatch, GetIDsOfNames)
         HRESULT ( STDMETHODCALLTYPE *GetIDsOfNames )( 
             IM3da * This,
             /* [in] */ REFIID riid,
@@ -145,6 +159,7 @@ EXTERN_C const IID DIID_IM3da;
             /* [in] */ LCID lcid,
             /* [size_is][out] */ DISPID *rgDispId);
         
+        DECLSPEC_XFGVIRT(IDispatch, Invoke)
         /* [local] */ HRESULT ( STDMETHODCALLTYPE *Invoke )( 
             IM3da * This,
             /* [annotation][in] */ 
@@ -238,28 +253,34 @@ EXTERN_C const IID DIID_IDBase;
     {
         BEGIN_INTERFACE
         
+        DECLSPEC_XFGVIRT(IUnknown, QueryInterface)
         HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
             IDBase * This,
             /* [in] */ REFIID riid,
             /* [annotation][iid_is][out] */ 
             _COM_Outptr_  void **ppvObject);
         
+        DECLSPEC_XFGVIRT(IUnknown, AddRef)
         ULONG ( STDMETHODCALLTYPE *AddRef )( 
             IDBase * This);
         
+        DECLSPEC_XFGVIRT(IUnknown, Release)
         ULONG ( STDMETHODCALLTYPE *Release )( 
             IDBase * This);
         
+        DECLSPEC_XFGVIRT(IDispatch, GetTypeInfoCount)
         HRESULT ( STDMETHODCALLTYPE *GetTypeInfoCount )( 
             IDBase * This,
             /* [out] */ UINT *pctinfo);
         
+        DECLSPEC_XFGVIRT(IDispatch, GetTypeInfo)
         HRESULT ( STDMETHODCALLTYPE *GetTypeInfo )( 
             IDBase * This,
             /* [in] */ UINT iTInfo,
             /* [in] */ LCID lcid,
             /* [out] */ ITypeInfo **ppTInfo);
         
+        DECLSPEC_XFGVIRT(IDispatch, GetIDsOfNames)
         HRESULT ( STDMETHODCALLTYPE *GetIDsOfNames )( 
             IDBase * This,
             /* [in] */ REFIID riid,
@@ -268,6 +289,7 @@ EXTERN_C const IID DIID_IDBase;
             /* [in] */ LCID lcid,
             /* [size_is][out] */ DISPID *rgDispId);
         
+        DECLSPEC_XFGVIRT(IDispatch, Invoke)
         /* [local] */ HRESULT ( STDMETHODCALLTYPE *Invoke )( 
             IDBase * This,
             /* [annotation][in] */ 
