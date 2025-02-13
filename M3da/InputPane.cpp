@@ -65,6 +65,10 @@ void CInputPane::OnSize(UINT nType, int cx, int cy)
 
 CRect CbarSz;
 this->GetWindowRect(&CbarSz);
+
+// avoids overlapping with the arrow controls on the bottom left
+CbarSz.DeflateRect(0, 10);
+
 int h = CbarSz.Height();
 int w = CbarSz.Width();
 int TxtH = 25;
