@@ -9057,7 +9057,7 @@ for (j=0;j<iNoOff;j++)
           pO->pParent=NULL;
 		  MoveObj(pO,vA);
 	      AddObj(pO);
-          Dsp_Add(pO);
+          //Dsp_Add(pO);
 		  vA+=tVec;
 	    }
     }
