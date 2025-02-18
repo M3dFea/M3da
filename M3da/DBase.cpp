@@ -20464,7 +20464,6 @@ void DBase::EditGlobals()
 		Dlg.PT = PropsT;
 		Dlg.pO = pO;
 		Dlg.DoModal();
-		S_Count--;
 		InvalidateOGL();
 		ReGen();
 		delete (pO);
