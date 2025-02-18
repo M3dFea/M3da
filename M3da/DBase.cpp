@@ -8619,78 +8619,119 @@ ReDraw();
 }
 
 
-void DBase::SurfaceTrimLoop(ObjList* Sur,ObjList* Curves2)
+void DBase::SurfaceTrimLoop(ObjList* Sur, ObjList* Curves2)
 {
 
-BOOL bErr;
-NSurf* pS;
-pS=(NSurf*) Sur->Objs[0];
-C3dVector vR;
-C3dVector vN;
-C3dVector vSN;
-C3dVector vO;
-C3dMatrix TMat;
-C3dVector pt;
-int i;
-int j;
-double dInc;
-if ((Sur->iNo>0) && (Curves2->iNo>0))
-{
-  ObjList* Curves = new ObjList();
-  Curves->Clear();
+	BOOL bErr;
+	NSurf* pS;
+	pS = (NSurf*)Sur->Objs[0];
+	C3dVector vR;
+	C3dVector vN;
+	C3dVector vSN;
+	C3dVector vO;
+	C3dMatrix TMat;
+	C3dVector pt;
+	int i;
+	int j;
+	double dInc;
+	if ((Sur->iNo > 0) && (Curves2->iNo > 0))
+	{
+		ObjList* Curves = new ObjList();
+		Curves->Clear();
 
-  G_Object* pG;
-  for (i=0;i<Curves2->iNo;i++)
-  {
-    pG=(G_Object*) Curves2->Objs[i];
-    if ((pG->iType == 1) ||
-        (pG->iType == 2))
-    {
-       Curves->Add(pG);
-    }
-    else if (pG->iType == 3)
-    {
-    //Need to deal with incomplete circles until we have 
-    //the arbitaru arc
-      NCircle* pC = (NCircle*) pG;
-      if ((pC->we==1.0) && (pC->ws==0.0))
-      {
-        Curves->Add(pC);
-      }
-      else
-      {
-         dInc=(pC->we-pC->ws)/36;
-         NCurve* pPC=new NCurve();
-         for (j=0;j<=36;j++)
-         {
-           pt=pC->GetPt(pC->ws+j*dInc);
-           pPC->AddVert(pt,1);
-         }
-         pPC->Generate(1);
-         Curves->Add(pPC);
-      }
-    }
-  }
+		G_Object* pG;
+		//for (i = 0; i < Curves2->iNo; i++)
+		//{
+		//	pG = (G_Object*)Curves2->Objs[i];
+		//	if ((pG->iType == 1) ||
+		//		(pG->iType == 2))
+		//	{
+		//		Curves->Add(pG);
+		//	}
+		for (i = 0; i < Curves2->iNo; i++)
+		{
+			pG = (G_Object*)Curves2->Objs[i];
+			if ((pG->iObjType == 7) && (pG->iType == 1))
+			{
+				//NEEDS UPDATING TO CURVE SPLIT FOR WS & WE <> 0 & 1
+				//Curves->Add(S_Buff[i]->Copy(NULL));
+				NCurve* pC = (NCurve*)pG;
+				if ((pC->we == 1.0) && (pC->ws == 0.0))
+				{
+					Curves->Add(S_Buff[i]->Copy(NULL));
+				}
+				else
+				{
+					dInc = (pC->we - pC->ws) / 36;
+					NCurve* pPC = new NCurve();
+					for (j = 0; j <= 36; j++)
+					{
+						pt = pC->GetPt(pC->ws + j * dInc);
+						pPC->AddVert(pt, 1);
+					}
+					pPC->Generate(1);
+					Curves->Add(pPC);
+				}
+			}
+			else if ((pG->iObjType == 7) && (pG->iType == 2))
+			{
+				C3dVector p1, p2;
+				NCurve* C1 = (NCurve*)pG;
+				p1 = C1->GetPt(C1->ws);
+				p2 = C1->GetPt(C1->we);
+				NLine* oL = new NLine();
+				oL->Create(p1, p2, -1, NULL);
+				Curves->Add(oL);
+				// Curves->Add(S_Buff[i]->Copy(NULL));
+			}
+			else if (pG->iObjType == 13)
+			{
+				NCurveOnSurf* pSS;
+				pSS = (NCurveOnSurf*)pG;
+				Curves->Add(pSS->GetSurfaceCVG(pSS->pParent));
+			}
+			else if ((pG->iObjType == 7) && (pG->iType == 3))
+			{
+				//Need to deal with incomplete circles until we have 
+				//the arbitaru arc
+				NCircle* pC = (NCircle*)pG;
+				if ((pC->we == 1.0) && (pC->ws == 0.0))
+				{
+					Curves->Add(S_Buff[i]->Copy(NULL));
+				}
+				else
+				{
+					dInc = (pC->we - pC->ws) / 36;
+					NCurve* pPC = new NCurve();
+					for (j = 0; j <= 36; j++)
+					{
+						pt = pC->GetPt(pC->ws + j * dInc);
+						pPC->AddVert(pt, 1);
+					}
+					pPC->Generate(1);
+					Curves->Add(pPC);
+				}
+			}
+		}
 
-  vO.Set(0,0,0);
-  vSN=pS->Get_Normal(0.5,0.5);
-  bErr=ChainCurves(Curves);
-  bErr=ChainNormal(Curves,vN);
-  if (vN.Dot(vSN)>0)
-  {
-    bErr=ChainReverse(Curves);
-  }
+		vO.Set(0, 0, 0);
+		vSN = pS->Get_Normal(0.5, 0.5);
+		bErr = ChainCurves(Curves);
+		bErr = ChainNormal(Curves, vN);
+		if (vN.Dot(vSN) > 0)
+		{
+			bErr = ChainReverse(Curves);
+		}
 
-  for (i=0;i<Curves->iNo;i++)
-  {
-    
-    Curves->Objs[i] = pS->AddTrimCurve((NCurve*) Curves->Objs[i]);
-  }
-  pS->InternalTrim(Curves);
-  delete(Curves);
-  InvalidateOGL();
-  ReDraw();
-  }
+		for (i = 0; i < Curves->iNo; i++)
+		{
+			Curves->Objs[i] = pS->AddTrimCurve((NCurve*)Curves->Objs[i]);
+		}
+		pS->InternalTrim(Curves);
+		delete(Curves);
+		InvalidateOGL();
+		ReDraw();
+	}
 }
 
 void DBase::OffSet(G_Object* pOff,C3dVector vDir,double Dist)
