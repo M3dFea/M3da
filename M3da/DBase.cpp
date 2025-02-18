@@ -8501,128 +8501,138 @@ void DBase::AddSolidSection()
 
 }
 
+
+
 void DBase::AddSurfBound()
 {
 
-BOOL bErr;
+	BOOL bErr;
+	BOOL bErr1;
+	BOOL bErr2;
+	BOOL bErr3;
+	C3dVector pt;
+	NSurf* pS;
 
-C3dVector pt;
-NSurf* pS;
-
-ObjList* Curves = new ObjList();
-Curves->Clear();
-int i;
-int j;
-double dInc;
-for (i=0;i<S_Count;i++)
-{
-	if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 1))
+	ObjList* Curves = new ObjList();
+	Curves->Clear();
+	int i;
+	int j;
+	double dInc;
+	for (i = 0; i < S_Count; i++)
 	{
-		//NEEDS UPDATING TO CURVE SPLIT FOR WS & WE <> 0 & 1
-		//Curves->Add(S_Buff[i]->Copy(NULL));
-		NCurve* pC = (NCurve*)S_Buff[i];
-		if ((pC->we == 1.0) && (pC->ws == 0.0))
+		if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 1))
 		{
-			Curves->Add(S_Buff[i]->Copy(NULL));
-		}
-		else
-		{
-			dInc = (pC->we - pC->ws) / 36;
-			NCurve* pPC = new NCurve();
-			for (j = 0; j <= 36; j++)
+			//NEEDS UPDATING TO CURVE SPLIT FOR WS & WE <> 0 & 1
+			//Curves->Add(S_Buff[i]->Copy(NULL));
+			NCurve* pC = (NCurve*)S_Buff[i];
+			if ((pC->we == 1.0) && (pC->ws == 0.0))
 			{
-				pt = pC->GetPt(pC->ws + j * dInc);
-				pPC->AddVert(pt, 1);
+				Curves->Add(S_Buff[i]->Copy(NULL));
 			}
-			pPC->Generate(1);
-			Curves->Add(pPC);
+			else
+			{
+				dInc = (pC->we - pC->ws) / 36;
+				NCurve* pPC = new NCurve();
+				for (j = 0; j <= 36; j++)
+				{
+					pt = pC->GetPt(pC->ws + j * dInc);
+					pPC->AddVert(pt, 1);
+				}
+				pPC->Generate(1);
+				Curves->Add(pPC);
+			}
+		}
+		else if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 2))
+		{
+			C3dVector p1, p2;
+			NCurve* C1 = (NCurve*)S_Buff[i];
+			p1 = C1->GetPt(C1->ws);
+			p2 = C1->GetPt(C1->we);
+			NLine* oL = new NLine();
+			oL->Create(p1, p2, -1, NULL);
+			Curves->Add(oL);
+			// Curves->Add(S_Buff[i]->Copy(NULL));
+		}
+		else if (S_Buff[i]->iObjType == 13)
+		{
+			NCurveOnSurf* pSS;
+			pSS = (NCurveOnSurf*)S_Buff[i];
+			Curves->Add(pSS->GetSurfaceCVG(pSS->pParent));
+		}
+		else if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 3))
+		{
+			//Need to deal with incomplete circles until we have 
+			//the arbitaru arc
+			NCircle* pC = (NCircle*)S_Buff[i];
+			if ((pC->we == 1.0) && (pC->ws == 0.0))
+			{
+				Curves->Add(S_Buff[i]->Copy(NULL));
+			}
+			else
+			{
+				dInc = (pC->we - pC->ws) / 36;
+				NCurve* pPC = new NCurve();
+				for (j = 0; j <= 36; j++)
+				{
+					pt = pC->GetPt(pC->ws + j * dInc);
+					pPC->AddVert(pt, 1);
+				}
+				pPC->Generate(1);
+				Curves->Add(pPC);
+			}
 		}
 	}
-	else if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 2))
+	C3dVector vR;
+	C3dVector vY;
+	C3dVector vN;
+	C3dVector vO;
+	C3dMatrix TMat;
+	C3dMatrix TMatInv;
+	double XMax;
+	double YMax;
+	double XMin;
+	double YMin;
+	if (Curves->iNo > 0)
 	{
-		C3dVector p1, p2;
-		NCurve* C1 = (NCurve*)S_Buff[i];
-		p1 = C1->GetPt(C1->ws);
-		p2 = C1->GetPt(C1->we);
-		NLine* oL = new NLine();
-		oL->Create(p1, p2, -1, NULL);
-		Curves->Add(oL);
-		// Curves->Add(S_Buff[i]->Copy(NULL));
+		bErr1 = ChainCurves(Curves);
+		bErr2 = ChainNormal(Curves, vN);
+		bErr3 = ChainRef(Curves, vR, vO);
+		if ((bErr1 == FALSE) && (bErr2 == FALSE) && (bErr3 == FALSE))
+		{
+			vR.Normalize();
+			vN.Normalize();
+			vY = vN.Cross(vR);
+			TMat.SetColVec(1, vR);
+			TMat.SetColVec(2, vY);
+			TMat.SetColVec(3, vN);
+			TMat.ClearTranslations();
+			TMatInv = TMat;
+			TMatInv.Transpose();
+			//TMat.Translate(-vO.x,-vO.y,-vO.z);
+			TMat.Translate2(vO.x, vO.y, vO.z);
+			bErr = Extents(Curves, TMatInv, vO, XMax, YMax, XMin, YMin);
+			pS = AddPlainSurf2(TMat, XMax, YMax, XMin, YMin, TRUE);
+			for (i = 0; i < Curves->iNo; i++)
+			{
+				Curves->Objs[i] = pS->AddTrimCurve((NCurve*)Curves->Objs[i]);
+			}
+			pS->UserTrim(Curves);
+		}
+		//pS->DefualtTrim();
 	}
-  else if (S_Buff[i]->iObjType == 13)
-  {  
-     NCurveOnSurf* pSS;
-     pSS=(NCurveOnSurf*) S_Buff[i];
-     Curves->Add(pSS->GetSurfaceCVG(pSS->pParent));
-  }
-  else if ((S_Buff[i]->iObjType == 7) && (S_Buff[i]->iType == 3))
-  {
-  //Need to deal with incomplete circles until we have 
-  //the arbitaru arc
-    NCircle* pC = (NCircle*) S_Buff[i];
-    if ((pC->we==1.0) && (pC->ws==0.0))
-    {
-      Curves->Add(S_Buff[i]->Copy(NULL));
-    }
-    else
-    {
-       dInc=(pC->we-pC->ws)/36;
-       NCurve* pPC=new NCurve();
-       for (j=0;j<=36;j++)
-       {
-         pt=pC->GetPt(pC->ws+j*dInc);
-         pPC->AddVert(pt,1);
-       }
-       pPC->Generate(1);
-       Curves->Add(pPC);
-    }
-  }
-}
-C3dVector vR;
-C3dVector vY;
-C3dVector vN;
-C3dVector vO;
-C3dMatrix TMat;
-C3dMatrix TMatInv;
-double XMax;
-double YMax;
-double XMin;
-double YMin;
-if (Curves->iNo>0)
-  {
-  bErr=ChainCurves(Curves);
-  bErr=ChainNormal(Curves,vN);
-  bErr=ChainRef(Curves,vR,vO);
-  vR.Normalize();
-  vN.Normalize();
-  vY=vN.Cross(vR);
-  TMat.SetColVec(1,vR);
-  TMat.SetColVec(2,vY);
-  TMat.SetColVec(3,vN);
-  TMat.ClearTranslations();
-  TMatInv=TMat;
-  TMatInv.Transpose();
-  //TMat.Translate(-vO.x,-vO.y,-vO.z);
-  TMat.Translate2(vO.x,vO.y,vO.z);
-  bErr=Extents(Curves,TMatInv,vO,XMax,YMax,XMin,YMin);
-  pS=AddPlainSurf2(TMat,XMax,YMax,XMin,YMin,TRUE);
-  for (i=0;i<Curves->iNo;i++)
-  {
-    Curves->Objs[i] = pS->AddTrimCurve((NCurve*) Curves->Objs[i]);
-  }
-  pS->UserTrim(Curves);
-  //pS->DefualtTrim();
+
+	delete (Curves);
+	ReDraw();
 }
 
-delete (Curves);
-ReDraw();
-}
 
 
 void DBase::SurfaceTrimLoop(ObjList* Sur, ObjList* Curves2)
 {
 
 	BOOL bErr;
+	BOOL bErr1;
+	BOOL bErr2;
 	NSurf* pS;
 	pS = (NSurf*)Sur->Objs[0];
 	C3dVector vR;
@@ -8716,18 +8726,20 @@ void DBase::SurfaceTrimLoop(ObjList* Sur, ObjList* Curves2)
 
 		vO.Set(0, 0, 0);
 		vSN = pS->Get_Normal(0.5, 0.5);
-		bErr = ChainCurves(Curves);
-		bErr = ChainNormal(Curves, vN);
-		if (vN.Dot(vSN) > 0)
+		bErr1 = ChainCurves(Curves);
+		bErr2 = ChainNormal(Curves, vN);
+		if ((bErr1 == FALSE) && (bErr2 == FALSE))
 		{
-			bErr = ChainReverse(Curves);
+			if (vN.Dot(vSN) > 0)
+			{
+				bErr = ChainReverse(Curves);
+			}
+			for (i = 0; i < Curves->iNo; i++)
+			{
+				Curves->Objs[i] = pS->AddTrimCurve((NCurve*)Curves->Objs[i]);
+			}
+			pS->InternalTrim(Curves);
 		}
-
-		for (i = 0; i < Curves->iNo; i++)
-		{
-			Curves->Objs[i] = pS->AddTrimCurve((NCurve*)Curves->Objs[i]);
-		}
-		pS->InternalTrim(Curves);
 		delete(Curves);
 		InvalidateOGL();
 		ReDraw();
