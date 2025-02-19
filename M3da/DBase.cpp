@@ -7903,6 +7903,8 @@ else
     v1=p1-p0;
     v2=p2-p0;
     vN=v1.Cross(v2);
+	vN.Normalize();
+	bErr = FALSE;
 }
 return (bErr);
 }
