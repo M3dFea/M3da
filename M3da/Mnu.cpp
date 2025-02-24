@@ -16732,7 +16732,7 @@ if (CInMsg!="MouseInp")
 
 		if (iStat == 2)
 		{
-		   outtext2("// ENTER IDS (START - FININSH) (Key In)");
+		   outtext2("// ENTER IDS (START - FINISH) (Key In)");
 		   iStat=3;
 		}
 		if (iStat == 3)
